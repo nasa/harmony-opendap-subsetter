@@ -1,0 +1,21 @@
+#!/bin/bash
+###############################################################################
+#
+# Execute the latest sds/var_subsetter Docker image as a container. This
+# requires content of an input Harmony message to be specified via the
+# --harmony-input argument. Additionally, --harmony-action must be 'invoke'.
+#
+# Adapted from SwotRepr: 2020-05-07
+#
+###############################################################################
+
+set -ex
+
+find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
+
+# Import variables from .env file if one exists
+if [ -f .env ]; then
+  docker run --rm -it -v $(pwd):/home --env-file=.env sds/var_subsetter "$@"
+else
+  docker run --rm -it -v $(pwd):/home sds/var_subsetter "$@"
+fi

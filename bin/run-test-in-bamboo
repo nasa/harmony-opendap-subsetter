@@ -1,0 +1,15 @@
+#!/bin/bash
+###############################################################################
+#
+# Execute the sds/var_subsetter_test Docker image as a container,  within
+# Bamboo.
+#
+# Adapted from SwotRepr: 2020-05-07
+#
+###############################################################################
+
+set -ex
+
+find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
+
+docker run --rm -v $(pwd):/home sds/var_subsetter_test "$@"

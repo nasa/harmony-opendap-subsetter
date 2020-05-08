@@ -119,6 +119,10 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             # multiple granules.
             raise Exception('Synchronous requests accept only one granule')
 
+        for source in self.message.sources:
+            if not hasattr(source, 'variables') or not source.variables:
+                raise Exception('No variables specified for subsetting')
+
 
 if __name__ == '__main__':
     """ Enable this command to be run locally within a conda environment

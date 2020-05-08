@@ -261,3 +261,32 @@ class TestSubsetter(TestCase):
                 title=granule.id,
                 **self.operations
             )
+
+    def test_missing_variables(self, mock_completed_with_local_file,
+                               mock_completed_with_error,
+                               mock_async_add_local_file_partial,
+                               mock_async_completed, mock_cleanup,
+                               mock_subset_granule, mock_get_mimetype):
+        """ Ensure that if no variables are specified for a source, the service
+            raises an exception.
+
+        """
+        mock_subset_granule.return_value = '/path/to/output.nc'
+        mock_get_mimetype.return_value = ('application/octet-stream', None)
+
+        message = self.create_message(['/home/tests/data/africa.nc'], [],
+                                      'jlovell')
+
+        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter.invoke()
+
+        mock_subset_granule.assert_not_called()
+        mock_get_mimetype.assert_not_called()
+
+        mock_completed_with_local_file.assert_not_called()
+        mock_async_add_local_file_partial.assert_not_called()
+        mock_async_completed.assert_not_called()
+        mock_cleanup.assert_called_once()
+        mock_completed_with_error.assert_called_with(
+            contains('No variables specified for subsetting')
+        )

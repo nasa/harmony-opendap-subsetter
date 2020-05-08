@@ -1,0 +1,16 @@
+#!/bin/bash
+###############################################################################
+#
+# Execute the sds/var_subsetter_test Docker image as a container. This will run
+# the unit test suite, check for Python linting errors, and ensure there are no
+# known security vulnerabilities in imported third party packages.
+#
+# Adapted from SwotRepr: 2020-05-07
+#
+###############################################################################
+
+set -ex
+
+find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
+
+docker run --rm sds/var_subsetter_test "$@"

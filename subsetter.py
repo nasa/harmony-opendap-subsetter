@@ -119,6 +119,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             # multiple granules.
             raise Exception('Synchronous requests accept only one granule')
 
+        # TODO: Update this check on variables once their format has expanded.
         for source in self.message.sources:
             if not hasattr(source, 'variables') or not source.variables:
                 raise Exception('No variables specified for subsetting')

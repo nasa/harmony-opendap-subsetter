@@ -134,27 +134,6 @@ class VarInfo:
 
         return required_variables
 
-    def _create_umm_var_dimensions(self):
-        """ Iterate through all variable names in the dimensions set. Using
-            the associated variables in the variables_with_coordinates and
-            metadata_variables dictionaries, construct valid UMM-Var
-            DimensionType objects for each dimension.
-
-            The schema for a dimension item is:
-            - name: str
-            - size: number
-            - type: enumerated value: LATITUDE_DIMENSION, LONGITUDE_DIMENSION,
-                    PRESSURE_DIMENSION, HEIGHT_DIMENSION, DEPTH_DIMENSTION,
-                    TIME_DIMENSION, OTHER
-
-        """
-        return {}
-
-    def _create_umm_vat_set(self):
-        """ Create the required set object for the UMM-Var schema. """
-        pass
-
-
 
 class Variable:
     """ A class to represent a single variable within the dmr or dmrpp file

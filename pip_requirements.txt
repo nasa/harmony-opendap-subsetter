@@ -1,1 +1,3 @@
+--extra-index-url https://maven.earthdata.nasa.gov/repository/python-repo/simple
 # This file should contain requirements to be installed via Pip.
+harmony-service-lib==0.0.3

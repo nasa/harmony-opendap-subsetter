@@ -5,6 +5,10 @@
 """
 from typing import Optional, Tuple
 import mimetypes
+from urllib import request
+import os
+import re
+import json
 
 from harmony.message import Granule
 
@@ -21,3 +25,38 @@ def get_granule_mimetype(granule: Granule) -> Tuple[Optional[str]]:
         mimetype = ('application/octet-stream', None)
 
     return mimetype
+
+def get_token() -> str:
+    """ This function creates token for CMR query using EDL_USERNAME and EDL_password.
+    """
+    # get collection EntryTitle from CMR query
+    username = os.environ['EDL_USERNAME']
+    password = os.environ['EDL_PASSWORD']
+
+    token_generator = f'<token><username>{username}</username>' \
+                      f'<password>{password}</password>' \
+                      f'<client_id>Var_Subsetter</client_id>' \
+                      f'<user_ip_address>127.0.0.1</user_ip_address> </token>'
+    token_url = 'https://cmr.uat.earthdata.nasa.gov/legacy-services/rest/tokens/'
+    headers = {'Content-Type': 'application/xml'}
+
+    req = request.Request(token_url, data=token_generator.encode('utf-8'),
+                          method='POST', headers=headers)
+    res = request.urlopen(req)
+
+    data = res.read().decode('utf-8')
+    token = re.search('<id>(.*)</id>', data).group(1)
+
+    return token
+
+def cmr_query(query_type: str, concept_id: str, query_item: str, token: str) -> str:
+    """ CMR query
+    """
+    cmr_url = f'https://cmr.uat.earthdata.nasa.gov/search/{query_type}.umm_json_v1_4?' \
+              f'concept_id={concept_id}&token={token}'
+
+    with request.urlopen(cmr_url) as url:
+        data = json.loads(url.read().decode())
+        result = data['items'][0]['umm'][query_item]
+
+    return result

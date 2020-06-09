@@ -1,3 +1,6 @@
 --extra-index-url https://maven.earthdata.nasa.gov/repository/python-repo/simple
 # This file should contain requirements to be installed via Pip.
 harmony-service-lib==0.0.3
+pydap ~= 3.2
+WebOb ~= 1.8.6
+webobtoolkit ~= 0.2.4

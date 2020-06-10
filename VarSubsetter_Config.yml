@@ -1,0 +1,111 @@
+Identification: VarSubsetter_config
+Mission_Shortnames:
+# a set of mission tagged shortname patterns
+# defines a mission name for matching shortname values.
+  ICESat2: 'ATL\d{2}'
+  GEDI: 'GEDI_L[1234][AB]'
+  SMAP: 'SPL[1234].+'
+
+Excluded_Science_Variables:  # if e.g. CF_References corrections is not enough
+# VarInfo class will assume certain variables are science variables.
+# This setting provides variable path patterns that should be excluded
+# from consideration as a science variable
+  Applicability:
+    Mission: 'ICESat2'
+  Variable_Pattern:
+    - '/quality_assessment/.*'
+    - '/orbit_info/.*'
+    - '/atlas_impulse_response/.*'
+
+CF_Overrides:  
+# For cases where CF references do not exist, or are invalid 
+  # These variables have no dimension references in the HDF5 file contents
+  - Applicability:
+      Mission: ICESat2  # ToDo: All collections?
+      Variable_Pattern: '/quality_assessment/gt[123][l|r]/.*'
+    Dimensions:
+      - '../delta_time'
+      - '/ds_surf_type'
+
+CF_Supplements:  
+# For overriding and extending CF references
+# This allows e.g., for CF references to persist, while supplemental information is provided
+# In particular, e.g. for subsetting support, non-CF attributes can be provided.
+  - Applicability:
+      Mission: 'ICESat2'
+      ShortNamePath: '(ATL0[3-9]|ATL10|ATL11|ATL13)' # others?
+    Data_Organization: 'h5_trajectory'
+       # organizations: h5_grid, h5_trajectory, h5_swath, h4eos_grid, h4eos_swath 
+    Designated_References:
+      # provide an ancillary_variable reference for these datasets
+      # (ensuring treatment as "required_field")
+      - Applicability:
+          Variable_Pattern: '/gt[123][lr]/geolocation/.*'
+        ancillary_variables:
+          - 'podppd_flag'
+      # provide subset-control-variable designation for these datasets
+      - Applicability:
+          ShortNamePath: 'ATL03'
+          Variable_Pattern: '/gt[123][lr]/heights/.*'
+        subset_control_variables:
+          - '../geolocation/ph_index_beg'
+          - '../geolocation/segment_ph_cnt'
+        subset_control_type: 'Fwd_Segment_Index'
+            # type: time, delta_time, latitude, longitude
+            #       Fwd_Segment_Index, Rvs_Segment_Index
+      - Applicability:
+          ShortNamePath: 'ATL03'
+          Variable_Pattern: '/gt[123][lr]/geolocation/ph_index_beg'
+        subset_control_variable_type: 'segment_index_beg'
+      - Applicability:
+          ShortNamePath: 'ATL03'
+          Variable_Pattern: '/gt[123][lr]/geolocation/ph_ind'
+        subset_control_variable_type: 'segment_index_cnt'
+
+      - Applicability:
+          ShortNamePath: 'ATL08'
+          Variable_Pattern: '/gt[123][lr]/signal_photons/.*'
+        subset_control_variables:
+          - '../land_segments/ph_ndx_beg'
+          - '../land_segments/n_seg_ph'
+        subset_control_type: 'Fwd_Segment_Index'
+            # type: time, delta_time, latitude, longitude
+            #       Fwd_Segment_Index, Rvs_Segment_Index
+      - Applicability:
+          ShortNamePath: 'ATL08'
+          Variable_Pattern: '/gt[123][lr]/land_segments/ph_ndx_beg'
+        subset_control_variable_type: 'segment_index_beg'
+      - Applicability:
+          ShortNamePath: 'ATL08'
+          Variable_Pattern: '/gt[123][lr]/land_segments/n_seg_ph'
+        subset_control_variable_type: 'segment_index_cnt'
+      # ToDo ShortNamePath: ATL10 --------------------------------------------
+  - Applicability:
+      Mission: 'GEDI'
+    Data_Organization: 'h5_trajectory'
+    Designated_References:
+    - Applicability:
+        ShortNamePath: 'GEDI_L1[AB]'
+        Variable_Pattern: '/BEAM[\d]+/geolocation/'
+      subset_control_variables:  # resetting the spatial coordinates for subsetting purposes
+        - 'delta_time'
+        - 'latitude_bin0'
+        - 'longitude_bin0'
+      # ToDo: resetting the spatial coordinates for subsetting purposes, DAS-682
+      subset_control_type: 'coordinates'
+    - Applicability:
+        ShortNamePath: 'GEDI_L2A'
+        Variable_Pattern: '/BEAM[\d]+/'
+      subset_control_variables:
+        - 'lat_lowestmode'
+        - 'lon_lowestmode'
+        - 'delta_time'
+      subset_control_type: 'coordinates'
+    - Applicability:
+        ShortNamePath: 'GEDI_L2A'
+        Variable_Pattern: '/BEAM[\d]+/geolocation/'
+      subset_control_variables:
+        - 'lat_lowestmode'
+        - 'lon_lowestmode'
+        - 'delta_time'
+      subset_control_type: 'coordinates'

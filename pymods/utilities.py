@@ -5,10 +5,11 @@
 """
 from typing import Optional, Tuple
 import mimetypes
-from urllib import request
+from urllib import request, error
 import os
 import re
 import json
+from logging import Logger
 
 from harmony.message import Granule
 
@@ -26,7 +27,7 @@ def get_granule_mimetype(granule: Granule) -> Tuple[Optional[str]]:
 
     return mimetype
 
-def get_token() -> str:
+def get_token(logger: Logger) -> str:
     """ This function creates token for CMR query using EDL_USERNAME and EDL_password.
     """
     # get collection EntryTitle from CMR query
@@ -40,23 +41,34 @@ def get_token() -> str:
     token_url = 'https://cmr.uat.earthdata.nasa.gov/legacy-services/rest/tokens/'
     headers = {'Content-Type': 'application/xml'}
 
-    req = request.Request(token_url, data=token_generator.encode('utf-8'),
-                          method='POST', headers=headers)
-    res = request.urlopen(req)
+    token = ''
 
-    data = res.read().decode('utf-8')
-    token = re.search('<id>(.*)</id>', data).group(1)
+    try:
+        req = request.Request(token_url, data=token_generator.encode('utf-8'),
+                              method='POST', headers=headers)
+        res = request.urlopen(req)
+    except error.HTTPError:
+        logger.error("Failed to generate CMR token")
+
+    else:
+        data = res.read().decode('utf-8')
+        token = re.search('<id>(.*)</id>', data).group(1)
 
     return token
 
-def cmr_query(query_type: str, concept_id: str, query_item: str, token: str) -> str:
+def cmr_query(query_type: str, concept_id: str, query_item: str, token: str, logger: Logger) -> str:
     """ CMR query
     """
     cmr_url = f'https://cmr.uat.earthdata.nasa.gov/search/{query_type}.umm_json_v1_4?' \
               f'concept_id={concept_id}&token={token}'
 
+    result = ''
+
     with request.urlopen(cmr_url) as url:
         data = json.loads(url.read().decode())
-        result = data['items'][0]['umm'][query_item]
+        try:
+            result = data['items'][0]['umm'][query_item]
+        except IndexError:
+            logger.error(f'Unable to obtain {query_item} from CMR')
 
     return result

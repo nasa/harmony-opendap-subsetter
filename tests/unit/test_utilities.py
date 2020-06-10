@@ -1,10 +1,10 @@
+from logging import Logger
 from unittest import TestCase
 from unittest.mock import patch
+import os
 
 from harmony.message import Granule
-
 from pymods.utilities import get_granule_mimetype, get_token, cmr_query
-
 
 class TestUtilities(TestCase):
     """ A class for testing functions in the pymods.utilities module. """
@@ -13,6 +13,9 @@ class TestUtilities(TestCase):
     def setUpClass(cls):
         cls.granule = Granule({'url': '/home/tests/data/africa.nc'})
         cls.granule.local_filename = cls.granule.url
+
+    def setUp(self):
+        self.logger = Logger('tests')
 
     def test_get_granule_mimetype(self):
         """ Ensure a mimetype can be retrieved for a valid file path or, if
@@ -32,14 +35,14 @@ class TestUtilities(TestCase):
 
     def test_cmr_query(self):
         """ CMR queries returned correct response """
-        token = get_token()
+        token = get_token(self.logger)
         collection_id = 'C1234714691-EEDTEST'
         granule_id = 'G1234718422-EEDTEST'
 
         with self.subTest('Collection entry title'):
-            entry_title = cmr_query('collections', collection_id, 'EntryTitle', token)
+            entry_title = cmr_query('collections', collection_id, 'EntryTitle', token, self.logger)
             self.assertEqual(entry_title, 'ATLAS-ICESat-2 L2A Global Geolocated Photon Data V003')
 
         with self.subTest('Granule granuleUR'):
-            granule_ur = cmr_query('granules', granule_id, 'GranuleUR', token)
+            granule_ur = cmr_query('granules', granule_id, 'GranuleUR', token, self.logger)
             self.assertEqual(granule_ur, 'EEDTEST-ATL03-003-ATL03_20181228T013120')

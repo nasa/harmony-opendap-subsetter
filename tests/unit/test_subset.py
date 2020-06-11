@@ -14,8 +14,8 @@ class TestSubset(TestCase):
     def setUpClass(cls):
         cls.message_content = ({'sources': [{'collection': 'C1233860183-EEDTEST',
                                              'variables': [{'id': 'V1234834148-EEDTEST',
-                                                            'name': 'geoid',
-                                                            'fullPath': 'gt1r/geophys_corr/geoid'}],
+                                                            'name': 'alpha_var',
+                                                            'fullPath': 'alpha_var'}],
                                              'granules': [{'id': 'G1233860471-EEDTEST',
                                                            'url': '/home/tests/data/africa.nc'}]
                                              }]})

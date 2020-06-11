@@ -49,8 +49,9 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # previous step.
 
     # generate OPeNDAP URL
+    # ToDo: will be replace with OPeNDAP resource URL passed down from Harmony
     opendap_dmr_url = f"https://opendap.uat.earthdata.nasa.gov/providers/{provider}/" \
-                      f"collections/{entry_title}/granules/{granule_ur}.h5"
+                      f"collections/{entry_title}/granules/{granule_ur}"
 
     datasets = VarInfo(opendap_dmr_url)
     required_variables = datasets.get_required_variables(set(requested_variables))
@@ -58,6 +59,8 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # replace '/' with '_' in variable names
     required_variables = [variable[1:].replace('/', '_') for variable in required_variables]
 
-    opendap_url = f"{opendap_dmr_url}?{','.join(required_variables)}"
+    opendap_url = f"{opendap_dmr_url}.nc4?{','.join(required_variables)}"
+
+    print(f'{opendap_url}')
 
     return '/path/to/subsetting/output.nc'

@@ -131,8 +131,5 @@ dmypy.json
 .pyre/
 modules.xml
 swotrepr.iml
-.idea/.gitignore
-.idea/misc.xml
-.idea/vcs.xml
-.idea/inspectionProfiles/profiles_settings.xml
-var_subsetter.iml
+.idea/
+*.iml

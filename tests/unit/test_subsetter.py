@@ -32,14 +32,15 @@ class TestSubsetter(TestCase):
                           'is_regridded': False,
                           'is_subsetted': False}
 
-    def create_message(self, file_paths: List[str],
+    def create_message(self, collection: str, granule_id: str, file_paths: List[str],
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
-        granules = [{'id': basename(file_path), 'url': file_path}
+        granules = [{'id': granule_id, 'url': file_path}
                     for file_path in file_paths]
         variables = [{'name': variable} for variable in variable_list]
-        message_content = {'sources': [{'granules': granules,
+        message_content = {'sources': [{'collection': collection,
+                                        'granules': granules,
                                         'variables': variables}],
                            'user': user}
 
@@ -61,7 +62,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/octet-stream', None)
 
-        message = self.create_message(['/home/tests/data/africa.nc'],
+        message = self.create_message('C1233860183-EEDTEST', 'G1233860471-EEDTEST', ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'], 'narmstrong',
                                       True)
         variable_subsetter = HarmonyAdapter(message)
@@ -94,7 +95,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/octet-stream', None)
 
-        message = self.create_message(['/home/tests/data/africa.nc'],
+        message = self.create_message('C1233860183-EEDTEST', 'G1233860471-EEDTEST', ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'], 'ealdrin',
                                       False)
 
@@ -131,7 +132,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/octet-stream', None)
 
-        message = self.create_message(['/home/tests/data/africa.nc'],
+        message = self.create_message('C1233860183-EEDTEST', 'G1233860471-EEDTEST', ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'], 'mcollins')
 
         variable_subsetter = HarmonyAdapter(message)
@@ -165,7 +166,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/octet-stream', None)
 
-        message = self.create_message([], ['alpha_var', 'blue_var'], 'pconrad')
+        message = self.create_message('C1233860183-EEDTEST', 'G1233860471-EEDTEST', [], ['alpha_var', 'blue_var'], 'pconrad')
 
         variable_subsetter = HarmonyAdapter(message)
         variable_subsetter.invoke()
@@ -197,7 +198,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/octet-stream', None)
 
-        message = self.create_message(['/home/tests/data/africa.nc',
+        message = self.create_message('C1233860183-EEDTEST', 'G1233860471-EEDTEST', ['/home/tests/data/africa.nc',
                                        '/home/tests/data/VNL2_test.nc'],
                                       ['alpha_var', 'blue_var'], 'rgordon',
                                       True)
@@ -234,7 +235,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/octet-stream', None)
 
-        message = self.create_message(['/home/tests/data/africa.nc',
+        message = self.create_message('C1233860183-EEDTEST', 'G1233860471-EEDTEST', ['/home/tests/data/africa.nc',
                                        '/home/tests/data/VNL2_test.nc'],
                                       ['alpha_var', 'blue_var'], 'abean',
                                       False)
@@ -274,7 +275,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/octet-stream', None)
 
-        message = self.create_message(['/home/tests/data/africa.nc'], [],
+        message = self.create_message('C1233860183-EEDTEST', 'G1233860471-EEDTEST', ['/home/tests/data/africa.nc'], [],
                                       'jlovell')
 
         variable_subsetter = HarmonyAdapter(message)

@@ -109,9 +109,6 @@ class VarInfo:
                                  if re.match(pattern, self.short_name)
                                  is not None), None)
 
-        print(f'short_name: {self.short_name}')
-        print(f'mission: {self.mission}')
-
     def _set_global_attributes(self):
         """ Check the attributes of the returned pydap dataset for both the
             HDF5_GLOBAL and NC_GLOBAL keys. Use whichever of these has any

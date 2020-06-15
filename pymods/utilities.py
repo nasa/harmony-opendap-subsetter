@@ -3,12 +3,13 @@
     allows finer-grained unit testing of each smaller part of functionality.
 
 """
-from typing import Optional, Tuple
-import mimetypes
+from typing import Dict, List, Optional, Tuple
 from urllib import request, error
+import functools
+import json
+import mimetypes
 import os
 import re
-import json
 from logging import Logger
 
 from harmony.message import Granule
@@ -72,3 +73,33 @@ def cmr_query(query_type: str, concept_id: str, query_item: str, token: str, log
             logger.error(f'Unable to obtain {query_item} from CMR')
 
     return result
+
+
+def recursive_get(input_dictionary: Dict, keys: List[str]):
+    """ Extract a value from an aribtrarily nested dictionary. """
+    try:
+        nested_value = functools.reduce(dict.get, keys, input_dictionary)
+    except TypeError:
+        # This catches when there is a missing intermediate key
+        nested_value = None
+
+    return nested_value
+
+
+def pydap_attribute_path(full_path: str) -> List[str]:
+    """ Take the full path to a metadata attribute and return the list of
+        keys that locate that attribute within the pydap global attributes.
+        This function expects the input path to have a leading "/" character.
+
+    """
+    full_path_pieces = full_path.split('/')[1:]
+
+    final_key = full_path_pieces.pop(-1)
+    leading_key = '_'.join(full_path_pieces)
+
+    if leading_key:
+        key_list = [leading_key, final_key]
+    else:
+        key_list = [final_key]
+
+    return key_list

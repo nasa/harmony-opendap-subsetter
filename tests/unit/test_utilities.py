@@ -4,7 +4,9 @@ from unittest.mock import patch
 import os
 
 from harmony.message import Granule
-from pymods.utilities import get_granule_mimetype, get_token, cmr_query
+
+from pymods.utilities import (cmr_query, get_granule_mimetype, get_token,
+                              pydap_attribute_path, recursive_get)
 
 class TestUtilities(TestCase):
     """ A class for testing functions in the pymods.utilities module. """
@@ -46,3 +48,40 @@ class TestUtilities(TestCase):
         with self.subTest('Granule granuleUR'):
             granule_ur = cmr_query('granules', granule_id, 'GranuleUR', token, self.logger)
             self.assertEqual(granule_ur, 'EEDTEST-ATL03-003-ATL03_20181228T013120')
+
+    def test_recursive_get(self):
+        """ Can retrieve a nested dictionary value, or account for missing
+            data.
+
+        """
+        test_args = [
+            ['Top level', {'a': 'b'}, ['a'], 'b'],
+            ['Nested', {'a': {'b': 'c'}}, ['a', 'b'], 'c'],
+            ['Missing nested data', {'a': {'c': 'd'}}, ['a', 'b'], None],
+            ['Missing top level', {'b': {'c': 'd'}}, ['a', 'c'], None]
+        ]
+
+        for description, test_dictionary, keys, expected_output in test_args:
+            with self.subTest(description):
+                self.assertEqual(recursive_get(test_dictionary, keys),
+                                 expected_output)
+
+    def test_pydap_attribute_path(self):
+        """ Check that a fully qualified path to a metadata attribute is
+            correctly converted to a combination of two keys, to locate the
+            attribute in the pydap global attributes for the granule.
+
+            For example: /Metadata/SeriesIdentification/shortName will be
+            located at: dataset.attributes['Metadata_SeriesIdentification']['shortName']
+
+        """
+        test_args = [['Not nested', '/short_name', ['short_name']],
+                     ['Singly nested', '/Metadata/short_name',
+                      ['Metadata', 'short_name']],
+                     ['Doubly nested', '/Metadata/Series/short_name',
+                      ['Metadata_Series', 'short_name']]]
+
+        for description, full_path, expected_key_list in test_args:
+            with self.subTest(description):
+                self.assertEqual(pydap_attribute_path(full_path),
+                                 expected_key_list)

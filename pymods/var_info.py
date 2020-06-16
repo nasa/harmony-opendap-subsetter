@@ -4,13 +4,13 @@
 
 """
 from typing import Dict, Set, Tuple
+import json
 import re
 
-from pydap.cas.urs import setup_session
 from pydap.client import open_url
 from pydap.model import BaseType
-from webob.client import send_request_app
-from webobtoolkit import filters
+
+from pymods.utilities import pydap_attribute_path, recursive_get
 
 # See: https://git.earthdata.nasa.gov/projects/EMFD/repos/
 #   unified-metadata-model/browse/variable/v1.5/umm-var-json-schema.json
@@ -19,8 +19,8 @@ data_types = {'byte', 'float', 'float32', 'float64', 'double', 'ubyte',
               'long', 'int', 'int8', 'int16', 'int32', 'int64', 'uint8',
               'uint16', 'uint32', 'uint64', 'other'}
 
-
 MetaDataType = Dict
+
 
 class VarInfo:
     """ A class to represent the full dataset of a granule, having read
@@ -28,18 +28,21 @@ class VarInfo:
 
     """
 
-    def __init__(self, dmr_file_url: str):
+    def __init__(self, pydap_url: str):
         """ Distinguish between variables containing references to other
             datasets, and those that do not. The former are considered science
             variables, providing they are not considered coordinates or
             dimensions for another variable.
 
-            Unlike NCInfo, in SwotRepr, each variable contains references to
+            Unlike NCInfo in SwotRepr, each variable contains references to
             their specific coordinates and dimensions, allowing the retrieval
             of all required variables for a specified list of science
             variables.
 
         """
+        self.global_attributes = None
+        self.short_name = None
+        self.mission = None
         self.metadata_variables: Dict[str, Variable] = {}
         self.variables_with_coordinates: Dict[str, Variable] = {}
         self.ancillary_data: Set[str] = set()
@@ -47,35 +50,22 @@ class VarInfo:
         self.dimensions: Set[str] = set()
         self.metadata = {}
 
-        self._read_dataset_from_dmr(dmr_file_url)
+        self._set_var_info_config()
+        self._read_dataset_from_pydap(pydap_url)
 
-    def _read_dataset_from_dmr(self, file_url: str):
-        """ This method parses the specified dmr file. """
+    def _read_dataset_from_pydap(self, file_url: str):
+        """ This method parses the downloaded pydap dataset at the specified
+            URL. For each variable in the dataset, an object is created, while
+            resolving and associated references, and updating those sets using
+            the CFConfig class to account for known data issues.
 
-        """ This comment contains experimental code to get around 302 redirects
-            and to implement URS authentication. The requests_application isn't
-            currently functional, and requires some work.
-
-            For an alternative methodology, see: https://github.com/pydap/pydap/issues/188
-
-        requests_application = filters.auto_redirect_filter(
-            filters.cookie_filter(
-                filters.decode_filter(
-                    filters.charset_filter(
-                        send_request_app
-                    )
-                )
-            )
-        )
-
-        session = setup_session('urs_username', 'urs_password',
-                                check_url=file_url)
-        self.dmr_input = open_url(file_url, session=session,
-                                  application=requests_application)
         """
-        self.dmr_input = open_url(file_url)
+        self.pydap_dataset = open_url(file_url)
+        self._set_global_attributes()
+        self._set_mission_and_short_name()
+        # self._set_cf_config()
 
-        for variable in self.dmr_input.values():
+        for variable in self.pydap_dataset.values():
             # TODO: When receiving a non-flattened file, augment this to make
             # sure it is a BaseType object, if StructureType or SequenceType
             # make sure these are correctly handled.
@@ -88,6 +78,53 @@ class VarInfo:
 
             if variable_object.dimensions is not None:
                 self.dimensions.update(variable_object.dimensions)
+
+    def _set_var_info_config(self):
+        """ Read the VarInfo configuration JSON file, containing locations to
+            search for the collection short_name attribute, and the mapping
+            from short_name to satellite mission.
+
+        """
+        with open('pymods/var_info_config.json', 'r') as file_handler:
+            self.var_info_config = json.load(file_handler)
+
+    def _set_mission_and_short_name(self):
+        """ Check a series of potential locations for the collection short name
+        of the granule. Once that is determined, match that short name to its
+        associated mission.
+
+        """
+        self.short_name = next((recursive_get(self.global_attributes,
+                                              pydap_attribute_path(item))
+                                for item
+                                in self.var_info_config['short_name_attributes']
+                                if recursive_get(self.global_attributes,
+                                                 pydap_attribute_path(item))
+                                is not None), None)
+
+        if self.short_name is not None:
+            self.mission = next((name
+                                 for pattern, name
+                                 in self.var_info_config['mission'].items()
+                                 if re.match(pattern, self.short_name)
+                                 is not None), None)
+
+    def _set_global_attributes(self):
+        """ Check the attributes of the returned pydap dataset for both the
+            HDF5_GLOBAL and NC_GLOBAL keys. Use whichever of these has any
+            valid keys within it. If neither have keys, then return an empty
+            dictionary.
+
+        """
+        hdf5_global_attributes = self.pydap_dataset.attributes.get('HDF5_GLOBAL')
+        nc_global_attributes = self.pydap_dataset.attributes.get('NC_GLOBAL')
+
+        if bool(hdf5_global_attributes):
+            self.global_attributes = hdf5_global_attributes
+        elif bool(nc_global_attributes):
+            self.global_attributes = nc_global_attributes
+        else:
+            self.global_attributes = {}
 
     def get_science_variables(self) -> Set[str]:
         """ Retrieve set of names for all variables that have coordinate

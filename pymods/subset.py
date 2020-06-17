@@ -3,7 +3,10 @@
     function, which is called from the `HarmonyAdapter` class.
 
 """
+import os
+import requests
 from logging import Logger
+from tempfile import mkdtemp
 
 from harmony.message import Granule
 from pymods.utilities import cmr_query, get_token
@@ -19,6 +22,9 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     logger.info(f'Performing variable subsetting on: {granule.local_filename}')
     collection_id = granule.collection
     granule_id = granule.id
+    temp_dir = mkdtemp()
+    root_ext = os.path.splitext(os.path.basename(granule.local_filename))
+    output_file = temp_dir + os.sep + root_ext[0] + '_subset' + root_ext[1]
 
     # abstract provider from collection concept id
     provider = collection_id.partition('-')[2]
@@ -61,6 +67,16 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
 
     opendap_url = f"{opendap_dmr_url}.nc4?{','.join(required_variables)}"
 
-    print(f'{opendap_url}')
+    result = requests.get(opendap_url)
 
-    return '/path/to/subsetting/output.nc'
+    try:
+        result.raise_for_status()
+        out = open(output_file, 'wb')
+        out.write(result.content)
+        out.close()
+        logger.info(f'Downloading output to {output_file}')
+    except requests.HTTPError as err:
+        logger.error(f'Request cannot be completed with error code {result.status_code}')
+        raise requests.HTTPError(f'Request cannot be completed with error code {result.status_code}')
+
+    return output_file

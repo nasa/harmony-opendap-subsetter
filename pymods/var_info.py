@@ -4,22 +4,13 @@
 
 """
 from typing import Dict, Set, Tuple
-import json
 import re
+import yaml
 
 from pydap.client import open_url
 from pydap.model import BaseType
 
 from pymods.utilities import pydap_attribute_path, recursive_get
-
-# See: https://git.earthdata.nasa.gov/projects/EMFD/repos/
-#   unified-metadata-model/browse/variable/v1.5/umm-var-json-schema.json
-data_types = {'byte', 'float', 'float32', 'float64', 'double', 'ubyte',
-              'ushort', 'uint', 'uchar', 'string', 'char8', 'uchar8', 'short',
-              'long', 'int', 'int8', 'int16', 'int32', 'int64', 'uint8',
-              'uint16', 'uint32', 'uint64', 'other'}
-
-MetaDataType = Dict
 
 
 class VarInfo:
@@ -80,13 +71,13 @@ class VarInfo:
                 self.dimensions.update(variable_object.dimensions)
 
     def _set_var_info_config(self):
-        """ Read the VarInfo configuration JSON file, containing locations to
+        """ Read the VarInfo configuration YAML file, containing locations to
             search for the collection short_name attribute, and the mapping
             from short_name to satellite mission.
 
         """
-        with open('pymods/var_info_config.json', 'r') as file_handler:
-            self.var_info_config = json.load(file_handler)
+        with open('pymods/var_subsetter_config.yml', 'r') as file_handler:
+            self.var_info_config = yaml.load(file_handler, yaml.FullLoader)
 
     def _set_mission_and_short_name(self):
         """ Check a series of potential locations for the collection short name
@@ -94,18 +85,20 @@ class VarInfo:
         associated mission.
 
         """
-        self.short_name = next((recursive_get(self.global_attributes,
-                                              pydap_attribute_path(item))
-                                for item
-                                in self.var_info_config['short_name_attributes']
-                                if recursive_get(self.global_attributes,
-                                                 pydap_attribute_path(item))
-                                is not None), None)
+        self.short_name = next(
+            (recursive_get(self.global_attributes, pydap_attribute_path(item))
+             for item
+             in self.var_info_config['Collection_ShortName_Path']
+             if recursive_get(self.global_attributes,
+                              pydap_attribute_path(item))
+             is not None),
+            None
+        )
 
         if self.short_name is not None:
             self.mission = next((name
                                  for pattern, name
-                                 in self.var_info_config['mission'].items()
+                                 in self.var_info_config['Mission'].items()
                                  if re.match(pattern, self.short_name)
                                  is not None), None)
 

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict
 import re
 import yaml
 
@@ -134,7 +134,7 @@ class CFConfig:
                                       short_name)
 
     @staticmethod
-    def _create_attributes_object(cf_item: Dict):
+    def _create_attributes_object(cf_item: Dict) -> Dict[str, str]:
         """ Construct a dictionary object containing all contained attributes,
             which are specified as list items with Name and Value keys.
 
@@ -142,7 +142,7 @@ class CFConfig:
         return {attribute['Name']: attribute['Value']
                 for attribute in cf_item.get('Attributes', {})}
 
-    def get_cf_attributes(self, variable: str = None):
+    def get_cf_attributes(self, variable: str = None) -> Dict[str, Dict[str, str]]:
         """ Return the CF overrides and supplements that match a given
             variable. If a variable is not specified, then return all overrides
             and supplements. If there are no overrides or supplements, then

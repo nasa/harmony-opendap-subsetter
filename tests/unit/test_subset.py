@@ -51,6 +51,7 @@ class TestSubset(TestCase):
             raise appropriate exception otherwise.
         """
         granule = self.message.granules[0]
+        granule.local_filename = '/home/tests/data/africa.nc'
         mock_cmr_query.side_effect = ['entry_title', 'granule ur']
         mock_response = generate_response()
         mock_get.return_value = mock_response

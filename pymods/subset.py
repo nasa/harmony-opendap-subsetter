@@ -23,8 +23,8 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     collection_id = granule.collection
     granule_id = granule.id
     temp_dir = mkdtemp()
-    root_ext = os.path.splitext(os.path.basename(granule.local_filename))
-    output_file = temp_dir + os.sep + root_ext[0] + '_subset' + root_ext[1]
+    file_root, file_ext = os.path.splitext(os.path.basename(granule.local_filename))
+    output_file = temp_dir + os.sep + file_root + '_subset' + file_ext
 
     # abstract provider from collection concept id
     provider = collection_id.partition('-')[2]
@@ -67,16 +67,20 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
 
     opendap_url = f"{opendap_dmr_url}.nc4?{','.join(required_variables)}"
 
-    result = requests.get(opendap_url)
-
     try:
+        result = requests.get(opendap_url)
         result.raise_for_status()
-        out = open(output_file, 'wb')
-        out.write(result.content)
-        out.close()
-        logger.info(f'Downloading output to {output_file}')
     except requests.HTTPError as err:
         logger.error(f'Request cannot be completed with error code {result.status_code}')
         raise requests.HTTPError(f'Request cannot be completed with error code {result.status_code}')
+
+    try:
+        out = open(output_file, 'wb')
+        logger.info(f'Downloading output to {output_file}')
+        out.write(result.content)
+        out.close()
+    except IOError:
+        logger.error(f'Error occurred when downloading the file')
+        raise IOError(f'Error occurred when downloading the file')
 
     return output_file

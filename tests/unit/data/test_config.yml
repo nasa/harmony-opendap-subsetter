@@ -15,7 +15,7 @@ Collection_ShortName_Path:
   - '/short_name'
   - '/Metadata/DatasetIdentification/shortName'
   - '/METADATA/DatasetIdentification/shortName'
-  - '/Metadata/DatasetIdentification/shortName'
+  - '/Metadata/SeriesIdentification/shortName'
   - '/METADATA/SeriesIdentification/shortName'
   - '/id'
 

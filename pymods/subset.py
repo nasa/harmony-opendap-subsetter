@@ -3,7 +3,10 @@
     function, which is called from the `HarmonyAdapter` class.
 
 """
+import os
+import requests
 from logging import Logger
+from tempfile import mkdtemp
 
 from harmony.message import Granule
 from pymods.utilities import cmr_query, get_token
@@ -19,6 +22,9 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     logger.info(f'Performing variable subsetting on: {granule.local_filename}')
     collection_id = granule.collection
     granule_id = granule.id
+    temp_dir = mkdtemp()
+    file_root, file_ext = os.path.splitext(os.path.basename(granule.local_filename))
+    output_file = temp_dir + os.sep + file_root + '_subset' + file_ext
 
     # abstract provider from collection concept id
     provider = collection_id.partition('-')[2]
@@ -61,6 +67,20 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
 
     opendap_url = f"{opendap_dmr_url}.nc4?{','.join(required_variables)}"
 
-    print(f'{opendap_url}')
+    try:
+        result = requests.get(opendap_url)
+        result.raise_for_status()
+    except requests.HTTPError as err:
+        logger.error(f'Request cannot be completed with error code {result.status_code}')
+        raise requests.HTTPError(f'Request cannot be completed with error code {result.status_code}')
 
-    return '/path/to/subsetting/output.nc'
+    try:
+        out = open(output_file, 'wb')
+        logger.info(f'Downloading output to {output_file}')
+        out.write(result.content)
+        out.close()
+    except IOError:
+        logger.error(f'Error occurred when downloading the file')
+        raise IOError(f'Error occurred when downloading the file')
+
+    return output_file

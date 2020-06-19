@@ -1,11 +1,10 @@
 from logging import Logger
 from unittest import TestCase
 from unittest.mock import patch
-import os
 
 from harmony.message import Granule
 
-from pymods.utilities import (cmr_query, get_granule_mimetype, get_token,
+from pymods.utilities import (get_granule_mimetype,
                               pydap_attribute_path, recursive_get)
 
 class TestUtilities(TestCase):
@@ -34,20 +33,6 @@ class TestUtilities(TestCase):
                 mock_guess_type.return_value = (None, None)
                 mimetype = get_granule_mimetype(self.granule)
                 self.assertEqual(mimetype, ('application/octet-stream', None))
-
-    def test_cmr_query(self):
-        """ CMR queries returned correct response """
-        token = get_token(self.logger)
-        collection_id = 'C1234714691-EEDTEST'
-        granule_id = 'G1234718422-EEDTEST'
-
-        with self.subTest('Collection entry title'):
-            entry_title = cmr_query('collections', collection_id, 'EntryTitle', token, self.logger)
-            self.assertEqual(entry_title, 'ATLAS-ICESat-2 L2A Global Geolocated Photon Data V003')
-
-        with self.subTest('Granule granuleUR'):
-            granule_ur = cmr_query('granules', granule_id, 'GranuleUR', token, self.logger)
-            self.assertEqual(granule_ur, 'EEDTEST-ATL03-003-ATL03_20181228T013120')
 
     def test_recursive_get(self):
         """ Can retrieve a nested dictionary value, or account for missing

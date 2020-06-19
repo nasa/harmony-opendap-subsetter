@@ -4,12 +4,11 @@
 
 """
 import os
-import requests
 from logging import Logger
 from tempfile import mkdtemp
+import requests
 
 from harmony.message import Granule
-from pymods.utilities import cmr_query, get_token
 from pymods.var_info import VarInfo
 
 def subset_granule(granule: Granule, logger: Logger) -> str:
@@ -20,30 +19,9 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
 
     """
     logger.info(f'Performing variable subsetting on: {granule.local_filename}')
-    collection_id = granule.collection
-    granule_id = granule.id
     temp_dir = mkdtemp()
     file_root, file_ext = os.path.splitext(os.path.basename(granule.local_filename))
     output_file = temp_dir + os.sep + file_root + '_subset' + file_ext
-
-    # abstract provider from collection concept id
-    provider = collection_id.partition('-')[2]
-
-    # get collection EntryTitle and granule UR from CMR query
-    token = get_token(logger)
-    if not token:
-        raise Exception("Failed to generate CMR token")
-
-    entry_title = cmr_query('collections', collection_id, 'EntryTitle', token, logger)
-
-    if not entry_title:
-        raise Exception("Failed to obtain EntryTitle from CMR")
-
-    granule_ur = cmr_query('granules', granule_id, 'GranuleUR', token, logger)
-
-    if not granule_ur:
-        raise Exception("Failed to obtain granule UR from CMR")
-
 
     # Derive a list of required variables, both those in the Granule object and
     # their dependencies, such as coordinates.
@@ -55,9 +33,7 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # previous step.
 
     # generate OPeNDAP URL
-    # ToDo: will be replace with OPeNDAP resource URL passed down from Harmony
-    opendap_dmr_url = f"https://opendap.uat.earthdata.nasa.gov/providers/{provider}/" \
-                      f"collections/{entry_title}/granules/{granule_ur}"
+    opendap_dmr_url = granule.url
 
     datasets = VarInfo(opendap_dmr_url)
     required_variables = datasets.get_required_variables(set(requested_variables))
@@ -80,7 +56,7 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
         out.write(result.content)
         out.close()
     except IOError:
-        logger.error(f'Error occurred when downloading the file')
-        raise IOError(f'Error occurred when downloading the file')
+        logger.error('Error occurred when downloading the file')
+        raise IOError('Error occurred when downloading the file')
 
     return output_file

@@ -21,8 +21,9 @@ Mission:
   'VIIRS_NPP-.+-L2P': 'VIIRS_PO'
 
 # If CF_Overrides and CF_Supplements are not enough VarInfo class will assume
-# certain variables are science variables. This setting provides variable path
-# patterns that should be excluded from consideration as a science variable
+# variables with a coordinates attribute are science variables. This setting
+# provides variable path patterns for variables with coordinates references,
+# which should be excluded from consideration as a science variable
 Excluded_Science_Variables:
   - Applicability:
       Mission: 'ICESat2'
@@ -33,13 +34,13 @@ Excluded_Science_Variables:
 
 # VarInfo will calculate a set of required fields (variables, subdatasets)
 # for a given science variable. This setting imposes additional contents
-# for the required fileds list.
+# for the required fields list.
 Required_Fields:
   # TODO: Replace with ancillary_variable references.
   - Applicability:
       Mission: 'GEDI'
     Variable_Pattern:
-      - '.*Shot_Number'
+      - '.*shot_number'
 
 # Temporal subsetting typically encounters time tags in data files as
 # e.g., delta_time, where the time value is relative to a "start-time"
@@ -126,7 +127,7 @@ CF_Overrides:
 CF_Supplements:  
   - Applicability:
       Mission: 'ICESat2'
-      ShortNamePath: '(ATL0[3-9]|ATL10|ATL11|ATL13)' # L1/L2
+      ShortNamePath: 'ATL0[3-9]|ATL1[023]' # L1/L2
     Global_Attributes:
       - Name: 'Data_Organization'
         Value: 'h5_trajectory'

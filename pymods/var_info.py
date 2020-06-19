@@ -1,6 +1,6 @@
 """ This module contains a class designed to read information from a dmr
     file. This should group the input into science variables, metadata,
-    coordinates, dimesions and ancillary data sets.
+    coordinates, dimensions and ancillary data sets.
 
 """
 from typing import Dict, Set, Tuple

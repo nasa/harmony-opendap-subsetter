@@ -51,7 +51,6 @@ class TestVarInfo(TestCase):
             with self.subTest(list(attributes.keys())[0]):
                 mock_response = generate_pydap_response(['sea_surface_temp'],
                                                         attributes)
-                print(mock_response.attributes)
                 mock_open_url.return_value = mock_response
                 dataset = VarInfo(self.pydap_url)
 

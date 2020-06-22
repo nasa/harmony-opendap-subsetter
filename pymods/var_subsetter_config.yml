@@ -1,5 +1,5 @@
 Identification: var_subsetter_config
-Version: 12
+Version: 13
 
 # A list of hdf subdataset paths that provide the shortname value of the
 # collection for the data file being processed.  Processed in this order to
@@ -82,6 +82,15 @@ CF_Overrides:
     Attributes:
       - Name: 'dimensions'
         Value: '../delta_time /ds_surf_type'
+  - Applicability:
+      Mission: 'ICESat2'
+      ShortNamePath: 'ATL08'
+    Applicability_Group:
+      - Applicability:
+          Variable_Path: '/gt[123][lr]/land_segments/surf_type'
+        Attributes:
+          - Name: 'dimensions'
+            Value: '../delta_time /ds_surf_type'
   # the following cases are for missing grid mapping data, essential to
   # data processing.  It is difficult to properly interpret without this.
   - Applicability:

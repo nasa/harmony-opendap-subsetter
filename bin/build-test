@@ -8,7 +8,7 @@
 #
 ###############################################################################
 
-image="sds/var_subsetter_test"
+image="sds/variable-subsetter-test"
 tag=${1:-latest}
 
 

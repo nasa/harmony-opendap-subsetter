@@ -10,7 +10,7 @@
 #
 ###############################################################################
 
-image="sds/var_subsetter_env"
+image="sds/variable-subsetter-env"
 tag=${1:-latest}
 
 

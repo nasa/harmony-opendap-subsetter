@@ -7,7 +7,7 @@
 # (which is much quicker than creating the Python environment), and runs all
 # tests.
 #
-FROM sds/var_subsetter_env
+FROM sds/variable-subsetter-env
 
 ENV PYTHONDONTWRITEBYTECODE=1
 

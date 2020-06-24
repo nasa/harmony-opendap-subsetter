@@ -46,6 +46,7 @@ class VarInfo:
         self.variables_with_coordinates: Dict[str, Variable] = {}
         self.references: Set[str] = set()
         self.metadata = {}
+        self.pydap_name_map: Dict[str, str] = dict()
 
         self._set_var_info_config()
         self._read_dataset_from_pydap(pydap_url)
@@ -69,11 +70,20 @@ class VarInfo:
         self._set_cf_config()
         self._update_global_attributes()
 
+        # Create a mapping from pydap variable name (e.g. group_variable) to
+        # full path (e.g. /group/variable)
+        self.pydap_name_map = {
+            pydap_name: variable.attributes.get('fullnamepath', pydap_name)
+            for pydap_name, variable
+            in self.pydap_dataset.items()
+        }
+
         for variable in self.pydap_dataset.values():
             # TODO: When receiving a non-flattened file, augment this to make
             # sure it is a BaseType object, if StructureType or SequenceType
             # make sure these are correctly handled.
-            variable_object = Variable(variable, self.cf_config)
+            variable_object = Variable(variable, self.cf_config,
+                                       self.pydap_name_map)
             full_path = variable_object.full_name_path
 
             self.references.update(variable_object.get_references())
@@ -262,7 +272,8 @@ class Variable:
 
     """
 
-    def __init__(self, variable: BaseType, cf_config: CFConfig):
+    def __init__(self, variable: BaseType, cf_config: CFConfig,
+                 pydap_name_map: Dict[str, str]):
         """ Extract the references contained within the variable's coordinates,
             ancillary_variables or dimensions, as returned from the initial
             pydap request. These should be augmented by information from the
@@ -283,7 +294,7 @@ class Variable:
         self.subset_control_variables = self._get_cf_references(
             variable, 'subset_control_variables'
         )
-        self.dimensions = self._extract_dimensions(variable)
+        self.dimensions = self._extract_dimensions(variable, pydap_name_map)
 
         self.attributes = {
             'acquisition_source_name': variable.attributes.get('source'),
@@ -373,13 +384,19 @@ class Variable:
 
         return references
 
-    def _extract_dimensions(self, variable: BaseType) -> Set[str]:
+    def _extract_dimensions(self, variable: BaseType,
+                            pydap_name_map: Dict[str, str]) -> Set[str]:
         """ Find the dimensions for the variable in question. If there are
             overriding or supplemental dimensions from the CF configuration
             file, these are used instead of, or in addtion to, the raw
             dimensions from pydap. All references are converted to absolute
             paths in the granule. A set of all fully qualified references is
             returned.
+
+            The dimensions stored in a BaseType object have underscores in
+            place of slashes, so the pydap_name_map tries to find the original
+            full path for the dimension variables. If the dimension is not
+            found in the pydap map, the original string is used.
 
         """
         overrides = self.cf_config['cf_overrides'].get('dimensions')
@@ -388,7 +405,9 @@ class Variable:
         if overrides is not None:
             dimensions = re.split(r'\s+|,\s*', overrides)
         else:
-            dimensions = list(variable.dimensions)
+            dimensions = [pydap_name_map.get(dimension, dimension)
+                          for dimension in variable.dimensions
+                          if dimension is not None]
 
         if supplements is not None:
             dimensions += re.split(r'\s+|,\s*', supplements)

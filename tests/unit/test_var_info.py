@@ -282,6 +282,7 @@ class TestVariable(TestCase):
         cls.config_file = 'tests/unit/data/test_config.yml'
         cls.fakesat_config = CFConfig('FakeSat', 'FAKE99',
                                       config_file=cls.config_file)
+        cls.fakesat_map = {'dimensions': '/dimensions'}
         cls.variable_attributes = {
             'ancillary_variables': '/ancillary_data/epoch',
             'coordinates': 'latitude, longitude',
@@ -291,14 +292,15 @@ class TestVariable(TestCase):
         }
         cls.pydap_variable = BaseType('/group/variable', np.ones((2, 2)),
                                       attributes=cls.variable_attributes,
-                                      dimensions=('/dimensions',))
+                                      dimensions=('dimensions',))
 
     def test_variable_instantiation(self):
         """ Ensure a Variable instance can be created from an input pydap
             BaseType instance.
 
         """
-        variable = Variable(self.pydap_variable, self.fakesat_config)
+        variable = Variable(self.pydap_variable, self.fakesat_config,
+                            self.fakesat_map)
         variable.full_name_path = '/group/variable'
         variable.group_path = '/group'
         variable.name = 'variable'
@@ -316,8 +318,9 @@ class TestVariable(TestCase):
                                'fullnamepath': '/coordinates_group/science'}
         pydap_variable = BaseType('/coordinates_group/science', np.ones((2, 2)),
                                   attributes=variable_attributes)
+        pydap_map = {'/coordinates_group/science': '/coordinates_group/science'}
 
-        variable = Variable(pydap_variable, self.fakesat_config)
+        variable = Variable(pydap_variable, self.fakesat_config, pydap_map)
         self.assertEqual(variable.coordinates, {'/coordinates_group/lat',
                                                 '/coordinates_group/lon'})
 
@@ -326,6 +329,12 @@ class TestVariable(TestCase):
             qualified.
 
         """
+        pydap_map = {'/gt1r/heights/bckgrd_mean': '/gt1r/heights/bckgrd_mean',
+                     '/gt1r/latitude': '/gt1r/latitude',
+                     '/gt1r/longitude': '/gt1r/longitude',
+                     '/latitude': '/latitude',
+                     '/longitude': '/longitude'}
+
         variable_name = '/gt1r/heights/bckgrd_mean'
         test_args = [['In parent group', '../latitude', '/gt1r/latitude'],
                      ['In granule root', '/latitude', '/latitude'],
@@ -338,7 +347,8 @@ class TestVariable(TestCase):
                                     'coordinates': coordinates}
                 pydap_variable = BaseType(variable_name, np.ones((2, 2)),
                                           attributes=pydap_attributes)
-                variable = Variable(pydap_variable, self.fakesat_config)
+                variable = Variable(pydap_variable, self.fakesat_config,
+                                    pydap_map)
                 self.assertEqual(variable.coordinates, {qualified_reference})
 
     def test_variable_get_references(self):
@@ -347,6 +357,7 @@ class TestVariable(TestCase):
             subset_control_variables is returned.
 
         """
+        pydap_map = {'/science_variable': '/science_variable'}
         variable_name = '/science_variable'
         pydap_attributes = mock_variables[variable_name]['attributes']
         pydap_dimensions = mock_variables[variable_name]['dimensions']
@@ -354,9 +365,31 @@ class TestVariable(TestCase):
                                   attributes=pydap_attributes,
                                   dimensions=pydap_dimensions)
 
-        variable = Variable(pydap_variable, self.fakesat_config)
+        variable = Variable(pydap_variable, self.fakesat_config, pydap_map)
         references = variable.get_references()
 
         self.assertEqual(references, {'/ancillary_one', '/latitude',
                                       '/longitude', '/dimension_one',
                                       '/subset_one'})
+
+    def test_pydap_dimension_conversion(self):
+        """ Ensure that if a dimension has a pydap style name it is converted
+            to the full path, for example:
+
+            group_one_group_two_variable
+
+            becomes:
+
+            /group_one/group_two/variable
+
+        """
+        variable_name = 'group_one_variable'
+        pydap_map = {'group_one_delta_time': '/group_one/delta_time',
+                     'group_one_variable': '/group_one/variable'}
+        pydap_attributes = {'fullnamepath': variable_name}
+        pydap_variable = BaseType(variable_name, np.ones((2, 2)),
+                                  attributes=pydap_attributes,
+                                  dimensions=('group_one_delta_time',))
+        variable = Variable(pydap_variable, self.fakesat_config, pydap_map)
+
+        self.assertEqual(variable.dimensions, {'/group_one/delta_time'})

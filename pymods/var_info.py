@@ -215,19 +215,22 @@ class VarInfo:
         """
         # TODO: Assess performance of recursive reference search including
         # CFConfig defined required fields (which could be in the hundreds).
-        cf_required_pattern = re.compile(
-            '|'.join(self.cf_config.required_variables)
-        )
+        if self.cf_config.required_variables:
+            cf_required_pattern = re.compile(
+                '|'.join(self.cf_config.required_variables)
+            )
 
-        all_variable_names = set(self.variables_with_coordinates.keys()).union(
-            set(self.metadata_variables.keys())
-        )
+            all_variable_names = set(self.variables_with_coordinates.keys()).union(
+                set(self.metadata_variables.keys())
+            )
 
-        cf_required_variables = {variable
-                                 for variable
-                                 in all_variable_names
-                                 if variable is not None
-                                 and re.match(cf_required_pattern, variable)}
+            cf_required_variables = {variable
+                                     for variable
+                                     in all_variable_names
+                                     if variable is not None
+                                     and re.match(cf_required_pattern, variable)}
+        else:
+            cf_required_variables = set()
 
         requested_variables.update(cf_required_variables)
         required_variables: Set[str] = set()

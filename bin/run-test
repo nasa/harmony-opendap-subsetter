@@ -1,7 +1,7 @@
 #!/bin/bash
 ###############################################################################
 #
-# Execute the sds/variable-subsetter_test Docker image as a container. This
+# Execute the sds/variable-subsetter-test Docker image as a container. This
 # will run the unit test suite, check for Python linting errors, and ensure
 # there are no known security vulnerabilities in imported third party packages.
 #

@@ -11,8 +11,8 @@
 #
 ###############################################################################
 
-base_image="sds/var_subsetter_env"
-image="sds/var_subsetter_dev"
+base_image="sds/variable-subsetter-env"
+image="sds/variable-subsetter-dev"
 tag=${1:-latest}
 
 

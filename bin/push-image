@@ -1,7 +1,7 @@
 #!/bin/bash
 ###############################################################################
 #
-# Pushes the latest version of the sds/var_subsetter image to an AWS ECR
+# Pushes the latest version of the sds/variable-subsetter image to an AWS ECR
 # repository. This script requires AWS credentials to be set.
 #
 # Adapted from SwotRepr: 2020-05-07
@@ -9,7 +9,7 @@
 ###############################################################################
 set -ex
 
-image="sds/var_subsetter"
+image="sds/variable-subsetter"
 tag=${1:-latest}
 
 region=${AWS_DEFAULT_REGION-"us-west-2"}

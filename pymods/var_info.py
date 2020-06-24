@@ -237,18 +237,17 @@ class VarInfo:
 
         while len(requested_variables) > 0:
             variable_name = requested_variables.pop()
+            required_variables.add(variable_name)
+
             variable = (self.variables_with_coordinates.get(variable_name) or
                         self.metadata_variables.get(variable_name))
 
             if variable is not None:
-                # Add variable. Enqueue coordinates and dimensions not already
-                # present in required set.
-                required_variables.add(variable_name)
+                # Add variable. Enqueue references not already present in
+                # required set.
+                variable_references = variable.get_references()
                 requested_variables.update(
-                    variable.coordinates.difference(required_variables)
-                )
-                requested_variables.update(
-                    variable.dimensions.difference(required_variables)
+                    variable_references.difference(required_variables)
                 )
 
         return required_variables

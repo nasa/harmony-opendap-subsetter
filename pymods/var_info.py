@@ -213,6 +213,8 @@ class VarInfo:
             instance, and any references within those variables.
 
         """
+        # TODO: Assess performance of recursive reference search including
+        # CFConfig defined required fields (which could be in the hundreds).
         cf_required_pattern = re.compile(
             '|'.join(self.cf_config.required_variables)
         )

@@ -32,7 +32,8 @@ class CFConfig:
         self.global_supplements = {}
         self.global_overrides = {}
 
-        self._read_config_file()
+        if self.mission is not None:
+            self._read_config_file()
 
     def _read_config_file(self):
         """ Open the main configuration YAML file and extract only those
@@ -64,7 +65,7 @@ class CFConfig:
             for item in config['CF_Supplements']
             if self._is_applicable(item['Applicability'].get('Mission'),
                                    item['Applicability'].get('ShortNamePath'))
-            for attribute in item['Global_Attributes']
+            for attribute in item.get('Global_Attributes', [])
         }
 
         self.global_overrides = {
@@ -72,7 +73,7 @@ class CFConfig:
             for item in config['CF_Overrides']
             if self._is_applicable(item['Applicability'].get('Mission'),
                                    item['Applicability'].get('ShortNamePath'))
-            for attribute in item['Global_Attributes']
+            for attribute in item.get('Global_Attributes', [])
         }
 
         for override in config['CF_Overrides']:

@@ -11,6 +11,7 @@ import requests
 from harmony.message import Granule
 from pymods.var_info import VarInfo
 
+
 def subset_granule(granule: Granule, logger: Logger) -> str:
     """ This function takes a single Harmony Granule object, and extracts the
         requested variables, and those sub-variables they depend
@@ -35,20 +36,23 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # generate OPeNDAP URL
     opendap_dmr_url = granule.url
 
-    datasets = VarInfo(opendap_dmr_url)
+    datasets = VarInfo(opendap_dmr_url, logger)
     required_variables = datasets.get_required_variables(set(requested_variables))
 
     # replace '/' with '_' in variable names
-    required_variables = [variable[1:].replace('/', '_') for variable in required_variables]
+    required_variables = [variable[1:].replace('/', '_')
+                          for variable in required_variables]
 
     opendap_url = f"{opendap_dmr_url}.nc4?{','.join(required_variables)}"
 
     try:
         result = requests.get(opendap_url)
         result.raise_for_status()
-    except requests.HTTPError as err:
-        logger.error(f'Request cannot be completed with error code {result.status_code}')
-        raise requests.HTTPError(f'Request cannot be completed with error code {result.status_code}')
+    except requests.HTTPError:
+        logger.error('Request cannot be completed with error code '
+                     f'{result.status_code}')
+        raise requests.HTTPError('Request cannot be completed with error code '
+                                 f'{result.status_code}')
 
     try:
         out = open(output_file, 'wb')

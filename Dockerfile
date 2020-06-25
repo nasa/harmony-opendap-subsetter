@@ -9,9 +9,9 @@ WORKDIR "/home"
 
 # Bundle app source
 COPY ./pymods pymods
-COPY subsetter.py .
-COPY conda_requirements.txt .
-COPY pip_requirements.txt .
+COPY ./subsetter.py subsetter.py
+COPY ./conda_requirements.txt conda_requirements.txt
+COPY ./pip_requirements.txt pip_requirements.txt
 
 # Create Conda environment
 RUN conda create --name subsetter --file conda_requirements.txt python=3.7 \

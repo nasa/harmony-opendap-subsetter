@@ -19,10 +19,13 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
         variables. The path of this output file is returned.
 
     """
-    logger.info(f'Performing variable subsetting on: {granule.local_filename}')
+    granule_filename = granule.url.split('?')[0].rstrip('/').split('/')[-1]
+    logger.info(f'Performing variable subsetting on: {granule_filename}')
+
+    granule_basename = os.path.splitext(granule_filename)[0]
+    file_ext = '.nc4'
     temp_dir = mkdtemp()
-    file_root, file_ext = os.path.splitext(os.path.basename(granule.local_filename))
-    output_file = temp_dir + os.sep + file_root + '_subset' + file_ext
+    output_file = os.sep.join([temp_dir, granule_basename + '_subset' + file_ext])
 
     # Derive a list of required variables, both those in the Granule object and
     # their dependencies, such as coordinates.
@@ -33,17 +36,18 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # Produce an output file that contains the variables identified in the
     # previous step.
 
-    # generate OPeNDAP URL
-    opendap_dmr_url = granule.url
 
-    datasets = VarInfo(opendap_dmr_url, logger)
+    # Harmony provides the OPeNDAP URL as the granule URL for this service
+    datasets = VarInfo(granule.url, logger)
     required_variables = datasets.get_required_variables(set(requested_variables))
+    # TODO: Add switch mechanism for including (or not including) all metadata
+    # variables in every subset request to OPeNDAP.
 
     # replace '/' with '_' in variable names
     required_variables = [variable[1:].replace('/', '_')
                           for variable in required_variables]
 
-    opendap_url = f"{opendap_dmr_url}.nc4?{','.join(required_variables)}"
+    opendap_url = f"{granule.url}.nc4?{','.join(required_variables)}"
 
     try:
         result = requests.get(opendap_url)

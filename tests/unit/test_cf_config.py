@@ -27,6 +27,7 @@ class TestCFConfig(TestCase):
         cls.global_supplements = {'fakesat_global_supplement': 'fakesat value'}
         cls.cf_overrides = {
             '.*': {'collection_override': 'collection value'},
+            '/coordinates_group/.*': {'coordinates': 'lat, lon'},
             '/group/.*': {'group_override': 'group value'},
             '/group/variable': {'variable_override': 'variable value'}
         }

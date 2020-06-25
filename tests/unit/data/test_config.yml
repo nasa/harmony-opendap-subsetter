@@ -23,6 +23,7 @@ Collection_ShortName_Path:
 # matching shortname values.
 Mission:
   'FAKE\d{2}': 'FakeSat'
+  'ATL03': 'ICESat2'
 
 # If CF_Overrides and CF_Supplements are not enough VarInfo class will assume
 # certain variables are science variables. This setting provides variable path
@@ -94,6 +95,11 @@ CF_Overrides:
         Attributes:
           - Name: 'variable_override'
             Value: 'variable value'
+      - Applicability:
+          Variable_Pattern: '/coordinates_group/.*'
+        Attributes:
+          - Name: 'coordinates'
+            Value: 'lat, lon'
     Global_Attributes:
       - Name: 'global_override'
         Value: 'GLOBAL'

@@ -1,14 +1,14 @@
 #!/bin/bash
 ###############################################################################
 #
-# Look for all versions of images containing the string "sds/var_subsetter"
+# Look for all versions of images containing the string "sds/variable-subsetter"
 # and remove them. This is primarily for clean-up after development.
 #
 # Adapted from SwotRepr: 2020-05-07
 #
 ###############################################################################
 
-image_base_name="sds/var_subsetter"
+image_base_name="sds/variable-subsetter"
 
 old=$(docker images | grep "${image_base_name}" | awk '{print $3}')
 if [ ! -z "$old" ]; then

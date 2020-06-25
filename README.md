@@ -27,14 +27,15 @@ To run the service in a Docker container, after building the image:
 ```bash
 ./bin/run-image \
 	--harmony-action 'invoke' \
-	--harmony-input '{"sources": [{"variables": "science_variable, "url": "..."}], "user": "urs_user", "isSynchronous": true}'
+	--harmony-input '{"sources": [{"variables": [{"id": "V0001-EXAMPLE", "name": "science_variable", "fullPath": "/path/to/science"}], "granules": ["url": "..."}]], "user": "urs_user", "isSynchronous": true}'
 ```
 
-The image build process needs Earthdata Login credentials to access the Harmony
-utility library. The script will attempt to retrieve credentials from a
-'.netrc' file, but will prompt you for credentials if it cannot find any. These
-credentials are used ONLY during the build process, and will not be propagated
-or otherwise stored in the docker image.
+The `--harmony-action` and `--harmony-input` parameters mimic how Harmony would
+invoke the variable subsetter service. A set of example messages can be found
+[here](https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse/tests/example_messages.py). In the example above, the message requests
+for a subset of a granule (at URL: "...") to contain the "/path/to/science"
+variable. The variable subsetter will extract this and other variables that it
+refers to in its CF attributes.
 
 ### Development notes:
 
@@ -61,3 +62,20 @@ can be run within a Docker container using the following two scripts:
 ./bin/build-test
 ./bin/run-test
 ```
+
+For faster iteration, one can use the `build-env` and `run-dev` scripts:
+
+```bash
+./bin/build-env
+
+# Do some development
+./bin/run-dev
+# Do some more development
+./bin/run-dev
+```
+
+The `build-env` script creates a conda environment installing the requisite
+Python packages from conda and pip. The `run-dev` script uses the output from
+`build-env` as a base image, and copies the source code for the variable
+subsetter into a new container, which is then executed to run the `unittest`
+suite.

@@ -52,9 +52,6 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             self.validate_message()
 
             for index, granule in enumerate(self.message.granules):
-                self.logger.info(f'Downloading: {granule.url}')
-                self.download_granules([granule])
-
                 output_file_path = subset_granule(granule, self.logger)
 
                 if not self.message.isSynchronous:

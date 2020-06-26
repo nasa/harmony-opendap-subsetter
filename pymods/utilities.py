@@ -7,8 +7,6 @@ from typing import Dict, List, Optional, Tuple
 import functools
 import mimetypes
 
-from harmony.message import Granule
-
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:
     """ This function tries to infer the MIME type of a file string. If

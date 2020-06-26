@@ -7,6 +7,10 @@ return in an output file. This output file will contain both those variables
 specified in the input message, and the relevant supporting variables (such as
 coordinates).
 
+Currently, if the request is synchronous, the variable subsetter will only
+allow processing of a single granule, and will raise an exception if there are
+multiple granules defined.
+
 ### Local usage:
 
 To download source code:
@@ -27,7 +31,7 @@ To run the service in a Docker container, after building the image:
 ```bash
 ./bin/run-image \
 	--harmony-action 'invoke' \
-	--harmony-input '{"sources": [{"variables": [{"id": "V0001-EXAMPLE", "name": "science_variable", "fullPath": "/path/to/science"}], "granules": ["url": "..."}]], "user": "urs_user", "isSynchronous": true}'
+	--harmony-input '{"sources": [{"variables": [{"id": "V0001-EXAMPLE", "name": "science_variable", "fullPath": "/path/to/science_variable"}], "granules": [{"url": "..."}]}], "user": "urs_user", "isSynchronous": true, "callback": "URL for callback"}'
 ```
 
 The `--harmony-action` and `--harmony-input` parameters mimic how Harmony would
@@ -36,6 +40,24 @@ invoke the variable subsetter service. A set of example messages can be found
 for a subset of a granule (at URL: "...") to contain the "/path/to/science"
 variable. The variable subsetter will extract this and other variables that it
 refers to in its CF attributes.
+
+Passing environment variables to the Docker container is done via a `.env` file
+in the root of the repository. The `bin/run-image` will automatically detect
+the presence of this file. To run the variable subsetter service container
+locally, use the following template for `.env`. This template assumes there is
+no Harmony local instance running.
+
+```
+EDL_USERNAME=jglenn
+EDL_PASSWORD=Fr13ndsh1p7
+ENV=test
+```
+
+Note, when `ENV` is set to `test` or `dev`, the Harmony adapter will not try to
+stage the output results unless a local Harmony instance is present. However, a
+`callback` is still required in the Harmony message, as the logging will try to
+concatenate this string in a warning stating that the service will not reply to
+Harmony.
 
 ### Development notes:
 

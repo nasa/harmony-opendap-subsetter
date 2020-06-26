@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from harmony.message import Granule
 
-from pymods.utilities import (get_granule_mimetype,
+from pymods.utilities import (get_file_mimetype,
                               pydap_attribute_path, recursive_get)
 
 class TestUtilities(TestCase):
@@ -18,20 +18,20 @@ class TestUtilities(TestCase):
     def setUp(self):
         self.logger = Logger('tests')
 
-    def test_get_granule_mimetype(self):
+    def test_get_file_mimetype(self):
         """ Ensure a mimetype can be retrieved for a valid file path or, if
             the mimetype cannot be inferred, that the default output is
             returned.
 
         """
         with self.subTest('File with MIME type'):
-            mimetype = get_granule_mimetype(self.granule)
+            mimetype = get_file_mimetype('africa.nc')
             self.assertEqual(mimetype, ('application/x-netcdf', None))
 
         with self.subTest('Default MIME type is returned'):
             with patch('mimetypes.guess_type') as mock_guess_type:
                 mock_guess_type.return_value = (None, None)
-                mimetype = get_granule_mimetype(self.granule)
+                mimetype = get_file_mimetype('africa.nc')
                 self.assertEqual(mimetype, ('application/octet-stream', None))
 
     def test_recursive_get(self):

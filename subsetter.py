@@ -5,9 +5,23 @@ This service will take an input file
 Message schema:
 
 {
-    "format": {},
-    "granules": [{"variables": ["alpha_var"],
-                  "url": "/home/tests/data/africa.nc"}],
+    "sources": [
+        {
+            "variables": [
+                {
+                    "fullPath": "/path/to/science_variable",
+                    "id": "V0001-EXAMPLE",
+                    "name": "science_variable"
+                },
+            ],
+            "granules": [
+                {
+                    "url": "/home/tests/data/africa.nc"
+                }
+            ]
+        }
+    ],
+    "callback": "URL for callback",
     "isSynchronous": true,
     "user": "urs_username"
 }
@@ -17,7 +31,6 @@ the service will behave synchronously.
 
 """
 from argparse import ArgumentParser
-from logging import Logger
 import os
 
 import harmony

@@ -23,7 +23,7 @@ import os
 import harmony
 
 from pymods.subset import subset_granule
-from pymods.utilities import get_granule_mimetype
+from pymods.utilities import get_file_mimetype
 
 
 class HarmonyAdapter(harmony.BaseHarmonyAdapter):
@@ -55,8 +55,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 output_file_path = subset_granule(granule, self.logger)
 
                 if not self.message.isSynchronous:
-                    # TODO: Should mimetype be based on output file?
-                    mimetype = get_granule_mimetype(granule)
+                    mimetype = get_file_mimetype(output_file_path)
 
                     # This progress assumes granules are similar sizes.
                     progress = int((100 * (index + 1)) /
@@ -69,8 +68,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                     )
 
             if self.message.isSynchronous:
-                # TODO: Should mimetype be based on output file?
-                mimetype = get_granule_mimetype(self.message.granules[0])
+                mimetype = get_file_mimetype(output_file_path)
 
                 self.completed_with_local_file(
                     output_file_path,

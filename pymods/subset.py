@@ -44,7 +44,7 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # variables in every subset request to OPeNDAP.
 
     # replace '/' with '_' in variable names
-    required_variables = [variable[1:].replace('/', '_')
+    required_variables = [variable.lstrip('/').replace('/', '_')
                           for variable in required_variables]
 
     opendap_url = f"{granule.url}.nc4?{','.join(required_variables)}"

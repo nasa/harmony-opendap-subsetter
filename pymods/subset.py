@@ -31,7 +31,10 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # their dependencies, such as coordinates.
 
     # create a list of variable full paths
-    requested_variables = [f'/{variable.fullPath}' for variable in granule.variables]
+    requested_variables = [variable.fullPath
+                           if variable.fullPath.startswith('/')
+                           else f'/{variable.fullPath}'
+                           for variable in granule.variables]
 
     # Produce an output file that contains the variables identified in the
     # previous step.

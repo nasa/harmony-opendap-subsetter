@@ -18,4 +18,5 @@ COPY ./tests tests
 COPY ./pymods pymods
 COPY subsetter.py .
 
-ENTRYPOINT ["conda", "run", "--name", "subsetter", "/home/tests/run_tests.sh"]
+# Configure a container to be executable via the `docker run` command.
+ENTRYPOINT ["/home/tests/run_tests.sh"]

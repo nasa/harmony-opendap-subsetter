@@ -56,7 +56,6 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         self.logger.info('Starting Data Services variable subsetter service')
         os.environ['HDF5_DISABLE_VERSION_CHECK'] = '1'
 
-
         operations = {'is_variable_subset': True,
                       'is_regridded': False,
                       'is_subsetted': False}

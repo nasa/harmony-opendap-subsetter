@@ -3,10 +3,32 @@
     allows finer-grained unit testing of each smaller part of functionality.
 
 """
+import os
+from logging import Logger
 from typing import Dict, List, Optional, Tuple
 import functools
 import mimetypes
+import requests
+from requests import HTTPError
+from pymods.exceptions import PydapRetrievalError, URLResponseError
 
+
+def get_url_response(source_url: str, logger: Logger):
+    """ This function gets response from source url request"""
+
+    username = os.environ.get('EDL_USERNAME')
+    password = os.environ.get('EDL_PASSWORD')
+    if (username is None or password is None):
+        logger.error('Error: There are no Login and Password in the system environment')
+        #TODO: login and password input
+        username = ''
+        password = ''
+    try:
+        response = requests.get(source_url, auth=(username, password))
+    except HTTPError as error:
+        logger.error(f'{response.status_code} Error getting response')
+        raise URLResponseError(error)
+    return response
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:
     """ This function tries to infer the MIME type of a file string. If

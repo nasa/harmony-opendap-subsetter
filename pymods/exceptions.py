@@ -25,3 +25,9 @@ class PydapRetrievalError(CustomError):
     """
     def __init__(self, message):
         super().__init__('PydapRetrievalError', message)
+
+class URLResponseError(CustomError):
+    """ This exception is raised when response from a specified URL fails."""
+
+    def __init__(self, message):
+        super().__init__('DmrRetrievalError', message)

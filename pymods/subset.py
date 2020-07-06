@@ -9,6 +9,7 @@ from tempfile import mkdtemp
 import requests
 
 from harmony.message import Granule
+from pymods.utilities import get_url_response
 from pymods.var_info import VarInfo
 
 
@@ -53,15 +54,8 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     opendap_url = f"{granule.url}.nc4?{','.join(required_variables)}"
 
     try:
-        result = requests.get(opendap_url)
+        result = get_url_response(opendap_url, logger)
         result.raise_for_status()
-    except requests.HTTPError:
-        logger.error('Request cannot be completed with error code '
-                     f'{result.status_code}')
-        raise requests.HTTPError('Request cannot be completed with error code '
-                                 f'{result.status_code}')
-
-    try:
         out = open(output_file, 'wb')
         logger.info(f'Downloading output to {output_file}')
         out.write(result.content)

@@ -3,9 +3,8 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from harmony.message import Granule
-
 from pymods.utilities import (get_file_mimetype,
-                              pydap_attribute_path, recursive_get)
+                              pydap_attribute_path, recursive_get, get_url_response)
 
 class TestUtilities(TestCase):
     """ A class for testing functions in the pymods.utilities module. """
@@ -14,6 +13,7 @@ class TestUtilities(TestCase):
     def setUpClass(cls):
         cls.granule = Granule({'url': '/home/tests/data/africa.nc'})
         cls.granule.local_filename = cls.granule.url
+        cls.source_url = 'https://opendap.uat.earthdata.nasa.gov/providers/EEDTEST/collections/ATLAS-ICESat-2%20L2A%20Global%20Geolocated%20Photon%20Data%20V003/granules/EEDTEST-ATL03-003-ATL03_20181228015957.dmr'
 
     def setUp(self):
         self.logger = Logger('tests')
@@ -70,3 +70,13 @@ class TestUtilities(TestCase):
             with self.subTest(description):
                 self.assertEqual(pydap_attribute_path(full_path),
                                  expected_key_list)
+
+    def test_url_respose(self):
+        """ Ensure a response can be retrieved for a valid source file url"""
+
+        response = get_url_response(self.source_url, self.logger)
+        if (response != None):
+            self.assertEqual(response.status_code, 200)
+
+
+

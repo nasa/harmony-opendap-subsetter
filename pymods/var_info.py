@@ -4,17 +4,25 @@
 
 """
 from logging import Logger
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
+import os
 import re
+import xml.etree.ElementTree as ET
 import yaml
 
 from pydap.client import open_url
-from pydap.model import BaseType
+from pydap.model import BaseType, DatasetType
 from webob.exc import HTTPError, HTTPRedirection
+import requests
 
 from pymods.cf_config import CFConfig
 from pymods.exceptions import PydapRetrievalError
-from pymods.utilities import pydap_attribute_path, recursive_get
+from pymods.utilities import (DAP4_TO_NUMPY_MAP, get_xml_attribute,
+                              get_xml_namespace, pydap_attribute_path,
+                              recursive_get)
+
+
+VariableType = Union[BaseType, ET.Element]
 
 
 class VarInfo:
@@ -23,7 +31,7 @@ class VarInfo:
 
     """
 
-    def __init__(self, pydap_url: str, logger: Logger,
+    def __init__(self, file_url: str, logger: Logger,
                  config_file: str = 'pymods/var_subsetter_config.yml'):
         """ Distinguish between variables containing references to other
             datasets, and those that do not. The former are considered science
@@ -42,56 +50,125 @@ class VarInfo:
         self.global_attributes = None
         self.short_name = None
         self.mission = None
+        self.namespace = None
         self.metadata_variables: Dict[str, Variable] = {}
         self.variables_with_coordinates: Dict[str, Variable] = {}
         self.references: Set[str] = set()
         self.metadata = {}
-        self.pydap_name_map: Dict[str, str] = dict()
+        self.name_map: Dict[str, str] = dict()
 
         self._set_var_info_config()
-        self._read_dataset_from_pydap(pydap_url)
 
-    def _read_dataset_from_pydap(self, file_url: str):
-        """ This method parses the downloaded pydap dataset at the specified
-            URL. For each variable in the dataset, an object is created, while
-            resolving and associated references, and updating those sets using
-            the CFConfig class to account for known data issues.
+        if file_url.endswith('.dmr'):
+            self._read_dataset_from_dmr(file_url)
+        else:
+            self._read_dataset_from_pydap(file_url)
 
-        """
-        try:
-            self.pydap_dataset = open_url(file_url)
-        except (HTTPError, HTTPRedirection) as error:
-            self.logger.error(f'{error.status_code} Error retrieving pydap '
-                              'dataset')
-            raise PydapRetrievalError(error.comment)
-
+        self._set_name_map()
         self._set_global_attributes()
         self._set_mission_and_short_name()
         self._set_cf_config()
         self._update_global_attributes()
 
-        # Create a mapping from pydap variable name (e.g. group_variable) to
-        # full path (e.g. /group/variable)
-        self.pydap_name_map = {
-            pydap_name: variable.attributes.get('fullnamepath', pydap_name)
-            for pydap_name, variable
-            in self.pydap_dataset.items()
-        }
+        if isinstance(self.dataset, DatasetType):
+            self._extract_pydap_variables()
+        else:
+            self._extract_dmr_variables()
 
-        for variable in self.pydap_dataset.values():
-            # TODO: When receiving a non-flattened file, augment this to make
-            # sure it is a BaseType object, if StructureType or SequenceType
-            # make sure these are correctly handled.
-            variable_object = Variable(variable, self.cf_config,
-                                       self.pydap_name_map)
-            full_path = variable_object.full_name_path
+    def _read_dataset_from_dmr(self, dmr_url: str):
+        """ This method parses the downloaded dmr file at the specified URL.
+            For each variable in the dataset, an object is created, while
+            resolving any associated references, and updating those sets using
+            the CFConfig class to account for known data issues.
 
-            self.references.update(variable_object.get_references())
+        """
+        self.logger.info('Retrieving .dmr from OPeNDAP')
+        # TODO: Replace with work from DAS-700 (a common function in
+        # pymods/utilities.py)
+        user = os.environ.get('EDL_USERNAME')
+        password = os.environ.get('EDL_PASSWORD')
+        dmr_response = requests.get(dmr_url, auth=(user, password))
 
-            if variable_object.coordinates:
-                self.variables_with_coordinates[full_path] = variable_object
-            else:
-                self.metadata_variables[full_path] = variable_object
+        self.dataset = ET.fromstring(dmr_response.content)
+        self.namespace = get_xml_namespace(self.dataset)
+
+    def _read_dataset_from_pydap(self, pydap_url: str):
+        """ This method parses the downloaded pydap dataset at the specified
+            URL. For each variable in the dataset, an object is created, while
+            resolving any associated references, and updating those sets using
+            the CFConfig class to account for known data issues.
+
+        """
+        self.logger.info('Retrieving dataset from pydap')
+        try:
+            self.dataset = open_url(pydap_url)
+        except (HTTPError, HTTPRedirection) as error:
+            self.logger.error(f'{error.status_code} Error retrieving pydap '
+                              'dataset')
+            raise PydapRetrievalError(error.comment)
+
+    def _set_name_map(self):
+        """ Create a mapping from pydap or XML variable name to the full path.
+            (e.g.: "group_variable" to "/group/variable").
+
+        """
+        if isinstance(self.dataset, DatasetType):
+            self.name_map = {
+                pydap_name: variable.attributes.get('fullnamepath', pydap_name)
+                for pydap_name, variable
+                in self.dataset.items()
+            }
+        else:
+            self.name_map = {
+                f'/{child.get("name")}': get_xml_attribute(
+                    child, 'fullnamepath', self.namespace, child.get('name')
+                )
+                for child in self.dataset
+                if child.tag.lstrip(self.namespace) in DAP4_TO_NUMPY_MAP
+            }
+
+    def _extract_pydap_variables(self):
+        """ Iterate through all the variables returned in a `pydap` Dataset
+            instance. For each variable, create an instance of the `Variable`
+            class, and assign it to either the `variables_with_coordinates` or
+            the `metadata_variables` dictionary accordingly.
+
+        """
+        for variable in self.dataset.values():
+            variable_object = Variable(variable, self.cf_config, self.name_map)
+            self._assign_variable(variable_object)
+
+    def _extract_dmr_variables(self):
+        """ Iterate through all child tags of the `.dmr` root dataset element.
+            If the tag matches one of the DAP4 variable types, then create an
+            instance of the `Variable` class, and assign it to either the
+            `variables_with_coordinates` or the `metadata_variables`
+            dictionary accordingly.
+
+        """
+        for child in self.dataset:
+            if child.tag.lstrip(self.namespace) in DAP4_TO_NUMPY_MAP:
+                variable_object = Variable(child, self.cf_config,
+                                           self.name_map, self.namespace)
+                self._assign_variable(variable_object)
+
+    def _assign_variable(self, variable_object):
+        """ A function combining the common operations once a variable from
+            either a `pydap` Dataset or `.dmr` file has been identified.
+
+            Given a `Variable` instance, based on the content of the
+            `coordinates` attribute, assign it to either the
+            `variables_with_coordinates` or `metadata_variables` dictionary.
+            Additionally, the set of references for all variables is updated.
+
+        """
+        full_path = variable_object.full_name_path
+        self.references.update(variable_object.get_references())
+
+        if variable_object.coordinates:
+            self.variables_with_coordinates[full_path] = variable_object
+        else:
+            self.metadata_variables[full_path] = variable_object
 
     def _set_var_info_config(self):
         """ Read the VarInfo configuration YAML file, containing locations to
@@ -141,15 +218,36 @@ class VarInfo:
             dictionary.
 
         """
-        hdf5_global_attributes = self.pydap_dataset.attributes.get('HDF5_GLOBAL')
-        nc_global_attributes = self.pydap_dataset.attributes.get('NC_GLOBAL')
-
-        if bool(hdf5_global_attributes):
-            self.global_attributes = hdf5_global_attributes
-        elif bool(nc_global_attributes):
-            self.global_attributes = nc_global_attributes
+        if isinstance(self.dataset, DatasetType):
+            self.global_attributes = self.dataset.attributes
         else:
             self.global_attributes = {}
+            self._extract_attributes_from_dmr(self.dataset,
+                                              self.global_attributes)
+
+    def _extract_attributes_from_dmr(self, root_element: ET.Element,
+                                     output_attributes: Dict):
+        """ Recurse through all attributes in a `.dmr` file. Starting at the
+            supplied root element, find all child Attribute elements. Those
+            children with a type property corresponding to a DAP4 variable
+            type are placed in an output_dictionary. If the Attribute tag has a
+            `Container` type, containing children of it's own, parse its
+            children in the same way.
+
+        """
+        for attribute in root_element.findall(f'{self.namespace}Attribute'):
+            attribute_name = attribute.get('name')
+            attribute_type = attribute.get('type')
+            if attribute_type in DAP4_TO_NUMPY_MAP:
+                value_element = attribute.find(f'{self.namespace}Value')
+                output_attributes[attribute_name] = (
+                    DAP4_TO_NUMPY_MAP[attribute_type](value_element.text)
+                )
+            elif attribute_type == 'Container':
+                output_attributes[attribute_name] = {}
+                self._extract_attributes_from_dmr(
+                    attribute, output_attributes[attribute_name]
+                )
 
     def _update_global_attributes(self):
         """ Having identified the mission and short_name for the granule, and
@@ -265,26 +363,27 @@ class VarInfo:
 
 class Variable:
     """ A class to represent a single variable contained within a granule.
-        This class maps from the `pydap.model.BaseType` class to a format
-        specifically for `VarInfo`, in which references are fully qualified,
-        and also augmented by any overrides or supplements from the variable
-        subsetter configuration file.
+        This class maps from either the `pydap.model.BaseType` class, or an
+        XML element from a dmr file, to a format specifically for `VarInfo`,
+        in which references are fully qualified, and also augmented by any
+        overrides or supplements from the variable subsetter configuration
+        file.
 
     """
 
-    def __init__(self, variable: BaseType, cf_config: CFConfig,
-                 pydap_name_map: Dict[str, str]):
+    def __init__(self, variable: VariableType, cf_config: CFConfig,
+                 name_map: Dict[str, str], namespace: Optional[str] = None):
         """ Extract the references contained within the variable's coordinates,
-            ancillary_variables or dimensions, as returned from the initial
-            pydap request. These should be augmented by information from the
-            CFConfig instance passed to the class.
+            ancillary_variables or dimensions. These should be augmented by
+            information from the CFConfig instance passed to the class.
 
             Additionally, store other information required for UMM-Var record
             production in an attributes dictionary. (These attributes may not
             be an exhaustive list).
 
         """
-        self.full_name_path = variable.attributes.get('fullnamepath')
+        self.namespace = namespace
+        self.full_name_path = self._get_attribute(variable, 'fullnamepath')
         self.cf_config = cf_config.get_cf_attributes(self.full_name_path)
         self.group_path, self.name = self._extract_group_and_name(variable)
 
@@ -294,19 +393,19 @@ class Variable:
         self.subset_control_variables = self._get_cf_references(
             variable, 'subset_control_variables'
         )
-        self.dimensions = self._extract_dimensions(variable, pydap_name_map)
+        self.dimensions = self._extract_dimensions(variable, name_map)
 
         self.attributes = {
-            'acquisition_source_name': variable.attributes.get('source'),
-            'data_type': variable.dtype.name,
-            'definition': variable.attributes.get('description'),
-            'fill_value': variable.attributes.get('_FillValue'),
-            'long_name': variable.attributes.get('long_name'),
-            'offset': variable.attributes.get('offset', 0),
-            'scale': variable.attributes.get('scale', 1),
-            'units': variable.attributes.get('units'),
-            'valid_max': variable.attributes.get('valid_max'),
-            'valid_min': variable.attributes.get('valid_min')
+            'acquisition_source_name': self._get_attribute(variable, 'source'),
+            'data_type': self._get_data_type(variable),
+            'definition': self._get_attribute(variable, 'description'),
+            'fill_value': self._get_attribute(variable, '_FillValue'),
+            'long_name': self._get_attribute(variable, 'long_name'),
+            'offset': self._get_attribute(variable, 'offset', 0),
+            'scale': self._get_attribute(variable, 'scale', 1),
+            'units': self._get_attribute(variable, 'units'),
+            'valid_max': self._get_attribute(variable, 'valid_max'),
+            'valid_min': self._get_attribute(variable, 'valid_min')
         }
 
     def get_references(self) -> Set[str]:
@@ -319,23 +418,31 @@ class Variable:
                                               self.dimensions,
                                               self.subset_control_variables)
 
-    def _extract_coordinates(self, variable: BaseType) -> Set[str]:
-        """ Check the child elements for an Attribute element with the name
-            'coordinates'. From this element, retrieve the set of coordinate
-            datasets.
+    def _get_data_type(self, variable: VariableType) -> str:
+        """ Extract a string representation of the variable data type. """
+        if isinstance(variable, BaseType):
+            data_type = variable.dtype.name
+        else:
+            data_type = variable.tag.lstrip(self.namespace).lower()
+
+        return data_type
+
+    def _get_attribute(self, variable: VariableType, attribute_name: str,
+                       default_value: Optional = None) -> Optional:
+        """ Determine if the variable is from pydap or is XML. Then use the
+            appropriate functionality to extract the attribute value, falling
+            back to a default value if the attribute is absent.
 
         """
-        coordinates_string = variable.attributes.get('coordinates')
-
-        if coordinates_string is not None:
-            raw_coordinates = re.split(r'\s+|,\s*', coordinates_string)
-            coordinates = self._qualify_references(raw_coordinates)
+        if isinstance(variable, BaseType):
+            attribute = variable.attributes.get(attribute_name, default_value)
         else:
-            coordinates = set()
+            attribute = get_xml_attribute(variable, attribute_name,
+                                          self.namespace, default_value)
 
-        return coordinates
+        return attribute
 
-    def _get_cf_references(self, variable: BaseType,
+    def _get_cf_references(self, variable: VariableType,
                            attribute_name: str) -> Set[str]:
         """ Obtain the string value of a metadata attribute, which should have
             already been corrected for any known artefacts (missing or
@@ -346,7 +453,7 @@ class Variable:
         attribute_string = self._get_cf_attribute(variable, attribute_name)
         return self._extract_references(attribute_string)
 
-    def _get_cf_attribute(self, variable: BaseType,
+    def _get_cf_attribute(self, variable: VariableType,
                           attribute_name: str) -> str:
         """ Given the name of a CF-convention attribute, extract the string
             value from the variable metadata. Then check the output from the
@@ -360,8 +467,7 @@ class Variable:
         if cf_overrides is not None:
             attribute_value = cf_overrides
         else:
-            attribute_value = variable.attributes.get(attribute_name)
-
+            attribute_value = self._get_attribute(variable, attribute_name)
         if cf_supplements is not None and attribute_value is not None:
             attribute_value += f', {cf_supplements}'
         elif cf_supplements is not None:
@@ -384,8 +490,8 @@ class Variable:
 
         return references
 
-    def _extract_dimensions(self, variable: BaseType,
-                            pydap_name_map: Dict[str, str]) -> Set[str]:
+    def _extract_dimensions(self, variable: VariableType,
+                            name_map: Dict[str, str]) -> Set[str]:
         """ Find the dimensions for the variable in question. If there are
             overriding or supplemental dimensions from the CF configuration
             file, these are used instead of, or in addtion to, the raw
@@ -393,10 +499,11 @@ class Variable:
             paths in the granule. A set of all fully qualified references is
             returned.
 
-            The dimensions stored in a BaseType object have underscores in
-            place of slashes, so the pydap_name_map tries to find the original
-            full path for the dimension variables. If the dimension is not
-            found in the pydap map, the original string is used.
+            The dimensions stored in a pydap BaseType object or dmr XML
+            variable have underscores in place of slashes, so the `name_map`
+            tries to find the original full path for the dimension variables.
+            If the dimension is not found in the `name_map`, the original
+            string is used.
 
         """
         overrides = self.cf_config['cf_overrides'].get('dimensions')
@@ -405,8 +512,15 @@ class Variable:
         if overrides is not None:
             dimensions = re.split(r'\s+|,\s*', overrides)
         else:
-            dimensions = [pydap_name_map.get(dimension, dimension)
-                          for dimension in variable.dimensions
+            if isinstance(variable, BaseType):
+                raw_dimensions = variable.dimensions
+            else:
+                raw_dimensions = [dimension.get('name')
+                                  for dimension
+                                  in variable.findall(f'{self.namespace}Dim')]
+
+            dimensions = [name_map.get(dimension, dimension)
+                          for dimension in raw_dimensions
                           if dimension is not None]
 
         if supplements is not None:
@@ -468,7 +582,11 @@ class Variable:
             name = split_full_path.pop(-1)
             group_path = '/'.join(split_full_path) or None
         else:
-            name = variable.name
+            if isinstance(variable, BaseType):
+                name = variable.name
+            else:
+                name = variable.get('name')
+
             group_path = None
 
         return group_path, name

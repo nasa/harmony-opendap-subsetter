@@ -25,7 +25,7 @@ if [ "$RESULT" -ne "0" ]; then
 fi
 
 # Run pylint
-pylint pymods --disable=E0401
+pylint pymods subsetter.py --disable=E0401
 RESULT=$?
 RESULT=$((3 & $RESULT))
 

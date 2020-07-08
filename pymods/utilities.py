@@ -9,8 +9,8 @@ from typing import Dict, List, Optional, Tuple
 import functools
 import mimetypes
 import requests
-from requests import HTTPError
-from pymods.exceptions import PydapRetrievalError, URLResponseError
+
+from pymods.exceptions import PydapRetrievalError, AuthorizationError
 
 
 def get_url_response(source_url: str, logger: Logger):
@@ -19,15 +19,17 @@ def get_url_response(source_url: str, logger: Logger):
     username = os.environ.get('EDL_USERNAME')
     password = os.environ.get('EDL_PASSWORD')
     if (username is None or password is None):
-        logger.error('Error: There are no Login and Password in the system environment')
-        #TODO: login and password input
-        username = ''
-        password = ''
+        logger.error('There are no EDL_USERNAME and/or EDL_PASSWORD in the system environment')
+        raise AuthorizationError(
+            "There are no EDL_USERNAME and/or EDL_PASSWORD in the system environment")
     try:
         response = requests.get(source_url, auth=(username, password))
-    except HTTPError as error:
-        logger.error(f'{response.status_code} Error getting response')
-        raise URLResponseError(error)
+        response.raise_for_status()
+    except requests.HTTPError:
+        logger.error('Request cannot be completed with error code '
+                     f'{response.status_code}')
+        raise requests.HTTPError('Request cannot be completed with error code '
+                                 f'{response.status_code}')
     return response
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:

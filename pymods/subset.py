@@ -53,9 +53,8 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
 
     opendap_url = f"{granule.url}.nc4?{','.join(required_variables)}"
 
+    result = get_url_response(opendap_url, logger)
     try:
-        result = get_url_response(opendap_url, logger)
-        result.raise_for_status()
         out = open(output_file, 'wb')
         logger.info(f'Downloading output to {output_file}')
         out.write(result.content)

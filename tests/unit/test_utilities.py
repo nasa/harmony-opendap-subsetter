@@ -1,19 +1,51 @@
+import json
 from logging import Logger
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, Mock
+import os
 
-from harmony.message import Granule
+from harmony.message import Granule, Message
+from requests.exceptions import HTTPError
+
+from pymods.exceptions import AuthorizationError
+from pymods.subset import subset_granule
 from pymods.utilities import (get_file_mimetype,
                               pydap_attribute_path, recursive_get, get_url_response)
+
+def generate_response(status=200,
+                      content=b'CONTENT',
+                      json_data=None,
+                      raise_for_status=None,
+                      url='https://fakesite.org'):
+    mock_resp = Mock()
+    mock_resp.raise_for_status = Mock()
+    if (url == 'https://fakesite.org'):
+        mock_resp.return_value = content
+    if raise_for_status:
+        mock_resp.raise_for_status.side_effect = raise_for_status
+    mock_resp.status_code = status
+    mock_resp.content = content
+    if json_data:
+        mock_resp.json = Mock(return_value=json_data)
+
+    return mock_resp
 
 class TestUtilities(TestCase):
     """ A class for testing functions in the pymods.utilities module. """
 
     @classmethod
     def setUpClass(cls):
+        cls.message_content = ({'sources': [{'collection': 'C1233860183-EEDTEST',
+                                             'variables': [{'id': 'V1234834148-EEDTEST',
+                                                            'name': 'alpha_var',
+                                                            'fullPath': 'alpha_var'}],
+                                             'granules': [{'id': 'G1233860471-EEDTEST',
+                                                           'url': '/home/tests/data/africa.nc'}]
+                                             }]})
+
+        cls.message = Message(json.dumps(cls.message_content))
         cls.granule = Granule({'url': '/home/tests/data/africa.nc'})
         cls.granule.local_filename = cls.granule.url
-        cls.source_url = 'https://opendap.uat.earthdata.nasa.gov/providers/EEDTEST/collections/ATLAS-ICESat-2%20L2A%20Global%20Geolocated%20Photon%20Data%20V003/granules/EEDTEST-ATL03-003-ATL03_20181228015957.dmr'
 
     def setUp(self):
         self.logger = Logger('tests')
@@ -71,12 +103,50 @@ class TestUtilities(TestCase):
                 self.assertEqual(pydap_attribute_path(full_path),
                                  expected_key_list)
 
-    def test_url_respose(self):
-        """ Ensure a response can be retrieved for a valid source file url"""
+    @patch('pymods.subset.VarInfo')
+    @patch('pymods.subset.requests.get')
+    @patch.dict(os.environ, {"EDL_USERNAME": "fake_username", "EDL_PASSWORD":"fake_password"})
+    def test_subset_granule(self, mock_get, mock_var_info):
+        """ Ensure valid request does not raise exception,
+            raise appropriate exception otherwise.
 
-        response = get_url_response(self.source_url, self.logger)
-        if (response != None):
-            self.assertEqual(response.status_code, 200)
+        """
+        granule = self.message.granules[0]
+        granule.local_filename = '/home/tests/data/africa.nc'
+        mock_response = generate_response()
+        mock_get.return_value = mock_response
 
+        output_path = subset_granule(granule, self.logger)
+        mock_get.assert_called_once()
+        self.assertIn('africa_subset.nc', output_path)
 
+        with self.subTest('Unauthorized error'):
+            with self.assertRaises(HTTPError):
+                mock_response = generate_response(status=401,
+                                                  raise_for_status=HTTPError(
+                                                      "Request cannot be completed with error code 401"))
+                mock_get.return_value = mock_response
+                subset_granule(granule, self.logger)
+
+        with self.subTest('Service Unavailable'):
+            with self.assertRaises(HTTPError):
+                mock_response = generate_response(status=500,
+                                                  raise_for_status=HTTPError(
+                                                      "Request cannot be completed with error code 500"))
+                mock_get.return_value = mock_response
+                subset_granule(granule, self.logger)
+
+    @patch('pymods.utilities.get_url_response')
+    def test_get_url_respose(self, mock_get_url_response):
+        """ Ensure that if System variables EDL_USERNAME and EDL_PASSWORD
+            are one or both None then message will raised
+
+        """
+        url = 'https://fakesite.org'
+        with self.assertRaises(AuthorizationError):
+            mock_response = generate_response(None,
+                                              raise_for_status=AuthorizationError(
+                                                  "There are no EDL_USERNAME and EDL_PASSWORD in the system environment"))
+            mock_get_url_response.return_value = mock_response
+            get_url_response(url, self.logger)
 

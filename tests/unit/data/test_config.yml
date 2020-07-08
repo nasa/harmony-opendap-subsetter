@@ -12,7 +12,8 @@ Version: 12
 # collection for the data file being processed.  Processed in this order to
 # find a shortname value for the current file.
 Collection_ShortName_Path:
-  - '/short_name'
+  - '/HDF5_GLOBAL/short_name'
+  - '/NC_GLOBAL/short_name'
   - '/Metadata/DatasetIdentification/shortName'
   - '/METADATA/DatasetIdentification/shortName'
   - '/Metadata/SeriesIdentification/shortName'

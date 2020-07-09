@@ -23,9 +23,6 @@ DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
                      'UInt64': np.uint64, 'Float32': np.float32,
                      'Float64': np.float64, 'String': str, 'URL': str}
 
-
-
-
 def get_url_response(source_url: str, logger: Logger) -> requests.models.Response:
     """ This function gets response from source url request"""
 
@@ -41,8 +38,6 @@ def get_url_response(source_url: str, logger: Logger) -> requests.models.Respons
     except requests.HTTPError:
         logger.error('Request cannot be completed with error code '
                      f'{response.status_code}')
-        # raise requests.exceptions.ConnectionError('Request cannot be completed with error code '
-        #                                           f'{response.status_code}')
         raise requests.HTTPError('Request cannot be completed with error code '
                                  f'{response.status_code}')
 

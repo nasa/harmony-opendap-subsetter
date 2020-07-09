@@ -6,7 +6,6 @@
 import os
 from logging import Logger
 from tempfile import mkdtemp
-import requests
 
 from harmony.message import Granule
 from pymods.utilities import get_url_response

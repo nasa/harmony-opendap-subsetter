@@ -1,20 +1,11 @@
-import json
 from logging import Logger
 from unittest import TestCase
 
 from unittest.mock import patch, Mock
-import os
-
-from harmony.message import Granule, Message
-from requests.exceptions import HTTPError
-
 from pymods.exceptions import AuthorizationError
-from pymods.subset import subset_granule
 from pymods.utilities import (get_file_mimetype,
                               pydap_attribute_path, recursive_get, get_url_response)
 import xml.etree.ElementTree as ET
-
-from harmony.message import Granule
 import numpy as np
 
 from pymods.exceptions import DmrNamespaceError
@@ -26,12 +17,9 @@ from pymods.utilities import (get_file_mimetype, get_xml_attribute,
 def generate_response(status=200,
                       content=b'CONTENT',
                       json_data=None,
-                      raise_for_status=None,
-                      url='https://fakesite.org'):
+                      raise_for_status=None):
     mock_resp = Mock()
     mock_resp.raise_for_status = Mock()
-    if (url == 'https://fakesite.org'):
-        mock_resp.return_value = content
     if raise_for_status:
         mock_resp.raise_for_status.side_effect = raise_for_status
     mock_resp.status_code = status
@@ -46,17 +34,6 @@ class TestUtilities(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.message_content = ({'sources': [{'collection': 'C1233860183-EEDTEST',
-                                             'variables': [{'id': 'V1234834148-EEDTEST',
-                                                            'name': 'alpha_var',
-                                                            'fullPath': 'alpha_var'}],
-                                             'granules': [{'id': 'G1233860471-EEDTEST',
-                                                           'url': '/home/tests/data/africa.nc'}]
-                                             }]})
-
-        cls.message = Message(json.dumps(cls.message_content))
-        cls.granule = Granule({'url': '/home/tests/data/africa.nc'})
-        cls.granule.local_filename = cls.granule.url
         cls.namespace = 'namespace_string'
 
     def setUp(self):
@@ -114,39 +91,6 @@ class TestUtilities(TestCase):
             with self.subTest(description):
                 self.assertEqual(pydap_attribute_path(full_path),
                                  expected_key_list)
-
-    @patch('pymods.subset.VarInfo')
-    @patch('pymods.subset.requests.get')
-    @patch.dict(os.environ, {"EDL_USERNAME": "fake_username", "EDL_PASSWORD":"fake_password"})
-    def test_subset_granule(self, mock_get, mock_var_info):
-        """ Ensure valid request does not raise exception,
-            raise appropriate exception otherwise.
-
-        """
-        granule = self.message.granules[0]
-        granule.local_filename = '/home/tests/data/africa.nc'
-        mock_response = generate_response()
-        mock_get.return_value = mock_response
-
-        output_path = subset_granule(granule, self.logger)
-        mock_get.assert_called_once()
-        self.assertIn('africa_subset.nc', output_path)
-
-        with self.subTest('Unauthorized error'):
-            with self.assertRaises(HTTPError):
-                mock_response = generate_response(status=401,
-                                                  raise_for_status=HTTPError(
-                                                      "Request cannot be completed with error code 401"))
-                mock_get.return_value = mock_response
-                subset_granule(granule, self.logger)
-
-        with self.subTest('Service Unavailable'):
-            with self.assertRaises(HTTPError):
-                mock_response = generate_response(status=500,
-                                                  raise_for_status=HTTPError(
-                                                      "Request cannot be completed with error code 500"))
-                mock_get.return_value = mock_response
-                subset_granule(granule, self.logger)
 
     @patch('pymods.utilities.get_url_response')
     def test_get_url_respose(self, mock_get_url_response):

@@ -26,7 +26,7 @@ DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
 
 
 
-def get_url_response(source_url: str, logger: Logger):
+def get_url_response(source_url: str, logger: Logger) -> requests.models.Response:
     """ This function gets response from source url request"""
 
     username = os.environ.get('EDL_USERNAME')
@@ -41,8 +41,11 @@ def get_url_response(source_url: str, logger: Logger):
     except requests.HTTPError:
         logger.error('Request cannot be completed with error code '
                      f'{response.status_code}')
+        # raise requests.exceptions.ConnectionError('Request cannot be completed with error code '
+        #                                           f'{response.status_code}')
         raise requests.HTTPError('Request cannot be completed with error code '
                                  f'{response.status_code}')
+
     return response
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:

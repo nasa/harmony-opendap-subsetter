@@ -1,33 +1,19 @@
 from logging import Logger
 from unittest import TestCase
-
 from unittest.mock import patch, Mock
-from pymods.exceptions import AuthorizationError
-from pymods.utilities import (get_file_mimetype,
-                              pydap_attribute_path, recursive_get, get_url_response)
+import os
 import xml.etree.ElementTree as ET
+
+from requests import HTTPError
 import numpy as np
 
-from pymods.exceptions import DmrNamespaceError
-from pymods.utilities import (get_file_mimetype, get_xml_attribute,
+from pymods.exceptions import AuthorizationError, DmrNamespaceError
+from pymods.utilities import (create_netrc_file, get_file_mimetype,
+                              get_url_response, get_xml_attribute,
                               get_xml_namespace, pydap_attribute_path,
                               recursive_get)
+from tests.utilities import MockResponse
 
-
-def generate_response(status=200,
-                      content=b'CONTENT',
-                      json_data=None,
-                      raise_for_status=None):
-    mock_resp = Mock()
-    mock_resp.raise_for_status = Mock()
-    if raise_for_status:
-        mock_resp.raise_for_status.side_effect = raise_for_status
-    mock_resp.status_code = status
-    mock_resp.content = content
-    if json_data:
-        mock_resp.json = Mock(return_value=json_data)
-
-    return mock_resp
 
 class TestUtilities(TestCase):
     """ A class for testing functions in the pymods.utilities module. """
@@ -92,19 +78,25 @@ class TestUtilities(TestCase):
                 self.assertEqual(pydap_attribute_path(full_path),
                                  expected_key_list)
 
-    @patch('pymods.utilities.get_url_response')
-    def test_get_url_respose(self, mock_get_url_response):
-        """ Ensure that if System variables EDL_USERNAME and EDL_PASSWORD
-            are one or both None then message will raised
+    @patch('pymods.utilities.requests.get')
+    def test_get_url_respose(self, mock_requests_get):
+        """ Ensure that a successful response will be returned, or one with an
+            error status will raise an exception.
 
         """
         url = 'https://fakesite.org'
-        with self.assertRaises(AuthorizationError):
-            mock_response = generate_response(None,
-                                              raise_for_status=AuthorizationError(
-                                                  "There are no EDL_USERNAME and EDL_PASSWORD in the system environment"))
-            mock_get_url_response.return_value = mock_response
-            get_url_response(url, self.logger)
+
+        with self.subTest('Succesful response'):
+            content = 'CONTENT'
+            mock_requests_get.return_value = MockResponse(200, content)
+            response = get_url_response(url, self.logger)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.content, content)
+
+        with self.subTest('Unsuccessful response'):
+            with self.assertRaises(HTTPError):
+                mock_requests_get.return_value = MockResponse(500, 'ERROR')
+                get_url_response(url, self.logger)
 
     def test_get_xml_namespace(self):
         """ Check that an XML namespace can be retrieved, or if one is absent,
@@ -160,3 +152,51 @@ class TestUtilities(TestCase):
 
                 self.assertIsInstance(attribute_value, expected_type)
                 self.assertEqual(attribute_value, expected_value)
+
+    def test_create_netrc(self):
+        """ Ensure a .netrc file can be succesfully created, or if either the
+            EDL_USERNAME or EDL_PASSWORD environment variable is absent, that
+            an AuthorizationError exception is raised.
+
+        """
+        netrc_path = f'{os.path.expanduser("~")}/.netrc'
+        username_only = {'EDL_USERNAME': 'sride'}
+        password_only = {'EDL_PASSWORD': 'STS-7'}
+        full_dictionary = {'EDL_USERNAME': 'sride', 'EDL_PASSWORD': 'STS-7'}
+
+        if os.path.exists(netrc_path):
+            os.remove(netrc_path)
+
+        with patch.dict(os.environ, full_dictionary):
+            with self.subTest('Successfully creates a .netrc file'):
+                create_netrc_file(self.logger)
+
+                with open(netrc_path) as file_handler:
+                    written_content = file_handler.readlines()
+
+                self.assertEqual(written_content,
+                                 ['machine urs.earthdata.nasa.gov\n',
+                                  '    login sride\n',
+                                  '    password STS-7\n',
+                                  '\n',
+                                  'machine uat.urs.earthdata.nasa.gov\n',
+                                  '    login sride\n',
+                                  '    password STS-7\n',
+                                  '\n',
+                                  'machine sit.urs.earthdata.nasa.gov\n',
+                                  '    login sride\n',
+                                  '    password STS-7\n',
+                                  '\n'])
+
+        if os.path.exists(netrc_path):
+            os.remove(netrc_path)
+
+        test_args = [['Missing EDL_USERNAME raises exception', username_only],
+                     ['Missing EDL_PASSWORD raises exception', password_only]]
+
+        for description, environment_variables in test_args:
+            with patch.dict(os.environ, environment_variables):
+                with self.subTest(description):
+                    with self.assertRaises(AuthorizationError):
+                        create_netrc_file(self.logger)
+                        self.assertFalse(os.path.exists(netrc_path))

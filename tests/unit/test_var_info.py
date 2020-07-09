@@ -6,12 +6,12 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 from pydap.model import BaseType, DatasetType
-from requests import HTTPError
 from webob.exc import HTTPClientError
 
 from pymods.cf_config import CFConfig
 from pymods.exceptions import PydapRetrievalError
 from pymods.var_info import VarInfo, Variable
+from tests.utilities import MockResponse
 
 
 mock_variables = {
@@ -72,24 +72,6 @@ def generate_pydap_response(variables: Dict[str, Dict[str, str]],
                                           dimensions=variable_dimensions)
 
     return dataset
-
-
-class MockResponse:
-    """ A test class to be used in mocking a response from the `requests.get`
-        method.
-
-    """
-    def __init__(self, status_code: int, content: str):
-        self.status_code = status_code
-        self.content = content
-
-    def raise_for_status(self):
-        """ Check the response status code. If it isn't in the range of
-            expected successful status codes, then raise an exception.
-
-        """
-        if self.status_code > 299 or self.status_code < 200:
-            raise HTTPError('Could not retrieve data.')
 
 
 class TestVarInfoPydap(TestCase):
@@ -416,15 +398,15 @@ class TestVarInfoDmr(TestCase):
             f'</{cls.namespace}Dataset>')
         )
 
-    @patch('pymods.var_info.requests.get')
-    def test_var_info_instantiation_no_augmentation(self, mock_requests_get):
+    @patch('pymods.var_info.get_url_response')
+    def test_var_info_instantiation_no_augmentation(self, mock_get_url):
         """ Ensure VarInfo instantiates correctly, creating records of all the
             variables in the granule, and correctly deciding if they are
             science variables, metadata or references. This test uses a mission
             and short name that do not have any CF overrides or supplements..
 
         """
-        mock_requests_get.return_value = self.mock_dataset
+        mock_get_url.return_value = self.mock_dataset
         dataset = VarInfo(self.dmr_url, self.logger,
                           config_file=self.config_file)
 
@@ -442,13 +424,13 @@ class TestVarInfoDmr(TestCase):
                                               '/dimension_one', '/latitude',
                                               '/longitude', '/subset_one'})
 
-    @patch('pymods.var_info.requests.get')
-    def test_var_info_instantiation_cf_augmentation(self, mock_requests_get):
+    @patch('pymods.var_info.get_url_response')
+    def test_var_info_instantiation_cf_augmentation(self, mock_get_url):
         """ Ensure VarInfo instantiates correcly, using a missions that has
             overrides and supplements in the CFConfig class.
 
         """
-        mock_requests_get.return_value = self.mock_dataset_two
+        mock_get_url.return_value = self.mock_dataset_two
         dataset = VarInfo(self.dmr_url, self.logger,
                           config_file=self.config_file)
 
@@ -467,33 +449,33 @@ class TestVarInfoDmr(TestCase):
         self.assertEqual(set(dataset.references), {'/science/latitude',
                                                    '/science/longitude'})
 
-    @patch('pymods.var_info.requests.get')
-    def test_var_info_request_error(self, mock_requests_get):
+    @patch('pymods.var_info.get_url_response')
+    def test_var_info_request_error(self, mock_get_url):
         """ Ensure VarInfo gracefully fails when a dataset object cannot be
             retrieved from OPeNDAP via an HTTP request.
 
         """
-        mock_requests_get.side_effect = HTTPClientError('dmr problem')
+        mock_get_url.side_effect = HTTPClientError('dmr problem')
 
         with self.assertRaises(HTTPClientError):
             VarInfo(self.dmr_url, self.logger)
 
-    @patch('pymods.var_info.requests.get')
-    def test_var_info_get_science_variables(self, mock_requests_get):
+    @patch('pymods.var_info.get_url_response')
+    def test_var_info_get_science_variables(self, mock_get_url):
         """ Ensure the correct set of science variables is returned. This
             should account for excluded science variables defined in the
             associated instance of the `CFConfig` class.
 
         """
-        mock_requests_get.return_value = self.mock_dataset_two
+        mock_get_url.return_value = self.mock_dataset_two
         dataset = VarInfo(self.dmr_url, self.logger,
                           config_file=self.config_file)
 
         science_variables = dataset.get_science_variables()
         self.assertEqual(science_variables, {'/science/interesting_thing'})
 
-    @patch('pymods.var_info.requests.get')
-    def test_var_info_get_metadata_variables(self, mock_requests_get):
+    @patch('pymods.var_info.get_url_response')
+    def test_var_info_get_metadata_variables(self, mock_get_url):
         """ Ensure the correct set of metadata variables (those without
             coordinate references) is returned. This should exclude variables
             that are also referred to by others via the metadata such as the
@@ -503,7 +485,7 @@ class TestVarInfoDmr(TestCase):
             excluded by the `CFConfig` instance.
 
         """
-        mock_requests_get.return_value = self.mock_dataset_two
+        mock_get_url.return_value = self.mock_dataset_two
         dataset = VarInfo(self.dmr_url, self.logger,
                           config_file=self.config_file)
 
@@ -512,8 +494,8 @@ class TestVarInfoDmr(TestCase):
                          {'/required_group/has_no_coordinates',
                           '/exclude_one/has_coordinates'})
 
-    @patch('pymods.var_info.requests.get')
-    def test_var_info_get_required_variables(self, mock_requests_get):
+    @patch('pymods.var_info.get_url_response')
+    def test_var_info_get_required_variables(self, mock_get_url):
         """ Ensure a full list of variables is returned when the VarInfo class
             is asked for those variables required to make a viable output
             granule. This should recursively search the references of all
@@ -522,7 +504,7 @@ class TestVarInfoDmr(TestCase):
             subset_control_variables.
 
         """
-        mock_requests_get.return_value = self.mock_dataset_two
+        mock_get_url.return_value = self.mock_dataset_two
         dataset = VarInfo(self.dmr_url, self.logger,
                           config_file=self.config_file)
 

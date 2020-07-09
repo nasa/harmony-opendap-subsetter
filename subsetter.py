@@ -36,7 +36,7 @@ import os
 import harmony
 
 from pymods.subset import subset_granule
-from pymods.utilities import get_file_mimetype
+from pymods.utilities import create_netrc_file, get_file_mimetype
 
 
 class HarmonyAdapter(harmony.BaseHarmonyAdapter):
@@ -62,6 +62,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
         try:
             self.validate_message()
+            create_netrc_file(self.logger)
 
             for index, granule in enumerate(self.message.granules):
                 output_file_path = subset_granule(granule, self.logger)
@@ -133,11 +134,9 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
 
 if __name__ == '__main__':
-    """ Enable this command to be run locally within a conda environment
-        containing all the requisite packages specified in both the
-        conda_requirements.txt and pip_requirements.txt files.
-
-    """
+    # Enable this command to be run locally within a conda environment
+    # containing all the requisite packages specified in both the
+    # conda_requirements.txt and pip_requirements.txt files.
     PARSER = ArgumentParser(
         prog='Variable Subsetting',
         description='Run the Data Services variable subsetting Tool'

@@ -5,7 +5,6 @@
 """
 from logging import Logger
 from typing import Dict, List, Optional, Set, Tuple, Union
-import os
 import re
 import xml.etree.ElementTree as ET
 import yaml
@@ -13,13 +12,12 @@ import yaml
 from pydap.client import open_url
 from pydap.model import BaseType, DatasetType
 from webob.exc import HTTPError, HTTPRedirection
-import requests
 
 from pymods.cf_config import CFConfig
 from pymods.exceptions import PydapRetrievalError
-from pymods.utilities import (DAP4_TO_NUMPY_MAP, get_xml_attribute,
-                              get_xml_namespace, pydap_attribute_path,
-                              recursive_get)
+from pymods.utilities import (DAP4_TO_NUMPY_MAP, get_url_response,
+                              get_xml_attribute, get_xml_namespace,
+                              pydap_attribute_path, recursive_get)
 
 
 VariableType = Union[BaseType, ET.Element]
@@ -83,11 +81,7 @@ class VarInfo:
 
         """
         self.logger.info('Retrieving .dmr from OPeNDAP')
-        # TODO: Replace with work from DAS-700 (a common function in
-        # pymods/utilities.py)
-        user = os.environ.get('EDL_USERNAME')
-        password = os.environ.get('EDL_PASSWORD')
-        dmr_response = requests.get(dmr_url, auth=(user, password))
+        dmr_response = get_url_response(dmr_url, self.logger)
 
         self.dataset = ET.fromstring(dmr_response.content)
         self.namespace = get_xml_namespace(self.dataset)

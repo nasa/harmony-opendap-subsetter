@@ -13,6 +13,9 @@ from pymods.utilities import get_url_response
 from pymods.var_info import VarInfo
 
 
+VAR_INFO_SOURCE = 'dmr'
+
+
 def subset_granule(granule: Granule, logger: Logger) -> str:
     """ This function takes a single Harmony Granule object, and extracts the
         requested variables, and those sub-variables they depend
@@ -37,13 +40,18 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
                            else f'/{variable.fullPath}'
                            for variable in granule.variables]
 
-    # Produce an output file that contains the variables identified in the
-    # previous step.
-
+    logger.info(f'Requested variables: {requested_variables}')
 
     # Harmony provides the OPeNDAP URL as the granule URL for this service
-    datasets = VarInfo(granule.url, logger)
+    if VAR_INFO_SOURCE == 'dmr':
+        var_info_url = granule.url + '.dmr'
+    else:
+        var_info_url = granule.url
+
+    datasets = VarInfo(var_info_url, logger)
     required_variables = datasets.get_required_variables(set(requested_variables))
+    logger.info(f'All required variables: {required_variables}')
+
     # TODO: Add switch mechanism for including (or not including) all metadata
     # variables in every subset request to OPeNDAP.
 
@@ -51,14 +59,14 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     required_variables = [variable.lstrip('/').replace('/', '_')
                           for variable in required_variables]
 
+    # TODO: Update URL to ".dap.nc4".
     opendap_url = f"{granule.url}.nc4?{','.join(required_variables)}"
 
     result = get_url_response(opendap_url, logger)
     try:
-        out = open(output_file, 'wb')
         logger.info(f'Downloading output to {output_file}')
-        out.write(result.content)
-        out.close()
+        with open(output_file, 'wb') as file_handler:
+            file_handler.write(result.content)
     except IOError:
         logger.error('Error occurred when downloading the file')
         raise IOError('Error occurred when downloading the file')

@@ -18,6 +18,15 @@ class CustomError(Exception):
         super().__init__(self.message)
 
 
+class DmrNamespaceError(CustomError):
+    """ This exception is raised when the root element of a dmr XML document
+        is not a fully qualified Dataset tag.
+
+    """
+    def __init__(self, tag):
+        super().__init__('DmrNamespaceError', f'Unexpected root: {tag}')
+
+
 class PydapRetrievalError(CustomError):
     """ This exception is raised when pydap fails to retrieve a dataset from
         a specified URL.

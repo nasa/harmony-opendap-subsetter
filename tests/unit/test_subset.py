@@ -41,7 +41,7 @@ class TestSubset(TestCase):
         self.logger = Logger('tests')
 
     @patch('pymods.subset.VarInfo')
-    @patch('pymods.subset.requests.get')
+    @patch('pymods.subset.get_url_response')
     def test_subset_granule(self, mock_get, mock_var_info):
         """ Ensure valid request does not raise exception,
             raise appropriate exception otherwise.
@@ -58,16 +58,5 @@ class TestSubset(TestCase):
 
         with self.subTest('Unauthorized error'):
             with self.assertRaises(HTTPError):
-                mock_response = generate_response(status=401,
-                                                  raise_for_status=HTTPError(
-                                                      "Request cannot be completed with error code 400"))
-                mock_get.return_value = mock_response
-                subset_granule(granule, self.logger)
-
-        with self.subTest('Service Unavailable'):
-            with self.assertRaises(HTTPError):
-                mock_response = generate_response(status=500,
-                                                  raise_for_status=HTTPError(
-                                                      "Request cannot be completed with error code 400"))
-                mock_get.return_value = mock_response
+                mock_get.side_effect = HTTPError("Request cannot be completed with error code 400")
                 subset_granule(granule, self.logger)

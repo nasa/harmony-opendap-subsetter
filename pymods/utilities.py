@@ -3,14 +3,17 @@
     allows finer-grained unit testing of each smaller part of functionality.
 
 """
+import os
+from logging import Logger
 from typing import Dict, List, Optional, Tuple
 from xml.etree.ElementTree import Element
 import functools
 import mimetypes
+import requests
 import re
 
 import numpy as np
-
+from pymods.exceptions import PydapRetrievalError, AuthorizationError
 from pymods.exceptions import DmrNamespaceError
 
 
@@ -20,6 +23,25 @@ DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
                      'UInt64': np.uint64, 'Float32': np.float32,
                      'Float64': np.float64, 'String': str, 'URL': str}
 
+def get_url_response(source_url: str, logger: Logger) -> requests.models.Response:
+    """ This function gets response from source url request"""
+
+    username = os.environ.get('EDL_USERNAME')
+    password = os.environ.get('EDL_PASSWORD')
+    if (username is None or password is None):
+        logger.error('There are no EDL_USERNAME and/or EDL_PASSWORD in the system environment')
+        raise AuthorizationError(
+            "There are no EDL_USERNAME and/or EDL_PASSWORD in the system environment")
+    try:
+        response = requests.get(source_url, auth=(username, password))
+        response.raise_for_status()
+    except requests.HTTPError:
+        logger.error('Request cannot be completed with error code '
+                     f'{response.status_code}')
+        raise requests.HTTPError('Request cannot be completed with error code '
+                                 f'{response.status_code}')
+
+    return response
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:
     """ This function tries to infer the MIME type of a file string. If

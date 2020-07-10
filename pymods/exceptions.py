@@ -34,3 +34,9 @@ class PydapRetrievalError(CustomError):
     """
     def __init__(self, message):
         super().__init__('PydapRetrievalError', message)
+
+class AuthorizationError(CustomError):
+    """ This error is raised when authorisation fails."""
+
+    def __init__(self, message):
+        super().__init__('AuthorizationError', message)

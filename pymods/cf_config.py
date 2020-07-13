@@ -3,7 +3,7 @@
     and overriding information for attributes provided by granules on a per-
     collection basis. This information is primarily intended to augment the
     CF-Convention attributes for a dataset, but can also be used to alter
-    non CF-Convention metadata within the a granule.
+    non CF-Convention metadata within a granule.
 
     Information within the configuration file is split into blocks that have
     an Applicability_Group. This section should define a mission, collection

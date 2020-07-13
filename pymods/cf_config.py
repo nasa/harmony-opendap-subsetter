@@ -1,3 +1,23 @@
+""" This module contains a class designed to read and present information from
+    a YAML configuration file. This configuration file provides supplemental
+    and overriding information for attributes provided by granules on a per-
+    collection basis. This information is primarily intended to augment the
+    CF-Convention attributes for a dataset, but can also be used to alter
+    non CF-Convention metadata within a granule.
+
+    Information within the configuration file is split into blocks that have
+    an Applicability_Group. This section should define a mission, collection
+    short name and (optionally) a regular expression compatible string for
+    relevant variable paths. These applicability groups can be nested, and so
+    the mission and short name can be inherited from the parent group.
+
+    The configuration file also specifies variables that are incorrectly
+    considered as science variables by the VarInfo class, due to them having
+    references in the coordinates attribute. Further, there are required
+    variables that have to be included in the output of every subset request
+    for a specific collection.
+
+"""
 from typing import Dict
 import re
 import yaml

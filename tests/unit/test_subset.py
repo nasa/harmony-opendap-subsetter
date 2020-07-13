@@ -1,40 +1,30 @@
 from logging import Logger
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import patch, MagicMock
 import json
+
 from requests.exceptions import HTTPError
-
 from harmony.message import Message
+
 from pymods.subset import subset_granule
+from pymods.var_info import VarInfo
+from tests.utilities import MockResponse
 
-def generate_response(status=200,
-                      content=b'CONTENT',
-                      json_data=None,
-                      raise_for_status=None):
-    mock_resp = Mock()
-    mock_resp.raise_for_status = Mock()
-    if raise_for_status:
-        mock_resp.raise_for_status.side_effect = raise_for_status
-    mock_resp.status_code = status
-    mock_resp.content = content
-    if json_data:
-        mock_resp.json = Mock(return_value=json_data)
-
-    return mock_resp
 
 class TestSubset(TestCase):
     """ Test the module that performs subsetting on a single granule. """
 
     @classmethod
     def setUpClass(cls):
-        cls.message_content = ({'sources': [{'collection': 'C1233860183-EEDTEST',
-                                             'variables': [{'id': 'V1234834148-EEDTEST',
-                                                            'name': 'alpha_var',
-                                                            'fullPath': 'alpha_var'}],
-                                             'granules': [{'id': 'G1233860471-EEDTEST',
-                                                           'url': '/home/tests/data/africa.nc'}]
-                                             }]})
-
+        cls.granule_url = 'https://harmony.earthdata.nasa.gov/bucket/africa'
+        cls.message_content = {
+            'sources': [{'collection': 'C1233860183-EEDTEST',
+                         'variables': [{'id': 'V1234834148-EEDTEST',
+                                        'name': 'alpha_var',
+                                        'fullPath': 'alpha_var'}],
+                         'granules': [{'id': 'G1233860471-EEDTEST',
+                                       'url': cls.granule_url}]}]
+        }
         cls.message = Message(json.dumps(cls.message_content))
 
     def setUp(self):
@@ -47,14 +37,22 @@ class TestSubset(TestCase):
             raise appropriate exception otherwise.
         """
         granule = self.message.granules[0]
-        granule.local_filename = '/home/tests/data/africa.nc'
-        mock_response = generate_response()
-        mock_get.return_value = mock_response
-        mock_var_info = Mock()
+        mock_get.return_value = MockResponse(200, b'CONTENT')
 
-        output_path = subset_granule(granule, self.logger)
-        mock_get.assert_called_once()
-        self.assertIn('africa_subset.nc', output_path)
+        # Note: return value below is a list, not a set, so the order can be
+        # guaranteed in the assertions that the request to OPeNDAP was made
+        # with all required variables.
+        mock_var_info.return_value.get_required_variables.return_value = [
+            '/alpha_var', '/blue_var'
+        ]
+
+        with self.subTest('Succesful calls to OPeNDAP'):
+            output_path = subset_granule(granule, self.logger)
+            mock_get.assert_called_once_with(
+                f'{self.granule_url}.nc4?alpha_var,blue_var',
+                self.logger
+            )
+            self.assertIn('africa_subset.nc', output_path)
 
         with self.subTest('Unauthorized error'):
             with self.assertRaises(HTTPError):

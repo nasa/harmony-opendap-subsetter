@@ -9,15 +9,16 @@ import re
 import xml.etree.ElementTree as ET
 import yaml
 
+from harmony.util import download as util_download
 from pydap.client import open_url
 from pydap.model import BaseType, DatasetType
 from webob.exc import HTTPError, HTTPRedirection
 
 from pymods.cf_config import CFConfig
 from pymods.exceptions import PydapRetrievalError
-from pymods.utilities import (DAP4_TO_NUMPY_MAP, get_url_response,
-                              get_xml_attribute, get_xml_namespace,
-                              pydap_attribute_path, recursive_get)
+from pymods.utilities import (DAP4_TO_NUMPY_MAP, get_xml_attribute,
+                              get_xml_namespace, pydap_attribute_path,
+                              recursive_get)
 
 
 VariableType = Union[BaseType, ET.Element]
@@ -29,7 +30,7 @@ class VarInfo:
 
     """
 
-    def __init__(self, file_url: str, logger: Logger,
+    def __init__(self, file_url: str, logger: Logger, temp_dir: str,
                  config_file: str = 'pymods/var_subsetter_config.yml'):
         """ Distinguish between variables containing references to other
             datasets, and those that do not. The former are considered science
@@ -44,6 +45,7 @@ class VarInfo:
         """
         self.config_file = config_file
         self.logger = logger
+        self.output_dir = temp_dir
         self.cf_config = None
         self.global_attributes = None
         self.short_name = None
@@ -81,9 +83,12 @@ class VarInfo:
 
         """
         self.logger.info('Retrieving .dmr from OPeNDAP')
-        dmr_response = get_url_response(dmr_url, self.logger)
+        dmr_file = util_download(dmr_url, self.output_dir, self.logger)
 
-        self.dataset = ET.fromstring(dmr_response.content)
+        with open(dmr_file, 'r') as file_handler:
+            dmr_content = file_handler.read()
+
+        self.dataset = ET.fromstring(dmr_content)
         self.namespace = get_xml_namespace(self.dataset)
 
     def _read_dataset_from_pydap(self, pydap_url: str):

@@ -1,4 +1,6 @@
 from logging import Logger
+from shutil import rmtree
+from tempfile import mkdtemp
 from typing import Dict
 from unittest import TestCase
 from unittest.mock import patch
@@ -11,7 +13,7 @@ from webob.exc import HTTPClientError
 from pymods.cf_config import CFConfig
 from pymods.exceptions import PydapRetrievalError
 from pymods.var_info import VarInfo, Variable
-from tests.utilities import MockResponse
+from tests.utilities import write_dmr
 
 
 mock_variables = {
@@ -97,6 +99,12 @@ class TestVarInfoPydap(TestCase):
             {'HDF5_GLOBAL': {'short_name': 'FAKE99'}}
         )
 
+    def setUp(self):
+        self.output_dir = mkdtemp()
+
+    def tearDown(self):
+        rmtree(self.output_dir)
+
     @patch('pymods.var_info.open_url')
     def test_var_info_short_name(self, mock_open_url):
         """ Ensure an instance of the VarInfo class is correctly initiated. """
@@ -117,7 +125,7 @@ class TestVarInfoPydap(TestCase):
                     {'sea_surface_temp': {}}, global_attributes
                 )
                 mock_open_url.return_value = mock_response
-                dataset = VarInfo(self.pydap_url, self.logger)
+                dataset = VarInfo(self.pydap_url, self.logger, self.output_dir)
 
                 mock_open_url.assert_called_once_with(self.pydap_url)
                 self.assertEqual(dataset.short_name, short_name)
@@ -128,7 +136,7 @@ class TestVarInfoPydap(TestCase):
             mock_response = generate_pydap_response({'sea_surface_temp': {}},
                                                     {})
             mock_open_url.return_value = mock_response
-            dataset = VarInfo(self.pydap_url, self.logger)
+            dataset = VarInfo(self.pydap_url, self.logger, self.output_dir)
 
             mock_open_url.assert_called_once_with(self.pydap_url)
             self.assertEqual(dataset.short_name, None)
@@ -155,7 +163,7 @@ class TestVarInfoPydap(TestCase):
                     {'sea_surface_temp': {}}, global_attributes
                 )
                 mock_open_url.return_value = mock_response
-                dataset = VarInfo(self.pydap_url, self.logger)
+                dataset = VarInfo(self.pydap_url, self.logger, self.output_dir)
 
                 mock_open_url.assert_called_once_with(self.pydap_url)
                 self.assertEqual(dataset.mission, expected_mission)
@@ -171,7 +179,7 @@ class TestVarInfoPydap(TestCase):
 
         """
         mock_open_url.return_value = self.mock_dataset
-        dataset = VarInfo(self.pydap_url, self.logger,
+        dataset = VarInfo(self.pydap_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         self.assertEqual(dataset.short_name, 'ATL03')
@@ -194,7 +202,7 @@ class TestVarInfoPydap(TestCase):
 
         """
         mock_open_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.pydap_url, self.logger,
+        dataset = VarInfo(self.pydap_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         expected_global_attributes = {
@@ -221,7 +229,7 @@ class TestVarInfoPydap(TestCase):
         mock_open_url.side_effect = HTTPClientError('pydap problem')
 
         with self.assertRaises(PydapRetrievalError):
-            VarInfo(self.pydap_url, self.logger)
+            VarInfo(self.pydap_url, self.logger, self.output_dir)
 
     @patch('pymods.var_info.open_url')
     def test_var_info_get_science_variables(self, mock_open_url):
@@ -231,7 +239,7 @@ class TestVarInfoPydap(TestCase):
 
         """
         mock_open_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.pydap_url, self.logger,
+        dataset = VarInfo(self.pydap_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         science_variables = dataset.get_science_variables()
@@ -249,7 +257,7 @@ class TestVarInfoPydap(TestCase):
 
         """
         mock_open_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.pydap_url, self.logger,
+        dataset = VarInfo(self.pydap_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         metadata_variables = dataset.get_metadata_variables()
@@ -268,7 +276,7 @@ class TestVarInfoPydap(TestCase):
 
         """
         mock_open_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.pydap_url, self.logger,
+        dataset = VarInfo(self.pydap_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         required_variables = dataset.get_required_variables(
@@ -294,120 +302,125 @@ class TestVarInfoDmr(TestCase):
         cls.config_file = 'tests/unit/data/test_config.yml'
         cls.namespace = 'namespace_string'
 
-        cls.mock_dataset = MockResponse(
-            200,
-            (f'<{cls.namespace}Dataset>'
-             f'  <{cls.namespace}Float64 name="/ancillary_one">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/ancillary_one</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/dimension_one">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/dimension_one</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/latitude">'
-             f'    <{cls.namespace}Dim name="/dimension_one" />'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/latitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/longitude">'
-             f'    <{cls.namespace}Dim name="/dimension_one" />'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/longitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/metadata_variable">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/metadata_variable</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/science_variable">'
-             f'    <{cls.namespace}Dim name="/dimension_one" />'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/science_variable</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'    <{cls.namespace}Attribute name="ancillary_variables" type="String">'
-             f'      <{cls.namespace}Value>/ancillary_one</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'    <{cls.namespace}Attribute name="coordinates" type="String">'
-             f'      <{cls.namespace}Value>/latitude, /longitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'    <{cls.namespace}Attribute name="subset_control_variables" type="String">'
-             f'      <{cls.namespace}Value>/subset_one</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/subset_one">'
-             f'    <{cls.namespace}Dim name="/dimension_one" />'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/subset_one</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'    <{cls.namespace}Attribute name="coordinates" type="String">'
-             f'      <{cls.namespace}Value>/latitude, /longitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Attribute name="HDF5_GLOBAL" type="Container">'
-             f'    <{cls.namespace}Attribute name="short_name" type="String">'
-             f'      <{cls.namespace}Value>ATL03</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Attribute>'
-             f'</{cls.namespace}Dataset>')
+        cls.mock_dataset = (
+            f'<{cls.namespace}Dataset>'
+            f'  <{cls.namespace}Float64 name="/ancillary_one">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/ancillary_one</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/dimension_one">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/dimension_one</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/latitude">'
+            f'    <{cls.namespace}Dim name="/dimension_one" />'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/latitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/longitude">'
+            f'    <{cls.namespace}Dim name="/dimension_one" />'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/longitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/metadata_variable">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/metadata_variable</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/science_variable">'
+            f'    <{cls.namespace}Dim name="/dimension_one" />'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/science_variable</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'    <{cls.namespace}Attribute name="ancillary_variables" type="String">'
+            f'      <{cls.namespace}Value>/ancillary_one</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'    <{cls.namespace}Attribute name="coordinates" type="String">'
+            f'      <{cls.namespace}Value>/latitude, /longitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'    <{cls.namespace}Attribute name="subset_control_variables" type="String">'
+            f'      <{cls.namespace}Value>/subset_one</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/subset_one">'
+            f'    <{cls.namespace}Dim name="/dimension_one" />'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/subset_one</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'    <{cls.namespace}Attribute name="coordinates" type="String">'
+            f'      <{cls.namespace}Value>/latitude, /longitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Attribute name="HDF5_GLOBAL" type="Container">'
+            f'    <{cls.namespace}Attribute name="short_name" type="String">'
+            f'      <{cls.namespace}Value>ATL03</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Attribute>'
+            f'</{cls.namespace}Dataset>'
         )
 
-        cls.mock_dataset_two = MockResponse(
-            200,
-            (f'<{cls.namespace}Dataset>'
-             f'  <{cls.namespace}Float64 name="/excude_one_has_coordinates">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/exclude_one/has_coordinates</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'    <{cls.namespace}Attribute name="coordinates" type="String">'
-             f'      <{cls.namespace}Value>../science/latitude, ../science/longitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/required_group_has_no_coordinates">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/required_group/has_no_coordinates</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/science_interesting_thing">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/science/interesting_thing</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'    <{cls.namespace}Attribute name="coordinates" type="String">'
-             f'      <{cls.namespace}Value>latitude, longitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/science_latitude">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/science/latitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Float64 name="/science_longitude">'
-             f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
-             f'      <{cls.namespace}Value>/science/longitude</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Float64>'
-             f'  <{cls.namespace}Attribute name="HDF5_GLOBAL" type="Container">'
-             f'    <{cls.namespace}Attribute name="short_name" type="String">'
-             f'      <{cls.namespace}Value>FAKE99</{cls.namespace}Value>'
-             f'    </{cls.namespace}Attribute>'
-             f'  </{cls.namespace}Attribute>'
-            f'</{cls.namespace}Dataset>')
+        cls.mock_dataset_two = (
+            f'<{cls.namespace}Dataset>'
+            f'  <{cls.namespace}Float64 name="/excude_one_has_coordinates">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/exclude_one/has_coordinates</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'    <{cls.namespace}Attribute name="coordinates" type="String">'
+            f'      <{cls.namespace}Value>../science/latitude, ../science/longitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/required_group_has_no_coordinates">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/required_group/has_no_coordinates</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/science_interesting_thing">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/science/interesting_thing</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'    <{cls.namespace}Attribute name="coordinates" type="String">'
+            f'      <{cls.namespace}Value>latitude, longitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/science_latitude">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/science/latitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Float64 name="/science_longitude">'
+            f'    <{cls.namespace}Attribute name="fullnamepath" type="String">'
+            f'      <{cls.namespace}Value>/science/longitude</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Float64>'
+            f'  <{cls.namespace}Attribute name="HDF5_GLOBAL" type="Container">'
+            f'    <{cls.namespace}Attribute name="short_name" type="String">'
+            f'      <{cls.namespace}Value>FAKE99</{cls.namespace}Value>'
+            f'    </{cls.namespace}Attribute>'
+            f'  </{cls.namespace}Attribute>'
+            f'</{cls.namespace}Dataset>'
         )
 
-    @patch('pymods.var_info.get_url_response')
-    def test_var_info_instantiation_no_augmentation(self, mock_get_url):
+    def setUp(self):
+        self.output_dir = mkdtemp()
+
+    def tearDown(self):
+        rmtree(self.output_dir)
+
+    @patch('pymods.var_info.util_download')
+    def test_var_info_instantiation_no_augmentation(self, mock_util_download):
         """ Ensure VarInfo instantiates correctly, creating records of all the
             variables in the granule, and correctly deciding if they are
             science variables, metadata or references. This test uses a mission
             and short name that do not have any CF overrides or supplements..
 
         """
-        mock_get_url.return_value = self.mock_dataset
-        dataset = VarInfo(self.dmr_url, self.logger,
+        mock_util_download.side_effect = [write_dmr(self.output_dir,
+                                                    self.mock_dataset)]
+        dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         self.assertEqual(dataset.short_name, 'ATL03')
@@ -424,14 +437,15 @@ class TestVarInfoDmr(TestCase):
                                               '/dimension_one', '/latitude',
                                               '/longitude', '/subset_one'})
 
-    @patch('pymods.var_info.get_url_response')
-    def test_var_info_instantiation_cf_augmentation(self, mock_get_url):
+    @patch('pymods.var_info.util_download')
+    def test_var_info_instantiation_cf_augmentation(self, mock_util_download):
         """ Ensure VarInfo instantiates correcly, using a missions that has
             overrides and supplements in the CFConfig class.
 
         """
-        mock_get_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.dmr_url, self.logger,
+        mock_util_download.side_effect = [write_dmr(self.output_dir,
+                                                    self.mock_dataset_two)]
+        dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         expected_global_attributes = {
@@ -449,33 +463,23 @@ class TestVarInfoDmr(TestCase):
         self.assertEqual(set(dataset.references), {'/science/latitude',
                                                    '/science/longitude'})
 
-    @patch('pymods.var_info.get_url_response')
-    def test_var_info_request_error(self, mock_get_url):
-        """ Ensure VarInfo gracefully fails when a dataset object cannot be
-            retrieved from OPeNDAP via an HTTP request.
-
-        """
-        mock_get_url.side_effect = HTTPClientError('dmr problem')
-
-        with self.assertRaises(HTTPClientError):
-            VarInfo(self.dmr_url, self.logger)
-
-    @patch('pymods.var_info.get_url_response')
-    def test_var_info_get_science_variables(self, mock_get_url):
+    @patch('pymods.var_info.util_download')
+    def test_var_info_get_science_variables(self, mock_util_download):
         """ Ensure the correct set of science variables is returned. This
             should account for excluded science variables defined in the
             associated instance of the `CFConfig` class.
 
         """
-        mock_get_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.dmr_url, self.logger,
+        mock_util_download.side_effect = [write_dmr(self.output_dir,
+                                                    self.mock_dataset_two)]
+        dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         science_variables = dataset.get_science_variables()
         self.assertEqual(science_variables, {'/science/interesting_thing'})
 
-    @patch('pymods.var_info.get_url_response')
-    def test_var_info_get_metadata_variables(self, mock_get_url):
+    @patch('pymods.var_info.util_download')
+    def test_var_info_get_metadata_variables(self, mock_util_download):
         """ Ensure the correct set of metadata variables (those without
             coordinate references) is returned. This should exclude variables
             that are also referred to by others via the metadata such as the
@@ -485,8 +489,9 @@ class TestVarInfoDmr(TestCase):
             excluded by the `CFConfig` instance.
 
         """
-        mock_get_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.dmr_url, self.logger,
+        mock_util_download.side_effect = [write_dmr(self.output_dir,
+                                                    self.mock_dataset_two)]
+        dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         metadata_variables = dataset.get_metadata_variables()
@@ -494,8 +499,8 @@ class TestVarInfoDmr(TestCase):
                          {'/required_group/has_no_coordinates',
                           '/exclude_one/has_coordinates'})
 
-    @patch('pymods.var_info.get_url_response')
-    def test_var_info_get_required_variables(self, mock_get_url):
+    @patch('pymods.var_info.util_download')
+    def test_var_info_get_required_variables(self, mock_util_download):
         """ Ensure a full list of variables is returned when the VarInfo class
             is asked for those variables required to make a viable output
             granule. This should recursively search the references of all
@@ -504,8 +509,9 @@ class TestVarInfoDmr(TestCase):
             subset_control_variables.
 
         """
-        mock_get_url.return_value = self.mock_dataset_two
-        dataset = VarInfo(self.dmr_url, self.logger,
+        mock_util_download.side_effect = [write_dmr(self.output_dir,
+                                                    self.mock_dataset_two)]
+        dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
                           config_file=self.config_file)
 
         required_variables = dataset.get_required_variables(

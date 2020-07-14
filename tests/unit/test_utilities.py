@@ -1,18 +1,14 @@
 from logging import Logger
 from unittest import TestCase
-from unittest.mock import patch, Mock
-import os
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
-from requests import HTTPError
 import numpy as np
 
-from pymods.exceptions import AuthorizationError, DmrNamespaceError
-from pymods.utilities import (create_netrc_file, get_file_mimetype,
-                              get_url_response, get_xml_attribute,
+from pymods.exceptions import DmrNamespaceError
+from pymods.utilities import (get_file_mimetype, get_xml_attribute,
                               get_xml_namespace, pydap_attribute_path,
                               recursive_get)
-from tests.utilities import MockResponse
 
 
 class TestUtilities(TestCase):
@@ -78,26 +74,6 @@ class TestUtilities(TestCase):
                 self.assertEqual(pydap_attribute_path(full_path),
                                  expected_key_list)
 
-    @patch('pymods.utilities.requests.get')
-    def test_get_url_respose(self, mock_requests_get):
-        """ Ensure that a successful response will be returned, or one with an
-            error status will raise an exception.
-
-        """
-        url = 'https://fakesite.org'
-
-        with self.subTest('Succesful response'):
-            content = 'CONTENT'
-            mock_requests_get.return_value = MockResponse(200, content)
-            response = get_url_response(url, self.logger)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.content, content)
-
-        with self.subTest('Unsuccessful response'):
-            with self.assertRaises(HTTPError):
-                mock_requests_get.return_value = MockResponse(500, 'ERROR')
-                get_url_response(url, self.logger)
-
     def test_get_xml_namespace(self):
         """ Check that an XML namespace can be retrieved, or if one is absent,
             that a `DmrNamespaceError` is raised.
@@ -152,51 +128,3 @@ class TestUtilities(TestCase):
 
                 self.assertIsInstance(attribute_value, expected_type)
                 self.assertEqual(attribute_value, expected_value)
-
-    def test_create_netrc(self):
-        """ Ensure a .netrc file can be succesfully created, or if either the
-            EDL_USERNAME or EDL_PASSWORD environment variable is absent, that
-            an AuthorizationError exception is raised.
-
-        """
-        netrc_path = f'{os.path.expanduser("~")}/.netrc'
-        username_only = {'EDL_USERNAME': 'sride'}
-        password_only = {'EDL_PASSWORD': 'STS-7'}
-        full_dictionary = {'EDL_USERNAME': 'sride', 'EDL_PASSWORD': 'STS-7'}
-
-        if os.path.exists(netrc_path):
-            os.remove(netrc_path)
-
-        with patch.dict(os.environ, full_dictionary):
-            with self.subTest('Successfully creates a .netrc file'):
-                create_netrc_file(self.logger)
-
-                with open(netrc_path) as file_handler:
-                    written_content = file_handler.readlines()
-
-                self.assertEqual(written_content,
-                                 ['machine urs.earthdata.nasa.gov\n',
-                                  '    login sride\n',
-                                  '    password STS-7\n',
-                                  '\n',
-                                  'machine uat.urs.earthdata.nasa.gov\n',
-                                  '    login sride\n',
-                                  '    password STS-7\n',
-                                  '\n',
-                                  'machine sit.urs.earthdata.nasa.gov\n',
-                                  '    login sride\n',
-                                  '    password STS-7\n',
-                                  '\n'])
-
-        if os.path.exists(netrc_path):
-            os.remove(netrc_path)
-
-        test_args = [['Missing EDL_USERNAME raises exception', username_only],
-                     ['Missing EDL_PASSWORD raises exception', password_only]]
-
-        for description, environment_variables in test_args:
-            with patch.dict(os.environ, environment_variables):
-                with self.subTest(description):
-                    with self.assertRaises(AuthorizationError):
-                        create_netrc_file(self.logger)
-                        self.assertFalse(os.path.exists(netrc_path))

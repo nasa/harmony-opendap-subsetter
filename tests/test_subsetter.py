@@ -1,3 +1,5 @@
+from shutil import rmtree
+from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import patch
 import json
@@ -6,7 +8,7 @@ import os
 import  harmony
 
 from subsetter import HarmonyAdapter
-from tests.utilities import contains, MockResponse
+from tests.utilities import contains, write_dmr
 
 
 environment_variables = {'EDL_USERNAME': 'fhaise', 'EDL_PASSWORD': 'A13'}
@@ -30,19 +32,28 @@ class TestSubsetterEndToEnd(TestCase):
         with open('tests/data/ATL03_example.dmr', 'r') as file_handler:
             cls.atl03_dmr = file_handler.read()
 
-    @patch.dict(os.environ, environment_variables)
+    def setUp(self):
+        """ Have to mock mkdtemp, to know where to put mock .dmr content. """
+        self.tmp_dir = mkdtemp()
+
+    def tearDown(self):
+        rmtree(self.tmp_dir)
+
     @patch.object(harmony.BaseHarmonyAdapter, 'completed_with_local_file')
     @patch.object(harmony.BaseHarmonyAdapter, 'cleanup')
-    @patch('requests.get')
-    def test_dmr_end_to_end(self, mock_get, mock_cleanup,
+    @patch('pymods.subset.mkdtemp')
+    @patch('pymods.subset.util_download')
+    @patch('pymods.var_info.util_download')
+    def test_dmr_end_to_end(self, mock_download_dmr, mock_download_subset,
+                            mock_mkdtemp, mock_cleanup,
                             mock_completed_with_local_file):
         """ Ensure the subsetter will run end-to-end, only mocking the
             HTTP response, and the output interactions with Harmony.
 
         """
-        dmr_response = MockResponse(200, self.atl03_dmr)
-        data_response = MockResponse(200, b'Fake binary content')
-        mock_get.side_effect = [dmr_response, data_response]
+        mock_mkdtemp.return_value = self.tmp_dir
+        mock_download_dmr.side_effect = [write_dmr(self.tmp_dir, self.atl03_dmr)]
+        mock_download_subset.return_value = 'opendap_url_subset.nc4'
 
         message_data = {
             'sources': [
@@ -55,16 +66,20 @@ class TestSubsetterEndToEnd(TestCase):
         }
         message = harmony.message.Message(json.dumps(message_data))
 
-        reprojector = HarmonyAdapter(message)
-        granule = reprojector.message.granules[0]
-        reprojector.invoke()
+        subsetter = HarmonyAdapter(message)
+        granule = subsetter.message.granules[0]
+        subsetter.invoke()
 
-        self.assertEqual(mock_get.call_count, 2)
-        mock_get.assert_any_call(f'{self.granule_url}.dmr')
+        mock_mkdtemp.assert_called_once()
+        mock_download_dmr.assert_called_once_with(f'{self.granule_url}.dmr',
+                                                  self.tmp_dir,
+                                                  subsetter.logger)
 
-        # The most recent call the requests.get should be to retrieve the
-        # subsetted file.
-        subset_url = mock_get.call_args[0][0]
+        mock_download_subset.assert_called_once_with(contains(self.granule_url),
+                                                     self.tmp_dir,
+                                                     subsetter.logger)
+
+        subset_url = mock_download_subset.call_args[0][0]
         self.assertTrue(subset_url.startswith(f'{self.granule_url}.nc4?'))
 
         requested_variables = subset_url.split('?')[1].split(',')

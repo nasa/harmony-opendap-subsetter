@@ -11,7 +11,6 @@ from subsetter import HarmonyAdapter
 from tests.utilities import contains
 
 
-@patch('subsetter.create_netrc_file')
 @patch('subsetter.get_file_mimetype')
 @patch('subsetter.subset_granule')
 @patch.object(BaseHarmonyAdapter, 'cleanup')
@@ -54,8 +53,7 @@ class TestSubsetter(TestCase):
                                  mock_completed_with_error,
                                  mock_async_add_local_file_partial,
                                  mock_async_completed, mock_cleanup,
-                                 mock_subset_granule, mock_get_mimetype,
-                                 mock_create_netrc):
+                                 mock_subset_granule, mock_get_mimetype):
         """ A request that specifies `isSynchronous = True` should complete
             for a single granule. It should call the `subset_granule` function,
             and then indicate the request completed.
@@ -74,7 +72,6 @@ class TestSubsetter(TestCase):
         variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
-        mock_create_netrc.assert_called_once()
         mock_subset_granule.assert_called_once_with(granule,
                                                     variable_subsetter.logger)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -92,8 +89,7 @@ class TestSubsetter(TestCase):
                                   mock_completed_with_error,
                                   mock_async_add_local_file_partial,
                                   mock_async_completed, mock_cleanup,
-                                  mock_subset_granule, mock_get_mimetype,
-                                  mock_create_netrc):
+                                  mock_subset_granule, mock_get_mimetype):
         """ A request that specified `isSynchronous = False` should complete
             for a single granule. It should call the `subset_granule` function,
             and then indicate the request completed.
@@ -113,7 +109,6 @@ class TestSubsetter(TestCase):
         variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
-        mock_create_netrc.assert_called_once()
         mock_subset_granule.assert_called_once_with(granule,
                                                     variable_subsetter.logger)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -134,8 +129,7 @@ class TestSubsetter(TestCase):
                                              mock_async_add_local_file_partial,
                                              mock_async_completed, mock_cleanup,
                                              mock_subset_granule,
-                                             mock_get_mimetype,
-                                             mock_create_netrc):
+                                             mock_get_mimetype):
         """ A request the does not specify `isSynchronous` should default to
             synchronous behaviour. The `subset_granule` function should be
             called. Then the request should complete.
@@ -154,7 +148,6 @@ class TestSubsetter(TestCase):
         variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
-        mock_create_netrc.assert_called_once()
         mock_subset_granule.assert_called_once_with(granule,
                                                     variable_subsetter.logger)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -174,8 +167,7 @@ class TestSubsetter(TestCase):
                               mock_completed_with_error,
                               mock_async_add_local_file_partial,
                               mock_async_completed, mock_cleanup,
-                              mock_subset_granule, mock_get_mimetype,
-                              mock_create_netrc):
+                              mock_subset_granule, mock_get_mimetype):
         """ A request with no specified granules in an inbound Harmony message
             should raise an exception.
 
@@ -192,7 +184,6 @@ class TestSubsetter(TestCase):
         variable_subsetter = HarmonyAdapter(message)
         variable_subsetter.invoke()
 
-        mock_create_netrc.assert_not_called()
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 
@@ -210,8 +201,7 @@ class TestSubsetter(TestCase):
                                            mock_async_add_local_file_partial,
                                            mock_async_completed, mock_cleanup,
                                            mock_subset_granule,
-                                           mock_get_mimetype,
-                                           mock_create_netrc):
+                                           mock_get_mimetype):
         """ A request for synchronous processing, with multiple granules
             specified should raise an exception.
 
@@ -232,7 +222,6 @@ class TestSubsetter(TestCase):
         variable_subsetter = HarmonyAdapter(message)
         variable_subsetter.invoke()
 
-        mock_create_netrc.assert_not_called()
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 
@@ -250,8 +239,7 @@ class TestSubsetter(TestCase):
                                             mock_async_add_local_file_partial,
                                             mock_async_completed, mock_cleanup,
                                             mock_subset_granule,
-                                            mock_get_mimetype,
-                                            mock_create_netrc):
+                                            mock_get_mimetype):
         """ A request for asynchronous processing, with multiple granules
             specified should be successful, and call `subset_granule` for each
             input granule.
@@ -274,7 +262,6 @@ class TestSubsetter(TestCase):
         variable_subsetter.invoke()
         granules = variable_subsetter.message.granules
 
-        mock_create_netrc.assert_called_once()
         mock_completed_with_local_file.assert_not_called()
         self.assertEqual(mock_async_add_local_file_partial.call_count,
                          len(granules))
@@ -297,8 +284,7 @@ class TestSubsetter(TestCase):
                                mock_completed_with_error,
                                mock_async_add_local_file_partial,
                                mock_async_completed, mock_cleanup,
-                               mock_subset_granule, mock_get_mimetype,
-                               mock_create_netrc):
+                               mock_subset_granule, mock_get_mimetype):
         """ Ensure that if no variables are specified for a source, the service
             raises an exception.
 
@@ -315,7 +301,6 @@ class TestSubsetter(TestCase):
         variable_subsetter = HarmonyAdapter(message)
         variable_subsetter.invoke()
 
-        mock_create_netrc.assert_not_called()
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 

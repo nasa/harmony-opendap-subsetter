@@ -1,14 +1,12 @@
 from logging import Logger
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import json
 
-from requests.exceptions import HTTPError
 from harmony.message import Message
 
 from pymods.subset import subset_granule
-from pymods.var_info import VarInfo
-from tests.utilities import MockResponse
+from tests.utilities import contains
 
 
 class TestSubset(TestCase):
@@ -31,13 +29,13 @@ class TestSubset(TestCase):
         self.logger = Logger('tests')
 
     @patch('pymods.subset.VarInfo')
-    @patch('pymods.subset.get_url_response')
-    def test_subset_granule(self, mock_get, mock_var_info):
+    @patch('pymods.subset.util_download')
+    def test_subset_granule(self, mock_util_download, mock_var_info):
         """ Ensure valid request does not raise exception,
             raise appropriate exception otherwise.
         """
         granule = self.message.granules[0]
-        mock_get.return_value = MockResponse(200, b'CONTENT')
+        mock_util_download.return_value = 'africa_subset.nc4'
 
         # Note: return value below is a list, not a set, so the order can be
         # guaranteed in the assertions that the request to OPeNDAP was made
@@ -48,13 +46,9 @@ class TestSubset(TestCase):
 
         with self.subTest('Succesful calls to OPeNDAP'):
             output_path = subset_granule(granule, self.logger)
-            mock_get.assert_called_once_with(
+            mock_util_download.assert_called_once_with(
                 f'{self.granule_url}.nc4?alpha_var,blue_var',
+                contains('/tmp/tmp'),
                 self.logger
             )
-            self.assertIn('africa_subset.nc', output_path)
-
-        with self.subTest('Unauthorized error'):
-            with self.assertRaises(HTTPError):
-                mock_get.side_effect = HTTPError("Request cannot be completed with error code 400")
-                subset_granule(granule, self.logger)
+            self.assertIn('africa_subset.nc4', output_path)

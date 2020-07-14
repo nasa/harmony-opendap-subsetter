@@ -4,24 +4,6 @@ import re
 from requests import HTTPError
 
 
-class MockResponse:
-    """ A test class to be used in mocking a response from the `requests.get`
-        method.
-
-    """
-    def __init__(self, status_code: int, content: str):
-        self.status_code = status_code
-        self.content = content
-
-    def raise_for_status(self):
-        """ Check the response status code. If it isn't in the range of
-            expected successful status codes, then raise an exception.
-
-        """
-        if self.status_code > 299 or self.status_code < 200:
-            raise HTTPError('Could not retrieve data.')
-
-
 class contains(str):
     """ Extension class that allows a 'string contains' check in a unit test
         assertion, e.g.: x.assert_called_once_with(contains('string content'))
@@ -38,3 +20,17 @@ class matches(str):
     """
     def __eq__(self, other):
         return re.search(self.lower(), other.lower(), re.IGNORECASE)
+
+
+def write_dmr(output_dir: str, content: str):
+    """ A helper function to write out the content of a `.dmr`, when the
+        `harmony.util.download` function is called. This will be called as
+        a side-effect to the mock for that function.
+
+    """
+    dmr_name = f'{output_dir}/downloaded.dmr'
+
+    with open(dmr_name, 'w') as file_handler:
+        file_handler.write(content)
+
+    return dmr_name

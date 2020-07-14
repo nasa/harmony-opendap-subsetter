@@ -3,18 +3,15 @@
     allows finer-grained unit testing of each smaller part of functionality.
 
 """
-from logging import Logger
 from typing import Dict, List, Optional, Tuple
 from xml.etree.ElementTree import Element
 import functools
 import mimetypes
-import os
 import re
 
 import numpy as np
-import requests
 
-from pymods.exceptions import AuthorizationError, DmrNamespaceError
+from pymods.exceptions import DmrNamespaceError
 
 
 DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
@@ -23,22 +20,6 @@ DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
                      'UInt64': np.uint64, 'Float32': np.float32,
                      'Float64': np.float64, 'String': str, 'URL': str}
 
-def get_url_response(source_url: str, logger: Logger) -> requests.models.Response:
-    """ This function gets response from source url request, if the HTTP
-        response contains a non-200 status code, the function will raise an
-        exception.
-
-    """
-    try:
-        response = requests.get(source_url)
-        response.raise_for_status()
-    except requests.HTTPError:
-        logger.error('Request cannot be completed with error code '
-                     f'{response.status_code}')
-        raise requests.HTTPError('Request cannot be completed with error code '
-                                 f'{response.status_code}')
-
-    return response
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:
     """ This function tries to infer the MIME type of a file string. If
@@ -127,38 +108,3 @@ def get_xml_attribute(variable: Element, attribute_name: str, namespace: str,
         attribute_value = default_value
 
     return attribute_value
-
-
-def create_netrc_file(logger: Logger):
-    """ Create a .netrc file in the home directory of the Docker container
-        using the environment variables supplied to the container by Harmony,
-        when it is executed. This file will only be created if a .netrc file
-        is not already present on the file system, ensuring local testing,
-        outside of Docker, of the variable subsetter will not overwrite
-        pre-existing .netrc files.
-
-        This file will be automatically detected by the `requests.get` function
-        when making calls to OPeNDAP.
-
-    """
-    edl_username = os.environ.get('EDL_USERNAME')
-    edl_password = os.environ.get('EDL_PASSWORD')
-
-    if edl_username is None or edl_password is None:
-        raise AuthorizationError('EDL_USERNAME and/or EDL_PASSWORD missing '
-                                 'from the system environment.')
-
-    urs_prefixes = ['', 'uat.', 'sit.']
-    urs_machines = [f'{prefix}urs.earthdata.nasa.gov'
-                    for prefix in urs_prefixes]
-
-    netrc_path = os.sep.join([os.path.expanduser('~'), '.netrc'])
-
-    if not os.path.isfile(netrc_path):
-        logger.info(f'Creating .netrc for user: {edl_username}')
-        with open(netrc_path, 'w')as file_handler:
-            for machine in urs_machines:
-                file_handler.writelines([f'machine {machine}\n',
-                                         f'    login {edl_username}\n',
-                                         f'    password {edl_password}\n',
-                                         '\n'])

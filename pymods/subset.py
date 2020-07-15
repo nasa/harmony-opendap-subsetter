@@ -3,12 +3,11 @@
     function, which is called from the `HarmonyAdapter` class.
 
 """
-import os
 from logging import Logger
 from tempfile import mkdtemp
 
 from harmony.message import Granule
-from pymods.utilities import get_url_response
+from harmony.util import download as util_download
 from pymods.var_info import VarInfo
 
 
@@ -25,15 +24,9 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     granule_filename = granule.url.split('?')[0].rstrip('/').split('/')[-1]
     logger.info(f'Performing variable subsetting on: {granule_filename}')
 
-    granule_basename = os.path.splitext(granule_filename)[0]
-    file_ext = '.nc4'
     temp_dir = mkdtemp()
-    output_file = os.sep.join([temp_dir, granule_basename + '_subset' + file_ext])
 
-    # Derive a list of required variables, both those in the Granule object and
-    # their dependencies, such as coordinates.
-
-    # create a list of variable full paths
+    # Create a list of requested variable full paths
     requested_variables = [variable.fullPath
                            if variable.fullPath.startswith('/')
                            else f'/{variable.fullPath}'
@@ -42,32 +35,27 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     logger.info(f'Requested variables: {requested_variables}')
 
     # Harmony provides the OPeNDAP URL as the granule URL for this service
+    # Determine whether to request the `.dmr` or to request the raw path from
+    # `pydap`.
     if VAR_INFO_SOURCE == 'dmr':
         var_info_url = granule.url + '.dmr'
     else:
         var_info_url = granule.url
 
-    datasets = VarInfo(var_info_url, logger)
+    # Obtain a list of all variables for the subset, including those used as
+    # references by the requested variables.
+    datasets = VarInfo(var_info_url, logger, temp_dir)
     required_variables = datasets.get_required_variables(set(requested_variables))
     logger.info(f'All required variables: {required_variables}')
 
     # TODO: Add switch mechanism for including (or not including) all metadata
     # variables in every subset request to OPeNDAP.
 
-    # replace '/' with '_' in variable names
+    # Make all required variable names compatible with an OPeNDAP subset URL.
     required_variables = [variable.lstrip('/').replace('/', '_')
                           for variable in required_variables]
 
     # TODO: Update URL to ".dap.nc4".
     opendap_url = f"{granule.url}.nc4?{','.join(required_variables)}"
 
-    result = get_url_response(opendap_url, logger)
-    try:
-        logger.info(f'Downloading output to {output_file}')
-        with open(output_file, 'wb') as file_handler:
-            file_handler.write(result.content)
-    except IOError:
-        logger.error('Error occurred when downloading the file')
-        raise IOError('Error occurred when downloading the file')
-
-    return output_file
+    return util_download(opendap_url, temp_dir, logger)

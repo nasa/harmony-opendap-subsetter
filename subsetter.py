@@ -36,7 +36,7 @@ import os
 import harmony
 
 from pymods.subset import subset_granule
-from pymods.utilities import create_netrc_file, get_file_mimetype
+from pymods.utilities import get_file_mimetype
 
 
 class HarmonyAdapter(harmony.BaseHarmonyAdapter):
@@ -62,7 +62,6 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
         try:
             self.validate_message()
-            create_netrc_file(self.logger)
 
             for index, granule in enumerate(self.message.granules):
                 output_file_path = subset_granule(granule, self.logger)

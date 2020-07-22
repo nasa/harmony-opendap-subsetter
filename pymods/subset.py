@@ -8,7 +8,7 @@ from tempfile import mkdtemp
 
 from harmony.message import Granule
 from harmony.util import download as util_download
-from pymods.var_info import VarInfo
+from pymods.var_info import VarInfoFromDmr, VarInfoFromPydap
 
 
 VAR_INFO_SOURCE = 'dmr'
@@ -38,14 +38,14 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # Determine whether to request the `.dmr` or to request the raw path from
     # `pydap`.
     if VAR_INFO_SOURCE == 'dmr':
-        var_info_url = granule.url + '.dmr'
+        dmr_url = granule.url + '.dmr'
+        dataset = VarInfoFromDmr(dmr_url, logger, temp_dir)
     else:
-        var_info_url = granule.url
+        dataset = VarInfoFromPydap(granule.url, logger, temp_dir)
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.
-    datasets = VarInfo(var_info_url, logger, temp_dir)
-    required_variables = datasets.get_required_variables(set(requested_variables))
+    required_variables = dataset.get_required_variables(set(requested_variables))
     logger.info(f'All required variables: {required_variables}')
 
     # TODO: Add switch mechanism for including (or not including) all metadata

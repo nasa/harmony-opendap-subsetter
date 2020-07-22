@@ -2,7 +2,6 @@ from typing import List, Optional
 from unittest import TestCase
 from unittest.mock import patch
 import json
-import os
 
 from harmony import BaseHarmonyAdapter
 from harmony.message import Message

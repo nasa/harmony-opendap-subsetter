@@ -28,9 +28,9 @@ class TestSubset(TestCase):
     def setUp(self):
         self.logger = Logger('tests')
 
-    @patch('pymods.subset.VarInfo')
+    @patch('pymods.subset.VarInfoFromDmr')
     @patch('pymods.subset.util_download')
-    def test_subset_granule(self, mock_util_download, mock_var_info):
+    def test_subset_granule(self, mock_util_download, mock_var_info_dmr):
         """ Ensure valid request does not raise exception,
             raise appropriate exception otherwise.
         """
@@ -40,7 +40,7 @@ class TestSubset(TestCase):
         # Note: return value below is a list, not a set, so the order can be
         # guaranteed in the assertions that the request to OPeNDAP was made
         # with all required variables.
-        mock_var_info.return_value.get_required_variables.return_value = [
+        mock_var_info_dmr.return_value.get_required_variables.return_value = [
             '/alpha_var', '/blue_var'
         ]
 

@@ -14,7 +14,7 @@ COPY ./conda_requirements.txt conda_requirements.txt
 COPY ./pip_requirements.txt pip_requirements.txt
 
 # Create Conda environment
-RUN conda create --name subsetter --file conda_requirements.txt python=3.7 \
+RUN conda create --name subsetter --file conda_requirements.txt python=3.7 -q \
 	--channel conda-forge \
 	--channel defaults
 

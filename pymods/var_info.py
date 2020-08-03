@@ -10,15 +10,14 @@ import re
 import xml.etree.ElementTree as ET
 import yaml
 
-from harmony.util import download as util_download
 from pydap.client import open_url
 from webob.exc import HTTPError, HTTPRedirection
 
 from pymods.cf_config import CFConfig
 from pymods.exceptions import PydapRetrievalError
-from pymods.utilities import (DAP4_TO_NUMPY_MAP, get_xml_attribute,
-                              get_xml_namespace, pydap_attribute_path,
-                              recursive_get)
+from pymods.utilities import (DAP4_TO_NUMPY_MAP, download_url,
+                              get_xml_attribute, get_xml_namespace,
+                              pydap_attribute_path, recursive_get)
 from pymods.variable import VariableFromDmr, VariableFromPydap
 
 
@@ -284,7 +283,7 @@ class VarInfoFromDmr(VarInfoBase):
 
         """
         self.logger.info('Retrieving .dmr from OPeNDAP')
-        dmr_file = util_download(dataset_url, self.output_dir, self.logger)
+        dmr_file = download_url(dataset_url, self.output_dir, self.logger)
 
         with open(dmr_file, 'r') as file_handler:
             dmr_content = file_handler.read()

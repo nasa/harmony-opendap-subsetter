@@ -1,13 +1,15 @@
 from logging import Logger
 from unittest import TestCase
 from unittest.mock import patch
+from urllib.error import HTTPError
 import xml.etree.ElementTree as ET
 
 import numpy as np
 
-from pymods.exceptions import DmrNamespaceError
-from pymods.utilities import (get_file_mimetype, get_xml_attribute,
-                              get_xml_namespace, pydap_attribute_path,
+from pymods.exceptions import DmrNamespaceError, UrlAttemptsExceededError
+from pymods.utilities import (download_url, get_file_mimetype,
+                              get_xml_attribute, get_xml_namespace,
+                              HTTP_REQUEST_ATTEMPTS, pydap_attribute_path,
                               recursive_get)
 
 
@@ -128,3 +130,56 @@ class TestUtilities(TestCase):
 
                 self.assertIsInstance(attribute_value, expected_type)
                 self.assertEqual(attribute_value, expected_value)
+
+    @patch('pymods.utilities.util_download')
+    def test_download_url(self, mock_util_download):
+        """ Ensure that the `harmony.util.download` function is called. Also
+            ensure that if a 500 error is returned, the request is retried. If
+            a different HTTPError occurs, the caught HTTPError should be
+            re-raised. Finally, check the maximum number of request attempts is
+            not exceeded.
+
+        """
+        output_directory = 'output/dir'
+        test_url = 'test.org'
+        message_retry = 'Internal Server Error'
+        message_other = 'Authentication Error'
+
+        http_response = f'{output_directory}/output.nc'
+        http_error_retry = HTTPError(test_url, 500, message_retry, {}, None)
+        http_error_other = HTTPError(test_url, 403, message_other, {}, None)
+
+        with self.subTest('Successful response, only make one request.'):
+            mock_util_download.return_value = http_response
+            response = download_url(test_url, output_directory, self.logger)
+
+            self.assertEqual(response, http_response)
+            mock_util_download.assert_called_once_with(test_url,
+                                                       output_directory,
+                                                       self.logger)
+
+            mock_util_download.reset_mock()
+
+        with self.subTest('500 error triggers a retry.'):
+            mock_util_download.side_effect = [http_error_retry, http_response]
+
+            response = download_url(test_url, output_directory, self.logger)
+
+            self.assertEqual(response, http_response)
+            self.assertEqual(mock_util_download.call_count, 2)
+
+        with self.subTest('Non-500 error does not retry, and is re-raised.'):
+            mock_util_download.side_effect = [http_error_other, http_response]
+
+            with self.assertRaises(HTTPError):
+                download_url(test_url, output_directory, self.logger)
+                mock_util_download.assert_called_once_with(test_url,
+                                                           output_directory,
+                                                           self.logger)
+
+        with self.subTest('Maximum number of attempts not exceeded.'):
+            mock_util_download.side_effect = [http_error_retry] * (HTTP_REQUEST_ATTEMPTS + 1)
+            with self.assertRaises(UrlAttemptsExceededError):
+                download_url(test_url, output_directory, self.logger)
+                self.assertEqual(mock_util_download.call_count,
+                                 HTTP_REQUEST_ATTEMPTS)

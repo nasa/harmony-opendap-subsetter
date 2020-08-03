@@ -43,8 +43,8 @@ class TestSubsetterEndToEnd(TestCase):
     @patch.object(harmony.BaseHarmonyAdapter, 'completed_with_local_file')
     @patch.object(harmony.BaseHarmonyAdapter, 'cleanup')
     @patch('pymods.subset.mkdtemp')
-    @patch('pymods.subset.util_download')
-    @patch('pymods.var_info.util_download')
+    @patch('pymods.subset.download_url')
+    @patch('pymods.var_info.download_url')
     def test_dmr_end_to_end(self, mock_download_dmr, mock_download_subset,
                             mock_mkdtemp, mock_cleanup,
                             mock_completed_with_local_file):
@@ -101,7 +101,7 @@ class TestSubsetterEndToEnd(TestCase):
     @patch.object(harmony.BaseHarmonyAdapter, 'completed_with_local_file')
     @patch.object(harmony.BaseHarmonyAdapter, 'cleanup')
     @patch('pymods.subset.mkdtemp')
-    @patch('pymods.subset.util_download')
+    @patch('pymods.subset.download_url')
     @patch('pymods.var_info.open_url')
     def test_pydap_end_to_end(self, mock_open_url, mock_download_subset,
                               mock_mkdtemp, mock_cleanup,

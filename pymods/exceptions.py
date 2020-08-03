@@ -34,3 +34,14 @@ class PydapRetrievalError(CustomError):
     """
     def __init__(self, message):
         super().__init__('PydapRetrievalError', message)
+
+
+class UrlAttemptsExceededError(CustomError):
+    """ This exception is raised when an HTTP request for a given URL has
+        failed a specified number of times.
+
+    """
+    def __init__(self, url):
+        super().__init__('UrlAttemptsExceededError',
+                         f'URL: {url} was unsuccessfully requested the '
+                         'maximum number of times.')

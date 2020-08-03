@@ -3,15 +3,18 @@
     allows finer-grained unit testing of each smaller part of functionality.
 
 """
+from logging import Logger
 from typing import Dict, List, Optional, Tuple
+from urllib.error import HTTPError
 from xml.etree.ElementTree import Element
 import functools
 import mimetypes
 import re
 
+from harmony.util import download as util_download
 import numpy as np
 
-from pymods.exceptions import DmrNamespaceError
+from pymods.exceptions import DmrNamespaceError, UrlAttemptsExceededError
 
 
 DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
@@ -19,6 +22,8 @@ DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
                      'Int32': np.int32, 'UInt32': np.uint32, 'Int64': np.int64,
                      'UInt64': np.uint64, 'Float32': np.float32,
                      'Float64': np.float64, 'String': str, 'URL': str}
+
+HTTP_REQUEST_ATTEMPTS = 3
 
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:
@@ -108,3 +113,38 @@ def get_xml_attribute(variable: Element, attribute_name: str, namespace: str,
         attribute_value = default_value
 
     return attribute_value
+
+
+def download_url(url: str, destination: str, logger: Logger) -> str:
+    """ Use built-in Harmony functionality to download from a URL. This is
+        expected to be used for obtaining the granule `.dmr` and the granule
+        itself (only the required variables).
+
+        OPeNDAP can return intermittent 500 errors. This function will retry
+        the original request in the event of a 500 error, but not for other
+        error types. In those instances, the original HTTPError is re-raised.
+
+        The return value is the location in the file-store of the downloaded
+        content from the URL.
+
+    """
+    request_completed = False
+    attempts = 0
+
+    while not request_completed and attempts < HTTP_REQUEST_ATTEMPTS:
+        attempts += 1
+
+        try:
+            response = util_download(url, destination, logger)
+            request_completed = True
+        except HTTPError as http_exception:
+            if http_exception.code == 500 and attempts < HTTP_REQUEST_ATTEMPTS:
+                logger.debug('500 error returned, retrying request.')
+            elif http_exception.code == 500:
+                raise UrlAttemptsExceededError(url)
+            else:
+                # Not a 500 error, so re-raise the HTTPError and exit the loop.
+                # (Also re-raise if this is the final attempt)
+                raise http_exception
+
+    return response

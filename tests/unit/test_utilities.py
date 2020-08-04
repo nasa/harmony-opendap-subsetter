@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
-from pymods.exceptions import DmrNamespaceError, UrlAttemptsExceededError
+from pymods.exceptions import DmrNamespaceError, UrlAccessFailedWithRetries
 from pymods.utilities import (download_url, get_file_mimetype,
                               get_xml_attribute, get_xml_namespace,
                               HTTP_REQUEST_ATTEMPTS, pydap_attribute_path,
@@ -179,7 +179,7 @@ class TestUtilities(TestCase):
 
         with self.subTest('Maximum number of attempts not exceeded.'):
             mock_util_download.side_effect = [http_error_retry] * (HTTP_REQUEST_ATTEMPTS + 1)
-            with self.assertRaises(UrlAttemptsExceededError):
+            with self.assertRaises(UrlAccessFailedWithRetries):
                 download_url(test_url, output_directory, self.logger)
                 self.assertEqual(mock_util_download.call_count,
                                  HTTP_REQUEST_ATTEMPTS)

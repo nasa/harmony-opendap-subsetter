@@ -14,7 +14,7 @@ import re
 from harmony.util import download as util_download
 import numpy as np
 
-from pymods.exceptions import DmrNamespaceError, UrlAttemptsExceededError
+from pymods.exceptions import DmrNamespaceError, UrlAccessFailedWithRetries
 
 
 DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
@@ -141,7 +141,7 @@ def download_url(url: str, destination: str, logger: Logger) -> str:
             if http_exception.code == 500 and attempts < HTTP_REQUEST_ATTEMPTS:
                 logger.debug('500 error returned, retrying request.')
             elif http_exception.code == 500:
-                raise UrlAttemptsExceededError(url)
+                raise UrlAccessFailedWithRetries(url)
             else:
                 # Not a 500 error, so re-raise the HTTPError and exit the loop.
                 # (Also re-raise if this is the final attempt)

@@ -29,13 +29,13 @@ class TestSubset(TestCase):
         self.logger = Logger('tests')
 
     @patch('pymods.subset.VarInfoFromDmr')
-    @patch('pymods.subset.util_download')
-    def test_subset_granule(self, mock_util_download, mock_var_info_dmr):
+    @patch('pymods.subset.download_url')
+    def test_subset_granule(self, mock_download_url, mock_var_info_dmr):
         """ Ensure valid request does not raise exception,
             raise appropriate exception otherwise.
         """
         granule = self.message.granules[0]
-        mock_util_download.return_value = 'africa_subset.nc4'
+        mock_download_url.return_value = 'africa_subset.nc4'
 
         # Note: return value below is a list, not a set, so the order can be
         # guaranteed in the assertions that the request to OPeNDAP was made
@@ -46,7 +46,7 @@ class TestSubset(TestCase):
 
         with self.subTest('Succesful calls to OPeNDAP'):
             output_path = subset_granule(granule, self.logger)
-            mock_util_download.assert_called_once_with(
+            mock_download_url.assert_called_once_with(
                 f'{self.granule_url}.nc4?alpha_var,blue_var',
                 contains('/tmp/tmp'),
                 self.logger

@@ -359,8 +359,8 @@ class TestVarInfoDmr(TestCase):
     def tearDown(self):
         rmtree(self.output_dir)
 
-    @patch('pymods.var_info.util_download')
-    def test_var_info_instantiation_no_augmentation(self, mock_util_download):
+    @patch('pymods.var_info.download_url')
+    def test_var_info_instantiation_no_augmentation(self, mock_download_url):
         """ Ensure VarInfoFromDmr instantiates correctly, creating records of
             all the variables in the granule, and correctly deciding if they
             are science variables, metadata or references. This test uses a
@@ -368,8 +368,8 @@ class TestVarInfoDmr(TestCase):
             supplements.
 
         """
-        mock_util_download.side_effect = [write_dmr(self.output_dir,
-                                                    self.mock_dataset)]
+        mock_download_url.side_effect = [write_dmr(self.output_dir,
+                                                   self.mock_dataset)]
         dataset = VarInfoFromDmr(self.dmr_url, self.logger, self.output_dir,
                                  config_file=self.config_file)
 
@@ -387,14 +387,14 @@ class TestVarInfoDmr(TestCase):
                                               '/dimension_one', '/latitude',
                                               '/longitude', '/subset_one'})
 
-    @patch('pymods.var_info.util_download')
-    def test_var_info_instantiation_cf_augmentation(self, mock_util_download):
+    @patch('pymods.var_info.download_url')
+    def test_var_info_instantiation_cf_augmentation(self, mock_download_url):
         """ Ensure VarInfoFromDmr instantiates correcly, using a missions that
             has overrides and supplements in the CFConfig class.
 
         """
-        mock_util_download.side_effect = [write_dmr(self.output_dir,
-                                                    self.mock_dataset_two)]
+        mock_download_url.side_effect = [write_dmr(self.output_dir,
+                                                   self.mock_dataset_two)]
         dataset = VarInfoFromDmr(self.dmr_url, self.logger, self.output_dir,
                                  config_file=self.config_file)
 
@@ -413,23 +413,23 @@ class TestVarInfoDmr(TestCase):
         self.assertEqual(set(dataset.references), {'/science/latitude',
                                                    '/science/longitude'})
 
-    @patch('pymods.var_info.util_download')
-    def test_var_info_get_science_variables(self, mock_util_download):
+    @patch('pymods.var_info.download_url')
+    def test_var_info_get_science_variables(self, mock_download_url):
         """ Ensure the correct set of science variables is returned. This
             should account for excluded science variables defined in the
             associated instance of the `CFConfig` class.
 
         """
-        mock_util_download.side_effect = [write_dmr(self.output_dir,
-                                                    self.mock_dataset_two)]
+        mock_download_url.side_effect = [write_dmr(self.output_dir,
+                                                   self.mock_dataset_two)]
         dataset = VarInfoFromDmr(self.dmr_url, self.logger, self.output_dir,
                                  config_file=self.config_file)
 
         science_variables = dataset.get_science_variables()
         self.assertEqual(science_variables, {'/science/interesting_thing'})
 
-    @patch('pymods.var_info.util_download')
-    def test_var_info_get_metadata_variables(self, mock_util_download):
+    @patch('pymods.var_info.download_url')
+    def test_var_info_get_metadata_variables(self, mock_download_url):
         """ Ensure the correct set of metadata variables (those without
             coordinate references) is returned. This should exclude variables
             that are also referred to by others via the metadata such as the
@@ -439,8 +439,8 @@ class TestVarInfoDmr(TestCase):
             excluded by the `CFConfig` instance.
 
         """
-        mock_util_download.side_effect = [write_dmr(self.output_dir,
-                                                    self.mock_dataset_two)]
+        mock_download_url.side_effect = [write_dmr(self.output_dir,
+                                                   self.mock_dataset_two)]
         dataset = VarInfoFromDmr(self.dmr_url, self.logger, self.output_dir,
                                  config_file=self.config_file)
 
@@ -449,8 +449,8 @@ class TestVarInfoDmr(TestCase):
                          {'/required_group/has_no_coordinates',
                           '/exclude_one/has_coordinates'})
 
-    @patch('pymods.var_info.util_download')
-    def test_var_info_get_required_variables(self, mock_util_download):
+    @patch('pymods.var_info.download_url')
+    def test_var_info_get_required_variables(self, mock_download_url):
         """ Ensure a full list of variables is returned when the VarInfoFromDmr
             class is asked for those variables required to make a viable output
             granule. This should recursively search the references of all
@@ -459,8 +459,8 @@ class TestVarInfoDmr(TestCase):
             subset_control_variables.
 
         """
-        mock_util_download.side_effect = [write_dmr(self.output_dir,
-                                                    self.mock_dataset_two)]
+        mock_download_url.side_effect = [write_dmr(self.output_dir,
+                                                   self.mock_dataset_two)]
         dataset = VarInfoFromDmr(self.dmr_url, self.logger, self.output_dir,
                                  config_file=self.config_file)
 

@@ -7,7 +7,8 @@ from logging import Logger
 from tempfile import mkdtemp
 
 from harmony.message import Granule
-from harmony.util import download as util_download
+
+from pymods.utilities import download_url
 from pymods.var_info import VarInfoFromDmr, VarInfoFromPydap
 
 
@@ -58,4 +59,4 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # TODO: Update URL to ".dap.nc4".
     opendap_url = f"{granule.url}.nc4?{','.join(required_variables)}"
 
-    return util_download(opendap_url, temp_dir, logger)
+    return download_url(opendap_url, temp_dir, logger)

@@ -78,21 +78,6 @@ Grid_Mapping_Data:
 # For cases where CF references do not exist, or are invalid
 # These variables have no dimension references in the HDF5 file contents
 CF_Overrides:
-  - Applicability:
-      Mission: 'ICESat2' # ToDo: All collections?
-      Variable_Pattern: '/quality_assessment/gt[123][lr]/.*'
-    Attributes:
-      - Name: 'dimensions'
-        Value: '../delta_time /ds_surf_type'
-  - Applicability:
-      Mission: 'ICESat2'
-      ShortNamePath: 'ATL08'
-    Applicability_Group:
-      - Applicability:
-          Variable_Path: '/gt[123][lr]/land_segments/surf_type'
-        Attributes:
-          - Name: 'dimensions'
-            Value: '../delta_time /ds_surf_type'
   # the following cases are for missing grid mapping data, essential to
   # data processing.  It is difficult to properly interpret without this.
   - Applicability:

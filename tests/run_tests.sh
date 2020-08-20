@@ -24,6 +24,8 @@ if [ "$RESULT" -ne "0" ]; then
     echo "ERROR: unittest generated errors"
 fi
 
+echo "\n"
+echo "Test Coverage Estimates"
 coverage report
 
 # Run pylint

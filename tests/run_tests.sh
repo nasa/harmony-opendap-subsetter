@@ -16,13 +16,17 @@ STATUS=0
 export HDF5_DISABLE_VERSION_CHECK=1
 
 # Run the standard set of unit tests
-python -m unittest discover tests
+coverage run -m unittest discover tests
 RESULT=$?
 
 if [ "$RESULT" -ne "0" ]; then
     STATUS=1
     echo "ERROR: unittest generated errors"
 fi
+
+echo "\n"
+echo "Test Coverage Estimates"
+coverage report
 
 # Run pylint
 pylint pymods subsetter.py --disable=E0401

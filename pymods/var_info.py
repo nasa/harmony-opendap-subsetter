@@ -174,7 +174,6 @@ class VarInfoBase(ABC):
         if self.cf_config.global_overrides:
             self.global_attributes.update(self.cf_config.global_overrides)
 
-
     def get_science_variables(self) -> Set[str]:
         """ Retrieve set of names for all variables that have coordinate
             references, that are not themselves used as dimensions, coordinates
@@ -190,7 +189,7 @@ class VarInfoBase(ABC):
             for variable
             in self.variables_with_coordinates
             if variable is not None
-            and not re.match(exclusions_pattern, variable)
+            and not self.variable_is_excluded(variable, exclusions_pattern)
         }
 
         return filtered_with_coordinates - self.references
@@ -209,16 +208,32 @@ class VarInfoBase(ABC):
             '|'.join(self.cf_config.excluded_science_variables)
         )
 
-        additional_metadata = {variable
-                               for variable
-                               in self.variables_with_coordinates
-                               if variable is not None
-                               and re.match(exclusions_pattern, variable)}
+        additional_metadata = {
+            variable
+            for variable
+            in self.variables_with_coordinates
+            if variable is not None
+            and self.variable_is_excluded(variable, exclusions_pattern)
+        }
 
         metadata_variables = set(self.metadata_variables.keys())
         metadata_variables.update(additional_metadata)
 
         return metadata_variables - self.references
+
+    @staticmethod
+    def variable_is_excluded(variable_name: str,
+                             exclusions_pattern: re.Pattern) -> bool:
+        """ Ensure the variable name does not match any collection specific
+            exclusion rules.
+
+        """
+        if exclusions_pattern.pattern != '':
+            exclude_variable = exclusions_pattern.match(variable_name) is not None
+        else:
+            exclude_variable = False
+
+        return exclude_variable
 
     def get_required_variables(self, requested_variables: Set[str]) -> Set[str]:
         """ Retrieve requested variables and recursively search for all
@@ -268,7 +283,20 @@ class VarInfoBase(ABC):
                     variable_references.difference(required_variables)
                 )
 
-        return required_variables
+        return self.exclude_fake_dimensions(required_variables)
+
+    @staticmethod
+    def exclude_fake_dimensions(variable_set: Set[str]) -> Set[str]:
+        """ An OPeNDAP .dmr can contain fake dimensions, used to supplement
+            missing information for a granule. These cannot be retrieved when
+            requesting a subset from an OPeNDAP server, and must be removed
+            from the list of required variables.
+
+        """
+        fakedim_pattern = re.compile(r'.*/FakeDim\d+')
+
+        return {variable for variable in variable_set
+                if not fakedim_pattern.match(variable)}
 
 
 class VarInfoFromDmr(VarInfoBase):
@@ -301,7 +329,7 @@ class VarInfoFromDmr(VarInfoBase):
                 child, 'fullnamepath', self.namespace, child.get('name')
             )
             for child in self.dataset
-            if child.tag.lstrip(self.namespace) in DAP4_TO_NUMPY_MAP
+            if child.tag.replace(self.namespace, '') in DAP4_TO_NUMPY_MAP
         }
 
     def _set_global_attributes(self):
@@ -341,7 +369,7 @@ class VarInfoFromDmr(VarInfoBase):
 
         """
         for child in self.dataset:
-            if child.tag.lstrip(self.namespace) in DAP4_TO_NUMPY_MAP:
+            if child.tag.replace(self.namespace, '') in DAP4_TO_NUMPY_MAP:
                 variable_object = VariableFromDmr(child, self.cf_config,
                                                   self.name_map,
                                                   self.namespace)

@@ -116,6 +116,44 @@ CF_Overrides:
     Attributes:
       - Name: '_fill'
         Value: '-9999'
+  # The SPL3SMP_E coordinates references for variables in the
+  # /Soil_Moisture_Retrieval_Data_AM group do not include a leading slash
+  # in the .dmr.
+  - Applicability:
+      Mission: SMAP
+      ShortNamePath: SPL3SMP_E
+      Variable_Pattern: '/Soil_Moisture_Retrieval_Data_AM/.*'
+    Attributes:
+      - Name: 'coordinates'
+        Value: '/Soil_Moisture_Retrieval_Data_AM/latitude, /Soil_Moisture_Retrieval_Data_AM/longitude'
+  # The SPL3SMP_E coordinates references for variables in the
+  # /Soil_Moisture_Retrieval_Data_PM group incorrectly point to coordinate
+  # variables in the /Soil_Moisture_Retrieval_Data_AM group.
+  - Applicability:
+      Mission: SMAP
+      ShortNamePath: SPL3SMP_E
+      Variable_Pattern: '/Soil_Moisture_Retrieval_Data_PM/.*'
+    Attributes:
+      - Name: 'coordinates'
+        Value: '/Soil_Moisture_Retrieval_Data_PM/latitude, /Soil_Moisture_Retrieval_Data_PM/longitude'
+  - Applicability:
+      Mission: ICESat2
+      ShortNamePath: ATL20
+      Variable_Pattern: '/daily/day\d{2}/.+'
+    Attributes:
+      # The ATL20 /daily/day\d+ groups all contain delta_time_beg and
+      # delta_time_end variables. The rule below considers these to be
+      # ancillary information for the science variables in these groups, using
+      # a relative path.
+      - Name: 'ancillary_variables'
+        Value: './delta_time_beg, ./delta_time_end'
+      # The ATL20 coordinate references in the .dmr generated from OPeNDAP
+      # contains '______grid_x ______grid_y' instead of
+      # '../../grid_x ../../grid_y'. This should be checked once the variable
+      # subsetter works again, and uses a .dmrpp sidecar file. (The coordinates
+      # attribute looks correct in raw HDF-5 file)
+      - Name: 'coordinates'
+        Value: '../../grid_x ../../grid_y'
 
 # For extending CF references. This allows for CF references to persist, while
 # supplemental information is provided. In particular, e.g. for subsetting
@@ -187,6 +225,30 @@ CF_Supplements:
         Attributes:
           - Name: 'subset_control_variable_type'
             Value: 'segment_index_cnt'
+  - Applicability:
+      Mission: 'ICESat2'
+      ShortNamePath: 'ATL1[67]'
+    Global_Attributes:
+      - Name: 'Data_Organization'
+        Value: 'h5_grid'
+  - Applicability:
+      Mission: 'ICESat2'
+      ShortNamePath: 'ATL20'
+    Global_Attributes:
+      - Name: 'Data_Organization'
+        Value: 'h5_grid'
+    Applicability_Group:
+      - Applicability:
+          Variable_Pattern: '.*'
+        Attributes:
+          - Name: 'coordinates'
+            Value: '/crs'
+  - Applicability:
+      Mission: 'SMAP'
+      ShortNamePath: 'SPL3SMP_E'
+    Global_Attributes:
+      - Name: 'Data_Organization'
+        Value: 'h5_grid'
 
 # ToDo ShortNamePath: ATL10
   - Applicability:

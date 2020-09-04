@@ -287,7 +287,9 @@ class TestVariableDmr(TestCase):
                     '/gt1r_latitude': '/gt1r/latitude',
                     '/gt1r_longitude': '/gt1r/longitude',
                     '/latitude': '/latitude',
-                    '/longitude': '/longitude'}
+                    '/longitude': '/longitude',
+                    '/global_aerosol_frac': '/global_aerosol_frac',
+                    '/global_lat': '/global_lat'}
 
         variable_name = '/gt1r/heights/bckgrd_mean'
         test_args = [['In parent group', '../latitude', '/gt1r/latitude'],
@@ -307,6 +309,29 @@ class TestVariableDmr(TestCase):
                     f'  </{self.namespace}Attribute>'
                     f'</{self.namespace}Float64>'
                 )
+                variable = VariableFromDmr(dmr_variable, self.fakesat_config,
+                                           name_map, self.namespace)
+                self.assertEqual(variable.coordinates, {qualified_reference})
+
+        root_var_name = '/global_aerosol_frac'
+        test_args = [
+            ['Root, relative with leading slash', '/global_lat', '/global_lat'],
+            ['Root, relative needs leading slash', 'global_lat', '/global_lat']
+        ]
+
+        for description, coordinates, qualified_reference in test_args:
+            with self.subTest(description):
+                dmr_variable = ET.fromstring(
+                    f'<{self.namespace}Float64 name="/global_aerosol_frac">'
+                    f'  <{self.namespace}Attribute name="coordinates" type="String">'
+                    f'    <{self.namespace}Value>{coordinates}</{self.namespace}Value>'
+                    f'  </{self.namespace}Attribute>'
+                    f'  <{self.namespace}Attribute name="fullnamepath" type="String">'
+                    f'    <{self.namespace}Value>{root_var_name}</{self.namespace}Value>'
+                    f'  </{self.namespace}Attribute>'
+                    f'</{self.namespace}Float64>'
+                )
+
                 variable = VariableFromDmr(dmr_variable, self.fakesat_config,
                                            name_map, self.namespace)
                 self.assertEqual(variable.coordinates, {qualified_reference})

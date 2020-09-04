@@ -183,8 +183,9 @@ class VariableBase(ABC):
             list of absolute references.
 
         """
+        references = set()
+
         if self.group_path is not None:
-            references = set()
             for reference in raw_references:
                 if reference.startswith('../'):
                     # Reference is relative, and requires manipulation
@@ -202,7 +203,13 @@ class VariableBase(ABC):
                 references.add(absolute_path)
 
         else:
-            references = set(raw_references)
+            for reference in raw_references:
+                if reference.startswith('/'):
+                    absolute_path = reference
+                else:
+                    absolute_path = f'/{reference}'
+
+                references.add(absolute_path)
 
         return references
 

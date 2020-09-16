@@ -29,7 +29,8 @@ class VariableBase(ABC):
     """
 
     def __init__(self, variable: BaseType, cf_config: CFConfig,
-                 name_map: Dict[str, str], namespace: Optional[str] = None):
+                 name_map: Dict[str, str], namespace: Optional[str] = None,
+                 full_name_path: Optional[str] = None):
         """ Extract the references contained within the variable's coordinates,
             ancillary_variables or dimensions. These should be augmented by
             information from the CFConfig instance passed to the class.
@@ -40,7 +41,12 @@ class VariableBase(ABC):
 
         """
         self.namespace = namespace
-        self.full_name_path = self._get_attribute(variable, 'fullnamepath')
+
+        if full_name_path is not None:
+            self.full_name_path = full_name_path
+        else:
+            self.full_name_path = self._get_attribute(variable, 'fullnamepath')
+
         self.cf_config = cf_config.get_cf_attributes(self.full_name_path)
         self.group_path, self.name = self._extract_group_and_name(variable)
 
@@ -165,11 +171,14 @@ class VariableBase(ABC):
         """
         overrides = self.cf_config['cf_overrides'].get('dimensions')
         supplements = self.cf_config['cf_supplements'].get('dimensions')
+        inverse_mapping = {with_underscores: with_slashes
+                           for with_slashes, with_underscores
+                           in name_map.items()}
 
         if overrides is not None:
             dimensions = re.split(r'\s+|,\s*', overrides)
         else:
-            dimensions = [name_map.get(dimension, dimension)
+            dimensions = [inverse_mapping.get(dimension, dimension)
                           for dimension in self._get_raw_dimensions(variable)
                           if dimension is not None]
 

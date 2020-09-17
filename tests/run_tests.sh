@@ -27,6 +27,7 @@ fi
 echo "\n"
 echo "Test Coverage Estimates"
 coverage report --omit="*tests/*" 
+coverage html --omit="*tests/*" -d /home/tests/coverage
 
 # Run pylint
 pylint pymods subsetter.py --disable=E0401

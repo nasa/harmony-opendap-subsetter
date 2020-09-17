@@ -82,8 +82,13 @@ can be run within a Docker container using the following two scripts:
 
 ```bash
 ./bin/build-test
-./bin/run-test /full/path/to/maskfill-coverage
+./bin/run-test /full/path/to/var_subsetter-coverage
 ```
+
+Coverage reports are being generate for each build in Bamboo, and saved as artifacts.
+Following URL is an example coverage report in Bamboo:
+
+https://ci.earthdata.nasa.gov/artifact/HITC-SVS20/BRT/build-3/Coverage-Report/source/tests/coverage/index.html
 
 For faster iteration, one can use the `build-env` and `run-dev` scripts:
 

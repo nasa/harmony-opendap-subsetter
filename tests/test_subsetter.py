@@ -21,8 +21,7 @@ class TestSubsetterEndToEnd(TestCase):
     def setUpClass(cls):
         """ Test fixture that can be set once for all tests in the class. """
         cls.granule_url = 'https://harmony.uat.earthdata.nasa.gov/opendap_url'
-        cls.variable_name = 'gt1r_geophys_corr_geoid'
-        cls.variable_full_path = 'gt1r/geophys_corr/geoid'
+        cls.variable_full_path = '/gt1r/geophys_corr/geoid'
         cls.expected_variables = ['gt1r_geolocation_delta_time',
                                   'gt1r_geolocation_reference_photon_lon',
                                   'gt1r_geolocation_podppd_flag',
@@ -60,7 +59,7 @@ class TestSubsetterEndToEnd(TestCase):
             'sources': [
                 {'granules' : [{'url': self.granule_url}],
                  'variables': [{'id': '',
-                                'name': self.variable_name,
+                                'name': self.variable_full_path,
                                 'fullPath': self.variable_full_path}]}
             ],
             'user': 'fhaise'
@@ -122,7 +121,7 @@ class TestSubsetterEndToEnd(TestCase):
             'sources': [
                 {'granules' : [{'url': self.granule_url}],
                  'variables': [{'id': '',
-                                'name': self.variable_name,
+                                'name': '/science_variable',
                                 'fullPath': '/science_variable'}]}
             ],
             'user': 'fhaise'

@@ -13,6 +13,7 @@ Collection_ShortName_Path:
   - '/METADATA/SeriesIdentification/shortName'
   - '/HDF5_GLOBAL/id'
   - '/NC_GLOBAL/id'
+  - 'short_name'
 
 # A set of mission tagged shortname patterns defines a mission name for
 # matching shortname values.

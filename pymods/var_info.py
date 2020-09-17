@@ -324,13 +324,12 @@ class VarInfoFromDmr(VarInfoBase):
             (e.g.: "group_variable" to "/group/variable").
 
         """
-        self.name_map = {
-            f'/{child.get("name")}': get_xml_attribute(
-                child, 'fullnamepath', self.namespace, child.get('name')
-            )
-            for child in self.dataset
-            if child.tag.replace(self.namespace, '') in DAP4_TO_NUMPY_MAP
-        }
+        def assign_to_name_map(output, group_path, element):
+            element_path = '/'.join([group_path, element.get('name')])
+            output[element_path] = element_path.lstrip('/').replace('/', '_')
+
+        self.traverse_variables(self.dataset, assign_to_name_map,
+                                self.name_map)
 
     def _set_global_attributes(self):
         """ Check the attributes of the returned `.dmr` XML tree. """
@@ -368,12 +367,36 @@ class VarInfoFromDmr(VarInfoBase):
             dictionary accordingly.
 
         """
-        for child in self.dataset:
-            if child.tag.replace(self.namespace, '') in DAP4_TO_NUMPY_MAP:
-                variable_object = VariableFromDmr(child, self.cf_config,
-                                                  self.name_map,
-                                                  self.namespace)
-                self._assign_variable(variable_object)
+        def save_variable(output, group_path, element):
+            element_path = '/'.join([group_path, element.get('name')])
+            variable = VariableFromDmr(element, self.cf_config, self.name_map,
+                                       namespace=self.namespace,
+                                       full_name_path=element_path)
+            output[variable.full_name_path] = variable
+            self._assign_variable(variable)
+
+        all_variables = {}
+        self.traverse_variables(self.dataset, save_variable, all_variables)
+
+    def traverse_variables(self, element: ET.Element, operation, output,
+                           group_path: str = ''):
+        """ Perform a depth first search of the `.dmr` `Dataset` element.
+            When a variable is located perform an operation on the supplied
+            output object, using the supplied function or class.
+
+        """
+
+        for child in list(element):
+            # If it is in the DAP4 list: use the function
+            # else, if it is a Group, call this function again
+            element_type = child.tag.replace(self.namespace, '')
+
+            if element_type in DAP4_TO_NUMPY_MAP:
+                operation(output, group_path, child)
+            elif element_type == 'Group':
+                new_group_path = '/'.join([group_path, child.get('name')])
+                self.traverse_variables(child, operation, output,
+                                        new_group_path)
 
 
 class VarInfoFromPydap(VarInfoBase):
@@ -394,11 +417,11 @@ class VarInfoFromPydap(VarInfoBase):
 
     def _set_name_map(self):
         """ Create a mapping from pydap variable name to the full path.
-            (e.g.: "group_variable" to "/group/variable").
+            (e.g.: "/group/variable" to "group_variable").
 
         """
         self.name_map = {
-            pydap_name: variable.attributes.get('fullnamepath', pydap_name)
+            variable.attributes.get('fullnamepath', pydap_name): pydap_name
             for pydap_name, variable
             in self.dataset.items()
         }

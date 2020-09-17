@@ -84,7 +84,7 @@ class TestVariableFromPydap(TestCase):
         cls.config_file = 'tests/unit/data/test_config.yml'
         cls.fakesat_config = CFConfig('FakeSat', 'FAKE99',
                                       config_file=cls.config_file)
-        cls.fakesat_map = {'dimensions': '/dimensions'}
+        cls.fakesat_map = {'/dimensions': 'dimensions'}
         cls.variable_attributes = {
             'ancillary_variables': '/ancillary_data/epoch',
             'coordinates': 'latitude, longitude',
@@ -189,8 +189,8 @@ class TestVariableFromPydap(TestCase):
 
         """
         variable_name = 'group_one_variable'
-        pydap_map = {'group_one_delta_time': '/group_one/delta_time',
-                     'group_one_variable': '/group_one/variable'}
+        pydap_map = {'/group_one/delta_time': 'group_one_delta_time',
+                     '/group_one/variable': 'group_one_variable'}
         pydap_attributes = {'fullnamepath': variable_name}
         pydap_variable = BaseType(variable_name, np.ones((2, 2)),
                                   attributes=pydap_attributes,
@@ -216,20 +216,17 @@ class TestVariableDmr(TestCase):
         cls.config_file = 'tests/unit/data/test_config.yml'
         cls.fakesat_config = CFConfig('FakeSat', 'FAKE99',
                                       config_file=cls.config_file)
-        cls.fakesat_map = {'/group_dimension': '/group/dimension',
-                           '/group_variable': '/group/variable'}
+        cls.fakesat_map = {'/group/dimension': '/group_dimension',
+                           '/group/variable': '/group_variable'}
         cls.namespace = 'namespace_string'
         cls.dmr_variable = ET.fromstring(
-            f'<{cls.namespace}Float64 name="/group_variable">'
-            f'  <{cls.namespace}Dim name="/group_dimension" />'
+            f'<{cls.namespace}Float64 name="variable">'
+            f'  <{cls.namespace}Dim name="dimension" />'
             f'  <{cls.namespace}Attribute name="ancillary_variables" type="String">'
             f'    <{cls.namespace}Value>/ancillary_data/epoch</{cls.namespace}Value>'
             f'  </{cls.namespace}Attribute>'
             f'  <{cls.namespace}Attribute name="coordinates" type="String">'
             f'    <{cls.namespace}Value>latitude, longitude</{cls.namespace}Value>'
-            f'  </{cls.namespace}Attribute>'
-            f'  <{cls.namespace}Attribute name="fullnamepath" type="String">'
-            f'    <{cls.namespace}Value>/group/variable</{cls.namespace}Value>'
             f'  </{cls.namespace}Attribute>'
             f'  <{cls.namespace}Attribute name="subset_control_variables" type="String">'
             f'    <{cls.namespace}Value>begin count</{cls.namespace}Value>'
@@ -239,6 +236,7 @@ class TestVariableDmr(TestCase):
             f'  </{cls.namespace}Attribute>'
             f'</{cls.namespace}Float64>'
         )
+        cls.dmr_variable_path = '/group/variable'
 
     def test_variable_instantiation(self):
         """ Ensure a `Variable` instance can be created from an input `.dmr`
@@ -246,7 +244,8 @@ class TestVariableDmr(TestCase):
 
         """
         variable = VariableFromDmr(self.dmr_variable, self.fakesat_config,
-                                   self.fakesat_map, self.namespace)
+                                   self.fakesat_map, self.namespace,
+                                   self.dmr_variable_path)
         self.assertEqual(variable.full_name_path, '/group/variable')
         self.assertEqual(variable.group_path, '/group')
         self.assertEqual(variable.name, 'variable')
@@ -261,7 +260,7 @@ class TestVariableDmr(TestCase):
     def test_variable_cf_override(self):
         """ Ensure a CF attribute is overridden by the `CFConfig` value. """
         dmr_variable = ET.fromstring(
-            f'<{self.namespace}Float64 name="/coordinates_group_science">'
+            f'<{self.namespace}Float64 name="science">'
             f'  <{self.namespace}Attribute name="coordinates" type="String">'
             f'    <{self.namespace}Value>latitude, longitude</{self.namespace}Value>'
             f'  </{self.namespace}Attribute>'
@@ -271,10 +270,10 @@ class TestVariableDmr(TestCase):
             f'</{self.namespace}Float64>'
         )
 
-        name_map = {'/coordinates_group_science': '/coordinates_group/science'}
+        name_map = {'/coordinates_group/science': '/coordinates_group_science'}
 
         variable = VariableFromDmr(dmr_variable, self.fakesat_config, name_map,
-                                   self.namespace)
+                                   self.namespace, '/coordinates_group/science')
         self.assertEqual(variable.coordinates, {'/coordinates_group/lat',
                                                 '/coordinates_group/lon'})
 
@@ -283,9 +282,9 @@ class TestVariableDmr(TestCase):
             qualified.
 
         """
-        name_map = {'/gt1r_heights_bckgrd_mean': '/gt1r/heights/bckgrd_mean',
-                    '/gt1r_latitude': '/gt1r/latitude',
-                    '/gt1r_longitude': '/gt1r/longitude',
+        name_map = {'/gt1r/heights/bckgrd_mean': '/gt1r_heights_bckgrd_mean',
+                    '/gt1r/latitude': '/gt1r_latitude',
+                    '/gt1r/longitude': '/gt1r_longitude',
                     '/latitude': '/latitude',
                     '/longitude': '/longitude',
                     '/global_aerosol_frac': '/global_aerosol_frac',
@@ -343,7 +342,8 @@ class TestVariableDmr(TestCase):
 
         """
         variable = VariableFromDmr(self.dmr_variable, self.fakesat_config,
-                                   self.fakesat_map, self.namespace)
+                                   self.fakesat_map, self.namespace,
+                                   self.dmr_variable_path)
 
         references = variable.get_references()
 
@@ -366,8 +366,8 @@ class TestVariableDmr(TestCase):
 
         """
         variable_name = '/group_one_variable'
-        name_map = {'/group_one_delta_time': '/group_one/delta_time',
-                    '/group_one_variable': '/group_one/variable'}
+        name_map = {'/group_one/delta_time': '/group_one_delta_time',
+                    '/group_one/variable': '/group_one_variable'}
 
         dmr_variable = ET.fromstring(
             f'<{self.namespace}Float64 name="{variable_name}">'

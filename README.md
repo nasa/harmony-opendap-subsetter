@@ -82,7 +82,7 @@ can be run within a Docker container using the following two scripts:
 
 ```bash
 ./bin/build-test
-./bin/run-test
+./bin/run-test /full/path/to/maskfill-coverage
 ```
 
 For faster iteration, one can use the `build-env` and `run-dev` scripts:

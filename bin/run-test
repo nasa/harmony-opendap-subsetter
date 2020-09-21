@@ -13,4 +13,4 @@ set -ex
 
 find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
 
-docker run --rm sds/variable-subsetter-test "$@"
+docker run --rm -v "$1":/home/tests/coverage sds/variable-subsetter-test "${@:2}"

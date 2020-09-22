@@ -6,7 +6,8 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
-from pymods.exceptions import DmrNamespaceError, UrlAccessFailedWithRetries
+from pymods.exceptions import (DmrNamespaceError, UrlAccessFailed,
+                               UrlAccessFailedWithRetries)
 from pymods.utilities import (download_url, get_file_mimetype,
                               get_xml_attribute, get_xml_namespace,
                               HTTP_REQUEST_ATTEMPTS, pydap_attribute_path,
@@ -171,7 +172,7 @@ class TestUtilities(TestCase):
         with self.subTest('Non-500 error does not retry, and is re-raised.'):
             mock_util_download.side_effect = [http_error_other, http_response]
 
-            with self.assertRaises(HTTPError):
+            with self.assertRaises(UrlAccessFailed):
                 download_url(test_url, output_directory, self.logger)
                 mock_util_download.assert_called_once_with(test_url,
                                                            output_directory,

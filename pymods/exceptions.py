@@ -36,6 +36,16 @@ class PydapRetrievalError(CustomError):
         super().__init__('PydapRetrievalError', message)
 
 
+class UrlAccessFailed(CustomError):
+    """ This exception is raise when an HTTP request for a given URL has a non
+        500 error, and is therefore not retried.
+
+    """
+    def __init__(self, url, status_code):
+        super().__init__('UrlAccessFailed',
+                         f'{status_code} error retrieving: {url}')
+
+
 class UrlAccessFailedWithRetries(CustomError):
     """ This exception is raised when an HTTP request for a given URL has
         failed a specified number of times.

@@ -16,8 +16,8 @@ from webob.exc import HTTPError, HTTPRedirection
 from pymods.cf_config import CFConfig
 from pymods.exceptions import PydapRetrievalError
 from pymods.utilities import (DAP4_TO_NUMPY_MAP, download_url,
-                              get_xml_attribute, get_xml_namespace,
-                              pydap_attribute_path, recursive_get)
+                              get_xml_namespace, pydap_attribute_path,
+                              recursive_get)
 from pymods.variable import VariableFromDmr, VariableFromPydap
 
 

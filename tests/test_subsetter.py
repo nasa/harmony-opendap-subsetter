@@ -77,7 +77,8 @@ class TestSubsetterEndToEnd(TestCase):
 
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,
-                                                     subsetter.logger)
+                                                     subsetter.logger,
+                                                     data='')
 
         subset_url = mock_download_subset.call_args[0][0]
         self.assertTrue(subset_url.startswith(f'{self.granule_url}.nc4?'))
@@ -137,7 +138,8 @@ class TestSubsetterEndToEnd(TestCase):
 
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,
-                                                     subsetter.logger)
+                                                     subsetter.logger,
+                                                     data='')
 
         subset_url = mock_download_subset.call_args[0][0]
         self.assertTrue(subset_url.startswith(f'{self.granule_url}.nc4?'))

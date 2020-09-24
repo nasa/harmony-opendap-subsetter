@@ -49,6 +49,7 @@ class TestSubset(TestCase):
             mock_download_url.assert_called_once_with(
                 f'{self.granule_url}.nc4?alpha_var,blue_var',
                 contains('/tmp/tmp'),
-                self.logger
+                self.logger,
+                data=''
             )
             self.assertIn('africa_subset.nc4', output_path)

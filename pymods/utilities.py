@@ -117,7 +117,7 @@ def get_xml_attribute(variable: Element, attribute_name: str, namespace: str,
     return attribute_value
 
 
-def download_url(url: str, destination: str, logger: Logger) -> str:
+def download_url(url: str, destination: str, logger: Logger, data=None) -> str:
     """ Use built-in Harmony functionality to download from a URL. This is
         expected to be used for obtaining the granule `.dmr` and the granule
         itself (only the required variables).
@@ -138,7 +138,7 @@ def download_url(url: str, destination: str, logger: Logger) -> str:
         attempts += 1
 
         try:
-            response = util_download(url, destination, logger)
+            response = util_download(url, destination, logger, data=data)
             request_completed = True
         except HTTPError as http_exception:
             logger.info('In HTTPError except\n\n\n\n')

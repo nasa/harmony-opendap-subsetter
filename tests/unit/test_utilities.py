@@ -157,7 +157,8 @@ class TestUtilities(TestCase):
             self.assertEqual(response, http_response)
             mock_util_download.assert_called_once_with(test_url,
                                                        output_directory,
-                                                       self.logger)
+                                                       self.logger,
+                                                       data=None)
 
             mock_util_download.reset_mock()
 

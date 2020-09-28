@@ -28,7 +28,7 @@ class TestSubset(TestCase):
     def setUp(self):
         self.logger = Logger('tests')
 
-    @patch('pymods.subset.VarInfoFromDmr')
+    @patch('pymods.subset.VarInfo')
     @patch('pymods.subset.download_url')
     def test_subset_granule(self, mock_download_url, mock_var_info_dmr):
         """ Ensure valid request does not raise exception,

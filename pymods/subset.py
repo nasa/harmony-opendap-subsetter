@@ -10,14 +10,11 @@ from urllib.parse import urlencode
 from harmony.message import Granule
 
 from pymods.utilities import download_url
-from pymods.var_info import VarInfoFromDmr, VarInfoFromPydap
-
-
-VAR_INFO_SOURCE = 'dmr'
+from pymods.var_info import VarInfo
 
 
 def subset_granule(granule: Granule, logger: Logger) -> str:
-    """ This function takes a single Harmony Granule object, and extracts the
+    """ This function takes a single Harmony `Granule` object, and extracts the
         requested variables, and those sub-variables they depend
         upon (such as coordinates), to produce an output file with only those
         variables. The path of this output file is returned.
@@ -37,13 +34,8 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     logger.info(f'Requested variables: {requested_variables}')
 
     # Harmony provides the OPeNDAP URL as the granule URL for this service
-    # Determine whether to request the `.dmr` or to request the raw path from
-    # `pydap`.
-    if VAR_INFO_SOURCE == 'dmr':
-        dmr_url = granule.url + '.dmr'
-        dataset = VarInfoFromDmr(dmr_url, logger, temp_dir)
-    else:
-        dataset = VarInfoFromPydap(granule.url, logger, temp_dir)
+    dmr_url = granule.url + '.dmr'
+    dataset = VarInfo(dmr_url, logger, temp_dir)
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.

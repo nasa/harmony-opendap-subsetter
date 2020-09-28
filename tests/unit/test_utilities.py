@@ -10,8 +10,8 @@ from pymods.exceptions import (DmrNamespaceError, UrlAccessFailed,
                                UrlAccessFailedWithRetries)
 from pymods.utilities import (download_url, get_file_mimetype,
                               get_xml_attribute, get_xml_namespace,
-                              HTTP_REQUEST_ATTEMPTS, pydap_attribute_path,
-                              recursive_get)
+                              HTTP_REQUEST_ATTEMPTS, recursive_get,
+                              split_attribute_path)
 
 
 class TestUtilities(TestCase):
@@ -57,10 +57,10 @@ class TestUtilities(TestCase):
                 self.assertEqual(recursive_get(test_dictionary, keys),
                                  expected_output)
 
-    def test_pydap_attribute_path(self):
+    def test_split_attribute_path(self):
         """ Check that a fully qualified path to a metadata attribute is
             correctly converted to a combination of two keys, to locate the
-            attribute in the pydap global attributes for the granule.
+            attribute in the global attributes for the granule.
 
             For example: /Metadata/SeriesIdentification/shortName will be
             located at: dataset.attributes['Metadata_SeriesIdentification']['shortName']
@@ -70,11 +70,11 @@ class TestUtilities(TestCase):
                      ['Singly nested', '/Metadata/short_name',
                       ['Metadata', 'short_name']],
                      ['Doubly nested', '/Metadata/Series/short_name',
-                      ['Metadata_Series', 'short_name']]]
+                      ['Metadata', 'Series', 'short_name']]]
 
         for description, full_path, expected_key_list in test_args:
             with self.subTest(description):
-                self.assertEqual(pydap_attribute_path(full_path),
+                self.assertEqual(split_attribute_path(full_path),
                                  expected_key_list)
 
     def test_get_xml_namespace(self):

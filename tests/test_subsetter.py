@@ -4,13 +4,11 @@ from unittest import TestCase
 from unittest.mock import patch
 from urllib.parse import parse_qsl
 import json
-import os
 
 import  harmony
 
 from subsetter import HarmonyAdapter
-from tests.utilities import (contains, generate_pydap_response, mock_variables,
-                             write_dmr)
+from tests.utilities import contains, write_dmr
 
 
 environment_variables = {'EDL_USERNAME': 'fhaise', 'EDL_PASSWORD': 'A13'}
@@ -90,70 +88,6 @@ class TestSubsetterEndToEnd(TestCase):
 
         requested_variables = query_parameters[0][1].split(';')
         self.assertCountEqual(requested_variables, self.expected_variables)
-
-        mock_completed_with_local_file.assert_called_once_with(
-            contains('opendap_url_subset.nc4'),
-            source_granule=granule,
-            is_regridded=False,
-            is_subsetted=False,
-            is_variable_subset=True,
-            mime='application/octet-stream'
-        )
-
-        mock_cleanup.assert_called_once()
-
-    @patch('pymods.subset.VAR_INFO_SOURCE', 'pydap')
-    @patch.object(harmony.BaseHarmonyAdapter, 'completed_with_local_file')
-    @patch.object(harmony.BaseHarmonyAdapter, 'cleanup')
-    @patch('pymods.subset.mkdtemp')
-    @patch('pymods.subset.download_url')
-    @patch('pymods.var_info.open_url')
-    def test_pydap_end_to_end(self, mock_open_url, mock_download_subset,
-                              mock_mkdtemp, mock_cleanup,
-                              mock_completed_with_local_file):
-        """ Ensure the subsetter will run end-to-end, only mocking the
-            HTTP response, and the output interactions with Harmony.
-
-        """
-        mock_mkdtemp.return_value = self.tmp_dir
-        mock_open_url.return_value = generate_pydap_response(
-            mock_variables, {'HDF5_GLOBAL': {'short_name': 'ATL03'}}
-        )
-        mock_download_subset.return_value = 'opendap_url_subset.nc4'
-        expected_variables = ['/ancillary_one', '/dimension_one', '/latitude',
-                              '/longitude', '/science_variable', '/subset_one']
-
-        message_data = {
-            'sources': [
-                {'granules' : [{'url': self.granule_url}],
-                 'variables': [{'id': '',
-                                'name': '/science_variable',
-                                'fullPath': '/science_variable'}]}
-            ],
-            'user': 'fhaise'
-        }
-        message = harmony.message.Message(json.dumps(message_data))
-
-        subsetter = HarmonyAdapter(message)
-        granule = subsetter.message.granules[0]
-        subsetter.invoke()
-
-        mock_mkdtemp.assert_called_once()
-        mock_open_url.assert_called_once_with(self.granule_url)
-
-        mock_download_subset.assert_called_once_with(contains(self.granule_url),
-                                                     self.tmp_dir,
-                                                     subsetter.logger,
-                                                     data='')
-
-        subset_url = mock_download_subset.call_args[0][0]
-        self.assertTrue(subset_url.startswith(f'{self.granule_url}.dap.nc4?'))
-
-        query_parameters = parse_qsl(subset_url.split('?')[1])
-        self.assertEqual('dap4.ce', query_parameters[0][0])
-
-        requested_variables = query_parameters[0][1].split(';')
-        self.assertCountEqual(requested_variables, expected_variables)
 
         mock_completed_with_local_file.assert_called_once_with(
             contains('opendap_url_subset.nc4'),

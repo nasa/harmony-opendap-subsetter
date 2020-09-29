@@ -2,6 +2,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import patch
+from urllib.parse import parse_qsl
 import json
 import os
 
@@ -22,12 +23,12 @@ class TestSubsetterEndToEnd(TestCase):
         """ Test fixture that can be set once for all tests in the class. """
         cls.granule_url = 'https://harmony.uat.earthdata.nasa.gov/opendap_url'
         cls.variable_full_path = '/gt1r/geophys_corr/geoid'
-        cls.expected_variables = ['gt1r_geolocation_delta_time',
-                                  'gt1r_geolocation_reference_photon_lon',
-                                  'gt1r_geolocation_podppd_flag',
-                                  'gt1r_geophys_corr_delta_time',
-                                  'gt1r_geolocation_reference_photon_lat',
-                                  'gt1r_geophys_corr_geoid']
+        cls.expected_variables = ['/gt1r/geolocation/delta_time',
+                                  '/gt1r/geolocation/reference_photon_lon',
+                                  '/gt1r/geolocation/podppd_flag',
+                                  '/gt1r/geophys_corr/delta_time',
+                                  '/gt1r/geolocation/reference_photon_lat',
+                                  '/gt1r/geophys_corr/geoid']
 
         with open('tests/data/ATL03_example.dmr', 'r') as file_handler:
             cls.atl03_dmr = file_handler.read()
@@ -75,15 +76,19 @@ class TestSubsetterEndToEnd(TestCase):
                                                   self.tmp_dir,
                                                   subsetter.logger)
 
+
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,
                                                      subsetter.logger,
                                                      data='')
 
         subset_url = mock_download_subset.call_args[0][0]
-        self.assertTrue(subset_url.startswith(f'{self.granule_url}.nc4?'))
+        self.assertTrue(subset_url.startswith(f'{self.granule_url}.dap.nc4?'))
 
-        requested_variables = subset_url.split('?')[1].split(',')
+        query_parameters = parse_qsl(subset_url.split('?')[1])
+        self.assertEqual('dap4.ce', query_parameters[0][0])
+
+        requested_variables = query_parameters[0][1].split(';')
         self.assertCountEqual(requested_variables, self.expected_variables)
 
         mock_completed_with_local_file.assert_called_once_with(
@@ -115,8 +120,8 @@ class TestSubsetterEndToEnd(TestCase):
             mock_variables, {'HDF5_GLOBAL': {'short_name': 'ATL03'}}
         )
         mock_download_subset.return_value = 'opendap_url_subset.nc4'
-        expected_variables = ['ancillary_one', 'dimension_one', 'latitude',
-                              'longitude', 'science_variable', 'subset_one']
+        expected_variables = ['/ancillary_one', '/dimension_one', '/latitude',
+                              '/longitude', '/science_variable', '/subset_one']
 
         message_data = {
             'sources': [
@@ -142,9 +147,12 @@ class TestSubsetterEndToEnd(TestCase):
                                                      data='')
 
         subset_url = mock_download_subset.call_args[0][0]
-        self.assertTrue(subset_url.startswith(f'{self.granule_url}.nc4?'))
+        self.assertTrue(subset_url.startswith(f'{self.granule_url}.dap.nc4?'))
 
-        requested_variables = subset_url.split('?')[1].split(',')
+        query_parameters = parse_qsl(subset_url.split('?')[1])
+        self.assertEqual('dap4.ce', query_parameters[0][0])
+
+        requested_variables = query_parameters[0][1].split(';')
         self.assertCountEqual(requested_variables, expected_variables)
 
         mock_completed_with_local_file.assert_called_once_with(

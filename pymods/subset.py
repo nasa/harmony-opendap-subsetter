@@ -5,6 +5,7 @@
 """
 from logging import Logger
 from tempfile import mkdtemp
+from urllib.parse import urlencode
 
 from harmony.message import Granule
 
@@ -52,13 +53,10 @@ def subset_granule(granule: Granule, logger: Logger) -> str:
     # TODO: Add switch mechanism for including (or not including) all metadata
     # variables in every subset request to OPeNDAP.
 
-    # Make all required variable names compatible with an OPeNDAP subset URL.
-    # Note: When using DAP4 (e.g. ".dap.nc4") we should be able to use the
-    # original values for required_variables, from above, in the OPeNDAP URL.
-    required_variables = [variable.lstrip('/').replace('/', '_')
-                          for variable in required_variables]
-
-    # TODO: Update URL to ".dap.nc4".
-    opendap_url = f'{granule.url}.nc4?{",".join(required_variables)}'
+    # Build the DAP4 format constraint expression, which is a semi-colon
+    # separated list of variable names.
+    # This should be in the request body, not a query string parameter.
+    constraint_expression = urlencode({'dap4.ce': ';'.join(required_variables)})
+    opendap_url = f'{granule.url}.dap.nc4?{constraint_expression}'
 
     return download_url(opendap_url, temp_dir, logger, data='')

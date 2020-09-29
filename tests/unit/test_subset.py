@@ -33,6 +33,8 @@ class TestSubset(TestCase):
     def test_subset_granule(self, mock_download_url, mock_var_info_dmr):
         """ Ensure valid request does not raise exception,
             raise appropriate exception otherwise.
+            Note: %2F is a URL encoded slash and %3B is a URL encoded semi-colon.
+
         """
         granule = self.message.granules[0]
         mock_download_url.return_value = 'africa_subset.nc4'
@@ -47,7 +49,7 @@ class TestSubset(TestCase):
         with self.subTest('Succesful calls to OPeNDAP'):
             output_path = subset_granule(granule, self.logger)
             mock_download_url.assert_called_once_with(
-                f'{self.granule_url}.nc4?alpha_var,blue_var',
+                f'{self.granule_url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
                 contains('/tmp/tmp'),
                 self.logger,
                 data=''

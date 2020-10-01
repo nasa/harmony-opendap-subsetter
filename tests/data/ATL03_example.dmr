@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="http://opendap.uat.earthdata.nasa.gov/providers/EEDTEST/collections/ATLAS-ICESat-2%20L2A%20Global%20Geolocated%20Photon%20Data%20V003/granules/hier_EEDTEST-ATL03-003-ATL03_20181228015957" dapVersion="4.0" dmrVersion="1.0" name="ATL03_20181228015957_13810110_003_01.h5">
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="http://opendap.uat.earthdata.nasa.gov/providers/EEDTEST/collections/ATLAS-ICESat-2%20L2A%20Global%20Geolocated%20Photon%20Data%20V003/granules/EEDTEST-ATL03-003-ATL03_20200714T235814" dapVersion="4.0" dmrVersion="1.0" name="ATL03_20200714235814_03000802_003_01.h5">
     <Dimension name="ds_surf_type" size="5"/>
     <Dimension name="ds_xyz" size="3"/>
     <Int32 name="ds_surf_type">
@@ -117,40 +117,40 @@
         <Value>SET_BY_META</Value>
     </Attribute>
     <Attribute name="date_created" type="String">
-        <Value>2020-03-21T12:54:34.000000Z</Value>
+        <Value>2020-08-21T22:55:53.000000Z</Value>
     </Attribute>
     <Attribute name="hdfversion" type="String">
         <Value>HDF5 1.10.3</Value>
     </Attribute>
     <Attribute name="history" type="String">
-        <Value>2020-03-21T12:54:34.000000Z;5a847446-832e-3206-8ca9-8a632e4d761b;Created by PGE atlas_l2a_alt Version 3.3</Value>
+        <Value>2020-08-21T22:55:53.000000Z;73495098-9c1d-3fa2-8adb-4a20ded54483;Created by PGE atlas_l2a_alt Version 3.3</Value>
     </Attribute>
     <Attribute name="identifier_file_uuid" type="String">
-        <Value>5a847446-832e-3206-8ca9-8a632e4d761b</Value>
+        <Value>73495098-9c1d-3fa2-8adb-4a20ded54483</Value>
     </Attribute>
     <Attribute name="identifier_product_format_version" type="String">
         <Value>3.3</Value>
     </Attribute>
     <Attribute name="time_coverage_duration" type="Float64">
-        <Value>461.</Value>
+        <Value>510.</Value>
     </Attribute>
     <Attribute name="time_coverage_end" type="String">
-        <Value>2018-12-28T02:07:38.000000Z</Value>
+        <Value>2020-07-15T00:06:44.000000Z</Value>
     </Attribute>
     <Attribute name="time_coverage_start" type="String">
-        <Value>2018-12-28T01:59:57.000000Z</Value>
+        <Value>2020-07-14T23:58:14.000000Z</Value>
     </Attribute>
     <Attribute name="geospatial_lat_min" type="Float64">
-        <Value>-79.002441705550709</Value>
+        <Value>26.997128728703963</Value>
     </Attribute>
     <Attribute name="geospatial_lon_min" type="Float64">
-        <Value>-42.33993820187478</Value>
+        <Value>130.39180268564937</Value>
     </Attribute>
     <Attribute name="geospatial_lat_max" type="Float64">
-        <Value>-50.209962155122966</Value>
+        <Value>59.504284794207422</Value>
     </Attribute>
     <Attribute name="geospatial_lon_max" type="Float64">
-        <Value>-32.276188773376937</Value>
+        <Value>134.94866774182643</Value>
     </Attribute>
     <Attribute name="publisher_name" type="String">
         <Value>NSIDC DAAC &gt; NASA National Snow and Ice Data Center Distributed Active Archive Center</Value>
@@ -410,7 +410,7 @@
       &lt;gmd:has&gt;
         &lt;gmi:MI_Metadata&gt;
           &lt;gmd:fileIdentifier&gt;
-            &lt;gmx:FileName&gt;ATL03_20181228015957_13810110_003_01.h5&lt;/gmx:FileName&gt;
+            &lt;gmx:FileName&gt;ATL03_20200714235814_03000802_003_01.h5&lt;/gmx:FileName&gt;
           &lt;/gmd:fileIdentifier&gt;
           &lt;gmd:contact&gt;
             &lt;gmd:CI_ResponsibleParty&gt;
@@ -441,7 +441,7 @@
             &lt;/gmd:CI_ResponsibleParty&gt;
           &lt;/gmd:contact&gt;
           &lt;gmd:dateStamp&gt;
-            &lt;gco:DateTime&gt;2020-03-21T12:54:34.000000Z&lt;/gco:DateTime&gt;
+            &lt;gco:DateTime&gt;2020-08-21T22:55:53.000000Z&lt;/gco:DateTime&gt;
           &lt;/gmd:dateStamp&gt;
           &lt;gmd:metadataStandardName&gt;
             &lt;gco:CharacterString&gt;ISO 19115-2 Geographic information - Metadata - Part 2: Extensions for imagery and gridded data&lt;/gco:CharacterString&gt;
@@ -454,12 +454,12 @@
               &lt;gmd:citation&gt;
                 &lt;gmd:CI_Citation&gt;
                   &lt;gmd:title&gt;
-                    &lt;gmx:FileName&gt;ATL03_20181228015957_13810110_003_01.h5&lt;/gmx:FileName&gt;
+                    &lt;gmx:FileName&gt;ATL03_20200714235814_03000802_003_01.h5&lt;/gmx:FileName&gt;
                   &lt;/gmd:title&gt;
                   &lt;gmd:date&gt;
                     &lt;gmd:CI_Date&gt;
                       &lt;gmd:date&gt;
-                        &lt;gco:DateTime&gt;2020-03-21T12:54:34.000000Z&lt;/gco:DateTime&gt;
+                        &lt;gco:DateTime&gt;2020-08-21T22:55:53.000000Z&lt;/gco:DateTime&gt;
                       &lt;/gmd:date&gt;
                       &lt;gmd:dateType&gt;
                         &lt;gmd:CI_DateTypeCode codeList=&quot;http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode&quot; codeListValue=&quot;creation&quot;&gt;creation&lt;/gmd:CI_DateTypeCode&gt;
@@ -489,7 +489,7 @@
                   &lt;gmd:identifier&gt;
                     &lt;gmd:MD_Identifier&gt;
                       &lt;gmd:code&gt;
-                        &lt;gco:CharacterString&gt;ATL03_20181228015957_13810110_003_01.h5&lt;/gco:CharacterString&gt;
+                        &lt;gco:CharacterString&gt;ATL03_20200714235814_03000802_003_01.h5&lt;/gco:CharacterString&gt;
                       &lt;/gmd:code&gt;
                       &lt;gmd:description&gt;
                         &lt;gco:CharacterString&gt;ProducerGranuleId&lt;/gco:CharacterString&gt;
@@ -535,7 +535,7 @@
                       &lt;gmd:geographicIdentifier&gt;
                         &lt;gmd:MD_Identifier&gt;
                           &lt;gmd:code&gt;
-                            &lt;gco:CharacterString&gt;AscendingCrossing: 165.20695928840985 StartLatitude: -50.000000000000000 StartDirection:D EndLatitude: -79.000000000000000 EndDirection: D&lt;/gco:CharacterString&gt;
+                            &lt;gco:CharacterString&gt;AscendingCrossing: 137.69460066990700 StartLatitude: 27.000000000000000 StartDirection:A EndLatitude: 59.500000000000000 EndDirection: A&lt;/gco:CharacterString&gt;
                           &lt;/gmd:code&gt;
                           &lt;gmd:codeSpace&gt;
                             &lt;gco:CharacterString&gt;gov.nasa.esdis.umm.orbitparameters&lt;/gco:CharacterString&gt;
@@ -552,7 +552,7 @@
                       &lt;gmd:geographicIdentifier&gt;
                         &lt;gmd:MD_Identifier&gt;
                           &lt;gmd:code&gt;
-                            &lt;gco:CharacterString&gt;OrbitNumber: 1582 EquatorCrossingLongitude: 165.20695928840985 EquatorCrossingDateTime: 2018-12-28T00:59:49.304986Z&lt;/gco:CharacterString&gt;
+                            &lt;gco:CharacterString&gt;OrbitNumber: 10210 EquatorCrossingLongitude: 137.69460066990700 EquatorCrossingDateTime: 2020-07-14T23:51:12.354427Z&lt;/gco:CharacterString&gt;
                           &lt;/gmd:code&gt;
                           &lt;gmd:codeSpace&gt;
                             &lt;gco:CharacterString&gt;gov.nasa.esdis.umm.orbitcalculatedspatialdomains&lt;/gco:CharacterString&gt;
@@ -568,8 +568,8 @@
                     &lt;gmd:EX_TemporalExtent&gt;
                       &lt;gmd:extent&gt;
                         &lt;gml:TimePeriod gml:id=&quot;TIME_PERIOD_ID&quot;&gt;
-                          &lt;gml:beginPosition&gt;2018-12-28T02:00:01.217090Z&lt;/gml:beginPosition&gt;
-                          &lt;gml:endPosition&gt;2018-12-28T02:07:38.713000Z&lt;/gml:endPosition&gt;
+                          &lt;gml:beginPosition&gt;2020-07-14T23:58:14.165915Z&lt;/gml:beginPosition&gt;
+                          &lt;gml:endPosition&gt;2020-07-15T00:06:44.761528Z&lt;/gml:endPosition&gt;
                         &lt;/gml:TimePeriod&gt;
                       &lt;/gmd:extent&gt;
                     &lt;/gmd:EX_TemporalExtent&gt;
@@ -592,10 +592,10 @@
                   &lt;gmd:processStep&gt;
                     &lt;gmi:LE_ProcessStep&gt;
                       &lt;gmd:description&gt;
-                        &lt;gco:CharacterString&gt;2020-03-21T12:54:34.000000Z;5a847446-832e-3206-8ca9-8a632e4d761b;Created by PGE atlas_l2a_alt Version 3.3&lt;/gco:CharacterString&gt;
+                        &lt;gco:CharacterString&gt;2020-08-21T22:55:53.000000Z;73495098-9c1d-3fa2-8adb-4a20ded54483;Created by PGE atlas_l2a_alt Version 3.3&lt;/gco:CharacterString&gt;
                       &lt;/gmd:description&gt;
                       &lt;gmd:dateTime&gt;
-                        &lt;gco:DateTime&gt;2020-03-21T12:54:34.000000Z&lt;/gco:DateTime&gt;
+                        &lt;gco:DateTime&gt;2020-08-21T22:55:53.000000Z&lt;/gco:DateTime&gt;
                       &lt;/gmd:dateTime&gt;
                     &lt;/gmi:LE_ProcessStep&gt;
                   &lt;/gmd:processStep&gt;
@@ -1508,13 +1508,13 @@
                 <Value>along-track</Value>
             </Attribute>
             <Attribute name="creationDate" type="String">
-                <Value>2020-03-21T12:54:34.000000Z</Value>
+                <Value>2020-08-21T22:55:53.000000Z</Value>
             </Attribute>
             <Attribute name="uuid" type="String">
-                <Value>5a847446-832e-3206-8ca9-8a632e4d761b</Value>
+                <Value>73495098-9c1d-3fa2-8adb-4a20ded54483</Value>
             </Attribute>
             <Attribute name="fileName" type="String">
-                <Value>ATL03_20181228015957_13810110_003_01.h5</Value>
+                <Value>ATL03_20200714235814_03000802_003_01.h5</Value>
             </Attribute>
             <Attribute name="VersionID" type="String">
                 <Value>003</Value>
@@ -1549,22 +1549,22 @@
         </Group>
         <Group name="Extent">
             <Attribute name="northBoundLatitude" type="Float64">
-                <Value>-50.209962155122966</Value>
+                <Value>59.504284794207422</Value>
             </Attribute>
             <Attribute name="eastBoundLongitude" type="Float64">
-                <Value>-32.276188773376937</Value>
+                <Value>134.94866774182643</Value>
             </Attribute>
             <Attribute name="southBoundLatitude" type="Float64">
-                <Value>-79.002441705550709</Value>
+                <Value>26.997128728703963</Value>
             </Attribute>
             <Attribute name="westBoundLongitude" type="Float64">
-                <Value>-42.33993820187478</Value>
+                <Value>130.39180268564937</Value>
             </Attribute>
             <Attribute name="rangeBeginningDateTime" type="String">
-                <Value>2018-12-28T02:00:01.217090Z</Value>
+                <Value>2020-07-14T23:58:14.165915Z</Value>
             </Attribute>
             <Attribute name="rangeEndingDateTime" type="String">
-                <Value>2018-12-28T02:07:38.713000Z</Value>
+                <Value>2020-07-15T00:06:44.761528Z</Value>
             </Attribute>
         </Group>
         <Group name="QADatasetIdentification">
@@ -1572,10 +1572,10 @@
                 <Value>An ASCII product that contains statistical information on data product results. These statistics enable data producers and users to assess the quality of the data in the data product granule</Value>
             </Attribute>
             <Attribute name="creationDate" type="String">
-                <Value>2020-03-21T13:10:59.000000Z</Value>
+                <Value>2020-08-21T23:26:36.000000Z</Value>
             </Attribute>
             <Attribute name="fileName" type="String">
-                <Value>ATL03_20181228015957_13810110_003_01.qa</Value>
+                <Value>ATL03_20200714235814_03000802_003_01.qa</Value>
             </Attribute>
         </Group>
         <Group name="Lineage">
@@ -1601,13 +1601,13 @@
                     <Value>ECI to ECF Quaternions file created by the ICESat-2 POD/PPD facility.</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>ANC03_f_201836200000_v01.h5</Value>
+                    <Value>ANC03_f_202019700000_v01.h5</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>ANC03</Value>
                 </Attribute>
                 <Attribute name="uuid" type="String">
-                    <Value>fa210535-7efc-34c0-bc2a-a43ec0541563</Value>
+                    <Value>0c950276-db3f-3ab3-a95f-d072601b2bfc</Value>
                 </Attribute>
                 <Attribute name="version" type="String">
                     <Value>005</Value>
@@ -1618,7 +1618,7 @@
                     <Value>Text-based keyword=value file generated automatically within the ICESat-2 data system that specifies all of the conditions required for each individual run of the software.</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>CTL_atlas_l2a_alt_003449451.ctl</Value>
+                    <Value>CTL_atlas_l2a_alt_004548101.ctl</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>CNTL</Value>
@@ -1666,34 +1666,34 @@
                     <Value>Contains transmit pulse information derived from an aggregation of Transmit Echo Pulse (TEP) photons.</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>ANC41_20181227184238_13770101_003_01.h5</Value>
+                    <Value>ANC41_20200714063401_02890801_003_01.h5</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>ANC41</Value>
                 </Attribute>
                 <Attribute name="uuid" type="String">
-                    <Value>ec177b30-41fc-3adf-a76a-827d5eee3a52</Value>
+                    <Value>869469ac-c9d7-3f4d-9f28-66fcc9b47a96</Value>
                 </Attribute>
                 <Attribute name="version" type="String">
                     <Value>003</Value>
                 </Attribute>
                 <Attribute name="start_cycle" type="Int32">
-                    <Value>1</Value>
+                    <Value>8</Value>
                 </Attribute>
                 <Attribute name="end_cycle" type="Int32">
-                    <Value>1</Value>
+                    <Value>8</Value>
                 </Attribute>
                 <Attribute name="start_orbit" type="Int32">
-                    <Value>1578</Value>
+                    <Value>10199</Value>
                 </Attribute>
                 <Attribute name="end_orbit" type="Int32">
-                    <Value>1588</Value>
+                    <Value>10214</Value>
                 </Attribute>
                 <Attribute name="start_rgt" type="Int32">
-                    <Value>1377</Value>
+                    <Value>289</Value>
                 </Attribute>
                 <Attribute name="end_rgt" type="Int32">
-                    <Value>1387</Value>
+                    <Value>304</Value>
                 </Attribute>
                 <Attribute name="start_region" type="Int32">
                     <Value>1</Value>
@@ -1792,13 +1792,13 @@
                     <Value>Ephemeris file created by the ICESat-2 POD/PPD facility</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>ANC04_f_201836200000_v02.h5</Value>
+                    <Value>ANC04_f_202019700000_v01_rpy.h5</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>ANC04</Value>
                 </Attribute>
                 <Attribute name="uuid" type="String">
-                    <Value>744c3bb7-da77-37cc-97f4-f019731043dc</Value>
+                    <Value>0bf850c9-5eb1-3e6d-83e0-f9c921bec431</Value>
                 </Attribute>
                 <Attribute name="version" type="String">
                     <Value>005</Value>
@@ -1826,22 +1826,18 @@
                     <Value>GEOS5-FPIT meteorological data files (retrieved from the GSFC DAAC)</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>GEOS.fpit.asm.inst3_3d_asm_Nv.GEOS5124.20181227_2100.V01.nc4</Value>
-                    <Value>GEOS.fpit.asm.inst3_3d_asm_Nv.GEOS5124.20181228_0000.V01.nc4</Value>
-                    <Value>GEOS.fpit.asm.inst3_3d_asm_Nv.GEOS5124.20181228_0300.V01.nc4</Value>
+                    <Value>GEOS.fpit.asm.inst3_3d_asm_Nv.GEOS5124.20200714_2100.V01.nc4</Value>
+                    <Value>GEOS.fpit.asm.inst3_3d_asm_Nv.GEOS5124.20200715_0000.V01.nc4</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>ANC01</Value>
                     <Value>ANC01</Value>
-                    <Value>ANC01</Value>
                 </Attribute>
                 <Attribute name="uuid" type="String">
-                    <Value>edd6a055-0ef2-3e70-bdbd-de28bdd4c254</Value>
-                    <Value>f6f6cc61-8c3d-37a1-8031-ae62be0ec3cf</Value>
-                    <Value>03b068b0-c9d7-39b9-ba82-850453342430</Value>
+                    <Value>dca4b7b9-f313-329e-9dc1-4239cdfa9954</Value>
+                    <Value>e0d03fac-c7d0-3145-a5c2-0a65f00dabff</Value>
                 </Attribute>
                 <Attribute name="version" type="String">
-                    <Value>001</Value>
                     <Value>001</Value>
                     <Value>001</Value>
                 </Attribute>
@@ -1885,13 +1881,13 @@
                     <Value>LF_PNTG File created by the iCESat-2 POD/PPD facility.</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>ANC05_f_201836200000_v02_cal05_j2000.a.h5</Value>
+                    <Value>ANC05_f_202019700000_v01_cal05_j2000.a.h5</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>ANC05</Value>
                 </Attribute>
                 <Attribute name="uuid" type="String">
-                    <Value>0c412842-f845-3188-a825-f3d5d8b86d0d</Value>
+                    <Value>6f9471c5-4368-3079-a7a0-2e09b88f491d</Value>
                 </Attribute>
                 <Attribute name="version" type="String">
                     <Value>005</Value>
@@ -1976,9 +1972,9 @@
                     <Value>SET_BY_PGE</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>ATL02_20181228015355_13810109_003_01.h5</Value>
-                    <Value>ATL02_20181228015957_13810110_003_01.h5</Value>
-                    <Value>ATL02_20181228020738_13810111_003_01.h5</Value>
+                    <Value>ATL02_20200714235112_03000801_003_01.h5</Value>
+                    <Value>ATL02_20200714235814_03000802_003_01.h5</Value>
+                    <Value>ATL02_20200715000644_03000803_003_01.h5</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>ATL02</Value>
@@ -1986,9 +1982,9 @@
                     <Value>ATL02</Value>
                 </Attribute>
                 <Attribute name="uuid" type="String">
-                    <Value>86dbc3e7-3614-3641-99ab-d841185aebe8</Value>
-                    <Value>d867c74d-a58b-3e2a-bc0b-4ade3a9b42c2</Value>
-                    <Value>ae83baf3-fb84-3a87-963c-fb868d7bf553</Value>
+                    <Value>9fb4f48e-60bc-309e-845b-113b0b4c4acf</Value>
+                    <Value>6a21a65e-9794-317e-9464-f4e708c53496</Value>
+                    <Value>277e303e-5123-3ffa-a770-cc229632b9dd</Value>
                 </Attribute>
                 <Attribute name="version" type="String">
                     <Value>003</Value>
@@ -1996,44 +1992,44 @@
                     <Value>003</Value>
                 </Attribute>
                 <Attribute name="start_cycle" type="Int32">
-                    <Value>1</Value>
-                    <Value>1</Value>
-                    <Value>1</Value>
+                    <Value>8</Value>
+                    <Value>8</Value>
+                    <Value>8</Value>
                 </Attribute>
                 <Attribute name="end_cycle" type="Int32">
-                    <Value>1</Value>
-                    <Value>1</Value>
-                    <Value>1</Value>
+                    <Value>8</Value>
+                    <Value>8</Value>
+                    <Value>8</Value>
                 </Attribute>
                 <Attribute name="start_orbit" type="Int32">
-                    <Value>1582</Value>
-                    <Value>1582</Value>
-                    <Value>1582</Value>
+                    <Value>10210</Value>
+                    <Value>10210</Value>
+                    <Value>10210</Value>
                 </Attribute>
                 <Attribute name="end_orbit" type="Int32">
-                    <Value>1582</Value>
-                    <Value>1582</Value>
-                    <Value>1582</Value>
+                    <Value>10210</Value>
+                    <Value>10210</Value>
+                    <Value>10210</Value>
                 </Attribute>
                 <Attribute name="start_rgt" type="Int32">
-                    <Value>1381</Value>
-                    <Value>1381</Value>
-                    <Value>1381</Value>
+                    <Value>300</Value>
+                    <Value>300</Value>
+                    <Value>300</Value>
                 </Attribute>
                 <Attribute name="end_rgt" type="Int32">
-                    <Value>1381</Value>
-                    <Value>1381</Value>
-                    <Value>1381</Value>
+                    <Value>300</Value>
+                    <Value>300</Value>
+                    <Value>300</Value>
                 </Attribute>
                 <Attribute name="start_region" type="Int32">
-                    <Value>9</Value>
-                    <Value>10</Value>
-                    <Value>11</Value>
+                    <Value>1</Value>
+                    <Value>2</Value>
+                    <Value>3</Value>
                 </Attribute>
                 <Attribute name="end_region" type="Int32">
-                    <Value>9</Value>
-                    <Value>10</Value>
-                    <Value>11</Value>
+                    <Value>1</Value>
+                    <Value>2</Value>
+                    <Value>3</Value>
                 </Attribute>
             </Group>
             <Group name="ANC19">
@@ -2058,21 +2054,25 @@
                     <Value>Dynamic Atmosphere Correction File retrieved from CNES.</Value>
                 </Attribute>
                 <Attribute name="fileName" type="String">
-                    <Value>dac_dif_25197_18.nc</Value>
-                    <Value>dac_dif_25198_00.nc</Value>
-                    <Value>dac_dif_25198_06.nc</Value>
+                    <Value>dac_dif_25762_12.nc</Value>
+                    <Value>dac_dif_25762_18.nc</Value>
+                    <Value>dac_dif_25763_00.nc</Value>
+                    <Value>dac_dif_25763_06.nc</Value>
                 </Attribute>
                 <Attribute name="shortName" type="String">
                     <Value>ANC23</Value>
                     <Value>ANC23</Value>
                     <Value>ANC23</Value>
+                    <Value>ANC23</Value>
                 </Attribute>
                 <Attribute name="uuid" type="String">
-                    <Value>f6e93ab7-0e4d-3e6e-9fb4-4f9f9ccd1eec</Value>
-                    <Value>9f770a15-9a8a-37ab-9b9d-50a6dbcac261</Value>
-                    <Value>49733152-24f2-3a28-a63e-ff8a536e2509</Value>
+                    <Value>3e2c4d41-3e7f-3293-ac35-02368d7a89f3</Value>
+                    <Value>8316ab41-02ad-37a8-a645-74c9146ae957</Value>
+                    <Value>3b9f127e-4d7e-3082-9382-3aeac2bbf2ff</Value>
+                    <Value>3cc11e66-42f6-3702-bc23-daa55f5b5676</Value>
                 </Attribute>
                 <Attribute name="version" type="String">
+                    <Value>nc</Value>
                     <Value>nc</Value>
                     <Value>nc</Value>
                     <Value>nc</Value>
@@ -2097,10 +2097,10 @@
                     <Value>Creates ATLAS HDF5 browse files</Value>
                 </Attribute>
                 <Attribute name="runTimeParameters" type="String">
-                    <Value>CTL_atlas_l2a_alt_003449451.ctl</Value>
+                    <Value>CTL_atlas_l2a_alt_004548101.ctl</Value>
                 </Attribute>
                 <Attribute name="stepDateTime" type="String">
-                    <Value>2020-03-21T13:11:43.000000Z</Value>
+                    <Value>2020-08-21T23:28:21.000000Z</Value>
                 </Attribute>
             </Group>
             <Group name="Metadata">
@@ -2120,10 +2120,10 @@
                     <Value>Creates ATLAS XML metadata files</Value>
                 </Attribute>
                 <Attribute name="runTimeParameters" type="String">
-                    <Value>CTL_atlas_l2a_alt_003449451.ctl</Value>
+                    <Value>CTL_atlas_l2a_alt_004548101.ctl</Value>
                 </Attribute>
                 <Attribute name="stepDateTime" type="String">
-                    <Value>2020-03-21T13:12:24.000000Z</Value>
+                    <Value>2020-08-21T23:29:39.000000Z</Value>
                 </Attribute>
             </Group>
             <Group name="PGE">
@@ -2158,10 +2158,10 @@
                     <Value>ASAS L2A ALT PGE</Value>
                 </Attribute>
                 <Attribute name="runTimeParameters" type="String">
-                    <Value>CTL_atlas_l2a_alt_003449451.ctl</Value>
+                    <Value>CTL_atlas_l2a_alt_004548101.ctl</Value>
                 </Attribute>
                 <Attribute name="stepDateTime" type="String">
-                    <Value>2020-03-21T12:54:34.000000Z</Value>
+                    <Value>2020-08-21T22:55:53.000000Z</Value>
                 </Attribute>
             </Group>
             <Group name="QA">
@@ -2181,10 +2181,10 @@
                     <Value>ATL03 QA Utility</Value>
                 </Attribute>
                 <Attribute name="runTimeParameters" type="String">
-                    <Value>CTL_atlas_l2a_alt_003449451.ctl</Value>
+                    <Value>CTL_atlas_l2a_alt_004548101.ctl</Value>
                 </Attribute>
                 <Attribute name="stepDateTime" type="String">
-                    <Value>2020-03-21T13:10:59.000000Z</Value>
+                    <Value>2020-08-21T23:26:36.000000Z</Value>
                 </Attribute>
             </Group>
         </Group>
@@ -2194,10 +2194,10 @@
             <Value>Each group contains the segments for one Ground Track. As ICESat-2 orbits the earth, sequential transmit pulses illuminate six ground tracks on the surface of the earth.  The track width is approximately 14m.  Each ground track is numbered, according to the laser spot number that generates a given ground track.  Ground tracks are numbered from the left to the right in the direction of spacecraft travel as: 1L, 1R in the left-most pair of beams; 2L, 2R for the center pair of beams; and 3L, 3R for the right-most pair of beams.</Value>
         </Attribute>
         <Attribute name="atlas_pce" type="String">
-            <Value>pce3</Value>
+            <Value>pce1</Value>
         </Attribute>
         <Attribute name="atlas_beam_type" type="String">
-            <Value>strong</Value>
+            <Value>weak</Value>
         </Attribute>
         <Attribute name="groundtrack_id" type="String">
             <Value>gt1r</Value>
@@ -2206,13 +2206,13 @@
             <Value>profile_1</Value>
         </Attribute>
         <Attribute name="atlas_spot_number" type="String">
-            <Value>5</Value>
+            <Value>2</Value>
         </Attribute>
         <Attribute name="sc_orientation" type="String">
-            <Value>Forward</Value>
+            <Value>Backward</Value>
         </Attribute>
         <Group name="bckgrd_atlas">
-            <Dimension name="delta_time" size="89490"/>
+            <Dimension name="delta_time" size="83140"/>
             <Float32 name="bckgrd_int_height">
                 <Dim name="/gt1r/bckgrd_atlas/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -2452,7 +2452,7 @@
             </Attribute>
         </Group>
         <Group name="geolocation">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Int32 name="segment_ph_cnt">
                 <Dim name="/gt1r/geolocation/delta_time"/>
                 <Attribute name="_FillValue" type="Int32">
@@ -3223,7 +3223,7 @@
             </Attribute>
         </Group>
         <Group name="geophys_corr">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Float32 name="tide_oc_pole">
                 <Dim name="/gt1r/geophys_corr/delta_time"/>
                 <Attribute name="description" type="String">
@@ -3494,230 +3494,8 @@
             <Attribute name="data_rate" type="String">
                 <Value>Data are stored at the rate of signal finding time intervals.</Value>
             </Attribute>
-            <Group name="sea_ice">
-                <Dimension name="delta_time" size="62225"/>
-                <Float32 name="bckgrd_mean">
-                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="bckgrd_sigma">
-                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin sigma</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="t_pc_delta">
-                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin width size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds</Value>
-                    </Attribute>
-                </Float32>
-                <Float64 name="delta_time">
-                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
-                    <Attribute name="contentType" type="String">
-                        <Value>physicalMeasurement</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>Elapsed GPS seconds</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>Derived via Time Tagging</Value>
-                    </Attribute>
-                    <Attribute name="standard_name" type="String">
-                        <Value>time</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds since 2018-01-01</Value>
-                    </Attribute>
-                </Float64>
-                <Float32 name="z_pc_delta">
-                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Height bin size of the histogram used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin height size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>meters</Value>
-                    </Attribute>
-                </Float32>
-                <Attribute name="Description" type="String">
-                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
-                </Attribute>
-            </Group>
-            <Group name="land">
-                <Dimension name="delta_time" size="5226"/>
-                <Float32 name="bckgrd_mean">
-                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="bckgrd_sigma">
-                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin sigma</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="t_pc_delta">
-                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin width size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds</Value>
-                    </Attribute>
-                </Float32>
-                <Float64 name="delta_time">
-                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
-                    <Attribute name="contentType" type="String">
-                        <Value>physicalMeasurement</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>Elapsed GPS seconds</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>Derived via Time Tagging</Value>
-                    </Attribute>
-                    <Attribute name="standard_name" type="String">
-                        <Value>time</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds since 2018-01-01</Value>
-                    </Attribute>
-                </Float64>
-                <Float32 name="z_pc_delta">
-                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Height bin size of the histogram used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin height size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>meters</Value>
-                    </Attribute>
-                </Float32>
-                <Attribute name="Description" type="String">
-                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
-                </Attribute>
-            </Group>
             <Group name="ocean">
-                <Dimension name="delta_time" size="72326"/>
+                <Dimension name="delta_time" size="23195"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt1r/signal_find_output/ocean/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -3804,6 +3582,117 @@
                 </Float64>
                 <Float32 name="z_pc_delta">
                     <Dim name="/gt1r/signal_find_output/ocean/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Height bin size of the histogram used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin height size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>meters</Value>
+                    </Attribute>
+                </Float32>
+                <Attribute name="Description" type="String">
+                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
+                </Attribute>
+            </Group>
+            <Group name="sea_ice">
+                <Dimension name="delta_time" size="6038"/>
+                <Float32 name="bckgrd_mean">
+                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="bckgrd_sigma">
+                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin sigma</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="t_pc_delta">
+                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin width size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds</Value>
+                    </Attribute>
+                </Float32>
+                <Float64 name="delta_time">
+                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
+                    <Attribute name="contentType" type="String">
+                        <Value>physicalMeasurement</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>Elapsed GPS seconds</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>Derived via Time Tagging</Value>
+                    </Attribute>
+                    <Attribute name="standard_name" type="String">
+                        <Value>time</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds since 2018-01-01</Value>
+                    </Attribute>
+                </Float64>
+                <Float32 name="z_pc_delta">
+                    <Dim name="/gt1r/signal_find_output/sea_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
                         <Value>3.402823466e+38</Value>
                     </Attribute>
@@ -3828,7 +3717,7 @@
                 </Attribute>
             </Group>
             <Group name="land_ice">
-                <Dimension name="delta_time" size="18588"/>
+                <Dimension name="delta_time" size="37924"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt1r/signal_find_output/land_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -3938,8 +3827,119 @@
                     <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
                 </Attribute>
             </Group>
+            <Group name="land">
+                <Dimension name="delta_time" size="36793"/>
+                <Float32 name="bckgrd_mean">
+                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="bckgrd_sigma">
+                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin sigma</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="t_pc_delta">
+                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin width size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds</Value>
+                    </Attribute>
+                </Float32>
+                <Float64 name="delta_time">
+                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
+                    <Attribute name="contentType" type="String">
+                        <Value>physicalMeasurement</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>Elapsed GPS seconds</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>Derived via Time Tagging</Value>
+                    </Attribute>
+                    <Attribute name="standard_name" type="String">
+                        <Value>time</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds since 2018-01-01</Value>
+                    </Attribute>
+                </Float64>
+                <Float32 name="z_pc_delta">
+                    <Dim name="/gt1r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Height bin size of the histogram used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin height size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>meters</Value>
+                    </Attribute>
+                </Float32>
+                <Attribute name="Description" type="String">
+                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
+                </Attribute>
+            </Group>
             <Group name="inlandwater">
-                <Dimension name="delta_time" size="16567"/>
+                <Dimension name="delta_time" size="40655"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt1r/signal_find_output/inlandwater/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -4051,7 +4051,7 @@
             </Group>
         </Group>
         <Group name="heights">
-            <Dimension name="delta_time" size="4102521"/>
+            <Dimension name="delta_time" size="13421060"/>
             <Int8 name="ph_id_count">
                 <Dim name="/gt1r/heights/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -4336,7 +4336,7 @@
             <Value>pce2</Value>
         </Attribute>
         <Attribute name="atlas_beam_type" type="String">
-            <Value>strong</Value>
+            <Value>weak</Value>
         </Attribute>
         <Attribute name="groundtrack_id" type="String">
             <Value>gt2r</Value>
@@ -4345,13 +4345,13 @@
             <Value>profile_2</Value>
         </Attribute>
         <Attribute name="atlas_spot_number" type="String">
-            <Value>3</Value>
+            <Value>4</Value>
         </Attribute>
         <Attribute name="sc_orientation" type="String">
-            <Value>Forward</Value>
+            <Value>Backward</Value>
         </Attribute>
         <Group name="bckgrd_atlas">
-            <Dimension name="delta_time" size="91495"/>
+            <Dimension name="delta_time" size="83096"/>
             <Float32 name="bckgrd_int_height">
                 <Dim name="/gt2r/bckgrd_atlas/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -4591,7 +4591,7 @@
             </Attribute>
         </Group>
         <Group name="geolocation">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Int32 name="segment_ph_cnt">
                 <Dim name="/gt2r/geolocation/delta_time"/>
                 <Attribute name="_FillValue" type="Int32">
@@ -5362,7 +5362,7 @@
             </Attribute>
         </Group>
         <Group name="geophys_corr">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Float32 name="tide_oc_pole">
                 <Dim name="/gt2r/geophys_corr/delta_time"/>
                 <Attribute name="description" type="String">
@@ -5634,7 +5634,7 @@
                 <Value>Data are stored at the rate of signal finding time intervals.</Value>
             </Attribute>
             <Group name="ocean">
-                <Dimension name="delta_time" size="72581"/>
+                <Dimension name="delta_time" size="23097"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2r/signal_find_output/ocean/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -5745,7 +5745,7 @@
                 </Attribute>
             </Group>
             <Group name="sea_ice">
-                <Dimension name="delta_time" size="62144"/>
+                <Dimension name="delta_time" size="6699"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2r/signal_find_output/sea_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -5856,7 +5856,7 @@
                 </Attribute>
             </Group>
             <Group name="land_ice">
-                <Dimension name="delta_time" size="18665"/>
+                <Dimension name="delta_time" size="38207"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2r/signal_find_output/land_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -5967,7 +5967,7 @@
                 </Attribute>
             </Group>
             <Group name="land">
-                <Dimension name="delta_time" size="5249"/>
+                <Dimension name="delta_time" size="36758"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2r/signal_find_output/land/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -6078,7 +6078,7 @@
                 </Attribute>
             </Group>
             <Group name="inlandwater">
-                <Dimension name="delta_time" size="16707"/>
+                <Dimension name="delta_time" size="40616"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2r/signal_find_output/inlandwater/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -6190,7 +6190,7 @@
             </Group>
         </Group>
         <Group name="heights">
-            <Dimension name="delta_time" size="3646224"/>
+            <Dimension name="delta_time" size="12167211"/>
             <Int8 name="ph_id_count">
                 <Dim name="/gt2r/heights/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -6472,10 +6472,10 @@
             <Value>Each group contains the segments for one Ground Track. As ICESat-2 orbits the earth, sequential transmit pulses illuminate six ground tracks on the surface of the earth.  The track width is approximately 14m.  Each ground track is numbered, according to the laser spot number that generates a given ground track.  Ground tracks are numbered from the left to the right in the direction of spacecraft travel as: 1L, 1R in the left-most pair of beams; 2L, 2R for the center pair of beams; and 3L, 3R for the right-most pair of beams.</Value>
         </Attribute>
         <Attribute name="atlas_pce" type="String">
-            <Value>pce3</Value>
+            <Value>pce1</Value>
         </Attribute>
         <Attribute name="atlas_beam_type" type="String">
-            <Value>weak</Value>
+            <Value>strong</Value>
         </Attribute>
         <Attribute name="groundtrack_id" type="String">
             <Value>gt1l</Value>
@@ -6484,13 +6484,13 @@
             <Value>profile_1</Value>
         </Attribute>
         <Attribute name="atlas_spot_number" type="String">
-            <Value>6</Value>
+            <Value>1</Value>
         </Attribute>
         <Attribute name="sc_orientation" type="String">
-            <Value>Forward</Value>
+            <Value>Backward</Value>
         </Attribute>
         <Group name="bckgrd_atlas">
-            <Dimension name="delta_time" size="84274"/>
+            <Dimension name="delta_time" size="102064"/>
             <Float32 name="bckgrd_int_height">
                 <Dim name="/gt1l/bckgrd_atlas/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -6730,7 +6730,7 @@
             </Attribute>
         </Group>
         <Group name="geolocation">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Int32 name="segment_ph_cnt">
                 <Dim name="/gt1l/geolocation/delta_time"/>
                 <Attribute name="_FillValue" type="Int32">
@@ -7501,7 +7501,7 @@
             </Attribute>
         </Group>
         <Group name="geophys_corr">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Float32 name="tide_oc_pole">
                 <Dim name="/gt1l/geophys_corr/delta_time"/>
                 <Attribute name="description" type="String">
@@ -7772,119 +7772,8 @@
             <Attribute name="data_rate" type="String">
                 <Value>Data are stored at the rate of signal finding time intervals.</Value>
             </Attribute>
-            <Group name="land">
-                <Dimension name="delta_time" size="4202"/>
-                <Float32 name="bckgrd_mean">
-                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="bckgrd_sigma">
-                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin sigma</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="t_pc_delta">
-                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin width size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds</Value>
-                    </Attribute>
-                </Float32>
-                <Float64 name="delta_time">
-                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
-                    <Attribute name="contentType" type="String">
-                        <Value>physicalMeasurement</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>Elapsed GPS seconds</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>Derived via Time Tagging</Value>
-                    </Attribute>
-                    <Attribute name="standard_name" type="String">
-                        <Value>time</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds since 2018-01-01</Value>
-                    </Attribute>
-                </Float64>
-                <Float32 name="z_pc_delta">
-                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Height bin size of the histogram used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin height size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>meters</Value>
-                    </Attribute>
-                </Float32>
-                <Attribute name="Description" type="String">
-                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
-                </Attribute>
-            </Group>
             <Group name="ocean">
-                <Dimension name="delta_time" size="61613"/>
+                <Dimension name="delta_time" size="42634"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt1l/signal_find_output/ocean/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -7995,7 +7884,7 @@
                 </Attribute>
             </Group>
             <Group name="sea_ice">
-                <Dimension name="delta_time" size="62225"/>
+                <Dimension name="delta_time" size="1550"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt1l/signal_find_output/sea_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -8106,7 +7995,7 @@
                 </Attribute>
             </Group>
             <Group name="land_ice">
-                <Dimension name="delta_time" size="10278"/>
+                <Dimension name="delta_time" size="68777"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt1l/signal_find_output/land_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -8216,8 +8105,119 @@
                     <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
                 </Attribute>
             </Group>
+            <Group name="land">
+                <Dimension name="delta_time" size="46009"/>
+                <Float32 name="bckgrd_mean">
+                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="bckgrd_sigma">
+                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin sigma</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="t_pc_delta">
+                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin width size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds</Value>
+                    </Attribute>
+                </Float32>
+                <Float64 name="delta_time">
+                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
+                    <Attribute name="contentType" type="String">
+                        <Value>physicalMeasurement</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>Elapsed GPS seconds</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>Derived via Time Tagging</Value>
+                    </Attribute>
+                    <Attribute name="standard_name" type="String">
+                        <Value>time</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds since 2018-01-01</Value>
+                    </Attribute>
+                </Float64>
+                <Float32 name="z_pc_delta">
+                    <Dim name="/gt1l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Height bin size of the histogram used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin height size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>meters</Value>
+                    </Attribute>
+                </Float32>
+                <Attribute name="Description" type="String">
+                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
+                </Attribute>
+            </Group>
             <Group name="inlandwater">
-                <Dimension name="delta_time" size="4333"/>
+                <Dimension name="delta_time" size="160511"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt1l/signal_find_output/inlandwater/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -8329,7 +8329,7 @@
             </Group>
         </Group>
         <Group name="heights">
-            <Dimension name="delta_time" size="2923411"/>
+            <Dimension name="delta_time" size="41635441"/>
             <Int8 name="ph_id_count">
                 <Dim name="/gt1l/heights/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -9959,10 +9959,10 @@
             <Value>Each group contains the segments for one Ground Track. As ICESat-2 orbits the earth, sequential transmit pulses illuminate six ground tracks on the surface of the earth.  The track width is approximately 14m.  Each ground track is numbered, according to the laser spot number that generates a given ground track.  Ground tracks are numbered from the left to the right in the direction of spacecraft travel as: 1L, 1R in the left-most pair of beams; 2L, 2R for the center pair of beams; and 3L, 3R for the right-most pair of beams.</Value>
         </Attribute>
         <Attribute name="atlas_pce" type="String">
-            <Value>pce1</Value>
+            <Value>pce3</Value>
         </Attribute>
         <Attribute name="atlas_beam_type" type="String">
-            <Value>weak</Value>
+            <Value>strong</Value>
         </Attribute>
         <Attribute name="groundtrack_id" type="String">
             <Value>gt3l</Value>
@@ -9971,13 +9971,13 @@
             <Value>profile_3</Value>
         </Attribute>
         <Attribute name="atlas_spot_number" type="String">
-            <Value>2</Value>
+            <Value>5</Value>
         </Attribute>
         <Attribute name="sc_orientation" type="String">
-            <Value>Forward</Value>
+            <Value>Backward</Value>
         </Attribute>
         <Group name="bckgrd_atlas">
-            <Dimension name="delta_time" size="84254"/>
+            <Dimension name="delta_time" size="102064"/>
             <Float32 name="bckgrd_int_height">
                 <Dim name="/gt3l/bckgrd_atlas/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -10217,7 +10217,7 @@
             </Attribute>
         </Group>
         <Group name="geolocation">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Int32 name="segment_ph_cnt">
                 <Dim name="/gt3l/geolocation/delta_time"/>
                 <Attribute name="_FillValue" type="Int32">
@@ -10988,7 +10988,7 @@
             </Attribute>
         </Group>
         <Group name="geophys_corr">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Float32 name="tide_oc_pole">
                 <Dim name="/gt3l/geophys_corr/delta_time"/>
                 <Attribute name="description" type="String">
@@ -11259,119 +11259,8 @@
             <Attribute name="data_rate" type="String">
                 <Value>Data are stored at the rate of signal finding time intervals.</Value>
             </Attribute>
-            <Group name="land">
-                <Dimension name="delta_time" size="4353"/>
-                <Float32 name="bckgrd_mean">
-                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="bckgrd_sigma">
-                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin sigma</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="t_pc_delta">
-                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin width size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds</Value>
-                    </Attribute>
-                </Float32>
-                <Float64 name="delta_time">
-                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
-                    <Attribute name="contentType" type="String">
-                        <Value>physicalMeasurement</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>Elapsed GPS seconds</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>Derived via Time Tagging</Value>
-                    </Attribute>
-                    <Attribute name="standard_name" type="String">
-                        <Value>time</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds since 2018-01-01</Value>
-                    </Attribute>
-                </Float64>
-                <Float32 name="z_pc_delta">
-                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Height bin size of the histogram used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin height size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>meters</Value>
-                    </Attribute>
-                </Float32>
-                <Attribute name="Description" type="String">
-                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
-                </Attribute>
-            </Group>
             <Group name="ocean">
-                <Dimension name="delta_time" size="61872"/>
+                <Dimension name="delta_time" size="42235"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3l/signal_find_output/ocean/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -11482,7 +11371,7 @@
                 </Attribute>
             </Group>
             <Group name="sea_ice">
-                <Dimension name="delta_time" size="62238"/>
+                <Dimension name="delta_time" size="6110"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3l/signal_find_output/sea_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -11593,7 +11482,7 @@
                 </Attribute>
             </Group>
             <Group name="land_ice">
-                <Dimension name="delta_time" size="10628"/>
+                <Dimension name="delta_time" size="68707"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3l/signal_find_output/land_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -11703,8 +11592,119 @@
                     <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
                 </Attribute>
             </Group>
+            <Group name="land">
+                <Dimension name="delta_time" size="46019"/>
+                <Float32 name="bckgrd_mean">
+                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="bckgrd_sigma">
+                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin sigma</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="t_pc_delta">
+                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin width size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds</Value>
+                    </Attribute>
+                </Float32>
+                <Float64 name="delta_time">
+                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
+                    <Attribute name="contentType" type="String">
+                        <Value>physicalMeasurement</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>Elapsed GPS seconds</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>Derived via Time Tagging</Value>
+                    </Attribute>
+                    <Attribute name="standard_name" type="String">
+                        <Value>time</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds since 2018-01-01</Value>
+                    </Attribute>
+                </Float64>
+                <Float32 name="z_pc_delta">
+                    <Dim name="/gt3l/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Height bin size of the histogram used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin height size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>meters</Value>
+                    </Attribute>
+                </Float32>
+                <Attribute name="Description" type="String">
+                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
+                </Attribute>
+            </Group>
             <Group name="inlandwater">
-                <Dimension name="delta_time" size="4528"/>
+                <Dimension name="delta_time" size="160364"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3l/signal_find_output/inlandwater/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -11816,7 +11816,7 @@
             </Group>
         </Group>
         <Group name="heights">
-            <Dimension name="delta_time" size="2785148"/>
+            <Dimension name="delta_time" size="41193885"/>
             <Int8 name="ph_id_count">
                 <Dim name="/gt3l/heights/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -12101,7 +12101,7 @@
             <Value>pce2</Value>
         </Attribute>
         <Attribute name="atlas_beam_type" type="String">
-            <Value>weak</Value>
+            <Value>strong</Value>
         </Attribute>
         <Attribute name="groundtrack_id" type="String">
             <Value>gt2l</Value>
@@ -12110,13 +12110,13 @@
             <Value>profile_2</Value>
         </Attribute>
         <Attribute name="atlas_spot_number" type="String">
-            <Value>4</Value>
+            <Value>3</Value>
         </Attribute>
         <Attribute name="sc_orientation" type="String">
-            <Value>Forward</Value>
+            <Value>Backward</Value>
         </Attribute>
         <Group name="bckgrd_atlas">
-            <Dimension name="delta_time" size="84261"/>
+            <Dimension name="delta_time" size="102063"/>
             <Float32 name="bckgrd_int_height">
                 <Dim name="/gt2l/bckgrd_atlas/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -12356,7 +12356,7 @@
             </Attribute>
         </Group>
         <Group name="geolocation">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Int32 name="segment_ph_cnt">
                 <Dim name="/gt2l/geolocation/delta_time"/>
                 <Attribute name="_FillValue" type="Int32">
@@ -13127,7 +13127,7 @@
             </Attribute>
         </Group>
         <Group name="geophys_corr">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Float32 name="tide_oc_pole">
                 <Dim name="/gt2l/geophys_corr/delta_time"/>
                 <Attribute name="description" type="String">
@@ -13399,7 +13399,7 @@
                 <Value>Data are stored at the rate of signal finding time intervals.</Value>
             </Attribute>
             <Group name="ocean">
-                <Dimension name="delta_time" size="61857"/>
+                <Dimension name="delta_time" size="42661"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2l/signal_find_output/ocean/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -13510,7 +13510,7 @@
                 </Attribute>
             </Group>
             <Group name="sea_ice">
-                <Dimension name="delta_time" size="62229"/>
+                <Dimension name="delta_time" size="1545"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2l/signal_find_output/sea_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -13621,7 +13621,7 @@
                 </Attribute>
             </Group>
             <Group name="land_ice">
-                <Dimension name="delta_time" size="10336"/>
+                <Dimension name="delta_time" size="68791"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2l/signal_find_output/land_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -13732,7 +13732,7 @@
                 </Attribute>
             </Group>
             <Group name="land">
-                <Dimension name="delta_time" size="4226"/>
+                <Dimension name="delta_time" size="46038"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2l/signal_find_output/land/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -13843,7 +13843,7 @@
                 </Attribute>
             </Group>
             <Group name="inlandwater">
-                <Dimension name="delta_time" size="4375"/>
+                <Dimension name="delta_time" size="160441"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt2l/signal_find_output/inlandwater/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -13955,7 +13955,7 @@
             </Group>
         </Group>
         <Group name="heights">
-            <Dimension name="delta_time" size="2975196"/>
+            <Dimension name="delta_time" size="41070980"/>
             <Int8 name="ph_id_count">
                 <Dim name="/gt2l/heights/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -21199,10 +21199,10 @@
             <Value>Each group contains the segments for one Ground Track. As ICESat-2 orbits the earth, sequential transmit pulses illuminate six ground tracks on the surface of the earth.  The track width is approximately 14m.  Each ground track is numbered, according to the laser spot number that generates a given ground track.  Ground tracks are numbered from the left to the right in the direction of spacecraft travel as: 1L, 1R in the left-most pair of beams; 2L, 2R for the center pair of beams; and 3L, 3R for the right-most pair of beams.</Value>
         </Attribute>
         <Attribute name="atlas_pce" type="String">
-            <Value>pce1</Value>
+            <Value>pce3</Value>
         </Attribute>
         <Attribute name="atlas_beam_type" type="String">
-            <Value>strong</Value>
+            <Value>weak</Value>
         </Attribute>
         <Attribute name="groundtrack_id" type="String">
             <Value>gt3r</Value>
@@ -21211,13 +21211,13 @@
             <Value>profile_3</Value>
         </Attribute>
         <Attribute name="atlas_spot_number" type="String">
-            <Value>1</Value>
+            <Value>6</Value>
         </Attribute>
         <Attribute name="sc_orientation" type="String">
-            <Value>Forward</Value>
+            <Value>Backward</Value>
         </Attribute>
         <Group name="bckgrd_atlas">
-            <Dimension name="delta_time" size="91171"/>
+            <Dimension name="delta_time" size="83188"/>
             <Float32 name="bckgrd_int_height">
                 <Dim name="/gt3r/bckgrd_atlas/delta_time"/>
                 <Attribute name="contentType" type="String">
@@ -21457,7 +21457,7 @@
             </Attribute>
         </Group>
         <Group name="geolocation">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Int32 name="segment_ph_cnt">
                 <Dim name="/gt3r/geolocation/delta_time"/>
                 <Attribute name="_FillValue" type="Int32">
@@ -22228,7 +22228,7 @@
             </Attribute>
         </Group>
         <Group name="geophys_corr">
-            <Dimension name="delta_time" size="163493"/>
+            <Dimension name="delta_time" size="181026"/>
             <Float32 name="tide_oc_pole">
                 <Dim name="/gt3r/geophys_corr/delta_time"/>
                 <Attribute name="description" type="String">
@@ -22499,8 +22499,119 @@
             <Attribute name="data_rate" type="String">
                 <Value>Data are stored at the rate of signal finding time intervals.</Value>
             </Attribute>
+            <Group name="land">
+                <Dimension name="delta_time" size="36691"/>
+                <Float32 name="bckgrd_mean">
+                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="bckgrd_sigma">
+                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>background counts per bin sigma</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>counts</Value>
+                    </Attribute>
+                </Float32>
+                <Float32 name="t_pc_delta">
+                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin width size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds</Value>
+                    </Attribute>
+                </Float32>
+                <Float64 name="delta_time">
+                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
+                    <Attribute name="contentType" type="String">
+                        <Value>physicalMeasurement</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>Elapsed GPS seconds</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>Derived via Time Tagging</Value>
+                    </Attribute>
+                    <Attribute name="standard_name" type="String">
+                        <Value>time</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>seconds since 2018-01-01</Value>
+                    </Attribute>
+                </Float64>
+                <Float32 name="z_pc_delta">
+                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
+                    <Attribute name="_FillValue" type="Float32">
+                        <Value>3.402823466e+38</Value>
+                    </Attribute>
+                    <Attribute name="coordinates" type="String">
+                        <Value>delta_time</Value>
+                    </Attribute>
+                    <Attribute name="description" type="String">
+                        <Value>Height bin size of the histogram used to find signal photons.</Value>
+                    </Attribute>
+                    <Attribute name="long_name" type="String">
+                        <Value>bin height size</Value>
+                    </Attribute>
+                    <Attribute name="source" type="String">
+                        <Value>ATL03 ATBD, Section 5</Value>
+                    </Attribute>
+                    <Attribute name="units" type="String">
+                        <Value>meters</Value>
+                    </Attribute>
+                </Float32>
+                <Attribute name="Description" type="String">
+                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
+                </Attribute>
+            </Group>
             <Group name="ocean">
-                <Dimension name="delta_time" size="72591"/>
+                <Dimension name="delta_time" size="23000"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3r/signal_find_output/ocean/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -22611,7 +22722,7 @@
                 </Attribute>
             </Group>
             <Group name="sea_ice">
-                <Dimension name="delta_time" size="62237"/>
+                <Dimension name="delta_time" size="7206"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3r/signal_find_output/sea_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -22722,7 +22833,7 @@
                 </Attribute>
             </Group>
             <Group name="land_ice">
-                <Dimension name="delta_time" size="19644"/>
+                <Dimension name="delta_time" size="38043"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3r/signal_find_output/land_ice/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -22809,117 +22920,6 @@
                 </Float64>
                 <Float32 name="z_pc_delta">
                     <Dim name="/gt3r/signal_find_output/land_ice/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Height bin size of the histogram used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin height size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>meters</Value>
-                    </Attribute>
-                </Float32>
-                <Attribute name="Description" type="String">
-                    <Value>Surface-type specific parameters output for each time interval for which signal photons were selected, based on the algorithm in Section 5.  Histogram parameters are from the histogram that was used to identify signal photons and set the confidence parameter for a given time increment.</Value>
-                </Attribute>
-            </Group>
-            <Group name="land">
-                <Dimension name="delta_time" size="5540"/>
-                <Float32 name="bckgrd_mean">
-                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The mean of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="bckgrd_sigma">
-                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The standard deviation of the number of background counts expected in one height bin of the histogram of width dzATM over time period, dtATM</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>background counts per bin sigma</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>counts</Value>
-                    </Attribute>
-                </Float32>
-                <Float32 name="t_pc_delta">
-                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
-                    <Attribute name="_FillValue" type="Float32">
-                        <Value>3.402823466e+38</Value>
-                    </Attribute>
-                    <Attribute name="coordinates" type="String">
-                        <Value>delta_time</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>The histogram bin width (integration time) along-track used to find signal photons.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>bin width size</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>ATL03 ATBD, Section 5</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds</Value>
-                    </Attribute>
-                </Float32>
-                <Float64 name="delta_time">
-                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
-                    <Attribute name="contentType" type="String">
-                        <Value>physicalMeasurement</Value>
-                    </Attribute>
-                    <Attribute name="description" type="String">
-                        <Value>Number of GPS seconds since the ATLAS SDP epoch. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
-                    </Attribute>
-                    <Attribute name="long_name" type="String">
-                        <Value>Elapsed GPS seconds</Value>
-                    </Attribute>
-                    <Attribute name="source" type="String">
-                        <Value>Derived via Time Tagging</Value>
-                    </Attribute>
-                    <Attribute name="standard_name" type="String">
-                        <Value>time</Value>
-                    </Attribute>
-                    <Attribute name="units" type="String">
-                        <Value>seconds since 2018-01-01</Value>
-                    </Attribute>
-                </Float64>
-                <Float32 name="z_pc_delta">
-                    <Dim name="/gt3r/signal_find_output/land/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
                         <Value>3.402823466e+38</Value>
                     </Attribute>
@@ -22944,7 +22944,7 @@
                 </Attribute>
             </Group>
             <Group name="inlandwater">
-                <Dimension name="delta_time" size="17735"/>
+                <Dimension name="delta_time" size="40542"/>
                 <Float32 name="bckgrd_mean">
                     <Dim name="/gt3r/signal_find_output/inlandwater/delta_time"/>
                     <Attribute name="_FillValue" type="Float32">
@@ -23056,7 +23056,7 @@
             </Group>
         </Group>
         <Group name="heights">
-            <Dimension name="delta_time" size="4548382"/>
+            <Dimension name="delta_time" size="11970539"/>
             <Int8 name="ph_id_count">
                 <Dim name="/gt3r/heights/delta_time"/>
                 <Attribute name="contentType" type="String">

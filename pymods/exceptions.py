@@ -27,15 +27,6 @@ class DmrNamespaceError(CustomError):
         super().__init__('DmrNamespaceError', f'Unexpected root: {tag}')
 
 
-class PydapRetrievalError(CustomError):
-    """ This exception is raised when pydap fails to retrieve a dataset from
-        a specified URL.
-
-    """
-    def __init__(self, message):
-        super().__init__('PydapRetrievalError', message)
-
-
 class UrlAccessFailed(CustomError):
     """ This exception is raise when an HTTP request for a given URL has a non
         500 error, and is therefore not retried.

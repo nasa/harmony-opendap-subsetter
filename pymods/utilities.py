@@ -53,23 +53,14 @@ def recursive_get(input_dictionary: Dict, keys: List[str]):
     return nested_value
 
 
-def pydap_attribute_path(full_path: str) -> List[str]:
+def split_attribute_path(full_path: str) -> List[str]:
     """ Take the full path to a metadata attribute and return the list of
-        keys that locate that attribute within the pydap global attributes.
-        This function expects the input path to have a leading "/" character.
+        keys that locate that attribute within the global attributes.
+        This function can account for the input path to having, or omitting, a
+        leading '/' character.
 
     """
-    full_path_pieces = full_path.lstrip('/').split('/')
-
-    final_key = full_path_pieces.pop(-1)
-    leading_key = '_'.join(full_path_pieces)
-
-    if leading_key:
-        key_list = [leading_key, final_key]
-    else:
-        key_list = [final_key]
-
-    return key_list
+    return full_path.lstrip('/').split('/')
 
 
 def get_xml_namespace(root_element: Element) -> str:

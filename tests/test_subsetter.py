@@ -95,7 +95,7 @@ class TestSubsetterEndToEnd(TestCase):
             is_regridded=False,
             is_subsetted=False,
             is_variable_subset=True,
-            mime='application/octet-stream'
+            mime='application/x-netcdf4'
         )
 
         mock_cleanup.assert_called_once()

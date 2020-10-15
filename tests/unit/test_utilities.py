@@ -27,7 +27,7 @@ class TestUtilities(TestCase):
     def test_get_file_mimetype(self):
         """ Ensure a mimetype can be retrieved for a valid file path or, if
             the mimetype cannot be inferred, that the default output is
-            returned.
+            returned. This assumes the output is a NetCDF-4 file.
 
         """
         with self.subTest('File with MIME type'):
@@ -38,7 +38,7 @@ class TestUtilities(TestCase):
             with patch('mimetypes.guess_type') as mock_guess_type:
                 mock_guess_type.return_value = (None, None)
                 mimetype = get_file_mimetype('africa.nc')
-                self.assertEqual(mimetype, ('application/octet-stream', None))
+                self.assertEqual(mimetype, ('application/x-netcdf4', None))
 
     def test_recursive_get(self):
         """ Can retrieve a nested dictionary value, or account for missing

@@ -59,7 +59,7 @@ class TestSubsetter(TestCase):
 
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
-        mock_get_mimetype.return_value = ('application/octet-stream', None)
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -77,7 +77,7 @@ class TestSubsetter(TestCase):
 
         mock_completed_with_local_file.assert_called_once_with(
             '/path/to/output.nc', source_granule=granule,
-            mime='application/octet-stream', **self.operations
+            mime='application/x-netcdf4', **self.operations
         )
         mock_async_add_local_file_partial.assert_not_called()
         mock_async_completed.assert_not_called()
@@ -95,7 +95,7 @@ class TestSubsetter(TestCase):
 
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
-        mock_get_mimetype.return_value = ('application/octet-stream', None)
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -115,7 +115,7 @@ class TestSubsetter(TestCase):
         mock_completed_with_local_file.assert_not_called()
         mock_async_add_local_file_partial.assert_called_once_with(
             '/path/to/output.nc', source_granule=granule, progress=100,
-            mime='application/octet-stream', title=granule.id,
+            mime='application/x-netcdf4', title=granule.id,
             **self.operations
         )
         mock_async_completed.assert_called_once()
@@ -135,7 +135,7 @@ class TestSubsetter(TestCase):
 
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
-        mock_get_mimetype.return_value = ('application/octet-stream', None)
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -154,7 +154,7 @@ class TestSubsetter(TestCase):
         mock_completed_with_local_file.assert_called_once_with(
             '/path/to/output.nc',
             source_granule=granule,
-            mime='application/octet-stream',
+            mime='application/x-netcdf4',
             **self.operations
         )
         mock_async_add_local_file_partial.assert_not_called()
@@ -172,7 +172,7 @@ class TestSubsetter(TestCase):
 
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
-        mock_get_mimetype.return_value = ('application/octet-stream', None)
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -208,7 +208,7 @@ class TestSubsetter(TestCase):
         output_paths = ['/path/to/output1.nc', '/path/to/output2.nc']
 
         mock_subset_granule.side_effect = output_paths
-        mock_get_mimetype.return_value = ('application/octet-stream', None)
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -248,7 +248,7 @@ class TestSubsetter(TestCase):
         progresses = [50, 100]
 
         mock_subset_granule.side_effect = output_paths
-        mock_get_mimetype.return_value = ('application/octet-stream', None)
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -274,7 +274,7 @@ class TestSubsetter(TestCase):
             mock_get_mimetype.assert_any_call(output_paths[index])
             mock_async_add_local_file_partial.assert_any_call(
                 output_paths[index], source_granule=granule,
-                progress=progresses[index], mime='application/octet-stream',
+                progress=progresses[index], mime='application/x-netcdf4',
                 title=granule.id,
                 **self.operations
             )
@@ -289,7 +289,7 @@ class TestSubsetter(TestCase):
 
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
-        mock_get_mimetype.return_value = ('application/octet-stream', None)
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',

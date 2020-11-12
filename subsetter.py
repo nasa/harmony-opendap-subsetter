@@ -31,9 +31,12 @@ the service will behave synchronously.
 
 """
 from argparse import ArgumentParser
-import os
+import shutil
+from tempfile import mkdtemp
+from pystac import Asset
 
 import harmony
+from harmony.util import generate_output_filename
 
 from pymods.subset import subset_granule
 from pymods.utilities import get_file_mimetype
@@ -52,55 +55,79 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
     """
 
     def invoke(self):
-        """ Callback used by BaseHarmonyAdapter to invoke the service. """
-        self.logger.info('Starting Data Services variable subsetter service')
-        os.environ['HDF5_DISABLE_VERSION_CHECK'] = '1'
+        """
+        Adds validation to default process_item-based invocation
 
-        operations = {'is_variable_subset': True,
-                      'is_regridded': False,
-                      'is_subsetted': False}
+        Returns
+        -------
+        pystac.Catalog
+            the output catalog
+        """
+        self.validate_message()
+        return super().invoke()
 
+    def process_item(self, item, source):
+        """
+        Processes a single input item.  Services that are not aggregating multiple input files
+        should prefer to implement this method rather than #invoke
+
+        This example copies its input to the output, marking "dpi" and "variables" message
+        attributes as having been processed
+
+        Parameters
+        ----------
+        item : pystac.Item
+            the item that should be processed
+        source : harmony.message.Source
+            the input source defining the variables, if any, to subset from the item
+
+        Returns
+        -------
+        pystac.Item
+            a STAC catalog whose metadata and assets describe the service output
+        """
+        result = item.clone()
+        result.assets = {}
+
+        # Create a temporary dir for processing we may do
+        workdir = mkdtemp()
         try:
-            self.validate_message()
+            # Get the data file
+            asset = None
+            for k, v in item.assets.items():
+                if v.roles and 'opendap' in v.roles:
+                    asset = v
+                    break
+                elif v.roles and 'data' in v.roles:
+                    # Legacy workflows won't provide a data role of 'opendap'.
+                    # After workflows are converted to chaining, this can all be
+                    # condensed to:
+                    # asset = next(v for k, v in item.assets.items() if 'opendap' in (v.roles or []))
+                    asset = v
 
-            for index, granule in enumerate(self.message.granules):
-                output_file_path = subset_granule(granule, self.logger)
+            # Mark any fields the service processes so later services do not repeat work
+            variables = source.process('variables')  # Variable subsetting
 
-                if not self.message.isSynchronous:
-                    mimetype = get_file_mimetype(output_file_path)
+            # Subset
+            output_file_path = subset_granule(asset.href, variables, workdir, self.logger)
 
-                    # This progress assumes granules are similar sizes.
-                    progress = int((100 * (index + 1)) /
-                                   len(self.message.granules))
+            # Stage the output file with a conventional filename
+            mime, _ = get_file_mimetype(output_file_path)
+            staged_filename = generate_output_filename(asset.href, variable_subset=source.variables)
+            url = harmony.util.stage(output_file_path,
+                                     staged_filename,
+                                     mime,
+                                     location=self.message.stagingLocation,
+                                     logger=self.logger)
 
-                    self.async_add_local_file_partial_result(
-                        output_file_path, source_granule=granule,
-                        mime=mimetype[0], progress=progress, title=granule.id,
-                        **operations
-                    )
+            # Update the STAC record
+            result.assets['data'] = Asset(url, title=staged_filename, media_type=mime, roles=['data'])
 
-            if self.message.isSynchronous:
-                mimetype = get_file_mimetype(output_file_path)
-
-                self.completed_with_local_file(
-                    output_file_path,
-                    source_granule=self.message.granules[0],
-                    mime=mimetype[0],
-                    **operations
-                )
-            else:
-                self.async_completed_successfully()
-
-            self.logger.info('Variable subsetting completed.')
-
-        except Exception as error:
-            self.logger.info('Variable subsetting failed:')
-            self.logger.exception(error)
-            self.completed_with_error('Variable subsetting failed with error: '
-                                      f'{str(error)}')
-
+            # Return the STAC record
+            return result
         finally:
-            self.cleanup()
+            # Clean up any intermediate resources
+            shutil.rmtree(workdir)
 
     def validate_message(self):
         """ Check the service was triggered by a valid message containing
@@ -119,7 +146,14 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         else:
             self.logger.info('Service has been called asynchronously.')
 
-        if not hasattr(self.message, 'granules') or not self.message.granules:
+        has_granules = hasattr(self.message, 'granules') and self.message.granules
+        has_items = False
+        try:
+            has_items = bool(self.catalog and next(self.catalog.get_all_items()))
+        except StopIteration:
+            pass
+
+        if not has_granules and not has_items:
             raise Exception('No granules specified for variable subsetting')
         elif self.message.isSynchronous and len(self.message.granules) > 1:
             # TODO: remove this condition when synchronous requests can handle

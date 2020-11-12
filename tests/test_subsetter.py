@@ -38,14 +38,13 @@ class TestSubsetterEndToEnd(TestCase):
     def tearDown(self):
         rmtree(self.tmp_dir)
 
-    @patch.object(harmony.BaseHarmonyAdapter, 'completed_with_local_file')
-    @patch.object(harmony.BaseHarmonyAdapter, 'cleanup')
-    @patch('pymods.subset.mkdtemp')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
     @patch('pymods.subset.download_url')
     @patch('pymods.var_info.download_url')
-    def test_dmr_end_to_end(self, mock_download_dmr, mock_download_subset,
-                            mock_mkdtemp, mock_cleanup,
-                            mock_completed_with_local_file):
+    @patch('harmony.util.stage')
+    def test_dmr_end_to_end(self, mock_stage, mock_download_dmr, mock_download_subset,
+                            mock_rmtree, mock_mkdtemp):
         """ Ensure the subsetter will run end-to-end, only mocking the
             HTTP response, and the output interactions with Harmony.
 
@@ -55,25 +54,33 @@ class TestSubsetterEndToEnd(TestCase):
         mock_download_subset.return_value = 'opendap_url_subset.nc4'
 
         message_data = {
-            'sources': [
-                {'granules' : [{'url': self.granule_url}],
-                 'variables': [{'id': '',
-                                'name': self.variable_full_path,
-                                'fullPath': self.variable_full_path}]}
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': self.variable_full_path,
+                               'fullPath': self.variable_full_path}]}
             ],
+            'callback': 'https://example.com/',
+            'stagingLocation': 's3://example-bucket/',
             'user': 'fhaise'
         }
         message = harmony.message.Message(json.dumps(message_data))
 
         subsetter = HarmonyAdapter(message)
-        granule = subsetter.message.granules[0]
         subsetter.invoke()
 
         mock_mkdtemp.assert_called_once()
         mock_download_dmr.assert_called_once_with(f'{self.granule_url}.dmr',
                                                   self.tmp_dir,
                                                   subsetter.logger)
-
 
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,
@@ -89,13 +96,9 @@ class TestSubsetterEndToEnd(TestCase):
         requested_variables = query_parameters[0][1].split(';')
         self.assertCountEqual(requested_variables, self.expected_variables)
 
-        mock_completed_with_local_file.assert_called_once_with(
-            contains('opendap_url_subset.nc4'),
-            source_granule=granule,
-            is_regridded=False,
-            is_subsetted=False,
-            is_variable_subset=True,
-            mime='application/x-netcdf4'
-        )
-
-        mock_cleanup.assert_called_once()
+        mock_stage.assert_called_once_with(
+            'opendap_url_subset.nc4',
+            'opendap_url__gt1r_geophys_corr_geoid.',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger)

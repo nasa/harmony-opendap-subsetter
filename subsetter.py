@@ -64,7 +64,12 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             self.validate_message()
 
             for index, granule in enumerate(self.message.granules):
-                output_file_path = subset_granule(granule, self.logger)
+                output_file_path = subset_granule(
+                    granule,
+                    self.logger,
+                    access_token=self.message.access_token,
+                    config=self.config
+                )
 
                 if not self.message.isSynchronous:
                     mimetype = get_file_mimetype(output_file_path)

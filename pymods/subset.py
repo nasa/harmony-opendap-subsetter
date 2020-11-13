@@ -13,7 +13,7 @@ from pymods.utilities import download_url
 from pymods.var_info import VarInfo
 
 
-def subset_granule(granule: Granule, logger: Logger) -> str:
+def subset_granule(granule: Granule, logger: Logger, access_token=None, config=None) -> str:
     """ This function takes a single Harmony `Granule` object, and extracts the
         requested variables, and those sub-variables they depend
         upon (such as coordinates), to produce an output file with only those

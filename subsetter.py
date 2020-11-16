@@ -33,10 +33,11 @@ the service will behave synchronously.
 from argparse import ArgumentParser
 import shutil
 from tempfile import mkdtemp
-from pystac import Asset
+from pystac import Asset, Item
 
 import harmony
 from harmony.util import generate_output_filename
+from harmony.message import Source
 
 from pymods.subset import subset_granule
 from pymods.utilities import get_file_mimetype
@@ -66,7 +67,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         self.validate_message()
         return super().invoke()
 
-    def process_item(self, item, source):
+    def process_item(self, item: Item, source: Source):
         """
         Processes a single input item.  Services that are not aggregating multiple input files
         should prefer to implement this method rather than #invoke
@@ -94,16 +95,16 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         try:
             # Get the data file
             asset = None
-            for k, v in item.assets.items():
-                if v.roles and 'opendap' in v.roles:
-                    asset = v
+            for key, item_asset in item.assets.items():
+                if item_asset.roles and 'opendap' in item_asset.roles:
+                    asset = item_asset
                     break
-                elif v.roles and 'data' in v.roles:
+                elif item_asset.roles and 'data' in item_asset.roles:
                     # Legacy workflows won't provide a data role of 'opendap'.
                     # After workflows are converted to chaining, this can all be
                     # condensed to:
                     # asset = next(v for k, v in item.assets.items() if 'opendap' in (v.roles or []))
-                    asset = v
+                    asset = item_asset
 
             # Mark any fields the service processes so later services do not repeat work
             variables = source.process('variables')  # Variable subsetting
@@ -147,11 +148,10 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             self.logger.info('Service has been called asynchronously.')
 
         has_granules = hasattr(self.message, 'granules') and self.message.granules
-        has_items = False
         try:
             has_items = bool(self.catalog and next(self.catalog.get_all_items()))
         except StopIteration:
-            pass
+            has_items = False
 
         if not has_granules and not has_items:
             raise Exception('No granules specified for variable subsetting')

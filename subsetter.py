@@ -99,11 +99,12 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 if item_asset.roles and 'opendap' in item_asset.roles:
                     asset = item_asset
                     break
-                elif item_asset.roles and 'data' in item_asset.roles:
+                if item_asset.roles and 'data' in item_asset.roles:
                     # Legacy workflows won't provide a data role of 'opendap'.
                     # After workflows are converted to chaining, this can all be
                     # condensed to:
-                    # asset = next(v for k, v in item.assets.items() if 'opendap' in (v.roles or []))
+                    # asset = next(v for k, v in item.assets.items()
+                    #                            if 'opendap' in (v.roles or []))
                     asset = item_asset
 
             # Mark any fields the service processes so later services do not repeat work
@@ -122,7 +123,10 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                                      logger=self.logger)
 
             # Update the STAC record
-            result.assets['data'] = Asset(url, title=staged_filename, media_type=mime, roles=['data'])
+            result.assets['data'] = Asset(url,
+                                          title=staged_filename,
+                                          media_type=mime,
+                                          roles=['data'])
 
             # Return the STAC record
             return result
@@ -155,7 +159,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
         if not has_granules and not has_items:
             raise Exception('No granules specified for variable subsetting')
-        elif self.message.isSynchronous and len(self.message.granules) > 1:
+        if self.message.isSynchronous and len(self.message.granules) > 1:
             # TODO: remove this condition when synchronous requests can handle
             # multiple granules.
             raise Exception('Synchronous requests accept only one granule')

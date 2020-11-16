@@ -51,4 +51,5 @@ def subset_granule(granule: Granule, logger: Logger, access_token=None, config=N
     constraint_expression = urlencode({'dap4.ce': ';'.join(required_variables)})
     opendap_url = f'{granule.url}.dap.nc4?{constraint_expression}'
 
-    return download_url(opendap_url, temp_dir, logger, data='')
+    return download_url(opendap_url, temp_dir, logger, access_token=access_token,
+                        data='', config=config)

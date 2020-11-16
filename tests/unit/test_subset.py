@@ -4,6 +4,7 @@ from unittest.mock import patch
 import json
 
 from harmony.message import Message
+import harmony.util
 
 from pymods.subset import subset_granule
 from tests.utilities import contains
@@ -27,6 +28,7 @@ class TestSubset(TestCase):
 
     def setUp(self):
         self.logger = Logger('tests')
+        self.config = harmony.util.config(validate=False)
 
     @patch('pymods.subset.VarInfo')
     @patch('pymods.subset.download_url')
@@ -52,6 +54,8 @@ class TestSubset(TestCase):
                 f'{self.granule_url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
                 contains('/tmp/tmp'),
                 self.logger,
-                data=''
+                data='',
+                access_token=None,
+                config=None
             )
             self.assertIn('africa_subset.nc4', output_path)

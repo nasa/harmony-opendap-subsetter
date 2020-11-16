@@ -34,6 +34,7 @@ class TestSubsetterEndToEnd(TestCase):
     def setUp(self):
         """ Have to mock mkdtemp, to know where to put mock .dmr content. """
         self.tmp_dir = mkdtemp()
+        self.config = harmony.util.config(validate=False)
 
     def tearDown(self):
         rmtree(self.tmp_dir)
@@ -61,11 +62,12 @@ class TestSubsetterEndToEnd(TestCase):
                                 'name': self.variable_full_path,
                                 'fullPath': self.variable_full_path}]}
             ],
-            'user': 'fhaise'
+            'user': 'fhaise',
+            'accessToken': 'xyzzy'
         }
         message = harmony.message.Message(json.dumps(message_data))
 
-        subsetter = HarmonyAdapter(message)
+        subsetter = HarmonyAdapter(message, config=self.config)
         granule = subsetter.message.granules[0]
         subsetter.invoke()
 

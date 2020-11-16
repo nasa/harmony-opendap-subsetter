@@ -50,7 +50,6 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         synchronous.
 
     """
-
     def invoke(self):
         """ Callback used by BaseHarmonyAdapter to invoke the service. """
         self.logger.info('Starting Data Services variable subsetter service')
@@ -67,7 +66,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 output_file_path = subset_granule(
                     granule,
                     self.logger,
-                    access_token=self.message.access_token,
+                    access_token=self.message.accessToken,
                     config=self.config
                 )
 

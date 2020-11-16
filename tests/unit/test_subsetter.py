@@ -5,6 +5,7 @@ import json
 
 from harmony import BaseHarmonyAdapter
 from harmony.message import Message
+import harmony.util
 
 from subsetter import HarmonyAdapter
 from tests.utilities import contains
@@ -31,6 +32,9 @@ class TestSubsetter(TestCase):
                           'is_regridded': False,
                           'is_subsetted': False}
 
+    def setUp(self):
+        self.config = harmony.util.config(validate=False)
+
     def create_message(self, collection: str, granule_id: str, file_paths: List[str],
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None) -> Message:
@@ -38,10 +42,13 @@ class TestSubsetter(TestCase):
         granules = [{'id': granule_id, 'url': file_path}
                     for file_path in file_paths]
         variables = [{'name': variable} for variable in variable_list]
-        message_content = {'sources': [{'collection': collection,
-                                        'granules': granules,
-                                        'variables': variables}],
-                           'user': user}
+        message_content = {
+            'sources': [{'collection': collection,
+                         'granules': granules,
+                         'variables': variables}],
+            'user': user,
+            'accessToken': 'xyzzy'
+        }
 
         if is_synchronous is not None:
             message_content['isSynchronous'] = is_synchronous
@@ -67,12 +74,14 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'narmstrong',
                                       True)
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
         mock_subset_granule.assert_called_once_with(granule,
-                                                    variable_subsetter.logger)
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=self.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_completed_with_local_file.assert_called_once_with(
@@ -104,12 +113,14 @@ class TestSubsetter(TestCase):
                                       'ealdrin',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
         mock_subset_granule.assert_called_once_with(granule,
-                                                    variable_subsetter.logger)
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=self.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_completed_with_local_file.assert_not_called()
@@ -143,12 +154,14 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'mcollins')
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
         mock_subset_granule.assert_called_once_with(granule,
-                                                    variable_subsetter.logger)
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=self.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_completed_with_local_file.assert_called_once_with(
@@ -180,7 +193,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'pconrad')
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         variable_subsetter.invoke()
 
         mock_subset_granule.assert_not_called()
@@ -218,7 +231,7 @@ class TestSubsetter(TestCase):
                                       'rgordon',
                                       True)
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         variable_subsetter.invoke()
 
         mock_subset_granule.assert_not_called()
@@ -257,7 +270,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'], 'abean',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         variable_subsetter.invoke()
         granules = variable_subsetter.message.granules
 
@@ -270,7 +283,9 @@ class TestSubsetter(TestCase):
 
         for index, granule in enumerate(granules):
             mock_subset_granule.assert_any_call(granule,
-                                                variable_subsetter.logger)
+                                                variable_subsetter.logger,
+                                                access_token=message.accessToken,
+                                                config=self.config)
             mock_get_mimetype.assert_any_call(output_paths[index])
             mock_async_add_local_file_partial.assert_any_call(
                 output_paths[index], source_granule=granule,
@@ -297,7 +312,7 @@ class TestSubsetter(TestCase):
                                       [],
                                       'jlovell')
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         variable_subsetter.invoke()
 
         mock_subset_granule.assert_not_called()

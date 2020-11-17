@@ -4,9 +4,10 @@ from unittest.mock import patch, ANY
 import json
 
 from harmony.message import Message
+from harmony.util import config
 
 from subsetter import HarmonyAdapter
-from tests.utilities import contains, spy_on
+from tests.utilities import spy_on
 
 
 @patch('subsetter.get_file_mimetype')
@@ -74,7 +75,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'narmstrong',
                                       True)
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=config(False))
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
@@ -112,7 +113,7 @@ class TestSubsetter(TestCase):
                                       'ealdrin',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=config(False))
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
@@ -148,7 +149,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'mcollins')
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=config(False))
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
@@ -185,7 +186,7 @@ class TestSubsetter(TestCase):
                                       'pconrad',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=config(False))
         error = None
         try:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
@@ -220,7 +221,7 @@ class TestSubsetter(TestCase):
                                       'rgordon',
                                       True)
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=config(False))
         error = None
         try:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
@@ -256,7 +257,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'], 'abean',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=config(False))
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granules = variable_subsetter.message.granules
@@ -295,7 +296,7 @@ class TestSubsetter(TestCase):
                                       [],
                                       'jlovell')
 
-        variable_subsetter = HarmonyAdapter(message)
+        variable_subsetter = HarmonyAdapter(message, config=config(False))
         error = None
         try:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):

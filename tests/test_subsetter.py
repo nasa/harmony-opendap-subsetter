@@ -5,7 +5,8 @@ from unittest.mock import patch
 from urllib.parse import parse_qsl
 import json
 
-import  harmony
+import harmony
+from harmony.util import config
 
 from subsetter import HarmonyAdapter
 from tests.utilities import contains, write_dmr
@@ -74,7 +75,7 @@ class TestSubsetterEndToEnd(TestCase):
         }
         message = harmony.message.Message(json.dumps(message_data))
 
-        subsetter = HarmonyAdapter(message)
+        subsetter = HarmonyAdapter(message, config=config(False))
         subsetter.invoke()
 
         mock_mkdtemp.assert_called_once()

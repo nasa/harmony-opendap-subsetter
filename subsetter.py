@@ -111,7 +111,13 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             variables = source.process('variables')  # Variable subsetting
 
             # Subset
-            output_file_path = subset_granule(asset.href, variables, workdir, self.logger)
+            output_file_path = subset_granule(
+                asset.href,
+                variables, workdir,
+                self.logger,
+                access_token=self.message.accessToken,
+                config=self.config
+            )
 
             # Stage the output file with a conventional filename
             mime, _ = get_file_mimetype(output_file_path)

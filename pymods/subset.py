@@ -8,12 +8,19 @@ from typing import List
 from urllib.parse import urlencode
 
 from harmony.message import Variable
+from harmony.util import Config
 
 from pymods.utilities import download_url
 from pymods.var_info import VarInfo
 
 
-def subset_granule(url: str, variables: List[Variable], output_dir: str, logger: Logger) -> str:
+def subset_granule(
+        url: str,
+        variables: List[Variable],
+        output_dir: str,
+        logger: Logger,
+        access_token: str = None,
+        config: Config = None) -> str:
     """ This function takes a granule's OPeNDAP URL and extracts the
         requested variables, and those sub-variables they depend
         upon (such as coordinates), to produce an output file with only those
@@ -49,4 +56,5 @@ def subset_granule(url: str, variables: List[Variable], output_dir: str, logger:
     constraint_expression = urlencode({'dap4.ce': ';'.join(required_variables)})
     opendap_url = f'{url}.dap.nc4?{constraint_expression}'
 
-    return download_url(opendap_url, output_dir, logger, data='')
+    return download_url(opendap_url, output_dir, logger, access_token=access_token,
+                        data='', config=config)

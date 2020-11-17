@@ -86,7 +86,9 @@ class TestSubsetterEndToEnd(TestCase):
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,
                                                      subsetter.logger,
-                                                     data='')
+                                                     access_token=None,
+                                                     data='',
+                                                     config=subsetter.config)
 
         subset_url = mock_download_subset.call_args[0][0]
         self.assertTrue(subset_url.startswith(f'{self.granule_url}.dap.nc4?'))

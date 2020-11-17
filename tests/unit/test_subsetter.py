@@ -83,7 +83,10 @@ class TestSubsetter(TestCase):
         mock_subset_granule.assert_called_once_with(granule.url,
                                                     granule.variables,
                                                     ANY,
-                                                    variable_subsetter.logger)
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config)
+
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
@@ -121,7 +124,9 @@ class TestSubsetter(TestCase):
         mock_subset_granule.assert_called_once_with(granule.url,
                                                     granule.variables,
                                                     ANY,
-                                                    variable_subsetter.logger)
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
@@ -157,7 +162,9 @@ class TestSubsetter(TestCase):
         mock_subset_granule.assert_called_once_with(granule.url,
                                                     granule.variables,
                                                     ANY,
-                                                    variable_subsetter.logger)
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
@@ -262,13 +269,13 @@ class TestSubsetter(TestCase):
             variable_subsetter.invoke()
         granules = variable_subsetter.message.granules
 
-        print(mock_stage.mock_calls)
-
         for index, granule in enumerate(granules):
             mock_subset_granule.assert_any_call(granule.url,
                                                 granule.variables,
                                                 ANY,
-                                                variable_subsetter.logger)
+                                                variable_subsetter.logger,
+                                                access_token=message.accessToken,
+                                                config=variable_subsetter.config)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
             mock_stage.assert_any_call(
@@ -276,7 +283,7 @@ class TestSubsetter(TestCase):
                 output_filenames[index],
                 'application/x-netcdf4',
                 location=message.stagingLocation,
-                logger=variable_subsetter.logger
+                logger=variable_subsetter.logger,
             )
 
     def test_missing_variables(self,

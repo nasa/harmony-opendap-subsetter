@@ -158,7 +158,9 @@ class TestUtilities(TestCase):
             mock_util_download.assert_called_once_with(test_url,
                                                        output_directory,
                                                        self.logger,
-                                                       data=None)
+                                                       data=None,
+                                                       access_token=None,
+                                                       cfg=None)
 
             mock_util_download.reset_mock()
 

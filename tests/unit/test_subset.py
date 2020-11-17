@@ -59,6 +59,8 @@ class TestSubset(TestCase):
                 f'{url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
                 ANY,
                 self.logger,
-                data=''
+                data='',
+                access_token=None,
+                config=None
             )
             self.assertIn('africa_subset.nc4', output_path)

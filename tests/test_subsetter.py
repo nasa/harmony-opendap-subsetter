@@ -71,7 +71,8 @@ class TestSubsetterEndToEnd(TestCase):
             ],
             'callback': 'https://example.com/',
             'stagingLocation': 's3://example-bucket/',
-            'user': 'fhaise'
+            'user': 'fhaise',
+            'accessToken': 'fake-token',
         }
         message = harmony.message.Message(json.dumps(message_data))
 
@@ -82,13 +83,13 @@ class TestSubsetterEndToEnd(TestCase):
         mock_download_dmr.assert_called_once_with(f'{self.granule_url}.dmr',
                                                   self.tmp_dir,
                                                   subsetter.logger,
-                                                  None,
+                                                  message_data['accessToken'],
                                                   subsetter.config)
 
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,
                                                      subsetter.logger,
-                                                     access_token=None,
+                                                     access_token=message_data['accessToken'],
                                                      data='',
                                                      config=subsetter.config)
 

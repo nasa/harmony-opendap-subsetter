@@ -40,7 +40,7 @@ def subset_granule(
 
     # Harmony provides the OPeNDAP URL as the granule URL for this service
     dmr_url = url + '.dmr'
-    dataset = VarInfo(dmr_url, logger, output_dir)
+    dataset = VarInfo(dmr_url, logger, output_dir, access_token, config)
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.

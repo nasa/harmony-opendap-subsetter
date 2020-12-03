@@ -81,7 +81,9 @@ class TestSubsetterEndToEnd(TestCase):
         mock_mkdtemp.assert_called_once()
         mock_download_dmr.assert_called_once_with(f'{self.granule_url}.dmr',
                                                   self.tmp_dir,
-                                                  subsetter.logger)
+                                                  subsetter.logger,
+                                                  None,
+                                                  subsetter.config)
 
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,

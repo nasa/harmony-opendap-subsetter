@@ -1,12 +1,13 @@
 from logging import Logger
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 import json
+import shutil
+from tempfile import mkdtemp
 
 from harmony.message import Message
 
 from pymods.subset import subset_granule
-from tests.utilities import contains
 
 
 class TestSubset(TestCase):
@@ -26,7 +27,11 @@ class TestSubset(TestCase):
         cls.message = Message(json.dumps(cls.message_content))
 
     def setUp(self):
+        self.output_dir = mkdtemp()
         self.logger = Logger('tests')
+
+    def tearDown(self):
+        shutil.rmtree(self.output_dir)
 
     @patch('pymods.subset.VarInfo')
     @patch('pymods.subset.download_url')
@@ -36,7 +41,7 @@ class TestSubset(TestCase):
             Note: %2F is a URL encoded slash and %3B is a URL encoded semi-colon.
 
         """
-        granule = self.message.granules[0]
+        url = self.__class__.granule_url
         mock_download_url.return_value = 'africa_subset.nc4'
 
         # Note: return value below is a list, not a set, so the order can be
@@ -45,13 +50,17 @@ class TestSubset(TestCase):
         mock_var_info_dmr.return_value.get_required_variables.return_value = [
             '/alpha_var', '/blue_var'
         ]
+        variables = self.message.sources[0].variables
 
         with self.subTest('Succesful calls to OPeNDAP'):
-            output_path = subset_granule(granule, self.logger)
+            output_path = subset_granule(url, variables, self.output_dir, self.logger)
+            print(mock_download_url.mock_calls)
             mock_download_url.assert_called_once_with(
-                f'{self.granule_url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
-                contains('/tmp/tmp'),
+                f'{url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
+                ANY,
                 self.logger,
-                data=''
+                data='',
+                access_token=None,
+                config=None
             )
             self.assertIn('africa_subset.nc4', output_path)

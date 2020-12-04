@@ -4,23 +4,28 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR "/home"
 
-# Bundle app source
-COPY ./tests tests
-COPY ./pymods pymods
-COPY subsetter.py .
-COPY conda_requirements.txt .
-COPY pip_requirements.txt .
+# Install dependencies first. These steps take the longest and change the least,
+# so their layers should usually be cached
+# Run bin/build-test latest --no-delete to take advantage of the faster build
 
 # Create Conda environment
-RUN conda create --name subsetter --file conda_requirements.txt python=3.7 -q \
+COPY conda_requirements.txt .
+RUN conda create -y --name subsetter --file conda_requirements.txt python=3.7 -q \
 	--channel conda-forge \
 	--channel defaults
 
 # Install additional Pip requirements (for the variable subsetter itself)
+COPY pip_requirements.txt .
 RUN conda run --name subsetter pip install -r pip_requirements.txt
 
 # Install additional Pip requirements (for testing)
+COPY ./tests/pip_test_requirements.txt tests/pip_test_requirements.txt
 RUN conda run --name subsetter pip install -r tests/pip_test_requirements.txt
+
+# Bundle app source
+COPY ./tests tests
+COPY ./pymods pymods
+COPY subsetter.py .
 
 # Set conda environment to subsetter, as conda run will not stream logging.
 # Setting these environment variables is the equivalent of `conda activate`.

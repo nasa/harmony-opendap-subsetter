@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import patch
 import re
 
+from harmony.util import config
 from pymods.var_info import VarInfo
 from tests.utilities import write_dmr
 
@@ -21,6 +22,9 @@ class TestVarInfo(TestCase):
         cls.logger = Logger('VarInfo tests')
         cls.dmr_url = 'http://test.opendap.org/opendap/hyrax/user/granule.dmr'
         cls.config_file = 'tests/unit/data/test_config.yml'
+        cls.env_config = config(False)
+        cls.access_token = 'fake-token'
+
         cls.namespace = 'namespace_string'
 
         cls.mock_dataset = (
@@ -114,7 +118,6 @@ class TestVarInfo(TestCase):
         """
         short_name = 'ATL03'
 
-
         hdf5_global = (
             '  <Group name="HDF5_GLOBAL">'
             '    <Attribute name="short_name">'
@@ -190,11 +193,17 @@ class TestVarInfo(TestCase):
                 mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                            mock_dmr)]
 
-                dataset = VarInfo(self.dmr_url, self.logger, self.output_dir)
+                dataset = VarInfo(self.dmr_url,
+                                  self.logger,
+                                  self.output_dir,
+                                  self.access_token,
+                                  self.env_config)
 
                 mock_download_url.assert_called_once_with(self.dmr_url,
                                                           self.output_dir,
-                                                          self.logger)
+                                                          self.logger,
+                                                          self.access_token,
+                                                          self.env_config)
                 self.assertEqual(dataset.short_name, short_name)
 
             mock_download_url.reset_mock()
@@ -203,11 +212,17 @@ class TestVarInfo(TestCase):
             mock_dmr = (f'<Dataset xmlns="{self.namespace}"></Dataset>')
             mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                        mock_dmr)]
-            dataset = VarInfo(self.dmr_url, self.logger, self.output_dir)
+            dataset = VarInfo(self.dmr_url,
+                              self.logger,
+                              self.output_dir,
+                              self.access_token,
+                              self.env_config)
 
             mock_download_url.assert_called_once_with(self.dmr_url,
                                                       self.output_dir,
-                                                      self.logger)
+                                                      self.logger,
+                                                      self.access_token,
+                                                      self.env_config)
             self.assertEqual(dataset.short_name, None)
             mock_download_url.reset_mock()
 
@@ -235,11 +250,17 @@ class TestVarInfo(TestCase):
                 mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                            mock_dmr)]
 
-                dataset = VarInfo(self.dmr_url, self.logger, self.output_dir)
+                dataset = VarInfo(self.dmr_url,
+                                  self.logger,
+                                  self.output_dir,
+                                  self.access_token,
+                                  self.env_config)
 
                 mock_download_url.assert_called_once_with(self.dmr_url,
                                                           self.output_dir,
-                                                          self.logger)
+                                                          self.logger,
+                                                          self.access_token,
+                                                          self.env_config)
                 self.assertEqual(dataset.mission, expected_mission)
 
             mock_download_url.reset_mock()
@@ -256,6 +277,7 @@ class TestVarInfo(TestCase):
         mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                    self.mock_dataset)]
         dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
+                          self.access_token, self.env_config,
                           config_file=self.config_file)
 
         self.assertEqual(dataset.short_name, 'ATL03')
@@ -283,6 +305,7 @@ class TestVarInfo(TestCase):
         mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                    self.mock_dataset_two)]
         dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
+                          self.access_token, self.env_config,
                           config_file=self.config_file)
 
         expected_global_attributes = {
@@ -310,6 +333,7 @@ class TestVarInfo(TestCase):
         mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                    self.mock_dataset_two)]
         dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
+                          self.access_token, self.env_config,
                           config_file=self.config_file)
 
         science_variables = dataset.get_science_variables()
@@ -329,6 +353,7 @@ class TestVarInfo(TestCase):
         mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                    self.mock_dataset_two)]
         dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
+                          self.access_token, self.env_config,
                           config_file=self.config_file)
 
         metadata_variables = dataset.get_metadata_variables()
@@ -349,6 +374,7 @@ class TestVarInfo(TestCase):
         mock_download_url.side_effect = [write_dmr(self.output_dir,
                                                    self.mock_dataset_two)]
         dataset = VarInfo(self.dmr_url, self.logger, self.output_dir,
+                          self.access_token, self.env_config,
                           config_file=self.config_file)
 
         required_variables = dataset.get_required_variables(

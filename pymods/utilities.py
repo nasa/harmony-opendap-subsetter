@@ -11,12 +11,8 @@ import functools
 import mimetypes
 import re
 
-<<<<<<< HEAD
 import harmony.util
 from harmony.util import download as util_download
-=======
-from harmony.util import download as util_download, Config
->>>>>>> master
 import numpy as np
 
 from pymods.exceptions import (DmrNamespaceError, UrlAccessFailed,
@@ -119,7 +115,7 @@ def download_url(
         destination: str,
         logger: Logger,
         access_token: str = None,
-        config: Config = None,
+        config: harmony.util.Config = None,
         data=None) -> str:
     """ Use built-in Harmony functionality to download from a URL. This is
         expected to be used for obtaining the granule `.dmr` and the granule

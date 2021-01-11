@@ -11,8 +11,12 @@ import functools
 import mimetypes
 import re
 
+<<<<<<< HEAD
 import harmony.util
 from harmony.util import download as util_download
+=======
+from harmony.util import download as util_download, Config
+>>>>>>> master
 import numpy as np
 
 from pymods.exceptions import (DmrNamespaceError, UrlAccessFailed,
@@ -110,12 +114,13 @@ def get_xml_attribute(variable: Element, attribute_name: str, namespace: str,
     return attribute_value
 
 
-def download_url(url: str,
-                 destination: str,
-                 access_token: str,
-                 config: harmony.util.Config,
-                 logger: Logger,
-                 data=None) -> str:
+def download_url(
+        url: str,
+        destination: str,
+        logger: Logger,
+        access_token: str = None,
+        config: Config = None,
+        data=None) -> str:
     """ Use built-in Harmony functionality to download from a URL. This is
         expected to be used for obtaining the granule `.dmr` and the granule
         itself (only the required variables).

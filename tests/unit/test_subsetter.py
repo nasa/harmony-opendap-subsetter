@@ -1,23 +1,18 @@
 from typing import List, Optional
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 import json
 
-from harmony import BaseHarmonyAdapter
 from harmony.message import Message
 import harmony.util
 
 from subsetter import HarmonyAdapter
-from tests.utilities import contains
+from tests.utilities import spy_on
 
 
 @patch('subsetter.get_file_mimetype')
 @patch('subsetter.subset_granule')
-@patch.object(BaseHarmonyAdapter, 'cleanup')
-@patch.object(BaseHarmonyAdapter, 'async_completed_successfully')
-@patch.object(BaseHarmonyAdapter, 'async_add_local_file_partial_result')
-@patch.object(BaseHarmonyAdapter, 'completed_with_error')
-@patch.object(BaseHarmonyAdapter, 'completed_with_local_file')
+@patch('harmony.util.stage')
 class TestSubsetter(TestCase):
     """ Test the HarmonyAdapter class for basic functionality including:
 
@@ -34,19 +29,32 @@ class TestSubsetter(TestCase):
 
     def setUp(self):
         self.config = harmony.util.config(validate=False)
+        self.process_item_spy = spy_on(HarmonyAdapter.process_item)
 
     def create_message(self, collection: str, granule_id: str, file_paths: List[str],
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
-        granules = [{'id': granule_id, 'url': file_path}
-                    for file_path in file_paths]
+        granules = [
+            {
+                'id': granule_id,
+                'url': file_path,
+                'temporal': {
+                    'start': '2020-01-01T00:00:00.000Z',
+                    'end': '2020-01-02T00:00:00.000Z'
+                },
+                'bbox': [-180, -90, 180, 90]
+            } for file_path in file_paths]
         variables = [{'name': variable} for variable in variable_list]
         message_content = {
-            'sources': [{'collection': collection,
-                         'granules': granules,
-                         'variables': variables}],
+            'sources': [{
+                'collection': collection,
+                'granules': granules,
+                'variables': variables
+            }],
             'user': user,
+            'callback': 'https://example.com/',
+            'stagingLocation': 's3://example-bucket/',
             'accessToken': 'xyzzy'
         }
 
@@ -55,11 +63,10 @@ class TestSubsetter(TestCase):
 
         return Message(json.dumps(message_content))
 
-    def test_synchronous_request(self, mock_completed_with_local_file,
-                                 mock_completed_with_error,
-                                 mock_async_add_local_file_partial,
-                                 mock_async_completed, mock_cleanup,
-                                 mock_subset_granule, mock_get_mimetype):
+    def test_synchronous_request(self,
+                                 mock_stage,
+                                 mock_subset_granule,
+                                 mock_get_mimetype):
         """ A request that specifies `isSynchronous = True` should complete
             for a single granule. It should call the `subset_granule` function,
             and then indicate the request completed.
@@ -75,29 +82,31 @@ class TestSubsetter(TestCase):
                                       'narmstrong',
                                       True)
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        variable_subsetter.invoke()
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
-        mock_subset_granule.assert_called_once_with(granule,
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    granule.variables,
+                                                    ANY,
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
-                                                    config=self.config)
+                                                    config=variable_subsetter.config)
+
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_completed_with_local_file.assert_called_once_with(
-            '/path/to/output.nc', source_granule=granule,
-            mime='application/x-netcdf4', **self.operations
+        mock_stage.assert_called_once_with(
+            '/path/to/output.nc',
+            'africa.nc',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger
         )
-        mock_async_add_local_file_partial.assert_not_called()
-        mock_async_completed.assert_not_called()
-        mock_cleanup.assert_called_once()
-        mock_completed_with_error.assert_not_called()
 
-    def test_asynchronous_request(self, mock_completed_with_local_file,
-                                  mock_completed_with_error,
-                                  mock_async_add_local_file_partial,
-                                  mock_async_completed, mock_cleanup,
-                                  mock_subset_granule, mock_get_mimetype):
+    def test_asynchronous_request(self,
+                                  mock_stage,
+                                  mock_subset_granule,
+                                  mock_get_mimetype):
         """ A request that specified `isSynchronous = False` should complete
             for a single granule. It should call the `subset_granule` function,
             and then indicate the request completed.
@@ -114,30 +123,27 @@ class TestSubsetter(TestCase):
                                       False)
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        variable_subsetter.invoke()
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
-        mock_subset_granule.assert_called_once_with(granule,
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    granule.variables,
+                                                    ANY,
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
-                                                    config=self.config)
+                                                    config=variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_completed_with_local_file.assert_not_called()
-        mock_async_add_local_file_partial.assert_called_once_with(
-            '/path/to/output.nc', source_granule=granule, progress=100,
-            mime='application/x-netcdf4', title=granule.id,
-            **self.operations
-        )
-        mock_async_completed.assert_called_once()
-        mock_cleanup.assert_called_once()
-        mock_completed_with_error.assert_not_called()
+        mock_stage.assert_called_once_with(
+            '/path/to/output.nc',
+            'africa.nc',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger)
 
     def test_unspecified_synchronous_request(self,
-                                             mock_completed_with_local_file,
-                                             mock_completed_with_error,
-                                             mock_async_add_local_file_partial,
-                                             mock_async_completed, mock_cleanup,
+                                             mock_stage,
                                              mock_subset_granule,
                                              mock_get_mimetype):
         """ A request the does not specify `isSynchronous` should default to
@@ -155,31 +161,30 @@ class TestSubsetter(TestCase):
                                       'mcollins')
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        variable_subsetter.invoke()
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
-        mock_subset_granule.assert_called_once_with(granule,
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    granule.variables,
+                                                    ANY,
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
-                                                    config=self.config)
+                                                    config=variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_completed_with_local_file.assert_called_once_with(
+        mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            source_granule=granule,
-            mime='application/x-netcdf4',
-            **self.operations
+            'africa.nc',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger
         )
-        mock_async_add_local_file_partial.assert_not_called()
-        mock_async_completed.assert_not_called()
-        mock_cleanup.assert_called_once()
-        mock_completed_with_error.assert_not_called()
 
-    def test_missing_granules(self, mock_completed_with_local_file,
-                              mock_completed_with_error,
-                              mock_async_add_local_file_partial,
-                              mock_async_completed, mock_cleanup,
-                              mock_subset_granule, mock_get_mimetype):
+    def test_missing_granules(self,
+                              mock_stage,
+                              mock_subset_granule,
+                              mock_get_mimetype):
         """ A request with no specified granules in an inbound Harmony message
             should raise an exception.
 
@@ -191,27 +196,25 @@ class TestSubsetter(TestCase):
                                       'G1233860471-EEDTEST',
                                       [],
                                       ['alpha_var', 'blue_var'],
-                                      'pconrad')
+                                      'pconrad',
+                                      False)
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        variable_subsetter.invoke()
+        error = None
+        try:
+            with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+                variable_subsetter.invoke()
+        except Exception as e:
+            error = e
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 
-        mock_completed_with_local_file.assert_not_called()
-        mock_async_add_local_file_partial.assert_not_called()
-        mock_async_completed.assert_not_called()
-        mock_cleanup.assert_called_once()
-        mock_completed_with_error.assert_called_with(
-            contains('No granules specified for variable subsetting')
-        )
+        mock_stage.assert_not_called()
+        assert str(error) == 'No granules specified for variable subsetting'
 
     def test_synchronous_multiple_granules(self,
-                                           mock_completed_with_local_file,
-                                           mock_completed_with_error,
-                                           mock_async_add_local_file_partial,
-                                           mock_async_completed, mock_cleanup,
+                                           mock_stage,
                                            mock_subset_granule,
                                            mock_get_mimetype):
         """ A request for synchronous processing, with multiple granules
@@ -232,24 +235,21 @@ class TestSubsetter(TestCase):
                                       True)
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        variable_subsetter.invoke()
+        error = None
+        try:
+            with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+                variable_subsetter.invoke()
+        except Exception as e:
+            error = e
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 
-        mock_completed_with_local_file.assert_not_called()
-        mock_async_add_local_file_partial.assert_not_called()
-        mock_async_completed.assert_not_called()
-        mock_cleanup.assert_called_once()
-        mock_completed_with_error.assert_called_with(
-            contains('Synchronous requests accept only one granule')
-        )
+        mock_stage.assert_not_called()
+        assert str(error) == 'Synchronous requests accept only one granule'
 
     def test_asynchronous_multiple_granules(self,
-                                            mock_completed_with_local_file,
-                                            mock_completed_with_error,
-                                            mock_async_add_local_file_partial,
-                                            mock_async_completed, mock_cleanup,
+                                            mock_stage,
                                             mock_subset_granule,
                                             mock_get_mimetype):
         """ A request for asynchronous processing, with multiple granules
@@ -258,7 +258,7 @@ class TestSubsetter(TestCase):
 
         """
         output_paths = ['/path/to/output1.nc', '/path/to/output2.nc']
-        progresses = [50, 100]
+        output_filenames = ['africa.nc', 'VNL2_test.nc']
 
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
@@ -271,34 +271,31 @@ class TestSubsetter(TestCase):
                                       False)
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        variable_subsetter.invoke()
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
         granules = variable_subsetter.message.granules
 
-        mock_completed_with_local_file.assert_not_called()
-        self.assertEqual(mock_async_add_local_file_partial.call_count,
-                         len(granules))
-        mock_async_completed.assert_called_once()
-        mock_cleanup.assert_called_once()
-        mock_completed_with_error.assert_not_called()
-
         for index, granule in enumerate(granules):
-            mock_subset_granule.assert_any_call(granule,
+            mock_subset_granule.assert_any_call(granule.url,
+                                                granule.variables,
+                                                ANY,
                                                 variable_subsetter.logger,
                                                 access_token=message.accessToken,
                                                 config=self.config)
             mock_get_mimetype.assert_any_call(output_paths[index])
-            mock_async_add_local_file_partial.assert_any_call(
-                output_paths[index], source_granule=granule,
-                progress=progresses[index], mime='application/x-netcdf4',
-                title=granule.id,
-                **self.operations
+
+            mock_stage.assert_any_call(
+                output_paths[index],
+                output_filenames[index],
+                'application/x-netcdf4',
+                location=message.stagingLocation,
+                logger=variable_subsetter.logger,
             )
 
-    def test_missing_variables(self, mock_completed_with_local_file,
-                               mock_completed_with_error,
-                               mock_async_add_local_file_partial,
-                               mock_async_completed, mock_cleanup,
-                               mock_subset_granule, mock_get_mimetype):
+    def test_missing_variables(self,
+                               mock_stage,
+                               mock_subset_granule,
+                               mock_get_mimetype):
         """ Ensure that if no variables are specified for a source, the service
             raises an exception.
 
@@ -313,15 +310,15 @@ class TestSubsetter(TestCase):
                                       'jlovell')
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        variable_subsetter.invoke()
+        error = None
+        try:
+            with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+                variable_subsetter.invoke()
+        except Exception as e:
+            error = e
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 
-        mock_completed_with_local_file.assert_not_called()
-        mock_async_add_local_file_partial.assert_not_called()
-        mock_async_completed.assert_not_called()
-        mock_cleanup.assert_called_once()
-        mock_completed_with_error.assert_called_with(
-            contains('No variables specified for subsetting')
-        )
+        mock_stage.assert_not_called()
+        assert str(error) == 'No variables specified for subsetting'

@@ -53,9 +53,9 @@ class TestSubset(TestCase):
             mock_download_url.assert_called_once_with(
                 f'{self.granule_url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
                 contains('/tmp/tmp'),
+                access_token=None,
+                config=None,
                 self.logger,
                 data='',
-                access_token=None,
-                config=None
             )
             self.assertIn('africa_subset.nc4', output_path)

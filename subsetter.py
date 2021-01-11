@@ -65,9 +65,9 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             for index, granule in enumerate(self.message.granules):
                 output_file_path = subset_granule(
                     granule,
-                    self.logger,
                     access_token=self.message.accessToken,
-                    config=self.config
+                    config=self.config,
+                    logger=self.logger
                 )
 
                 if not self.message.isSynchronous:

@@ -8,12 +8,14 @@ from tempfile import mkdtemp
 from urllib.parse import urlencode
 
 from harmony.message import Granule
+import harmony.util
 
 from pymods.utilities import download_url
 from pymods.var_info import VarInfo
 
 
-def subset_granule(granule: Granule, logger: Logger, access_token=None, config=None) -> str:
+def subset_granule(granule: Granule, access_token: str,
+                   config: harmony.util.Config, logger: Logger) -> str:
     """ This function takes a single Harmony `Granule` object, and extracts the
         requested variables, and those sub-variables they depend
         upon (such as coordinates), to produce an output file with only those
@@ -35,7 +37,7 @@ def subset_granule(granule: Granule, logger: Logger, access_token=None, config=N
 
     # Harmony provides the OPeNDAP URL as the granule URL for this service
     dmr_url = granule.url + '.dmr'
-    dataset = VarInfo(dmr_url, logger, temp_dir)
+    dataset = VarInfo(dmr_url, logger, temp_dir, access_token, config)
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.
@@ -51,5 +53,4 @@ def subset_granule(granule: Granule, logger: Logger, access_token=None, config=N
     constraint_expression = urlencode({'dap4.ce': ';'.join(required_variables)})
     opendap_url = f'{granule.url}.dap.nc4?{constraint_expression}'
 
-    return download_url(opendap_url, temp_dir, logger, access_token=access_token,
-                        data='', config=config)
+    return download_url(opendap_url, temp_dir, access_token, config, logger)

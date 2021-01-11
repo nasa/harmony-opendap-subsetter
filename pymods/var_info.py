@@ -9,6 +9,8 @@ import re
 import xml.etree.ElementTree as ET
 import yaml
 
+import harmony.util
+
 from pymods.cf_config import CFConfig
 from pymods.utilities import (DAP4_TO_NUMPY_MAP, download_url,
                               get_xml_namespace, split_attribute_path,
@@ -23,6 +25,7 @@ class VarInfo:
     """
 
     def __init__(self, file_url: str, logger: Logger, temp_dir: str,
+                 access_token: str, config: harmony.util.Config,
                  config_file: str = 'pymods/var_subsetter_config.yml'):
         """ Distinguish between variables containing references to other
             datasets, and those that do not. The former are considered science
@@ -49,20 +52,22 @@ class VarInfo:
         self.metadata = {}
 
         self._set_var_info_config()
-        self._read_dataset(file_url)
+        self._read_dataset(file_url, access_token, config)
         self._set_global_attributes()
         self._set_mission_and_short_name()
         self._set_cf_config()
         self._update_global_attributes()
         self._extract_variables()
 
-    def _read_dataset(self, dataset_url: str):
+    def _read_dataset(self, dataset_url: str, access_token: str,
+                      config: harmony.util.Config):
         """ Download a `.dmr` file from the specified URL. Then extract the XML
             tree and namespace.
 
         """
         self.logger.info('Retrieving .dmr from OPeNDAP')
-        dmr_file = download_url(dataset_url, self.output_dir, self.logger)
+        dmr_file = download_url(dataset_url, self.output_dir, access_token,
+                                config, self.logger)
 
         with open(dmr_file, 'r') as file_handler:
             dmr_content = file_handler.read()

@@ -5,7 +5,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qsl
 import json
 
-import  harmony
+import harmony
 
 from subsetter import HarmonyAdapter
 from tests.utilities import contains, write_dmr
@@ -63,7 +63,8 @@ class TestSubsetterEndToEnd(TestCase):
                                 'fullPath': self.variable_full_path}]}
             ],
             'user': 'fhaise',
-            'accessToken': 'xyzzy'
+            'accessToken': 'xyzzy',
+            'callback': 'https://localhost/callback'
         }
         message = harmony.message.Message(json.dumps(message_data))
 
@@ -75,7 +76,6 @@ class TestSubsetterEndToEnd(TestCase):
         mock_download_dmr.assert_called_once_with(f'{self.granule_url}.dmr',
                                                   self.tmp_dir,
                                                   subsetter.logger)
-
 
         mock_download_subset.assert_called_once_with(contains(self.granule_url),
                                                      self.tmp_dir,

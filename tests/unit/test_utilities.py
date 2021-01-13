@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
-import harmony.util
+from harmony.util import config
 
 from pymods.exceptions import (DmrNamespaceError, UrlAccessFailed,
                                UrlAccessFailedWithRetries)
@@ -25,7 +25,7 @@ class TestUtilities(TestCase):
 
     def setUp(self):
         self.logger = Logger('tests')
-        self.config = harmony.util.config(validate=False)
+        self.config = config(validate=False)
 
     def test_get_file_mimetype(self):
         """ Ensure a mimetype can be retrieved for a valid file path or, if

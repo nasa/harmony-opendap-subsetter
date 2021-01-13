@@ -4,7 +4,7 @@ from unittest.mock import patch, ANY
 import json
 
 from harmony.message import Message
-import harmony.util
+from harmony.util import config
 
 from subsetter import HarmonyAdapter
 from tests.utilities import spy_on
@@ -28,7 +28,7 @@ class TestSubsetter(TestCase):
                           'is_subsetted': False}
 
     def setUp(self):
-        self.config = harmony.util.config(validate=False)
+        self.config = config(validate=False)
         self.process_item_spy = spy_on(HarmonyAdapter.process_item)
 
     def create_message(self, collection: str, granule_id: str, file_paths: List[str],

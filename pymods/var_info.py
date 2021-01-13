@@ -9,7 +9,7 @@ import re
 import xml.etree.ElementTree as ET
 import yaml
 
-import harmony.util
+from harmony.util import Config
 
 from pymods.cf_config import CFConfig
 from pymods.utilities import (DAP4_TO_NUMPY_MAP, download_url,
@@ -25,7 +25,7 @@ class VarInfo:
     """
 
     def __init__(self, file_url: str, logger: Logger, temp_dir: str,
-                 access_token: str, config: harmony.util.Config,
+                 access_token: str, config: Config,
                  config_file: str = 'pymods/var_subsetter_config.yml'):
         """ Distinguish between variables containing references to other
             datasets, and those that do not. The former are considered science
@@ -60,7 +60,7 @@ class VarInfo:
         self._extract_variables()
 
     def _read_dataset(self, dataset_url: str, access_token: str,
-                      config: harmony.util.Config):
+                      config: Config):
         """ Download a `.dmr` file from the specified URL. Then extract the XML
             tree and namespace.
 

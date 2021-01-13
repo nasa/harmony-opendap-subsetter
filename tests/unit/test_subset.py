@@ -6,7 +6,7 @@ import shutil
 from tempfile import mkdtemp
 
 from harmony.message import Message
-import harmony.util
+from harmony.util import config
 
 from pymods.subset import subset_granule
 
@@ -30,7 +30,7 @@ class TestSubset(TestCase):
     def setUp(self):
         self.output_dir = mkdtemp()
         self.logger = Logger('tests')
-        self.config = harmony.util.config(validate=False)
+        self.config = config(validate=False)
 
     def tearDown(self):
         shutil.rmtree(self.output_dir)

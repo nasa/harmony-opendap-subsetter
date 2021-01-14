@@ -142,7 +142,7 @@ def download_url(
                 logger,
                 access_token=access_token,
                 data=data,
-                config=config
+                cfg=config
             )
             request_completed = True
         except HTTPError as http_exception:

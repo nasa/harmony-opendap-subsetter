@@ -156,15 +156,17 @@ class TestUtilities(TestCase):
 
         with self.subTest('Successful response, only make one request.'):
             mock_util_download.return_value = http_response
-            response = download_url(test_url, output_directory, access_token, self.config, self.logger)
+            response = download_url(test_url, output_directory, self.logger,
+                                    access_token, self.config)
 
             self.assertEqual(response, http_response)
-            mock_util_download.assert_called_once_with(test_url,
-                                                       output_directory,
-                                                       self.logger,
-                                                       access_token=None,
-                                                       data=None,
-                                                       config=None)
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config)
 
             mock_util_download.reset_mock()
 

@@ -61,7 +61,6 @@ class TestSubset(TestCase):
                 f'{url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
                 ANY,
                 self.logger,
-                data='',
                 access_token=None,
                 config=None
             )

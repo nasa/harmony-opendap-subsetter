@@ -66,8 +66,8 @@ class VarInfo:
 
         """
         self.logger.info('Retrieving .dmr from OPeNDAP')
-        dmr_file = download_url(dataset_url, self.output_dir, access_token,
-                                config, self.logger)
+        dmr_file = download_url(dataset_url, self.output_dir, self.logger,
+                                access_token, config)
 
         with open(dmr_file, 'r') as file_handler:
             dmr_content = file_handler.read()

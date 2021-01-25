@@ -5,11 +5,24 @@
 # Bamboo.
 #
 # Adapted from SwotRepr: 2020-05-07
+# Updated for JUnit output: 2021-01-25
 #
 ###############################################################################
 
 set -ex
 
+# Remove cached bytecode Python files, to ensure latest code is used
 find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
 
-docker run --rm -v $(pwd):/home sds/variable-subsetter-test "$@"
+# Make the directory into which XML format test reports will be saved
+mkdir test-reports
+
+# Make the directory into which coverage reports will be saved
+mkdir coverage
+
+# Run the tests in a Docker container with mounted volumes for XML report
+# output and test coverage reporting
+docker run --rm \
+	-v $(pwd)/test-reports:/home/tests/reports \
+	-v $(pwd)/coverage:/home/tests/coverage \
+	sds/variable-subsetter-test "$@"

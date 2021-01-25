@@ -15,8 +15,8 @@ STATUS=0
 
 export HDF5_DISABLE_VERSION_CHECK=1
 
-# Run the standard set of unit tests
-coverage run -m unittest discover tests
+# Run the standard set of unit tests, producing JUnit compatible output
+coverage run -m xmlrunner discover tests -o tests/reports
 RESULT=$?
 
 if [ "$RESULT" -ne "0" ]; then

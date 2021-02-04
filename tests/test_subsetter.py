@@ -5,7 +5,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qsl
 import json
 
-import harmony
+from harmony.message import Message
 from harmony.util import config
 
 from subsetter import HarmonyAdapter
@@ -35,6 +35,7 @@ class TestSubsetterEndToEnd(TestCase):
     def setUp(self):
         """ Have to mock mkdtemp, to know where to put mock .dmr content. """
         self.tmp_dir = mkdtemp()
+        self.config = config(validate=False)
 
     def tearDown(self):
         rmtree(self.tmp_dir)
@@ -74,7 +75,7 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'fhaise',
             'accessToken': 'fake-token',
         }
-        message = harmony.message.Message(json.dumps(message_data))
+        message = Message(json.dumps(message_data))
 
         subsetter = HarmonyAdapter(message, config=config(False))
         subsetter.invoke()
@@ -90,7 +91,6 @@ class TestSubsetterEndToEnd(TestCase):
                                                      self.tmp_dir,
                                                      subsetter.logger,
                                                      access_token=message_data['accessToken'],
-                                                     data='',
                                                      config=subsetter.config)
 
         subset_url = mock_download_subset.call_args[0][0]

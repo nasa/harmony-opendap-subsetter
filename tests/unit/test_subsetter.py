@@ -28,6 +28,7 @@ class TestSubsetter(TestCase):
                           'is_subsetted': False}
 
     def setUp(self):
+        self.config = config(validate=False)
         self.process_item_spy = spy_on(HarmonyAdapter.process_item)
 
     def create_message(self, collection: str, granule_id: str, file_paths: List[str],
@@ -45,12 +46,17 @@ class TestSubsetter(TestCase):
                 'bbox': [-180, -90, 180, 90]
             } for file_path in file_paths]
         variables = [{'name': variable} for variable in variable_list]
-        message_content = {'sources': [{'collection': collection,
-                                        'granules': granules,
-                                        'variables': variables}],
-                           'callback': 'https://example.com/',
-                           'stagingLocation': 's3://example-bucket/',
-                           'user': user}
+        message_content = {
+            'sources': [{
+                'collection': collection,
+                'granules': granules,
+                'variables': variables
+            }],
+            'user': user,
+            'callback': 'https://example.com/',
+            'stagingLocation': 's3://example-bucket/',
+            'accessToken': 'xyzzy'
+        }
 
         if is_synchronous is not None:
             message_content['isSynchronous'] = is_synchronous
@@ -75,7 +81,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'narmstrong',
                                       True)
-        variable_subsetter = HarmonyAdapter(message, config=config(False))
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
@@ -116,7 +122,7 @@ class TestSubsetter(TestCase):
                                       'ealdrin',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message, config=config(False))
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
@@ -154,7 +160,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'mcollins')
 
-        variable_subsetter = HarmonyAdapter(message, config=config(False))
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
@@ -193,7 +199,7 @@ class TestSubsetter(TestCase):
                                       'pconrad',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message, config=config(False))
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         error = None
         try:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
@@ -228,7 +234,7 @@ class TestSubsetter(TestCase):
                                       'rgordon',
                                       True)
 
-        variable_subsetter = HarmonyAdapter(message, config=config(False))
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         error = None
         try:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
@@ -264,7 +270,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'], 'abean',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message, config=config(False))
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
         granules = variable_subsetter.message.granules
@@ -275,7 +281,7 @@ class TestSubsetter(TestCase):
                                                 ANY,
                                                 variable_subsetter.logger,
                                                 access_token=message.accessToken,
-                                                config=variable_subsetter.config)
+                                                config=self.config)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
             mock_stage.assert_any_call(
@@ -303,7 +309,7 @@ class TestSubsetter(TestCase):
                                       [],
                                       'jlovell')
 
-        variable_subsetter = HarmonyAdapter(message, config=config(False))
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
         error = None
         try:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):

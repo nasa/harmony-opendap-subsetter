@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
+from harmony.util import config
+
 from pymods.exceptions import (DmrNamespaceError, UrlAccessFailed,
                                UrlAccessFailedWithRetries)
 from pymods.utilities import (download_url, get_file_mimetype,
@@ -23,6 +25,7 @@ class TestUtilities(TestCase):
 
     def setUp(self):
         self.logger = Logger('tests')
+        self.config = config(validate=False)
 
     def test_get_file_mimetype(self):
         """ Ensure a mimetype can be retrieved for a valid file path or, if
@@ -143,6 +146,7 @@ class TestUtilities(TestCase):
         """
         output_directory = 'output/dir'
         test_url = 'test.org'
+        access_token = 'xyzzy'
         message_retry = 'Internal Server Error'
         message_other = 'Authentication Error'
 
@@ -152,15 +156,17 @@ class TestUtilities(TestCase):
 
         with self.subTest('Successful response, only make one request.'):
             mock_util_download.return_value = http_response
-            response = download_url(test_url, output_directory, self.logger)
+            response = download_url(test_url, output_directory, self.logger,
+                                    access_token, self.config)
 
             self.assertEqual(response, http_response)
-            mock_util_download.assert_called_once_with(test_url,
-                                                       output_directory,
-                                                       self.logger,
-                                                       data=None,
-                                                       access_token=None,
-                                                       cfg=None)
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config)
 
             mock_util_download.reset_mock()
 

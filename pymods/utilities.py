@@ -11,7 +11,7 @@ import functools
 import mimetypes
 import re
 
-from harmony.util import download as util_download, Config
+from harmony.util import Config, download as util_download
 import numpy as np
 
 from pymods.exceptions import (DmrNamespaceError, UrlAccessFailed,
@@ -137,7 +137,13 @@ def download_url(
 
         try:
             response = util_download(
-                url, destination, logger, data=data, access_token=access_token, cfg=config)
+                url,
+                destination,
+                logger,
+                access_token=access_token,
+                data=data,
+                cfg=config
+            )
             request_completed = True
         except HTTPError as http_exception:
             logger.info('In HTTPError except\n\n\n\n')

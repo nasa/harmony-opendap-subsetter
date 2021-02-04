@@ -6,6 +6,7 @@ import shutil
 from tempfile import mkdtemp
 
 from harmony.message import Message
+from harmony.util import config
 
 from pymods.subset import subset_granule
 
@@ -29,6 +30,7 @@ class TestSubset(TestCase):
     def setUp(self):
         self.output_dir = mkdtemp()
         self.logger = Logger('tests')
+        self.config = config(validate=False)
 
     def tearDown(self):
         shutil.rmtree(self.output_dir)
@@ -59,7 +61,6 @@ class TestSubset(TestCase):
                 f'{url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
                 ANY,
                 self.logger,
-                data='',
                 access_token=None,
                 config=None
             )

@@ -54,7 +54,6 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         synchronous.
 
     """
-
     def invoke(self):
         """
         Adds validation to default process_item-based invocation

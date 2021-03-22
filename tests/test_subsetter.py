@@ -12,9 +12,6 @@ from subsetter import HarmonyAdapter
 from tests.utilities import contains, write_dmr
 
 
-environment_variables = {'EDL_USERNAME': 'fhaise', 'EDL_PASSWORD': 'A13'}
-
-
 class TestSubsetterEndToEnd(TestCase):
 
     @classmethod
@@ -43,10 +40,10 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('subsetter.mkdtemp')
     @patch('shutil.rmtree')
     @patch('pymods.subset.download_url')
-    @patch('pymods.var_info.download_url')
+    @patch('varinfo.var_info.download_url')
     @patch('harmony.util.stage')
-    def test_dmr_end_to_end(self, mock_stage, mock_download_dmr, mock_download_subset,
-                            mock_rmtree, mock_mkdtemp):
+    def test_dmr_end_to_end(self, mock_stage, mock_download_dmr,
+                            mock_download_subset, mock_rmtree, mock_mkdtemp):
         """ Ensure the subsetter will run end-to-end, only mocking the
             HTTP response, and the output interactions with Harmony.
 
@@ -68,8 +65,7 @@ class TestSubsetterEndToEnd(TestCase):
                 }],
                 'variables': [{'id': '',
                                'name': self.variable_full_path,
-                               'fullPath': self.variable_full_path}]}
-            ],
+                               'fullPath': self.variable_full_path}]}],
             'callback': 'https://example.com/',
             'stagingLocation': 's3://example-bucket/',
             'user': 'fhaise',

@@ -1,4 +1,9 @@
 # This file should contain requirements to be installed via Pip.
+--extra-index-url https://maven.earthdata.nasa.gov/repository/python-repo/simple
+# Packages available only from Maven
+sds-varinfo ~= 0.0.1
+
+# Open source packages available from PyPI
 numpy ~= 1.18.4
 pyyaml ~= 5.4.0
 harmony-service-lib ~= 1.0.4

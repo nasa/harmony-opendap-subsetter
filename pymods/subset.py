@@ -57,5 +57,6 @@ def subset_granule(
     constraint_expression = urlencode({'dap4.ce': ';'.join(required_variables)})
     opendap_url = f'{url}.dap.nc4?{constraint_expression}'
 
+    # Note: The empty string `data` argument ensures a POST request is used.
     return download_url(opendap_url, output_dir, logger,
-                        access_token=access_token, config=config)
+                        access_token=access_token, config=config, data='')

@@ -62,6 +62,7 @@ class TestSubset(TestCase):
                 ANY,
                 self.logger,
                 access_token=None,
-                config=None
+                config=None,
+                data=''
             )
             self.assertIn('africa_subset.nc4', output_path)

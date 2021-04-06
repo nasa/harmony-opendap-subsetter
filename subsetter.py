@@ -36,8 +36,8 @@ from tempfile import mkdtemp
 from pystac import Asset, Item
 
 import harmony
-from harmony.util import generate_output_filename
 from harmony.message import Source
+from harmony.util import generate_output_filename, HarmonyException
 
 from pymods.subset import subset_granule
 from pymods.utilities import get_file_mimetype
@@ -94,7 +94,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         try:
             # Get the data file
             asset = None
-            for key, item_asset in item.assets.items():
+            for item_asset in item.assets.values():
                 if item_asset.roles and 'opendap' in item_asset.roles:
                     asset = item_asset
                     break
@@ -135,6 +135,9 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
             # Return the STAC record
             return result
+        except Exception as exception:
+            self.logger.exception(exception)
+            raise HarmonyException('Subsetter failed with error: ' + str(exception)) from exception
         finally:
             # Clean up any intermediate resources
             shutil.rmtree(workdir)

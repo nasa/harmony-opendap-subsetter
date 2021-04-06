@@ -35,7 +35,7 @@ class TestSubset(TestCase):
     def tearDown(self):
         shutil.rmtree(self.output_dir)
 
-    @patch('pymods.subset.VarInfo')
+    @patch('pymods.subset.VarInfoFromDmr')
     @patch('pymods.subset.download_url')
     def test_subset_granule(self, mock_download_url, mock_var_info_dmr):
         """ Ensure valid request does not raise exception,
@@ -56,8 +56,10 @@ class TestSubset(TestCase):
 
         with self.subTest('Succesful calls to OPeNDAP'):
             output_path = subset_granule(url, variables, self.output_dir, self.logger)
-            print(mock_download_url.mock_calls)
-            mock_download_url.assert_called_once_with(
+            self.assertEqual(mock_download_url.call_count, 2)
+            mock_download_url.assert_any_call(f'{url}.dmr', ANY, self.logger,
+                                              access_token=None, config=None)
+            mock_download_url.assert_any_call(
                 f'{url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
                 ANY,
                 self.logger,

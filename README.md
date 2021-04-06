@@ -48,8 +48,6 @@ locally, use the following template for `.env`. This template assumes there is
 no Harmony local instance running.
 
 ```
-EDL_USERNAME=jglenn
-EDL_PASSWORD=Fr13ndsh1p7
 ENV=test
 ```
 

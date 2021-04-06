@@ -6,7 +6,7 @@ from urllib.parse import parse_qsl
 import json
 
 from harmony.message import Message
-from harmony.util import config
+from harmony.util import config, HarmonyException
 
 from subsetter import HarmonyAdapter
 from tests.utilities import contains, write_dmr
@@ -40,17 +40,16 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('subsetter.mkdtemp')
     @patch('shutil.rmtree')
     @patch('pymods.subset.download_url')
-    @patch('varinfo.var_info.download_url')
     @patch('harmony.util.stage')
-    def test_dmr_end_to_end(self, mock_stage, mock_download_dmr,
-                            mock_download_subset, mock_rmtree, mock_mkdtemp):
+    def test_dmr_end_to_end(self, mock_stage, mock_download_subset,
+                            mock_rmtree, mock_mkdtemp):
         """ Ensure the subsetter will run end-to-end, only mocking the
-            HTTP response, and the output interactions with Harmony.
+            HTTP responses, and the output interactions with Harmony.
 
         """
         mock_mkdtemp.return_value = self.tmp_dir
-        mock_download_dmr.side_effect = [write_dmr(self.tmp_dir, self.atl03_dmr)]
-        mock_download_subset.return_value = 'opendap_url_subset.nc4'
+        dmr_path = write_dmr(self.tmp_dir, self.atl03_dmr)
+        mock_download_subset.side_effect = [dmr_path, 'opendap_url_subset.nc4']
 
         message_data = {
             'sources': [{
@@ -77,18 +76,20 @@ class TestSubsetterEndToEnd(TestCase):
         subsetter.invoke()
 
         mock_mkdtemp.assert_called_once()
-        mock_download_dmr.assert_called_once_with(f'{self.granule_url}.dmr',
-                                                  self.tmp_dir,
-                                                  subsetter.logger,
-                                                  message_data['accessToken'],
-                                                  subsetter.config)
 
-        mock_download_subset.assert_called_once_with(contains(self.granule_url),
-                                                     self.tmp_dir,
-                                                     subsetter.logger,
-                                                     access_token=message_data['accessToken'],
-                                                     config=subsetter.config,
-                                                     data='')
+        self.assertEqual(mock_download_subset.call_count, 2)
+        mock_download_subset.assert_any_call(f'{self.granule_url}.dmr',
+                                             self.tmp_dir,
+                                             subsetter.logger,
+                                             access_token=message_data['accessToken'],
+                                             config=subsetter.config)
+
+        mock_download_subset.assert_any_call(contains(self.granule_url),
+                                             self.tmp_dir,
+                                             subsetter.logger,
+                                             access_token=message_data['accessToken'],
+                                             config=subsetter.config,
+                                             data='')
 
         subset_url = mock_download_subset.call_args[0][0]
         self.assertTrue(subset_url.startswith(f'{self.granule_url}.dap.nc4?'))
@@ -105,3 +106,43 @@ class TestSubsetterEndToEnd(TestCase):
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=subsetter.logger)
+
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.subset.download_url')
+    @patch('harmony.util.stage')
+    def test_exception_handling(self, mock_stage, mock_download_subset,
+                                mock_rmtree, mock_mkdtemp):
+        """ Ensure that if an exception is raised during processing, this
+            causes a HarmonyException to be raised, to allow for informative
+            logging.
+
+        """
+        mock_mkdtemp.return_value = self.tmp_dir
+        dmr_path = write_dmr(self.tmp_dir, self.atl03_dmr)
+        mock_download_subset.side_effect = Exception('Random error')
+
+        message_data = {
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': self.variable_full_path,
+                               'fullPath': self.variable_full_path}]}],
+            'callback': 'https://example.com/',
+            'stagingLocation': 's3://example-bucket/',
+            'user': 'fhaise',
+            'accessToken': 'fake-token',
+        }
+        message = Message(json.dumps(message_data))
+
+        with self.assertRaises(HarmonyException):
+            subsetter = HarmonyAdapter(message, config=config(False))
+            subsetter.invoke()

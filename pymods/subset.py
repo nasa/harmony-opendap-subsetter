@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 
 from harmony.message import Variable
 from harmony.util import Config
-from varinfo import VarInfo
+from varinfo import VarInfoFromDmr
 
 from pymods.utilities import download_url
 
@@ -38,10 +38,12 @@ def subset_granule(
 
     logger.info(f'Requested variables: {requested_variables}')
 
-    # Harmony provides the OPeNDAP URL as the granule URL for this service
-    dmr_url = url + '.dmr'
-    dataset = VarInfo(dmr_url, logger, output_dir, access_token, config,
-                      config_file='pymods/var_subsetter_config.yml')
+    # Harmony provides the OPeNDAP URL as the granule URL for this service.
+    # First download the `.dmr` representation of the file.
+    dmr_path = download_url(f'{url}.dmr', output_dir, logger,
+                            access_token=access_token, config=config)
+    dataset = VarInfoFromDmr(dmr_path, logger,
+                             config_file='pymods/var_subsetter_config.yml')
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.

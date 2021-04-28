@@ -60,11 +60,11 @@ class TestSubset(TestCase):
             mock_download_url.assert_any_call(f'{url}.dmr', ANY, self.logger,
                                               access_token=None, config=None)
             mock_download_url.assert_any_call(
-                f'{url}.dap.nc4?dap4.ce=%2Falpha_var%3B%2Fblue_var',
+                f'{url}.dap.nc4',
                 ANY,
                 self.logger,
                 access_token=None,
                 config=None,
-                data=''
+                data={'dap4.ce': '%2Falpha_var%3B%2Fblue_var'}
             )
             self.assertIn('africa_subset.nc4', output_path)

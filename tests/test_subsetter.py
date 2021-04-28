@@ -1,15 +1,15 @@
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import patch
-from urllib.parse import parse_qsl
+from unittest.mock import ANY, patch
+from urllib.parse import unquote
 import json
 
 from harmony.message import Message
 from harmony.util import config, HarmonyException
 
 from subsetter import HarmonyAdapter
-from tests.utilities import contains, write_dmr
+from tests.utilities import write_dmr
 
 
 class TestSubsetterEndToEnd(TestCase):
@@ -84,20 +84,18 @@ class TestSubsetterEndToEnd(TestCase):
                                              access_token=message_data['accessToken'],
                                              config=subsetter.config)
 
-        mock_download_subset.assert_any_call(contains(self.granule_url),
+        mock_download_subset.assert_any_call(f'{self.granule_url}.dap.nc4',
                                              self.tmp_dir,
                                              subsetter.logger,
                                              access_token=message_data['accessToken'],
                                              config=subsetter.config,
-                                             data='')
+                                             data=ANY)
 
-        subset_url = mock_download_subset.call_args[0][0]
-        self.assertTrue(subset_url.startswith(f'{self.granule_url}.dap.nc4?'))
+        post_data = mock_download_subset.call_args[1].get('data', {})
+        self.assertIn('dap4.ce', post_data)
 
-        query_parameters = parse_qsl(subset_url.split('?')[1])
-        self.assertEqual('dap4.ce', query_parameters[0][0])
-
-        requested_variables = query_parameters[0][1].split(';')
+        decoded_constraint_expression = unquote(post_data['dap4.ce'])
+        requested_variables = decoded_constraint_expression.split(';')
         self.assertCountEqual(requested_variables, self.expected_variables)
 
         mock_stage.assert_called_once_with(

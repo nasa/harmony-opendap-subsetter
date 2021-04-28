@@ -5,7 +5,7 @@
 """
 from logging import Logger
 from typing import List
-from urllib.parse import urlencode
+from urllib.parse import quote
 
 from harmony.message import Variable
 from harmony.util import Config
@@ -55,10 +55,10 @@ def subset_granule(
 
     # Build the DAP4 format constraint expression, which is a semi-colon
     # separated list of variable names.
-    # This should be in the request body, not a query string parameter.
-    constraint_expression = urlencode({'dap4.ce': ';'.join(required_variables)})
-    opendap_url = f'{url}.dap.nc4?{constraint_expression}'
+    constraint_expression = quote(';'.join(required_variables), safe='')
+    request_data = {'dap4.ce': constraint_expression}
 
     # Note: The empty string `data` argument ensures a POST request is used.
-    return download_url(opendap_url, output_dir, logger,
-                        access_token=access_token, config=config, data='')
+    return download_url(f'{url}.dap.nc4', output_dir, logger,
+                        access_token=access_token, config=config,
+                        data=request_data)

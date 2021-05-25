@@ -6,7 +6,7 @@
 from logging import Logger
 from os import sep
 from os.path import splitext
-from shutil import copy
+from shutil import move
 from typing import Optional, Set, Tuple
 from urllib.error import HTTPError
 from urllib.parse import quote
@@ -83,9 +83,9 @@ def move_downloaded_nc4(output_dir: str, downloaded_file: str) -> str:
         even if a POST request is being made with different parameters.
 
     """
-    extension = splitext(downloaded_file)[1]
+    extension = splitext(downloaded_file)[1] or '.nc4'
     new_filename = sep.join([output_dir, f'{uuid4().hex}{extension}'])
-    copy(downloaded_file, new_filename)
+    move(downloaded_file, new_filename)
     return new_filename
 
 

@@ -173,9 +173,9 @@ class TestUtilities(TestCase):
                  '%2Fblue_var%5B3%3A4%5D%3B%2Falpha_var%5B1%3A2%5D']
             )
 
-    @patch('pymods.utilities.copy')
+    @patch('pymods.utilities.move')
     @patch('pymods.utilities.uuid4')
-    def test_move_downloaded_nc4(self, mock_uuid4, mock_copy):
+    def test_move_downloaded_nc4(self, mock_uuid4, mock_move):
         """ Ensure a specified file is moved to the specified location. """
         mock_uuid4.return_value = Mock(hex='uuid4')
         output_dir = '/tmp/path/to'
@@ -184,5 +184,5 @@ class TestUtilities(TestCase):
         self.assertEqual(move_downloaded_nc4(output_dir, old_path),
                          '/tmp/path/to/uuid4.nc4')
 
-        mock_copy.assert_called_once_with('/tmp/path/to/file.nc4',
+        mock_move.assert_called_once_with('/tmp/path/to/file.nc4',
                                           '/tmp/path/to/uuid4.nc4')

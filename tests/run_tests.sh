@@ -30,7 +30,7 @@ coverage report --omit="*tests/*"
 coverage html --omit="*tests/*" -d /home/tests/coverage
 
 # Run pylint
-pylint pymods subsetter.py --disable=E0401
+pylint pymods subsetter.py --disable=E0401 --extension-pkg-whitelist=netCDF4
 RESULT=$?
 RESULT=$((3 & $RESULT))
 

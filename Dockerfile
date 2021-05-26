@@ -7,14 +7,16 @@ FROM continuumio/miniconda3
 
 WORKDIR "/home"
 
-# Copy requirements into the container
+# Copy Conda requirements into the container
 COPY ./conda_requirements.txt conda_requirements.txt
-COPY ./pip_requirements.txt pip_requirements.txt
 
 # Create Conda environment
 RUN conda create -y --name subsetter --file conda_requirements.txt python=3.7 -q \
 	--channel conda-forge \
 	--channel defaults
+
+# Copy additional Pip dependencies into the container
+COPY ./pip_requirements.txt pip_requirements.txt
 
 # Install additional Pip dependencies
 RUN conda run --name subsetter pip install --no-input -r pip_requirements.txt

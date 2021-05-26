@@ -5,26 +5,27 @@
 """
 from logging import Logger
 from typing import List
-from urllib.parse import quote
 
-from harmony.message import Variable
+from harmony.message import Variable as HarmonyVariable
 from harmony.util import Config
 from varinfo import VarInfoFromDmr
 
-from pymods.utilities import download_url
+from pymods.geo_grid import get_geo_bounding_box_subset
+from pymods.utilities import download_url, get_opendap_nc4
 
 
-def subset_granule(
-        url: str,
-        variables: List[Variable],
-        output_dir: str,
-        logger: Logger,
-        access_token: str = None,
-        config: Config = None) -> str:
+def subset_granule(url: str, variables: List[HarmonyVariable], output_dir: str,
+                   logger: Logger, access_token: str = None,
+                   config: Config = None, bounding_box: List[float] = None) -> str:
     """ This function takes a granule's OPeNDAP URL and extracts the
         requested variables, and those sub-variables they depend
         upon (such as coordinates), to produce an output file with only those
         variables. The path of this output file is returned.
+
+        The optional `bounding_box` argument can be supplied for geographically
+        gridded data. In this case a bounding-box spatial subset will be
+        applied to the retrieved variables, in addition to only retrieving the
+        required variables.
 
     """
     granule_filename = url.split('?')[0].rstrip('/').split('/')[-1]
@@ -53,12 +54,18 @@ def subset_granule(
     # TODO: Add switch mechanism for including (or not including) all metadata
     # variables in every subset request to OPeNDAP.
 
-    # Build the DAP4 format constraint expression, which is a semi-colon
-    # separated list of variable names.
-    constraint_expression = quote(';'.join(required_variables), safe='')
-    request_data = {'dap4.ce': constraint_expression}
+    if bounding_box is not None:
+        # Retrieve OPeNDAP data for a geographically gridded collection, that
+        # includes only the specified variables, and only in the ranges defined
+        # by the bounding box.
+        output_path = get_geo_bounding_box_subset(required_variables, dataset,
+                                                  bounding_box, url,
+                                                  output_dir, logger,
+                                                  access_token, config)
+    else:
+        # Retrieve OPeNDAP data including only the specified variables (but in
+        # their full ranges).
+        output_path = get_opendap_nc4(url, required_variables, output_dir,
+                                      logger, access_token, config)
 
-    # Note: The empty string `data` argument ensures a POST request is used.
-    return download_url(f'{url}.dap.nc4', output_dir, logger,
-                        access_token=access_token, config=config,
-                        data=request_data)
+    return output_path

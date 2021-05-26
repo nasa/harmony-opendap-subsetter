@@ -1,13 +1,14 @@
-from logging import Logger
+from logging import getLogger
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 
 from harmony.util import config
 
 from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
-from pymods.utilities import (download_url, get_file_mimetype,
-                              HTTP_REQUEST_ATTEMPTS)
+from pymods.utilities import (download_url, get_constraint_expression,
+                              get_file_mimetype, get_opendap_nc4,
+                              HTTP_REQUEST_ATTEMPTS, move_downloaded_nc4)
 
 
 class TestUtilities(TestCase):
@@ -15,11 +16,8 @@ class TestUtilities(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.namespace = 'namespace_string'
-
-    def setUp(self):
-        self.logger = Logger('tests')
-        self.config = config(validate=False)
+        cls.config = config(validate=False)
+        cls.logger = getLogger('tests')
 
     def test_get_file_mimetype(self):
         """ Ensure a mimetype can be retrieved for a valid file path or, if
@@ -48,6 +46,7 @@ class TestUtilities(TestCase):
         """
         output_directory = 'output/dir'
         test_url = 'test.org'
+        test_data = {'dap4.ce': '%2Flatitude%3B%2Flongitude'}
         access_token = 'xyzzy'
         message_retry = 'Internal Server Error'
         message_other = 'Authentication Error'
@@ -69,6 +68,23 @@ class TestUtilities(TestCase):
                 access_token=access_token,
                 data=None,
                 cfg=self.config)
+
+            mock_util_download.reset_mock()
+
+        with self.subTest('A request with data passes the data to Harmony.'):
+            mock_util_download.return_value = http_response
+            response = download_url(test_url, output_directory, self.logger,
+                                    access_token, self.config, data=test_data)
+
+            self.assertEqual(response, http_response)
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=test_data,
+                cfg=self.config
+            )
 
             mock_util_download.reset_mock()
 
@@ -95,3 +111,78 @@ class TestUtilities(TestCase):
                 download_url(test_url, output_directory, self.logger)
                 self.assertEqual(mock_util_download.call_count,
                                  HTTP_REQUEST_ATTEMPTS)
+
+    @patch('pymods.utilities.move_downloaded_nc4')
+    @patch('pymods.utilities.util_download')
+    def test_get_opendap_nc4(self, mock_download, mock_move_download):
+        """ Ensure a request is sent to OPeNDAP that combines the URL of the
+            granule with a constraint expression.
+
+            Once the request is completed, the output file should be moved to
+            ensure a second request to the same URL is still performed.
+
+        """
+        downloaded_file_name = 'output_file.nc4'
+        moved_file_name = 'moved_file.nc4'
+        mock_download.return_value = downloaded_file_name
+        mock_move_download.return_value = moved_file_name
+
+        url = 'https://opendap.earthdata.nasa.gov/granule'
+        required_variables = {'variable'}
+        output_dir = '/path/to/temporary/folder/'
+        access_token = 'secret_token!!!'
+        expected_data = {'dap4.ce': 'variable'}
+
+        output_file = get_opendap_nc4(url, required_variables, output_dir,
+                                      self.logger, access_token, self.config)
+
+        self.assertEqual(output_file, moved_file_name)
+        mock_download.assert_called_once_with(
+            f'{url}.dap.nc4', output_dir, self.logger,
+            access_token=access_token, data=expected_data, cfg=self.config
+        )
+        mock_move_download.assert_called_once_with(output_dir,
+                                                   downloaded_file_name)
+
+    def test_get_constraint_expression(self):
+        """ Ensure a correctly encoded DAP4 constraint expression is
+            constructed for the given input.
+
+            URL encoding:
+
+            - %2F = '/'
+            - %3A = ':'
+            - %3B = ';'
+            - %5B = '['
+            - %5D = ']'
+
+            Note - with sets, the order can't be guaranteed, so there are two
+            options for the combined constraint expression.
+
+        """
+        with self.subTest('No index ranges specified'):
+            self.assertIn(
+                get_constraint_expression({'/alpha_var', '/blue_var'}),
+                ['%2Falpha_var%3B%2Fblue_var', '%2Fblue_var%3B%2Falpha_var']
+            )
+
+        with self.subTest('Variables with index ranges'):
+            self.assertIn(
+                get_constraint_expression({'/alpha_var[1:2]', '/blue_var[3:4]'}),
+                ['%2Falpha_var%5B1%3A2%5D%3B%2Fblue_var%5B3%3A4%5D',
+                 '%2Fblue_var%5B3%3A4%5D%3B%2Falpha_var%5B1%3A2%5D']
+            )
+
+    @patch('pymods.utilities.copy')
+    @patch('pymods.utilities.uuid4')
+    def test_move_downloaded_nc4(self, mock_uuid4, mock_copy):
+        """ Ensure a specified file is moved to the specified location. """
+        mock_uuid4.return_value = Mock(hex='uuid4')
+        output_dir = '/tmp/path/to'
+        old_path = '/tmp/path/to/file.nc4'
+
+        self.assertEqual(move_downloaded_nc4(output_dir, old_path),
+                         '/tmp/path/to/uuid4.nc4')
+
+        mock_copy.assert_called_once_with('/tmp/path/to/file.nc4',
+                                          '/tmp/path/to/uuid4.nc4')

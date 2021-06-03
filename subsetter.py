@@ -67,24 +67,27 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         return super().invoke()
 
     def process_item(self, item: Item, source: Source):
-        """
-        Processes a single input item.  Services that are not aggregating multiple input files
-        should prefer to implement this method rather than #invoke
+        """ Processes a single input item.  Services that are not aggregating
+            multiple input files should prefer to implement this method rather
+            than `invoke`
 
-        This example copies its input to the output, marking "dpi" and "variables" message
-        attributes as having been processed
+            This example copies its input to the output, marking `variables`
+            and `subset.bbox` message attributes as having been processed
 
-        Parameters
-        ----------
-        item : pystac.Item
-            the item that should be processed
-        source : harmony.message.Source
-            the input source defining the variables, if any, to subset from the item
+            Parameters
+            ----------
+            item : pystac.Item
+                the item that should be processed
+            source : harmony.message.Source
+                the input source defining the variables, if any, to subset from
+                the item
 
-        Returns
-        -------
-        pystac.Item
-            a STAC catalog whose metadata and assets describe the service output
+            Returns
+            -------
+            pystac.Item
+                a STAC catalog whose metadata and assets describe the service
+                output
+
         """
         result = item.clone()
         result.assets = {}
@@ -106,8 +109,14 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                     #                            if 'opendap' in (v.roles or []))
                     asset = item_asset
 
-            # Mark any fields the service processes so later services do not repeat work
-            variables = source.process('variables')  # Variable subsetting
+            # Mark any fields the service processes so later services do not
+            # repeat work. Unspecified `Message` attributes default to `None`.
+            variables = source.process('variables')
+
+            if self.message.subset is not None:
+                bounding_box = self.message.subset.process('bbox')
+            else:
+                bounding_box = None
 
             # Subset
             output_file_path = subset_granule(
@@ -115,12 +124,15 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 variables, workdir,
                 self.logger,
                 access_token=self.message.accessToken,
-                config=self.config
+                config=self.config,
+                bounding_box=bounding_box
             )
 
             # Stage the output file with a conventional filename
             mime, _ = get_file_mimetype(output_file_path)
-            staged_filename = generate_output_filename(asset.href, variable_subset=source.variables)
+            staged_filename = generate_output_filename(
+                asset.href, variable_subset=source.variables, ext='.nc4'
+            )
             url = harmony.util.stage(output_file_path,
                                      staged_filename,
                                      mime,
@@ -160,6 +172,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             self.logger.info('Service has been called asynchronously.')
 
         has_granules = hasattr(self.message, 'granules') and self.message.granules
+
         try:
             has_items = bool(self.catalog and next(self.catalog.get_all_items()))
         except StopIteration:

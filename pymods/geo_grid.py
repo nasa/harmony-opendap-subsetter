@@ -299,13 +299,19 @@ def fill_variables(output_path: str, dataset: VarInfoFromDmr,
         This function will only be called if there are variables that require
         filling.
 
+        Note - longitude variables themselves will not be filled, to ensure
+        valid grid coordinates at all points of the science variables.
+
     """
     dimensions_to_fill = set(fill_ranges)
 
     with Dataset(output_path, 'a', format='NETCDF4') as output_dataset:
         for variable_path in required_variables:
             variable = dataset.get_variable(variable_path)
-            if len(dimensions_to_fill.intersection(variable.dimensions)) > 0:
+            if (
+                    not is_longitude(variable) and
+                    len(dimensions_to_fill.intersection(variable.dimensions)) > 0
+            ):
                 fill_index_tuple = tuple(
                     get_fill_slice(variable, dimension, fill_ranges)
                     for dimension in variable.dimensions
@@ -337,11 +343,8 @@ def get_fill_slice(variable: VariableFromDmr, dimension: str,
 
         * science_variable[:][:][start_lon:stop_lon] = fill
 
-        Note - longitude variables themselves will not be filled, to ensure
-        valid grid coordinates at all points of the science variables.
-
     """
-    if dimension in fill_ranges and not is_longitude(variable):
+    if dimension in fill_ranges:
         fill_slice = slice(fill_ranges[dimension][1] + 1,
                            fill_ranges[dimension][0])
     else:

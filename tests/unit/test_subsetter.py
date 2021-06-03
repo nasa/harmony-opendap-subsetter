@@ -33,7 +33,8 @@ class TestSubsetter(TestCase):
 
     def create_message(self, collection: str, granule_id: str, file_paths: List[str],
                        variable_list: List[str], user: str,
-                       is_synchronous: Optional[bool] = None) -> Message:
+                       is_synchronous: Optional[bool] = None,
+                       bounding_box: Optional[List[float]] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
         granules = [
             {
@@ -55,7 +56,8 @@ class TestSubsetter(TestCase):
             'user': user,
             'callback': 'https://example.com/',
             'stagingLocation': 's3://example-bucket/',
-            'accessToken': 'xyzzy'
+            'accessToken': 'xyzzy',
+            'subset': {'bbox': bounding_box, 'shape': None}
         }
 
         if is_synchronous is not None:
@@ -91,13 +93,14 @@ class TestSubsetter(TestCase):
                                                     ANY,
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
-                                                    config=variable_subsetter.config)
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=None)
 
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            'africa.nc',
+            'africa.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger
@@ -132,12 +135,13 @@ class TestSubsetter(TestCase):
                                                     ANY,
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
-                                                    config=variable_subsetter.config)
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            'africa.nc',
+            'africa.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger)
@@ -170,12 +174,52 @@ class TestSubsetter(TestCase):
                                                     ANY,
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
-                                                    config=variable_subsetter.config)
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            'africa.nc',
+            'africa.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger
+        )
+
+    def test_hoss_request(self, mock_stage, mock_subset_granule,
+                          mock_get_mimetype):
+        """ A request that specifies a bounding box should result in a both a
+            variable and a spatial subset being made.
+
+        """
+        mock_subset_granule.return_value = '/path/to/output.nc'
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        bounding_box = [-20, -10, 20, 30]
+
+        message = self.create_message('C1233860183-EEDTEST',
+                                      'G1233860471-EEDTEST',
+                                      ['/home/tests/data/africa.nc'],
+                                      ['alpha_var', 'blue_var'],
+                                      'mcollins',
+                                      bounding_box=bounding_box)
+
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
+        granule = variable_subsetter.message.granules[0]
+
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    granule.variables,
+                                                    ANY,
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=bounding_box)
+        mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
+
+        mock_stage.assert_called_once_with(
+            '/path/to/output.nc',
+            'africa.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger
@@ -258,7 +302,7 @@ class TestSubsetter(TestCase):
 
         """
         output_paths = ['/path/to/output1.nc', '/path/to/output2.nc']
-        output_filenames = ['africa.nc', 'VNL2_test.nc']
+        output_filenames = ['africa.nc4', 'VNL2_test.nc4']
 
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
@@ -281,7 +325,8 @@ class TestSubsetter(TestCase):
                                                 ANY,
                                                 variable_subsetter.logger,
                                                 access_token=message.accessToken,
-                                                config=self.config)
+                                                config=self.config,
+                                                bounding_box=None)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
             mock_stage.assert_any_call(

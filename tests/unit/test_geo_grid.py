@@ -452,7 +452,8 @@ class TestGeoGrid(TestCase):
         input_file = 'tests/data/f16_ssmis_20200102v7.nc'
         test_file = copy(input_file, self.test_dir)
         fill_ranges = {'/longitude': [1400, 10]}
-        required_variables = {'/sst_dtime', '/wind_speed'}
+        required_variables = {'/sst_dtime', '/wind_speed',
+                              '/latitude', '/longitude', '/time'}
 
         fill_variables(test_file, self.dataset, required_variables,
                        fill_ranges)
@@ -467,7 +468,7 @@ class TestGeoGrid(TestCase):
 
             # Assert the expected range of wind_speed and sst_dtime are filled
             # but that rest of the variable matches the input file.
-            for variable in required_variables:
+            for variable in ['/sst_dtime', '/wind_speed']:
                 input_data = test_input[variable][:]
                 output_data = test_output[variable][:]
                 self.assertTrue(np.all(output_data[:][:][11:1400].mask))
@@ -485,9 +486,6 @@ class TestGeoGrid(TestCase):
         """ Ensure that a slice object is correctly formed for a requested
             dimension.
 
-            Longitude variables should not be filled, to ensure that there are
-            valid grid coordinates for science variables (sub-test 3).
-
         """
         fill_ranges = {'/longitude': [200, 15]}
         longitude = self.dataset.get_variable('/longitude')
@@ -503,12 +501,6 @@ class TestGeoGrid(TestCase):
             self.assertEqual(
                 get_fill_slice(wind_speed, '/longitude', fill_ranges),
                 slice(16, 200)
-            )
-
-        with self.subTest('A longitude variable returns slice(None).'):
-            self.assertEqual(
-                get_fill_slice(longitude, '/longitude', fill_ranges),
-                slice(None)
             )
 
     def test_is_geographic_coordinate(self):

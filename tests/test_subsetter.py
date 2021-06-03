@@ -1,12 +1,14 @@
-from shutil import rmtree
+from shutil import copy, rmtree
 from tempfile import mkdtemp
+from typing import Dict, Set
 from unittest import TestCase
 from unittest.mock import ANY, Mock, patch
 from urllib.parse import unquote
-import json
 
 from harmony.message import Message
 from harmony.util import config, HarmonyException
+from netCDF4 import Dataset
+from numpy.testing import assert_array_equal
 
 from subsetter import HarmonyAdapter
 from tests.utilities import write_dmr
@@ -18,16 +20,13 @@ class TestSubsetterEndToEnd(TestCase):
     def setUpClass(cls):
         """ Test fixture that can be set once for all tests in the class. """
         cls.granule_url = 'https://harmony.uat.earthdata.nasa.gov/opendap_url'
-        cls.variable_full_path = '/gt1r/geophys_corr/geoid'
-        cls.expected_variables = ['/gt1r/geolocation/delta_time',
-                                  '/gt1r/geolocation/reference_photon_lon',
-                                  '/gt1r/geolocation/podppd_flag',
-                                  '/gt1r/geophys_corr/delta_time',
-                                  '/gt1r/geolocation/reference_photon_lat',
-                                  '/gt1r/geophys_corr/geoid']
+        cls.atl03_variable = '/gt1r/geophys_corr/geoid'
 
         with open('tests/data/ATL03_example.dmr', 'r') as file_handler:
             cls.atl03_dmr = file_handler.read()
+
+        with open('tests/data/rssmif16d_example.dmr', 'r') as file_handler:
+            cls.rssmif16d_dmr = file_handler.read()
 
     def setUp(self):
         """ Have to mock mkdtemp, to know where to put mock .dmr content. """
@@ -37,16 +36,30 @@ class TestSubsetterEndToEnd(TestCase):
     def tearDown(self):
         rmtree(self.tmp_dir)
 
+    def assert_valid_request_data(self, request_data: Dict,
+                                  expected_variables: Set[str]):
+        """ Check the contents of the request data sent to the OPeNDAP server
+            when retrieving a NetCDF-4 file. This should ensure that a URL
+            encoded constraint expression was sent, and that all the expected
+            variables (potentially with index ranges) were included.
+
+            This custom class method is used because the contraint expressions
+            are constructed from sets. The order of variables in the set, and
+            therefore the constraint expression string, cannot be guaranteed.
+
+        """
+        opendap_separator = '%3B'
+        self.assertIn('dap4.ce', request_data)
+        requested_variables = set(request_data['dap4.ce'].split(opendap_separator))
+        self.assertSetEqual(requested_variables, expected_variables)
+
     @patch('pymods.utilities.uuid4')
-    @patch('pymods.utilities.copy')
     @patch('subsetter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.download_url')
-    @patch('pymods.subset.download_url')
+    @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
-    def test_non_geo_end_to_end(self, mock_stage, mock_download_dmr,
-                                mock_download_data, mock_rmtree, mock_mkdtemp,
-                                mock_copy, mock_uuid):
+    def test_non_geo_end_to_end(self, mock_stage, mock_util_download,
+                                mock_rmtree, mock_mkdtemp, mock_uuid):
         """ Ensure the subsetter will run end-to-end, only mocking the
             HTTP responses, and the output interactions with Harmony.
 
@@ -54,11 +67,15 @@ class TestSubsetterEndToEnd(TestCase):
         mock_uuid.return_value = Mock(hex='uuid')
         mock_mkdtemp.return_value = self.tmp_dir
         dmr_path = write_dmr(self.tmp_dir, self.atl03_dmr)
-        mock_download_dmr.return_value = dmr_path
-        mock_download_data.return_value = 'opendap_url_subset.nc4'
-        mock_copy.return_value = 'moved_url_subset.nc4'
+
+        downloaded_nc4_path = f'{self.tmp_dir}/opendap_url_subset.nc4'
+        copy('tests/data/africa.nc', downloaded_nc4_path)
+
+        mock_util_download.side_effect = [dmr_path, downloaded_nc4_path]
 
         message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
             'sources': [{
                 'granules': [{
                     'id': 'G000-TEST',
@@ -70,59 +87,271 @@ class TestSubsetterEndToEnd(TestCase):
                     'bbox': [-180, -90, 180, 90]
                 }],
                 'variables': [{'id': '',
-                               'name': self.variable_full_path,
-                               'fullPath': self.variable_full_path}]}],
-            'callback': 'https://example.com/',
+                               'name': self.atl03_variable,
+                               'fullPath': self.atl03_variable}]}],
             'stagingLocation': 's3://example-bucket/',
             'user': 'fhaise',
-            'accessToken': None
         }
-        message = Message(json.dumps(message_data))
+        message = Message(message_data)
 
         subsetter = HarmonyAdapter(message, config=config(False))
         subsetter.invoke()
 
-        mock_mkdtemp.assert_called_once()
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should be the required
+        # variables.
+        self.assertEqual(mock_util_download.call_count, 2)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
 
-        mock_download_dmr.assert_called_once_with(
-            f'{self.granule_url}.dmr',
-            self.tmp_dir,
-            subsetter.logger,
-            access_token=message_data['accessToken'],
-            config=subsetter.config
+        # Ensure the constraint expression contains all the required variables.
+        post_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(
+            post_data,
+            {'%2Fgt1r%2Fgeolocation%2Fdelta_time',
+             '%2Fgt1r%2Fgeolocation%2Freference_photon_lon',
+             '%2Fgt1r%2Fgeolocation%2Fpodppd_flag',
+             '%2Fgt1r%2Fgeophys_corr%2Fdelta_time',
+             '%2Fgt1r%2Fgeolocation%2Freference_photon_lat',
+             '%2Fgt1r%2Fgeophys_corr%2Fgeoid'}
         )
-        mock_download_data.assert_called_once_with(
-            f'{self.granule_url}.dap.nc4',
-            self.tmp_dir,
-            subsetter.logger,
-            access_token=message_data['accessToken'],
-            config=subsetter.config,
-            data=ANY
-        )
-        mock_copy.assert_called_once_with('opendap_url_subset.nc4',
-                                          f'{self.tmp_dir}/uuid.nc4')
 
-        post_data = mock_download_data.call_args[1].get('data', {})
-        self.assertIn('dap4.ce', post_data)
-
-        decoded_constraint_expression = unquote(post_data['dap4.ce'])
-        requested_variables = decoded_constraint_expression.split(';')
-        self.assertCountEqual(requested_variables, self.expected_variables)
-
+        # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(
             f'{self.tmp_dir}/uuid.nc4',
-            'opendap_url__gt1r_geophys_corr_geoid.',
+            'opendap_url__gt1r_geophys_corr_geoid.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
-            logger=subsetter.logger)
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
 
-    def test_geo_end_to_end(self):
-        """ A placeholder test for DAS-1084, in which an end-to-end test should
-            be placed, ensuring a full run of the new HOSS functionality is
-            successful.
+    @patch('pymods.geo_grid.fill_variables')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_geo_end_to_end(self, mock_stage, mock_util_download, mock_rmtree,
+                            mock_mkdtemp, mock_uuid, mock_fill_values):
+        """ Ensure a request with a bounding box will be correctly processed,
+            requesting only the expected variables, with index ranges
+            corresponding to the bounding box specified.
 
         """
-        pass
+        variable_path = '/wind_speed'
+        bounding_box = [-30, 45, -15, 60]
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.rssmif16d_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/f16_ssmis_lat_lon.nc', dimensions_path)
+
+        all_variables_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/f16_ssmis_geo.nc', all_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          all_variables_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': variable_path,
+                               'fullPath': variable_path}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'bbox': bounding_box},
+            'user': 'jlovell',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should be the required
+        # variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(dimensions_data,
+                                       {'%2Flatitude', '%2Flongitude'})
+        # Ensure the constraint expression contains all the required variables.
+        # /wind_speed[][540:600][1320:1380], /time, /longitude[1320:1380]
+        # /latitude[540:600]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime',
+             '%2Flatitude%5B540%3A600%5D',
+             '%2Flongitude%5B1320%3A1380%5D',
+             '%2Fwind_speed%5B%5D%5B540%3A600%5D%5B1320%3A1380%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
+                                           'opendap_url__wind_speed.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=subsetter.logger)
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure the filling functionality was not called:
+        mock_fill_values.assert_not_called()
+
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_geo_crossing_grid_edge(self, mock_stage, mock_util_download,
+                                    mock_rmtree, mock_mkdtemp, mock_uuid):
+        """ Ensure a request with a bounding box that crosses a longitude edge
+            (360 degrees east) requests the expected variables from OPeNDAP and
+            does so only in the expected latitude range. The full longitude
+            range should be requested for all variables, with filling applied
+            outside of the bounding box region.
+
+        """
+        variable_path = '/wind_speed'
+        bounding_box = [-7.5, -60, 7.5, -45]
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.rssmif16d_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/f16_ssmis_lat_lon.nc', dimensions_path)
+
+        unfilled_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/f16_ssmis_unfilled.nc', unfilled_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          unfilled_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': variable_path,
+                               'fullPath': variable_path}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'bbox': bounding_box},
+            'user': 'jswiggert',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should be the required
+        # variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(dimensions_data,
+                                       {'%2Flatitude', '%2Flongitude'})
+        # Ensure the constraint expression contains all the required variables.
+        # /wind_speed[][120:180][], /time, /longitude (full range),
+        # /latitude[120:180]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime',
+             '%2Flatitude%5B120%3A180%5D',
+             '%2Flongitude',
+             '%2Fwind_speed%5B%5D%5B120%3A180%5D%5B%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
+                                           'opendap_url__wind_speed.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=subsetter.logger)
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure the final output was correctly filled (the unfilled file is
+        # filled in place):
+        expected_output = Dataset('tests/data/f16_ssmis_filled.nc', 'r')
+        actual_output = Dataset(f'{self.tmp_dir}/uuid2.nc4', 'r')
+
+        for variable_name, expected_variable in expected_output.variables.items():
+            self.assertIn(variable_name, actual_output.variables)
+            assert_array_equal(actual_output[variable_name][:],
+                               expected_variable[:])
+
+        expected_output.close()
+        actual_output.close()
 
     @patch('subsetter.mkdtemp')
     @patch('shutil.rmtree')
@@ -139,6 +368,8 @@ class TestSubsetterEndToEnd(TestCase):
         mock_download_subset.side_effect = Exception('Random error')
 
         message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
             'sources': [{
                 'granules': [{
                     'id': 'G000-TEST',
@@ -150,15 +381,16 @@ class TestSubsetterEndToEnd(TestCase):
                     'bbox': [-180, -90, 180, 90]
                 }],
                 'variables': [{'id': '',
-                               'name': self.variable_full_path,
-                               'fullPath': self.variable_full_path}]}],
-            'callback': 'https://example.com/',
+                               'name': self.atl03_variable,
+                               'fullPath': self.atl03_variable}]}],
             'stagingLocation': 's3://example-bucket/',
-            'user': 'fhaise',
-            'accessToken': 'fake-token',
+            'user': 'kmattingly',
         }
-        message = Message(json.dumps(message_data))
+        message = Message(message_data)
 
         with self.assertRaises(HarmonyException):
             subsetter = HarmonyAdapter(message, config=config(False))
             subsetter.invoke()
+
+        mock_stage.assert_not_called()
+        mock_rmtree.assert_called_once_with(self.tmp_dir)

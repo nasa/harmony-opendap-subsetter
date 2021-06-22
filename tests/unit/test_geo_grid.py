@@ -3,23 +3,21 @@ from os import makedirs
 from os.path import exists
 from shutil import copy, rmtree
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from netCDF4 import Dataset
 import numpy as np
 
 from harmony.util import config
-from varinfo import VarInfoFromDmr
+from varinfo import VarInfoFromDmr, VariableFromDmr
 
 from pymods.geo_grid import (add_index_range, fill_variables,
                              get_bounding_box_longitudes,
                              get_dimension_index_ranges,
                              get_dimension_index_range, get_fill_slice,
                              get_geo_bounding_box_subset,
-                             get_required_dimensions,
-                             get_valid_longitude_range,
-                             is_geographic_coordinate, is_latitude,
-                             is_longitude, unwrap_longitude, wrap_longitude)
+                             get_valid_longitude_range, unwrap_longitude,
+                             wrap_longitude)
 
 
 class TestGeoGrid(TestCase):
@@ -191,25 +189,6 @@ class TestGeoGrid(TestCase):
         mock_get_dimension_index_ranges.assert_not_called()
         mock_fill_variables.assert_not_called()
 
-    def test_get_required_dimensions(self):
-        """ Ensure a set of required variables can be parsed and a set of
-            dimensions used by all of those variables is returned.
-
-        """
-        with self.subTest('Combines different dimensions'):
-            self.assertSetEqual(
-                get_required_dimensions(self.dataset,
-                                        {'/latitude', '/longitude'}),
-                {'/latitude', '/longitude'}
-            )
-
-        with self.subTest('Has a single entry for repeated dimensions'):
-            self.assertSetEqual(
-                get_required_dimensions(self.dataset,
-                                        {'/rainfall_rate', '/sst_dtime'}),
-                {'/latitude', '/longitude', '/time'}
-            )
-
     def test_get_dimension_index_ranges(self):
         """ Ensure that correct index ranges can be calculated for:
 
@@ -217,10 +196,13 @@ class TestGeoGrid(TestCase):
             - Longitude dimensions (continuous ranges)
             - Longitude dimensions (bounding box crossing grid edge)
 
+            This test will use the valid range of the RSSMIF16D collection,
+            such that 0 ≤ longitude (degrees east) ≤ 360.
+
         """
         makedirs(self.test_dir)
         test_file_name = f'{self.test_dir}/test.nc'
-        bounding_box = [-20, 45, 20, 85]
+        bounding_box = [160, 45, 200, 85]
 
         with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
             test_file.createDimension('latitude', size=180)
@@ -233,7 +215,7 @@ class TestGeoGrid(TestCase):
 
             test_file.createVariable('longitude', float,
                                      dimensions=('longitude', ))
-            test_file['longitude'][:] = np.linspace(-179.5, 179.5, 360)
+            test_file['longitude'][:] = np.linspace(0.5, 359.5, 360)
             test_file['longitude'].setncatts({'units': 'degrees_east'})
 
         with self.subTest('Latitude dimension'):
@@ -251,13 +233,11 @@ class TestGeoGrid(TestCase):
                 {'/longitude': [160, 200]}
             )
 
-        with Dataset(test_file_name, 'a', format='NETCDF4') as test_file:
-            test_file['longitude'][:] = np.linspace(0.5, 359.5, 360)
-
         with self.subTest('Longitude, bounding box crosses grid edge'):
+            bbox_crossing = [-20, 45, 20, 85]
             self.assertDictEqual(
                 get_dimension_index_ranges(test_file_name, self.dataset,
-                                           {'/longitude'}, bounding_box),
+                                           {'/longitude'}, bbox_crossing),
                 {'/longitude': [340, 20]}
             )
 
@@ -290,36 +270,26 @@ class TestGeoGrid(TestCase):
             longitude variable.
 
             If the variable range is -180 ≤ longitude (degrees) < 180, then the
-            bounding box values should remain un converted. If the variable
+            bounding box values should remain unconverted. If the variable
             range is 0 ≤ longitude (degrees) < 360, then the bounding box
             values should be converted to this range.
 
         """
         bounding_box = [-150, -15, -120, 15]
 
-        dataset = Dataset('test.nc', 'w', diskless=True)
-        dataset.createDimension('longitude', size=361)
+        test_args = [['-180 ≤ lon (deg) < 180', -180, 180, [-150, -120]],
+                     ['0 ≤ lon (deg) < 360', 0, 360, [210, 240]]]
 
-        test_args = [
-            ['-180 ≤ lon (deg) < 180', 'lon_wrap', -180, 180, [-150, -120]],
-            ['0 ≤ lon (deg) < 360', 'lon_unwrap', 0, 360, [210, 240]],
-        ]
+        longitude_variable = Mock(spec=VariableFromDmr)
 
-        for description, var_name, valid_min, valid_max, results in test_args:
+        for description, valid_min, valid_max, results in test_args:
             with self.subTest(description):
-                data = np.linspace(valid_min, valid_max, 361)
-                longitude = dataset.createVariable(var_name, data.dtype,
-                                                   dimensions=('longitude', ))
-                longitude[:] = data
-                longitude.setncatts({'valid_min': valid_min,
-                                     'valid_max': valid_max})
+                data = np.ma.masked_array(data=np.linspace(valid_min, valid_max, 361))
+                longitude_variable.get_range.return_value = [valid_min, valid_max]
 
-                self.assertListEqual(
-                    get_bounding_box_longitudes(bounding_box, dataset[var_name]),
-                    results
-                )
-
-        dataset.close()
+                longitudes = get_bounding_box_longitudes(bounding_box, data,
+                                                         longitude_variable)
+                self.assertListEqual(longitudes, results)
 
     def test_wrap_longitude(self):
         """ Ensure that longitudes are correctly mapped to the
@@ -356,61 +326,29 @@ class TestGeoGrid(TestCase):
             can be identified from the data themselves.
 
         """
-        unwrapped_data = np.linspace(0, 360, 361)
-        wrapped_data = np.linspace(-180, 180, 361)
+        unwrapped_data = np.ma.masked_array(data=np.linspace(0, 360, 361))
+        wrapped_data = np.ma.masked_array(data=np.linspace(-180, 180, 361))
 
-        with Dataset('tests.nc', 'w', diskless=True) as test_file:
-            test_file.createDimension('longitude', size=361)
+        variable_with_range = Mock(spec=VariableFromDmr)
+        variable_with_range.get_range.return_value = [-30, 30]
 
-            with self.subTest('valid_range metadata attribute is  present'):
-                variable = test_file.createVariable('valid_range',
-                                                    unwrapped_data.dtype,
-                                                    dimensions=('longitude', ))
-                variable.setncatts({'valid_range': [0, 360]})
-                self.assertListEqual(get_valid_longitude_range(variable),
-                                     [0, 360])
+        variable_without_range = Mock(spec=VariableFromDmr)
+        variable_without_range.get_range.return_value = None
 
-            with self.subTest('valid_min and valid_max metadata attributes'):
-                variable = test_file.createVariable('valid_min_max',
-                                                    wrapped_data.dtype,
-                                                    dimensions=('longitude', ))
-                variable.setncatts({'valid_min': -180, 'valid_max': 180})
-                self.assertListEqual(get_valid_longitude_range(variable),
-                                     [-180, 180])
+        with self.subTest('Range data available from VariableFromDmr'):
+            valid_range = get_valid_longitude_range(variable_with_range,
+                                                    wrapped_data)
+            self.assertListEqual(valid_range, [-30, 30])
 
-            with self.subTest('No metadata attributes, data > 180 degrees'):
-                variable = test_file.createVariable('from_data_0_360',
-                                                    unwrapped_data.dtype,
-                                                    dimensions=('longitude', ))
-                variable[:] = unwrapped_data
-                self.assertListEqual(get_valid_longitude_range(variable),
-                                     [0, 360])
+        with self.subTest('No metadata attributes, data > 180 degrees'):
+            valid_range = get_valid_longitude_range(variable_without_range,
+                                                    unwrapped_data)
+            self.assertListEqual(valid_range, [0, 360])
 
-            with self.subTest('No metadata attributes, data ≤ 180 degrees'):
-                variable = test_file.createVariable('from_data_180_180',
-                                                    wrapped_data.dtype,
-                                                    dimensions=('longitude', ))
-                variable[:] = wrapped_data
-                self.assertListEqual(get_valid_longitude_range(variable),
-                                     [-180, 180])
-
-            with self.subTest('Only valid_min resorts to data range'):
-                variable = test_file.createVariable('only_valid_min',
-                                                    unwrapped_data.dtype,
-                                                    dimensions=('longitude', ))
-                variable.setncatts({'valid_min': 0})
-                variable[:] = unwrapped_data
-                self.assertListEqual(get_valid_longitude_range(variable),
-                                     [0, 360])
-
-            with self.subTest('Only valid_max resorts to data range'):
-                variable = test_file.createVariable('only_valid_max',
-                                                    unwrapped_data.dtype,
-                                                    dimensions=('longitude', ))
-                variable.setncatts({'valid_max': 360})
-                variable[:] = unwrapped_data
-                self.assertListEqual(get_valid_longitude_range(variable),
-                                     [0, 360])
+        with self.subTest('No metadata attributes, data ≤ 180 degrees'):
+            valid_range = get_valid_longitude_range(variable_without_range,
+                                                    wrapped_data)
+            self.assertListEqual(valid_range, [-180, 180])
 
     def test_add_index_range(self):
         """ Ensure the correct combinations of index ranges are added as
@@ -488,65 +426,15 @@ class TestGeoGrid(TestCase):
 
         """
         fill_ranges = {'/longitude': [200, 15]}
-        longitude = self.dataset.get_variable('/longitude')
-        wind_speed = self.dataset.get_variable('/wind_speed')
 
         with self.subTest('An unfilled dimension returns slice(None).'):
             self.assertEqual(
-                get_fill_slice(wind_speed, '/time', fill_ranges),
+                get_fill_slice('/time', fill_ranges),
                 slice(None)
             )
 
         with self.subTest('A filled dimension returns slice(start, stop).'):
             self.assertEqual(
-                get_fill_slice(wind_speed, '/longitude', fill_ranges),
+                get_fill_slice('/longitude', fill_ranges),
                 slice(16, 200)
             )
-
-    def test_is_geographic_coordinate(self):
-        """ Ensure a latitude and longitude can be correctly determined as
-            geographic.
-
-        """
-        with self.subTest('A latitude variable returns True'):
-            self.assertTrue(
-                is_geographic_coordinate(self.dataset.get_variable('/latitude'))
-            )
-
-        with self.subTest('A longitude variable returns True'):
-            self.assertTrue(
-                is_geographic_coordinate(self.dataset.get_variable('/longitude'))
-            )
-
-        with self.subTest('A non geographic dimension returns False'):
-            self.assertFalse(
-                is_geographic_coordinate(self.dataset.get_variable('/sst_dtime'))
-            )
-
-    def test_is_latitude(self):
-        """ Ensure a latitude variable is correctly identified, but that
-            longitudes or other non-latitudes are not misattributed.
-
-        """
-        with self.subTest('A latitude variable returns True'):
-            self.assertTrue(is_latitude(self.dataset.get_variable('/latitude')))
-
-        with self.subTest('A longitude variable returns False'):
-            self.assertFalse(is_latitude(self.dataset.get_variable('/longitude')))
-
-        with self.subTest('A non geographic dimension returns False'):
-            self.assertFalse(is_latitude(self.dataset.get_variable('/sst_dtime')))
-
-    def test_is_longitude(self):
-        """ Ensure a longitude variable is correctly identified, but that
-            latitudes or other non-longitudes are not misattributed.
-
-        """
-        with self.subTest('A latitude variable returns False'):
-            self.assertFalse(is_longitude(self.dataset.get_variable('/latitude')))
-
-        with self.subTest('A longitude variable returns True'):
-            self.assertTrue(is_longitude(self.dataset.get_variable('/longitude')))
-
-        with self.subTest('A non geographic dimension returns False'):
-            self.assertFalse(is_longitude(self.dataset.get_variable('/sst_dtime')))

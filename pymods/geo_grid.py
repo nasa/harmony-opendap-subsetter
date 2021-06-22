@@ -28,6 +28,7 @@ from logging import Logger
 from typing import Dict, List, Set
 
 from netCDF4 import Dataset, Variable
+from numpy.ma.core import MaskedArray
 import numpy as np
 
 from harmony.util import Config
@@ -57,12 +58,7 @@ def get_geo_bounding_box_subset(required_variables: Set[str],
         and the data outside of the bounding box are filled.
 
     """
-    dimension_variables = get_required_dimensions(dataset, required_variables)
-
-    geographic_dimensions = set(
-        dimension for dimension in dimension_variables
-        if is_geographic_coordinate(dataset.get_variable(dimension))
-    )
+    geographic_dimensions = dataset.get_spatial_dimensions(required_variables)
 
     if len(geographic_dimensions) > 0:
         # Prefetch geographic dimension data from OPeNDAP
@@ -103,16 +99,6 @@ def get_geo_bounding_box_subset(required_variables: Set[str],
     return output_path
 
 
-def get_required_dimensions(dataset: VarInfoFromDmr,
-                            required_variables: Set[str]) -> Set[str]:
-    """ Return a single set of all variables that used as dimensions of any
-        variables being requested from OPeNDAP.
-
-    """
-    return set(dimension for variable in required_variables
-               for dimension in dataset.get_variable(variable).dimensions)
-
-
 def get_dimension_index_ranges(dimensions_path: str, dataset: VarInfoFromDmr,
                                geographic_dimensions: Set[str],
                                bounding_box: List[float]) -> Dict[str, List[float]]:
@@ -134,7 +120,7 @@ def get_dimension_index_ranges(dimensions_path: str, dataset: VarInfoFromDmr,
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dimension in geographic_dimensions:
             variable = dataset.get_variable(dimension)
-            if is_latitude(variable):
+            if variable.is_latitude():
                 index_ranges[dimension] = get_dimension_index_range(
                     dimensions_file[dimension][:], bounding_box[1],
                     bounding_box[3]
@@ -143,7 +129,7 @@ def get_dimension_index_ranges(dimensions_path: str, dataset: VarInfoFromDmr,
                 # First, convert the bounding box western and eastern extents
                 # to match the valid range of the dimension data
                 west_extent, east_extent = get_bounding_box_longitudes(
-                    bounding_box, dimensions_file[dimension]
+                    bounding_box, dimensions_file[dimension][:], variable
                 )
                 index_ranges[dimension] = get_dimension_index_range(
                     dimensions_file[dimension][:], west_extent, east_extent
@@ -152,8 +138,7 @@ def get_dimension_index_ranges(dimensions_path: str, dataset: VarInfoFromDmr,
     return index_ranges
 
 
-def get_dimension_index_range(dimension: np.ma.core.MaskedArray,
-                              minimum_extent: float,
+def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
                               maximum_extent: float) -> List[int]:
     """ Find the indices closest to the interpolated values of the minimum and
         maximum extents in that dimension.
@@ -188,7 +173,8 @@ def get_dimension_index_range(dimension: np.ma.core.MaskedArray,
 
 
 def get_bounding_box_longitudes(bounding_box: List[float],
-                                longitude: Variable) -> List[float]:
+                                longitude_array: MaskedArray,
+                                longitude: VariableFromDmr) -> List[float]:
     """ Ensure the bounding box longitude extents are in the valid range for
         the longitude variable. The bounding box values are expected to range
         from -180 ≤ longitude (degrees) < 180, whereas some collections have
@@ -197,7 +183,7 @@ def get_bounding_box_longitudes(bounding_box: List[float],
         The bounding box from the Harmony message is ordered: [W, S, E, N]
 
     """
-    valid_range = get_valid_longitude_range(longitude)
+    valid_range = get_valid_longitude_range(longitude, longitude_array)
 
     if valid_range[1] > 180:
         # Discontinuity at Prime Meridian: 0 ≤ longitude (degrees) < 360
@@ -232,7 +218,8 @@ def unwrap_longitude(wrapped_longitude: float) -> float:
     return ((wrapped_longitude % 360) + 360) % 360
 
 
-def get_valid_longitude_range(longitude: Variable) -> List[float]:
+def get_valid_longitude_range(longitude: VariableFromDmr,
+                              longitude_array: MaskedArray) -> List[float]:
     """ Check the variable metadata for `valid_range` or `valid_min` and
         `valid_max`. If no metadata data attributes indicating the valid range
         are present, check if the data contain a value in the range
@@ -244,13 +231,11 @@ def get_valid_longitude_range(longitude: Variable) -> List[float]:
         * Discontinuity at Prime Meridian: 0 ≤ longitude (degrees) < 360
 
     """
-    if hasattr(longitude, 'valid_range'):
-        valid_range = [longitude.valid_range[0], longitude.valid_range[1]]
-    elif hasattr(longitude, 'valid_min') and hasattr(longitude, 'valid_max'):
-        valid_range = [longitude.valid_min, longitude.valid_max]
-    elif np.max(longitude) > 180.0:
+    valid_range = longitude.get_range()
+
+    if valid_range is None and np.max(longitude_array) > 180.0:
         valid_range = [0.0, 360.0]
-    else:
+    elif valid_range is None:
         valid_range = [-180.0, 180.0]
 
     return valid_range
@@ -309,19 +294,18 @@ def fill_variables(output_path: str, dataset: VarInfoFromDmr,
         for variable_path in required_variables:
             variable = dataset.get_variable(variable_path)
             if (
-                    not is_longitude(variable) and
+                    not variable.is_longitude() and
                     len(dimensions_to_fill.intersection(variable.dimensions)) > 0
             ):
                 fill_index_tuple = tuple(
-                    get_fill_slice(variable, dimension, fill_ranges)
+                    get_fill_slice(dimension, fill_ranges)
                     for dimension in variable.dimensions
                 )
 
                 output_dataset[variable_path][fill_index_tuple] = np.ma.masked
 
 
-def get_fill_slice(variable: VariableFromDmr, dimension: str,
-                   fill_ranges: Dict[str, List[float]]) -> slice:
+def get_fill_slice(dimension: str, fill_ranges: Dict[str, List[float]]) -> slice:
     """ Check the dictionary of dimensions that need to be filled for the
         given dimension. If present, the minimum index will be greater than the
         maximum index (the eastern edge of the bounding box will seem to be to
@@ -351,29 +335,3 @@ def get_fill_slice(variable: VariableFromDmr, dimension: str,
         fill_slice = slice(None)
 
     return fill_slice
-
-
-def is_geographic_coordinate(variable: VariableFromDmr) -> bool:
-    """ Use heuristics to determine if a variable is a geographic coordinate
-        based on its units. A latitude variable will have units 'degrees_north'
-        and a longitude variable will have units 'degrees_east'.
-
-
-    """
-    return is_longitude(variable) or is_latitude(variable)
-
-
-def is_latitude(variable: VariableFromDmr) -> bool:
-    """ Determine if the variable is a latitude based on the `units` metadata
-        attribute being 'degrees_north'.
-
-    """
-    return variable.attributes.get('units') == 'degrees_north'
-
-
-def is_longitude(variable: VariableFromDmr) -> bool:
-    """ Determine if the variable is a longitude based on the `units` metadata
-        attribute being 'degrees_east'.
-
-    """
-    return variable.attributes.get('units') == 'degrees_east'

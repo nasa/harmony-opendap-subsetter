@@ -1,8 +1,18 @@
 #
-# Using Conda within ENTRYPOINT was taken from:
-# https://pythonspeed.com/articles/activate-conda-dockerfile/
+# Service image for sds/variable-subsetter, a Harmony backend service that
+# includes both a variable subsetter and the Harmony OPeNDAP Subsetter (HOSS).
+# Both perform requests to an instance of OPeNDAP in the Cloud to retrieve
+# the requested variables from an Earth Observation scientific file, with HOSS
+# also supporting bounding box spatial subsetting for geographically gridded
+# data.
 #
-
+# This image instantiates a conda environment, with required pacakges, before
+# installing additional dependencies via Pip. The service code is then copied
+# into the Docker image, before environment variables are set to activate the
+# created conda environment.
+#
+# Updated: 2021-06-24
+#
 FROM continuumio/miniconda3
 
 WORKDIR "/home"

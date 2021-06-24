@@ -1,34 +1,21 @@
-FROM continuumio/miniconda3
+#
+# Test image for the Harmony sds/variable-subsetter and HOSS services. This
+# image uses the main service image, sds/variable-subsetter, as a base layer
+# for the tests. This ensures  that the contents of the service image are
+# tested, preventing discrepancies between the service and test environments.
+#
+# Updated: 2021-06-24
+#
+FROM sds/variable-subsetter
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR "/home"
-
-# Install dependencies first. These steps take the longest and change the least,
-# so their layers should usually be cached
-# Run bin/build-test latest --no-delete to take advantage of the faster build
-
-# Copy tests and requirements files
-COPY tests/pip_test_requirements.txt .
-COPY conda_requirements.txt .
-COPY pip_requirements.txt .
-
-# Create Conda environment
-RUN conda create -y --name subsetter --file conda_requirements.txt python=3.7 -q \
-	--channel conda-forge \
-	--channel defaults
-
-# Install additional Pip requirements (for the variable subsetter itself)
-COPY pip_requirements.txt .
-RUN conda run --name subsetter pip install -r pip_requirements.txt
-
 # Install additional Pip requirements (for testing)
+COPY tests/pip_test_requirements.txt .
 RUN conda run --name subsetter pip install --no-input -r pip_test_requirements.txt
 
-# Bundle app source
+# Copy test directory containing Python unittest suite, test data and utilities 
 COPY ./tests tests
-COPY ./pymods pymods
-COPY subsetter.py .
 
 # Set conda environment to subsetter, as conda run will not stream logging.
 # Setting these environment variables is the equivalent of `conda activate`.

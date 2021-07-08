@@ -111,8 +111,9 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
             # Mark any fields the service processes so later services do not
             # repeat work. Unspecified `Message` attributes default to `None`.
-            variables = source.process('variables')
+            variables = source.process('variables') or []
 
+            # Future work, DAS-1193: Move bounding box extraction to new module
             if self.message.subset is not None:
                 bounding_box = self.message.subset.process('bbox')
             else:
@@ -185,10 +186,9 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             # multiple granules.
             raise Exception('Synchronous requests accept only one granule')
 
-        # TODO: Update this check on variables once their format has expanded.
         for source in self.message.sources:
             if not hasattr(source, 'variables') or not source.variables:
-                raise Exception('No variables specified for subsetting')
+                self.logger.info('All variables will be retrieved.')
 
 
 if __name__ == '__main__':

@@ -121,3 +121,76 @@ class TestSubset(TestCase):
                                                     self.config)
         self.assertIn('africa_geo_subset.nc4', output_path)
         mock_get_opendap_data.assert_not_called()
+
+    @patch('pymods.subset.get_opendap_nc4')
+    @patch('pymods.subset.get_geo_bounding_box_subset')
+    @patch('pymods.subset.download_url')
+    def test_subset_non_geo_no_variables(self, mock_download_dmr,
+                                         mock_get_geo_subset,
+                                         mock_get_opendap_data):
+        """ Ensure a request without a bounding box and without any specified
+            variables will produce a request to OPeNDAP that does not specify
+            any variables. This will default to retrieving the full NetCDF-4
+            file from OPeNDAP.
+
+        """
+        url = self.granule_url
+        mock_download_dmr.return_value = 'tests/data/rssmif16d_example.dmr'
+        mock_get_opendap_data.return_value = 'rssmif16d_subset.nc4'
+
+        output_path = subset_granule(url, [], self.output_dir, self.logger,
+                                     access_token='access', config=self.config,
+                                     bounding_box=None)
+
+        self.assertIn('rssmif16d_subset.nc4', output_path)
+        mock_download_dmr.assert_called_once_with(f'{url}.dmr',
+                                                  self.output_dir,
+                                                  self.logger,
+                                                  access_token='access',
+                                                  config=self.config)
+        mock_get_geo_subset.assert_not_called()
+        mock_get_opendap_data.assert_called_once_with(url, set(),
+                                                      self.output_dir,
+                                                      self.logger, 'access',
+                                                      self.config)
+
+    @patch('pymods.subset.get_opendap_nc4')
+    @patch('pymods.subset.get_geo_bounding_box_subset')
+    @patch('pymods.subset.download_url')
+    def test_subset_geo_no_variables(self, mock_download_dmr,
+                                     mock_get_geo_subset,
+                                     mock_get_opendap_data):
+        """ Ensure a request with a bounding box, but without any specified
+            variables will consider all science and metadata variables as the
+            requested variables. This situation will arise if a user requests
+            all variables. HOSS will need to explicitly list all the variables
+            it retrieves (unlike the variable subsetter) as the DAP4 constraint
+            expression will need to specify index ranges for all geographically
+            gridded variables.
+
+        """
+        url = self.granule_url
+        bounding_box = [40, -30, 50, -20]
+        expected_variables = {'/atmosphere_cloud_liquid_water_content',
+                              '/atmosphere_water_vapor_content',
+                              '/latitude', '/longitude', '/rainfall_rate',
+                              '/sst_dtime', '/time', '/wind_speed'}
+        mock_download_dmr.return_value = 'tests/data/rssmif16d_example.dmr'
+        mock_get_geo_subset.return_value = 'rssmif16d_subset.nc4'
+
+        output_path = subset_granule(url, [], self.output_dir, self.logger,
+                                     access_token='access', config=self.config,
+                                     bounding_box=bounding_box)
+
+        self.assertIn('rssmif16d_subset.nc4', output_path)
+        mock_download_dmr.assert_called_once_with(f'{url}.dmr',
+                                                  self.output_dir,
+                                                  self.logger,
+                                                  access_token='access',
+                                                  config=self.config)
+        mock_get_geo_subset.assert_called_once_with(expected_variables,
+                                                    ANY, bounding_box,
+                                                    url, self.output_dir,
+                                                    self.logger, 'access',
+                                                    self.config)
+        mock_get_opendap_data.assert_not_called()

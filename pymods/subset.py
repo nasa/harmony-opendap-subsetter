@@ -27,17 +27,16 @@ def subset_granule(url: str, variables: List[HarmonyVariable], output_dir: str,
         applied to the retrieved variables, in addition to only retrieving the
         required variables.
 
+        Future work: When temporal subsetting is to be attempted, some
+        functionality will need to be raised from get_geo_bounding_box. That
+        function should probably just cover retrieving the index ranges for the
+        spatial dimensions, but the DAP4 constraint expression should be
+        constructed externally to that module, so it can be combined with any
+        temporal dimension index ranges.
+
     """
     granule_filename = url.split('?')[0].rstrip('/').split('/')[-1]
     logger.info(f'Performing variable subsetting on: {granule_filename}')
-
-    # Create a list of requested variable full paths
-    requested_variables = [variable.fullPath
-                           if variable.fullPath.startswith('/')
-                           else f'/{variable.fullPath}'
-                           for variable in variables]
-
-    logger.info(f'Requested variables: {requested_variables}')
 
     # Harmony provides the OPeNDAP URL as the granule URL for this service.
     # First download the `.dmr` representation of the file.
@@ -45,6 +44,23 @@ def subset_granule(url: str, variables: List[HarmonyVariable], output_dir: str,
                             access_token=access_token, config=config)
     dataset = VarInfoFromDmr(dmr_path, logger,
                              config_file='pymods/var_subsetter_config.yml')
+
+    # Create a list of requested variable full paths
+    requested_variables = [variable.fullPath
+                           if variable.fullPath.startswith('/')
+                           else f'/{variable.fullPath}'
+                           for variable in variables]
+
+    # If spatial subsetting is required, but no variables are specified (e.g.,
+    # all variables are requested) then the requested variables should be set
+    # to all variables (science and non-science), so that index-range subsets
+    # can be specified in a DAP4 constraint expression:
+    if bounding_box is not None and len(requested_variables) == 0:
+        requested_variables = dataset.get_science_variables().union(
+            dataset.get_metadata_variables()
+        )
+
+    logger.info(f'Requested variables: {requested_variables}')
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.

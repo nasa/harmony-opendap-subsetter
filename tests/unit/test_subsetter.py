@@ -342,7 +342,9 @@ class TestSubsetter(TestCase):
                                mock_subset_granule,
                                mock_get_mimetype):
         """ Ensure that if no variables are specified for a source, the service
-            raises an exception.
+            will not raise an exception, and that the variables specified to
+            the `subset_granule` function is an empty list. The output of that
+            function should be staged by Harmony.
 
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
@@ -355,15 +357,24 @@ class TestSubsetter(TestCase):
                                       'jlovell')
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        error = None
-        try:
-            with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-                variable_subsetter.invoke()
-        except Exception as e:
-            error = e
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
 
-        mock_subset_granule.assert_not_called()
-        mock_get_mimetype.assert_not_called()
+        granule = variable_subsetter.message.granules[0]
 
-        mock_stage.assert_not_called()
-        assert str(error) == 'No variables specified for subsetting'
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    [],
+                                                    ANY,
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=None)
+        mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
+
+        mock_stage.assert_called_once_with(
+            '/path/to/output.nc',
+            'africa.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger
+        )

@@ -27,7 +27,7 @@
 from logging import Logger
 from typing import Dict, List, Set
 
-from netCDF4 import Dataset, Variable
+from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 import numpy as np
 
@@ -101,7 +101,7 @@ def get_geo_bounding_box_subset(required_variables: Set[str],
 
 def get_dimension_index_ranges(dimensions_path: str, dataset: VarInfoFromDmr,
                                geographic_dimensions: Set[str],
-                               bounding_box: List[float]) -> Dict[str, List[float]]:
+                               bounding_box: List[float]) -> Dict[str, List[int]]:
     """ Iterate through all geographic dimensions and extract the indices that
         correspond to the minimum and maximum extents in that dimension. For
         longitudes, it is assumed that the western extent should be considered
@@ -121,21 +121,47 @@ def get_dimension_index_ranges(dimensions_path: str, dataset: VarInfoFromDmr,
         for dimension in geographic_dimensions:
             variable = dataset.get_variable(dimension)
             if variable.is_latitude():
-                index_ranges[dimension] = get_dimension_index_range(
-                    dimensions_file[dimension][:], bounding_box[1],
-                    bounding_box[3]
-                )
+                if is_dimension_ascending(dimensions_file[dimension][:]):
+                    # dimension array runs -90 to 90 degrees.
+                    # The minimum index will be the south extent
+                    minimum_extent = bounding_box[1]
+                    maximum_extent = bounding_box[3]
+                else:
+                    # dimension array runs 90 to -90 degrees.
+                    # The minimum index will be the north extent
+                    minimum_extent = bounding_box[3]
+                    maximum_extent = bounding_box[1]
             else:
                 # First, convert the bounding box western and eastern extents
                 # to match the valid range of the dimension data
                 west_extent, east_extent = get_bounding_box_longitudes(
                     bounding_box, dimensions_file[dimension][:], variable
                 )
-                index_ranges[dimension] = get_dimension_index_range(
-                    dimensions_file[dimension][:], west_extent, east_extent
-                )
+                if is_dimension_ascending(dimensions_file[dimension][:]):
+                    # dimension array runs -180 to 180 (or 0 to 360) degrees.
+                    # The minimum index will be the west extent
+                    minimum_extent = west_extent
+                    maximum_extent = east_extent
+                else:
+                    # dimension array runs 180 to -180 (or 360 to 0) degrees.
+                    # The minimum index will be the east extent
+                    minimum_extent = east_extent
+                    maximum_extent = west_extent
+
+            index_ranges[dimension] = get_dimension_index_range(
+                dimensions_file[dimension][:], minimum_extent, maximum_extent
+            )
 
     return index_ranges
+
+
+def is_dimension_ascending(dimension: MaskedArray) -> bool:
+    """ Read the array associated with a dimension variable and check if the
+        variables ascend starting from the zeroth element or not.
+
+    """
+    first_index, last_index = np.ma.flatnotmasked_edges(dimension)
+    return dimension[first_index] < dimension[last_index]
 
 
 def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
@@ -164,8 +190,18 @@ def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
 
     """
     dimension_range = [minimum_extent, maximum_extent]
-    raw_indices = np.interp(dimension_range, dimension,
-                            np.arange(dimension.size))
+    dimension_indices = np.arange(dimension.size)
+
+    if is_dimension_ascending(dimension):
+        dimension_values = dimension
+    else:
+        # second argument to `np.linterp` must be ascending.
+        # The dimension indices also should be flipped to still be correct
+        dimension_values = np.flip(dimension)
+        dimension_indices = np.flip(dimension_indices)
+
+    raw_indices = np.interp(dimension_range, dimension_values,
+                            dimension_indices)
     minimum_index = int(np.rint(raw_indices[0]))
     maximum_index = int(np.rint(raw_indices[1]))
 
@@ -242,7 +278,7 @@ def get_valid_longitude_range(longitude: VariableFromDmr,
 
 
 def add_index_range(variable_name: str, dataset: VarInfoFromDmr,
-                    index_ranges: Dict[str, List[float]]) -> str:
+                    index_ranges: Dict[str, List[int]]) -> str:
     """ Append the index ranges of each dimension for the specified variable.
         If there are no dimensions with listed index ranges, then the full
         variable should be requested, and no index notation is required.
@@ -275,7 +311,7 @@ def add_index_range(variable_name: str, dataset: VarInfoFromDmr,
 
 def fill_variables(output_path: str, dataset: VarInfoFromDmr,
                    required_variables: Set[str],
-                   fill_ranges: Dict[str, List[float]]) -> None:
+                   fill_ranges: Dict[str, List[int]]) -> None:
     """ Cycle through the output NetCDF-4 file and check the dimensions of
         each variable. If the minimum index is greater than the maximum index
         in the subset range, then the requested bounding box crossed an edge of
@@ -305,7 +341,7 @@ def fill_variables(output_path: str, dataset: VarInfoFromDmr,
                 output_dataset[variable_path][fill_index_tuple] = np.ma.masked
 
 
-def get_fill_slice(dimension: str, fill_ranges: Dict[str, List[float]]) -> slice:
+def get_fill_slice(dimension: str, fill_ranges: Dict[str, List[int]]) -> slice:
     """ Check the dictionary of dimensions that need to be filled for the
         given dimension. If present, the minimum index will be greater than the
         maximum index (the eastern edge of the bounding box will seem to be to

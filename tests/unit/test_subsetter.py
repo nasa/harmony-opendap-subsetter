@@ -273,7 +273,7 @@ class TestSubsetter(TestCase):
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc',
-                                       '/home/tests/data/VNL2_test.nc'],
+                                       '/home/tests/data/f16_ssmis_20200102v7.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'rgordon',
                                       True)
@@ -302,7 +302,7 @@ class TestSubsetter(TestCase):
 
         """
         output_paths = ['/path/to/output1.nc', '/path/to/output2.nc']
-        output_filenames = ['africa.nc4', 'VNL2_test.nc4']
+        output_filenames = ['africa.nc4', 'f16_ssmis_20200102v7.nc4']
 
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
@@ -310,7 +310,7 @@ class TestSubsetter(TestCase):
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc',
-                                       '/home/tests/data/VNL2_test.nc'],
+                                       '/home/tests/data/f16_ssmis_20200102v7.nc'],
                                       ['alpha_var', 'blue_var'], 'abean',
                                       False)
 

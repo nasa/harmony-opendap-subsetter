@@ -16,8 +16,8 @@ from pymods.geo_grid import (add_index_range, fill_variables,
                              get_dimension_index_ranges,
                              get_dimension_index_range, get_fill_slice,
                              get_geo_bounding_box_subset,
-                             get_valid_longitude_range, unwrap_longitude,
-                             wrap_longitude)
+                             get_valid_longitude_range, is_dimension_ascending,
+                             unwrap_longitude, wrap_longitude)
 
 
 class TestGeoGrid(TestCase):
@@ -195,6 +195,8 @@ class TestGeoGrid(TestCase):
             - Latitude dimensions
             - Longitude dimensions (continuous ranges)
             - Longitude dimensions (bounding box crossing grid edge)
+            - Latitude dimension (descending)
+            - Longitude dimension (descending, not crossing grid edge)
 
             This test will use the valid range of the RSSMIF16D collection,
             such that 0 ≤ longitude (degrees east) ≤ 360.
@@ -241,6 +243,61 @@ class TestGeoGrid(TestCase):
                 {'/longitude': [340, 20]}
             )
 
+        with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
+            test_file.createDimension('latitude', size=180)
+            test_file.createDimension('longitude', size=360)
+
+            test_file.createVariable('latitude', float,
+                                     dimensions=('latitude', ))
+            test_file['latitude'][:] = np.linspace(89.5, -89.5, 180)
+            test_file['latitude'].setncatts({'units': 'degrees_north'})
+
+            test_file.createVariable('longitude', float,
+                                     dimensions=('longitude', ))
+            test_file['longitude'][:] = np.linspace(359.5, 0.5, 360)
+            test_file['longitude'].setncatts({'units': 'degrees_east'})
+
+        with self.subTest('Descending dimensions'):
+            # latitude[5] = 84.5, latitude[45] = 44.5
+            # longitude[160] = 199.5, longitude[200] = 159.5
+            self.assertDictEqual(
+                get_dimension_index_ranges(test_file_name, self.dataset,
+                                           {'/latitude', '/longitude'},
+                                           bounding_box),
+                {'/latitude': [4, 44], '/longitude': [160, 200]}
+            )
+
+    def test_is_dimension_ascending(self):
+        """ Ensure that a dimension variable is correctly identified as
+            ascending or descending. This should be immune to having a few
+            fill values, particularly in the first and last element in the
+            array.
+
+        """
+        ascending_data = np.linspace(0, 200, 101)
+        descending_data = np.linspace(200, 0, 101)
+
+        # Create a mask that will mask the first and last element of an array
+        mask = np.zeros(ascending_data.shape)
+        mask[0] = 1
+        mask[-1] = 1
+
+        ascending_dimension = np.ma.masked_array(data=ascending_data)
+        descending_dimension = np.ma.masked_array(data=descending_data)
+        ascending_masked = np.ma.masked_array(data=ascending_data, mask=mask)
+        descending_masked = np.ma.masked_array(data=descending_data, mask=mask)
+
+        test_args = [
+            ['Ascending dimension returns True', ascending_dimension, True],
+            ['Ascending masked dimension returns True', ascending_masked, True],
+            ['Descending dimension returns False', descending_dimension, False],
+            ['Descending masked dimension returns False', descending_masked, False]
+        ]
+        for description, dimension, expected_result in test_args:
+            with self.subTest(description):
+                self.assertEqual(is_dimension_ascending(dimension),
+                                 expected_result)
+
     def test_get_dimension_index_range(self):
         """ Ensure the expected index values are retrieved for the minimum and
             maximum values of an expected range. This should correspond to the
@@ -248,21 +305,28 @@ class TestGeoGrid(TestCase):
             bounding box spatial subset. List elements must be integers for
             later array slicing.
 
+            data_ascending[20] = data_descending[80] = 40.0
+            data_ascending[87] = data_descending[13] = 174.0
+
         """
-        data = np.linspace(0, 200, 101)
-        dimension_data = np.ma.masked_array(data=data, mask=False)
-        minimum_extent = 39
-        maximum_extent = 174.3
+        data_ascending = np.linspace(0, 200, 101)
+        data_descending = np.linspace(200, 0, 101)
 
-        # data[20] = 40.0, data[87] = 174.0
-        expected_results = [20, 87]
+        test_args = [
+            ['Ascending dimension', data_ascending, 39, 174.3, [20, 87]],
+            ['Descending dimension', data_descending, 174.3, 39, [13, 80]]
+        ]
 
-        results = get_dimension_index_range(dimension_data, minimum_extent,
-                                            maximum_extent)
+        for description, data, min_extent, max_extent, expected_results in test_args:
+            with self.subTest(description):
+                dimension_data = np.ma.masked_array(data=data, mask=False)
+                results = get_dimension_index_range(dimension_data,
+                                                    min_extent,
+                                                    max_extent)
 
-        self.assertIsInstance(results[0], int)
-        self.assertIsInstance(results[1], int)
-        self.assertListEqual(results, expected_results)
+                self.assertIsInstance(results[0], int)
+                self.assertIsInstance(results[1], int)
+                self.assertListEqual(results, expected_results)
 
     def test_get_bounding_box_longitudes(self):
         """ Ensure the western and eastern extents of a bounding box are

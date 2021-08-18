@@ -217,15 +217,15 @@ class TestSubsetterEndToEnd(TestCase):
         self.assert_valid_request_data(dimensions_data,
                                        {'%2Flatitude', '%2Flongitude'})
         # Ensure the constraint expression contains all the required variables.
-        # /wind_speed[][540:600][1320:1380], /time, /longitude[1320:1380]
-        # /latitude[540:600]
+        # /wind_speed[][540:599][1320:1379], /time, /longitude[1320:1379]
+        # /latitude[540:599]
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
             {'%2Ftime',
-             '%2Flatitude%5B540%3A600%5D',
-             '%2Flongitude%5B1320%3A1380%5D',
-             '%2Fwind_speed%5B%5D%5B540%3A600%5D%5B1320%3A1380%5D'}
+             '%2Flatitude%5B540%3A599%5D',
+             '%2Flongitude%5B1320%3A1379%5D',
+             '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D'}
         )
 
         # Ensure the output was staged with the expected file name
@@ -324,15 +324,15 @@ class TestSubsetterEndToEnd(TestCase):
         self.assert_valid_request_data(dimensions_data,
                                        {'%2Flatitude', '%2Flongitude'})
         # Ensure the constraint expression contains all the required variables.
-        # /wind_speed[][120:180][1320:1380], /time, /longitude[1320:1380]
-        # /latitude[120:180]
+        # /wind_speed[][120:179][1320:1379], /time, /longitude[1320:1379]
+        # /latitude[120:179]
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
             {'%2Ftime',
-             '%2Flatitude%5B120%3A180%5D',
-             '%2Flongitude%5B1320%3A1380%5D',
-             '%2Fwind_speed%5B%5D%5B120%3A180%5D%5B1320%3A1380%5D'}
+             '%2Flatitude%5B120%3A179%5D',
+             '%2Flongitude%5B1320%3A1379%5D',
+             '%2Fwind_speed%5B%5D%5B120%3A179%5D%5B1320%3A1379%5D'}
         )
 
         # Ensure the output was staged with the expected file name
@@ -428,15 +428,15 @@ class TestSubsetterEndToEnd(TestCase):
         self.assert_valid_request_data(dimensions_data,
                                        {'%2Flatitude', '%2Flongitude'})
         # Ensure the constraint expression contains all the required variables.
-        # /wind_speed[][120:180][], /time, /longitude (full range),
-        # /latitude[120:180]
+        # /wind_speed[][120:179][], /time, /longitude (full range),
+        # /latitude[120:179]
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
             {'%2Ftime',
-             '%2Flatitude%5B120%3A180%5D',
+             '%2Flatitude%5B120%3A179%5D',
              '%2Flongitude',
-             '%2Fwind_speed%5B%5D%5B120%3A180%5D%5B%5D'}
+             '%2Fwind_speed%5B%5D%5B120%3A179%5D%5B%5D'}
         )
 
         # Ensure the output was staged with the expected file name

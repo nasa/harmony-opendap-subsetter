@@ -197,6 +197,7 @@ class TestGeoGrid(TestCase):
             - Longitude dimensions (bounding box crossing grid edge)
             - Latitude dimension (descending)
             - Longitude dimension (descending, not crossing grid edge)
+            - Values that are exactly halfway between pixels.
 
             This test will use the valid range of the RSSMIF16D collection,
             such that 0 ≤ longitude (degrees east) ≤ 360.
@@ -205,6 +206,7 @@ class TestGeoGrid(TestCase):
         makedirs(self.test_dir)
         test_file_name = f'{self.test_dir}/test.nc'
         bounding_box = [160, 45, 200, 85]
+        bounding_box_floats = [160.1, 44.9, 200.1, 84.9]
 
         with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
             test_file.createDimension('latitude', size=180)
@@ -220,27 +222,49 @@ class TestGeoGrid(TestCase):
             test_file['longitude'][:] = np.linspace(0.5, 359.5, 360)
             test_file['longitude'].setncatts({'units': 'degrees_east'})
 
-        with self.subTest('Latitude dimension'):
-            # latitude[134] = 44.5, latitude[174] = 84.5
+        with self.subTest('Latitude dimension, halfway between pixels'):
+            # latitude[134] = 44.5, latitude[135] = 45.5:
+            # Southern extent = 45 => index = 135 (min index so round up)
+            # latitude[174] = 84.5, latitude[175] = 85.5:
+            # Northern extent = 85 => index = 174 (max index so round down)
             self.assertDictEqual(
                 get_dimension_index_ranges(test_file_name, self.dataset,
                                            {'/latitude'}, bounding_box),
+                {'/latitude': [135, 174]}
+            )
+
+        with self.subTest('Latitude dimension, not halfway between pixels'):
+            # latitude[134] = 44.5, latitude[135] = 45.5:
+            # Southern extent = 44.9 => index = 134
+            # latitude[174] = 84.5, latitude[175] = 85.5:
+            # Northern extent = 84.9 => index = 174
+            self.assertDictEqual(
+                get_dimension_index_ranges(test_file_name, self.dataset,
+                                           {'/latitude'}, bounding_box_floats),
                 {'/latitude': [134, 174]}
             )
 
         with self.subTest('Longitude dimension, bounding box within grid'):
+            # longitude[159] = 159.5, longitude[160] = 160.5:
+            # Western extent = 160 => index = 160 (min index so round up)
+            # longitude[199] = 199.5, longitude[200] = 200.5:
+            # Eastern extent = 200 => index = 199 (max index so round down)
             self.assertDictEqual(
                 get_dimension_index_ranges(test_file_name, self.dataset,
                                            {'/longitude'}, bounding_box),
-                {'/longitude': [160, 200]}
+                {'/longitude': [160, 199]}
             )
 
         with self.subTest('Longitude, bounding box crosses grid edge'):
+            # longitude[339] = 339.5, longitude[340] = 340.5:
+            # Western longitude = -20 => 340 => index = 340 (min index, so round up)
+            # longitude[19] = 19.5, longitude[20] = 20.5:
+            # Eastern longitude = 20 => index 19 (max index, so round down)
             bbox_crossing = [-20, 45, 20, 85]
             self.assertDictEqual(
                 get_dimension_index_ranges(test_file_name, self.dataset,
                                            {'/longitude'}, bbox_crossing),
-                {'/longitude': [340, 20]}
+                {'/longitude': [340, 19]}
             )
 
         with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
@@ -257,14 +281,28 @@ class TestGeoGrid(TestCase):
             test_file['longitude'][:] = np.linspace(359.5, 0.5, 360)
             test_file['longitude'].setncatts({'units': 'degrees_east'})
 
-        with self.subTest('Descending dimensions'):
-            # latitude[5] = 84.5, latitude[45] = 44.5
-            # longitude[160] = 199.5, longitude[200] = 159.5
+        with self.subTest('Descending dimensions, not halfway between pixels'):
+            # latitude[4] = 85.5, latitude[5] = 84.5, lat = 84.9 => index = 5
+            # latitude[44] = 45.5, latitude[45] = 44.5, lat = 44.9 => index = 45
+            # longitude[159] = 200.5, longitude[160] = 199.5, lon = 200.1 => 159
+            # longitude[199] = 160.5, longitude[200] = 159.5, lon = 160.1 => 199
+            self.assertDictEqual(
+                get_dimension_index_ranges(test_file_name, self.dataset,
+                                           {'/latitude', '/longitude'},
+                                           bounding_box_floats),
+                {'/latitude': [5, 45], '/longitude': [159, 199]}
+            )
+
+        with self.subTest('Descending dimensions, halfway between pixels'):
+            # latitude[4] = 85.5, latitude[5] = 84.5, lat = 85 => index = 5
+            # latitude[44] = 45.5, latitude[45] = 44.5, lat = 45 => index = 44
+            # longitude[159] = 200.5, longitude[160] = 199.5, lon = 200 => index = 160
+            # longitude[199] = 160.5, longitude[200] = 159.5, lon = 160 => index = 199
             self.assertDictEqual(
                 get_dimension_index_ranges(test_file_name, self.dataset,
                                            {'/latitude', '/longitude'},
                                            bounding_box),
-                {'/latitude': [4, 44], '/longitude': [160, 200]}
+                {'/latitude': [5, 44], '/longitude': [160, 199]}
             )
 
     def test_is_dimension_ascending(self):
@@ -308,13 +346,18 @@ class TestGeoGrid(TestCase):
             data_ascending[20] = data_descending[80] = 40.0
             data_ascending[87] = data_descending[13] = 174.0
 
+            This test should also ensure that extent values exactly halfway
+            between pixels should not include the outer pixel.
+
         """
         data_ascending = np.linspace(0, 200, 101)
         data_descending = np.linspace(200, 0, 101)
 
         test_args = [
             ['Ascending dimension', data_ascending, 39, 174.3, [20, 87]],
-            ['Descending dimension', data_descending, 174.3, 39, [13, 80]]
+            ['Descending dimension', data_descending, 174.3, 39, [13, 80]],
+            ['Ascending halfway between', data_ascending, 39, 175, [20, 87]],
+            ['Descending halfway between', data_descending, 175, 39, [13, 80]],
         ]
 
         for description, data, min_extent, max_extent, expected_results in test_args:

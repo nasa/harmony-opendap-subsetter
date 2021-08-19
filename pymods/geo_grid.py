@@ -202,8 +202,21 @@ def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
 
     raw_indices = np.interp(dimension_range, dimension_values,
                             dimension_indices)
-    minimum_index = int(np.rint(raw_indices[0]))
-    maximum_index = int(np.rint(raw_indices[1]))
+
+    if raw_indices[0] % 1 == 0.5:
+        # Minimum extent is exactly halfway between two pixels, round up.
+        raw_minimum_index = np.nextafter(raw_indices[0], raw_indices[0] + 1)
+    else:
+        raw_minimum_index = raw_indices[0]
+
+    if raw_indices[1] % 1 == 0.5:
+        # Maximum extent is exactly halfway between two pixels, round down.
+        raw_maximum_index = np.nextafter(raw_indices[1], raw_indices[1] - 1)
+    else:
+        raw_maximum_index = raw_indices[1]
+
+    minimum_index = int(np.rint(raw_minimum_index))
+    maximum_index = int(np.rint(raw_maximum_index))
 
     return [minimum_index, maximum_index]
 

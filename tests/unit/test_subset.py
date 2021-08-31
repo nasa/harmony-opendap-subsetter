@@ -194,3 +194,51 @@ class TestSubset(TestCase):
                                                     self.logger, 'access',
                                                     self.config)
         mock_get_opendap_data.assert_not_called()
+
+    @patch('pymods.subset.get_opendap_nc4')
+    @patch('pymods.subset.get_geo_bounding_box_subset')
+    @patch('pymods.subset.download_url')
+    def test_subset_non_variable_dimensions(self, mock_download_dmr,
+                                            mock_get_geo_subset,
+                                            mock_get_opendap_data):
+        """ Ensure a request with a bounding box, without specified variables,
+            will not include non-variable dimensions in the requests to OPeNDAP
+            in the list of required variables.
+
+            In the GPM_3IMERGHH data, the specific dimensions that should not
+            be included in the required variables are `latv`, `lonv` and `nv`.
+            These are size-only dimensions for the `lat_bnds`, `lon_bnds` and
+            `time_bnds` variables.
+
+        """
+        url = self.granule_url
+        bounding_box = [40, -30, 50, -20]
+        expected_variables = {
+            '/Grid/HQobservationTime', '/Grid/HQprecipitation',
+            '/Grid/HQprecipSource', '/Grid/IRkalmanFilterWeight',
+            '/Grid/IRprecipitation', '/Grid/lat', '/Grid/lat_bnds',
+            '/Grid/lon', '/Grid/lon_bnds', '/Grid/precipitationCal',
+            '/Grid/precipitationQualityIndex', '/Grid/precipitationUncal',
+            '/Grid/probabilityLiquidPrecipitation', '/Grid/randomError',
+            '/Grid/time', '/Grid/time_bnds'
+        }
+
+        mock_download_dmr.return_value = 'tests/data/GPM_3IMERGHH_example.dmr'
+        mock_get_geo_subset.return_value = 'GPM_3IMERGHH_subset.nc4'
+
+        output_path = subset_granule(url, [], self.output_dir, self.logger,
+                                     access_token='access', config=self.config,
+                                     bounding_box=bounding_box)
+
+        self.assertIn('GPM_3IMERGHH_subset.nc4', output_path)
+        mock_download_dmr.assert_called_once_with(f'{url}.dmr',
+                                                  self.output_dir,
+                                                  self.logger,
+                                                  access_token='access',
+                                                  config=self.config)
+        mock_get_geo_subset.assert_called_once_with(expected_variables,
+                                                    ANY, bounding_box,
+                                                    url, self.output_dir,
+                                                    self.logger, 'access',
+                                                    self.config)
+        mock_get_opendap_data.assert_not_called()

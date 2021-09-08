@@ -5,7 +5,7 @@ import json
 import shutil
 from tempfile import mkdtemp
 
-from harmony.message import Message
+from harmony.message import Message, Variable as HarmonyVariable
 from harmony.util import config
 
 from pymods.subset import subset_granule
@@ -228,6 +228,56 @@ class TestSubset(TestCase):
 
         output_path = subset_granule(url, [], self.output_dir, self.logger,
                                      access_token='access', config=self.config,
+                                     bounding_box=bounding_box)
+
+        self.assertIn('GPM_3IMERGHH_subset.nc4', output_path)
+        mock_download_dmr.assert_called_once_with(f'{url}.dmr',
+                                                  self.output_dir,
+                                                  self.logger,
+                                                  access_token='access',
+                                                  config=self.config)
+        mock_get_geo_subset.assert_called_once_with(expected_variables,
+                                                    ANY, bounding_box,
+                                                    url, self.output_dir,
+                                                    self.logger, 'access',
+                                                    self.config)
+        mock_get_opendap_data.assert_not_called()
+
+    @patch('pymods.subset.get_opendap_nc4')
+    @patch('pymods.subset.get_geo_bounding_box_subset')
+    @patch('pymods.subset.download_url')
+    def test_subset_bounds_reference(self, mock_download_dmr,
+                                     mock_get_geo_subset,
+                                     mock_get_opendap_data):
+        """ Ensure a request with a bounding box, specifying variables that
+            have references in a `bounds` attribute also consider the variables
+            referred to in the `bounds` attribute as required.
+
+            In the GPM_3IMERGHH data, the `lat`, `lon` and `time` variables
+            have `lat_bnds`, `lon_bnds` and `time_bnds`, respectively.
+
+        """
+        url = self.granule_url
+        bounding_box = [40, -30, 50, -20]
+        requested_variables = [
+            HarmonyVariable({'fullPath': '/Grid/lon',
+                             'id': 'V123-EEDTEST',
+                             'name': '/Grid/lon'}),
+            HarmonyVariable({'fullPath': '/Grid/HQprecipSource',
+                             'id': 'V234-EEDTEST',
+                             'name': '/Grid/HQprecipSource'})
+        ]
+
+        expected_variables = {'/Grid/HQprecipSource', '/Grid/lat',
+                              '/Grid/lat_bnds', '/Grid/lon', '/Grid/lon_bnds',
+                              '/Grid/time', '/Grid/time_bnds'}
+
+        mock_download_dmr.return_value = 'tests/data/GPM_3IMERGHH_example.dmr'
+        mock_get_geo_subset.return_value = 'GPM_3IMERGHH_subset.nc4'
+
+        output_path = subset_granule(url, requested_variables, self.output_dir,
+                                     self.logger, access_token='access',
+                                     config=self.config,
                                      bounding_box=bounding_box)
 
         self.assertIn('GPM_3IMERGHH_subset.nc4', output_path)

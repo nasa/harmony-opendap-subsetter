@@ -14,17 +14,9 @@ from uuid import uuid4
 import mimetypes
 
 from harmony.util import Config, download as util_download
-import numpy as np
 
 from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
 
-
-DAP4_TO_NUMPY_MAP = {'Char': np.uint8, 'Byte': np.uint8, 'Int8': np.int8,
-                     'UInt8': np.uint8, 'Int16': np.int16, 'UInt16': np.uint16,
-                     'Int32': np.int32, 'UInt32': np.uint32, 'Int64': np.int64,
-                     'UInt64': np.uint64, 'Float32': np.float32,
-                     'Float64': np.float64, 'String': str, 'URL': str,
-                     'Dimension': None}
 
 HTTP_REQUEST_ATTEMPTS = 3
 

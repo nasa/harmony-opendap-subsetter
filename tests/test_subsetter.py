@@ -3,7 +3,6 @@ from tempfile import mkdtemp
 from typing import Dict, Set
 from unittest import TestCase
 from unittest.mock import ANY, Mock, patch
-from urllib.parse import unquote
 
 from harmony.message import Message
 from harmony.util import config, HarmonyException
@@ -21,6 +20,7 @@ class TestSubsetterEndToEnd(TestCase):
         """ Test fixture that can be set once for all tests in the class. """
         cls.granule_url = 'https://harmony.uat.earthdata.nasa.gov/opendap_url'
         cls.atl03_variable = '/gt1r/geophys_corr/geoid'
+        cls.rssmif16d_variable = '/wind_speed'
 
         with open('tests/data/ATL03_example.dmr', 'r') as file_handler:
             cls.atl03_dmr = file_handler.read()
@@ -69,7 +69,9 @@ class TestSubsetterEndToEnd(TestCase):
         dmr_path = write_dmr(self.tmp_dir, self.atl03_dmr)
 
         downloaded_nc4_path = f'{self.tmp_dir}/opendap_url_subset.nc4'
-        copy('tests/data/africa.nc', downloaded_nc4_path)
+        # There needs to be a physical file present to be renamed by Harmony.
+        # The contents are not accessed.
+        copy('tests/data/ATL03_example.dmr', downloaded_nc4_path)
 
         mock_util_download.side_effect = [dmr_path, downloaded_nc4_path]
 
@@ -136,20 +138,19 @@ class TestSubsetterEndToEnd(TestCase):
         )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
-    @patch('pymods.geo_grid.fill_variables')
+    @patch('pymods.dimension_utilities.get_fill_slice')
     @patch('pymods.utilities.uuid4')
     @patch('subsetter.mkdtemp')
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
     def test_geo_end_to_end(self, mock_stage, mock_util_download, mock_rmtree,
-                            mock_mkdtemp, mock_uuid, mock_fill_values):
+                            mock_mkdtemp, mock_uuid, mock_get_fill_slice):
         """ Ensure a request with a bounding box will be correctly processed,
             requesting only the expected variables, with index ranges
             corresponding to the bounding box specified.
 
         """
-        variable_path = '/wind_speed'
         bounding_box = [-30, 45, -15, 60]
 
         mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
@@ -180,8 +181,8 @@ class TestSubsetterEndToEnd(TestCase):
                     'bbox': [-180, -90, 180, 90]
                 }],
                 'variables': [{'id': '',
-                               'name': variable_path,
-                               'fullPath': variable_path}]}],
+                               'name': self.rssmif16d_variable,
+                               'fullPath': self.rssmif16d_variable}]}],
             'stagingLocation': 's3://example-bucket/',
             'subset': {'bbox': bounding_box},
             'user': 'jlovell',
@@ -236,10 +237,10 @@ class TestSubsetterEndToEnd(TestCase):
                                            logger=subsetter.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
-        # Ensure the filling functionality was not called:
-        mock_fill_values.assert_not_called()
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.geo_grid.fill_variables')
+    @patch('pymods.dimension_utilities.get_fill_slice')
     @patch('pymods.utilities.uuid4')
     @patch('subsetter.mkdtemp')
     @patch('shutil.rmtree')
@@ -247,7 +248,7 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('harmony.util.stage')
     def test_geo_descending_latitude(self, mock_stage, mock_util_download,
                                      mock_rmtree, mock_mkdtemp, mock_uuid,
-                                     mock_fill_values):
+                                     mock_get_fill_slice):
         """ Ensure a request with a bounding box will be correctly processed,
             requesting only the expected variables, with index ranges
             corresponding to the bounding box specified. The latitude dimension
@@ -256,7 +257,6 @@ class TestSubsetterEndToEnd(TestCase):
             are identified and the correct DAP4 constraint expression is built.
 
         """
-        variable_path = '/wind_speed'
         bounding_box = [-30, 45, -15, 60]
 
         mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
@@ -287,8 +287,8 @@ class TestSubsetterEndToEnd(TestCase):
                     'bbox': [-180, -90, 180, 90]
                 }],
                 'variables': [{'id': '',
-                               'name': variable_path,
-                               'fullPath': variable_path}]}],
+                               'name': self.rssmif16d_variable,
+                               'fullPath': self.rssmif16d_variable}]}],
             'stagingLocation': 's3://example-bucket/',
             'subset': {'bbox': bounding_box},
             'user': 'cduke',
@@ -343,8 +343,8 @@ class TestSubsetterEndToEnd(TestCase):
                                            logger=subsetter.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
-        # Ensure the filling functionality was not called:
-        mock_fill_values.assert_not_called()
+        # Ensure no variables were filled:
+        mock_get_fill_slice.assert_not_called()
 
     @patch('pymods.utilities.uuid4')
     @patch('subsetter.mkdtemp')
@@ -360,7 +360,6 @@ class TestSubsetterEndToEnd(TestCase):
             outside of the bounding box region.
 
         """
-        variable_path = '/wind_speed'
         bounding_box = [-7.5, -60, 7.5, -45]
 
         mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
@@ -391,8 +390,8 @@ class TestSubsetterEndToEnd(TestCase):
                     'bbox': [-180, -90, 180, 90]
                 }],
                 'variables': [{'id': '',
-                               'name': variable_path,
-                               'fullPath': variable_path}]}],
+                               'name': self.rssmif16d_variable,
+                               'fullPath': self.rssmif16d_variable}]}],
             'stagingLocation': 's3://example-bucket/',
             'subset': {'bbox': bounding_box},
             'user': 'jswiggert',
@@ -459,6 +458,115 @@ class TestSubsetterEndToEnd(TestCase):
 
         expected_output.close()
         actual_output.close()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_geo_no_variables(self, mock_stage, mock_util_download,
+                              mock_rmtree, mock_mkdtemp, mock_uuid,
+                              mock_get_fill_slice):
+        """ Ensure a request with a bounding box that does not specify any
+            variables will retrieve all variables, but limited to the range
+            specified by the bounding box.
+
+        """
+        bounding_box = [-30, 45, -15, 60]
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.rssmif16d_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/f16_ssmis_lat_lon.nc', dimensions_path)
+
+        all_variables_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/f16_ssmis_geo_no_vars.nc', all_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          all_variables_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': []
+            }],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'bbox': bounding_box},
+            'user': 'kerwinj',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should be the required
+        # dimension variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(dimensions_data,
+                                       {'%2Flatitude', '%2Flongitude'})
+        # Ensure the constraint expression contains all variables.
+        # /atmosphere_cloud_liquid_water_content[][540:599][1320:1379],
+        # /atmosphere_water_vapor_content[][540:599][1320:1379],
+        # /rainfall_rate[][540:599][1320:1379],
+        # /sst_dtime[][540:599][1320:1379], /wind_speed[][540:599][1320:1379],
+        # /time, /longitude[1320:1379], /latitude[540:599]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime',
+             '%2Flatitude%5B540%3A599%5D',
+             '%2Flongitude%5B1320%3A1379%5D',
+             '%2Fatmosphere_cloud_liquid_water_content%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+             '%2Fatmosphere_water_vapor_content%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+             '%2Frainfall_rate%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+             '%2Fsst_dtime%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+             '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
+                                           'opendap_url.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=subsetter.logger)
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled:
+        mock_get_fill_slice.assert_not_called()
 
     @patch('subsetter.mkdtemp')
     @patch('shutil.rmtree')

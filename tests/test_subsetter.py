@@ -129,7 +129,7 @@ class TestSubsetterEndToEnd(TestCase):
         # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(
             f'{self.tmp_dir}/uuid.nc4',
-            'opendap_url__gt1r_geophys_corr_geoid.nc4',
+            'opendap_url_gt1r_geophys_corr_geoid.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=subsetter.logger
@@ -230,7 +230,7 @@ class TestSubsetterEndToEnd(TestCase):
 
         # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           'opendap_url__wind_speed.nc4',
+                                           'opendap_url_wind_speed.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
                                            logger=subsetter.logger)
@@ -337,7 +337,7 @@ class TestSubsetterEndToEnd(TestCase):
 
         # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           'opendap_url__wind_speed.nc4',
+                                           'opendap_url_wind_speed.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
                                            logger=subsetter.logger)
@@ -441,7 +441,7 @@ class TestSubsetterEndToEnd(TestCase):
 
         # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           'opendap_url__wind_speed.nc4',
+                                           'opendap_url_wind_speed.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
                                            logger=subsetter.logger)

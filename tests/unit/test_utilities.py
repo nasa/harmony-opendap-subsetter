@@ -26,13 +26,13 @@ class TestUtilities(TestCase):
 
         """
         with self.subTest('File with MIME type'):
-            mimetype = get_file_mimetype('africa.nc')
+            mimetype = get_file_mimetype('f16_ssmis_20200102v7.nc')
             self.assertEqual(mimetype, ('application/x-netcdf', None))
 
         with self.subTest('Default MIME type is returned'):
             with patch('mimetypes.guess_type') as mock_guess_type:
                 mock_guess_type.return_value = (None, None)
-                mimetype = get_file_mimetype('africa.nc')
+                mimetype = get_file_mimetype('f16_ssmis_20200102v7.nc')
                 self.assertEqual(mimetype, ('application/x-netcdf4', None))
 
     @patch('pymods.utilities.util_download')

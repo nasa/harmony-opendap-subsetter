@@ -86,6 +86,7 @@ class TestSubsetter(TestCase):
         variable_subsetter = HarmonyAdapter(message, config=self.config)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
+
         granule = variable_subsetter.message.granules[0]
 
         mock_subset_granule.assert_called_once_with(granule.url,
@@ -244,18 +245,18 @@ class TestSubsetter(TestCase):
                                       False)
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        error = None
-        try:
+
+        with self.assertRaises(Exception) as context_manager:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
                 variable_subsetter.invoke()
-        except Exception as e:
-            error = e
+
+            self.assertEqual(str(context_manager.exception),
+                             'No granules specified for variable subsetting')
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 
         mock_stage.assert_not_called()
-        assert str(error) == 'No granules specified for variable subsetting'
 
     def test_synchronous_multiple_granules(self,
                                            mock_stage,
@@ -279,18 +280,18 @@ class TestSubsetter(TestCase):
                                       True)
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
-        error = None
-        try:
+
+        with self.assertRaises(Exception) as context_manager:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
                 variable_subsetter.invoke()
-        except Exception as e:
-            error = e
+
+            self.assertEqual(str(context_manager.exception),
+                             'Synchronous requests accept only one granule')
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
 
         mock_stage.assert_not_called()
-        assert str(error) == 'Synchronous requests accept only one granule'
 
     def test_asynchronous_multiple_granules(self,
                                             mock_stage,

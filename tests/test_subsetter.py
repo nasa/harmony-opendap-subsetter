@@ -465,6 +465,155 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
+    def test_geo_bbox(self, mock_stage, mock_util_download, mock_rmtree,
+                      mock_mkdtemp, mock_uuid, mock_get_fill_slice):
+        """ Ensure requests with particular bounding box edge-cases return the
+            correct pixel ranges:
+
+            * Single point, N=S, W=E, inside a pixel, retrieves that single
+              pixel.
+            * Single point, N=S, W=E, in corner of 4 pixels retrieves all 4
+              surrounding pixels.
+            * Line, N=S, W < E, where the latitude is inside a pixel, retrieves
+              a single row of pixels.
+            * Line, N > S, W=E, where longitude is between pixels, retrieves
+              two columns of pixels, corresponding to those which touch the
+              line.
+
+        """
+        point_in_pixel = [-29.99, 45.01, -29.99, 45.01]
+        point_between_pixels = [-30, 45, -30, 45]
+        line_in_pixels = [-30, -14.99, -15, -14.99]
+        line_between_pixels = [-30, 45, -30, 60]
+
+        range_point_in_pixel = {
+            '%2Ftime', '%2Flatitude%5B540%3A540%5D',
+            '%2Flongitude%5B1320%3A1320%5D',
+            '%2Fwind_speed%5B%5D%5B540%3A540%5D%5B1320%3A1320%5D'
+        }
+
+        range_point_between_pixels = {
+            '%2Ftime', '%2Flatitude%5B539%3A540%5D',
+            '%2Flongitude%5B1319%3A1320%5D',
+            '%2Fwind_speed%5B%5D%5B539%3A540%5D%5B1319%3A1320%5D'
+        }
+
+        range_line_in_pixels = {
+            '%2Ftime', '%2Flatitude%5B300%3A300%5D',
+            '%2Flongitude%5B1320%3A1379%5D',
+            '%2Fwind_speed%5B%5D%5B300%3A300%5D%5B1320%3A1379%5D'
+        }
+
+        range_line_between_pixels = {
+            '%2Ftime', '%2Flatitude%5B540%3A599%5D',
+            '%2Flongitude%5B1319%3A1320%5D',
+            '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1319%3A1320%5D'
+        }
+
+        test_args = [['Point is inside single pixel', point_in_pixel,
+                      range_point_in_pixel],
+                     ['Point in corner of 4 pixels', point_between_pixels,
+                      range_point_between_pixels],
+                     ['Line through single row', line_in_pixels,
+                      range_line_in_pixels],
+                     ['Line between two columns', line_between_pixels,
+                      range_line_between_pixels]]
+
+        for description, bounding_box, expected_index_ranges in test_args:
+            with self.subTest(description):
+                mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+                mock_mkdtemp.return_value = self.tmp_dir
+
+                dmr_path = write_dmr(self.tmp_dir, self.rssmif16d_dmr)
+
+                dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+                copy('tests/data/f16_ssmis_lat_lon.nc', dimensions_path)
+
+                all_variables_path = f'{self.tmp_dir}/variables.nc4'
+                copy('tests/data/f16_ssmis_geo.nc', all_variables_path)
+
+                mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                                  all_variables_path]
+
+                message_data = {
+                    'accessToken': 'fake-token',
+                    'callback': 'https://example.com/',
+                    'sources': [{
+                        'granules': [{
+                            'id': 'G000-TEST',
+                            'url': self.granule_url,
+                            'temporal': {
+                                'start': '2020-01-01T00:00:00.000Z',
+                                'end': '2020-01-02T00:00:00.000Z'
+                            },
+                            'bbox': [-180, -90, 180, 90]
+                        }],
+                        'variables': [{'id': '',
+                                       'name': self.rssmif16d_variable,
+                                       'fullPath': self.rssmif16d_variable}]}],
+                    'stagingLocation': 's3://example-bucket/',
+                    'subset': {'bbox': bounding_box},
+                    'user': 'jaaron',
+                }
+                message = Message(message_data)
+
+                subsetter = HarmonyAdapter(message, config=config(False))
+                subsetter.invoke()
+
+                # Ensure the correct number of downloads were requested from
+                # OPeNDAP: the first should be the `.dmr`. The second should be
+                # the required variables.
+                self.assertEqual(mock_util_download.call_count, 3)
+                mock_util_download.assert_any_call(f'{self.granule_url}.dmr',
+                                                   self.tmp_dir,
+                                                   subsetter.logger,
+                                                   access_token=message_data['accessToken'],
+                                                   data=None,
+                                                   cfg=subsetter.config)
+
+                # Because of the `ANY` match for the request data, the requests
+                # for dimensions and all variables will look the same.
+                mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                                   self.tmp_dir,
+                                                   subsetter.logger,
+                                                   access_token=message_data['accessToken'],
+                                                   data=ANY,
+                                                   cfg=subsetter.config)
+
+                # Ensure the constraint expression for dimensions data included
+                # only geographic variables with no index ranges
+                dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+                self.assert_valid_request_data(dimensions_data,
+                                               {'%2Flatitude', '%2Flongitude'})
+                # Ensure the constraint expression contains all the required variables.
+                index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+                self.assert_valid_request_data(index_range_data,
+                                               expected_index_ranges)
+
+                # Ensure the output was staged with the expected file name
+                mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
+                                                   'opendap_url_wind_speed.nc4',
+                                                   'application/x-netcdf4',
+                                                   location='s3://example-bucket/',
+                                                   logger=subsetter.logger)
+                mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+                # Ensure no variables were filled
+                mock_get_fill_slice.assert_not_called()
+
+            mock_mkdtemp.reset_mock()
+            mock_uuid.reset_mock()
+            mock_util_download.reset_mock()
+            mock_stage.reset_mock()
+            mock_get_fill_slice.reset_mock()
+            mock_rmtree.reset_mock()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
     def test_geo_no_variables(self, mock_stage, mock_util_download,
                               mock_rmtree, mock_mkdtemp, mock_uuid,
                               mock_get_fill_slice):

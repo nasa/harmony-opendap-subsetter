@@ -60,6 +60,9 @@ def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
         index value. Rounding that value gives the starting index value for the
         cell that contains that bound.
 
+        If an extent is requested that is a single point in this dimension, the
+        range should be the two surrounding pixels that border the point.
+
         For a latitude dimension:
 
         * `minimum_extent` is the southern extent of the bounding box.
@@ -88,13 +91,23 @@ def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
     raw_indices = np.interp(dimension_range, dimension_values,
                             dimension_indices)
 
-    if raw_indices[0] % 1 == 0.5:
+    if (raw_indices[0] == raw_indices[1]) and (raw_indices[0] % 1 == 0.5):
+        # Minimum extent is exactly halfway between two pixels, and the
+        # requested extents are a single point in this dimension. Round down
+        # to retrieve the two bordering pixels.
+        raw_minimum_index = np.nextafter(raw_indices[0], raw_indices[0] - 1)
+    elif raw_indices[0] % 1 == 0.5:
         # Minimum extent is exactly halfway between two pixels, round up.
         raw_minimum_index = np.nextafter(raw_indices[0], raw_indices[0] + 1)
     else:
         raw_minimum_index = raw_indices[0]
 
-    if raw_indices[1] % 1 == 0.5:
+    if (raw_indices[0] == raw_indices[1]) and (raw_indices[1] % 1 == 0.5):
+        # Maximum extent is exactly halfway between two pixels, and the
+        # requested extents are a single point in this dimension. Round up to
+        # retrieve the two bordering pixels.
+        raw_maximum_index = np.nextafter(raw_indices[1], raw_indices[1] + 1)
+    elif raw_indices[1] % 1 == 0.5:
         # Maximum extent is exactly halfway between two pixels, round down.
         raw_maximum_index = np.nextafter(raw_indices[1], raw_indices[1] - 1)
     else:

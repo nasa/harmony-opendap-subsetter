@@ -78,6 +78,8 @@ class TestDimensionUtilities(TestCase):
             ['Descending dimension', data_descending, 174.3, 39, (13, 80)],
             ['Ascending halfway between', data_ascending, 39, 175, (20, 87)],
             ['Descending halfway between', data_descending, 175, 39, (13, 80)],
+            ['Single point inside pixel', data_ascending, 10, 10, (5, 5)],
+            ['Single point on pixel edges', data_ascending, 9, 9, (4, 5)],
         ]
 
         for description, data, min_extent, max_extent, expected_results in test_args:

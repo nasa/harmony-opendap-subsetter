@@ -99,7 +99,7 @@ def get_varinfo(opendap_url: str, output_dir: str, logger: Logger,
         representation of the granule that maps dependencies between variables.
 
     """
-    dmr_path = download_url(f'{opendap_url}.dmr', output_dir, logger,
+    dmr_path = download_url(f'{opendap_url}.dmr.xml', output_dir, logger,
                             access_token=access_token, config=config)
     return VarInfoFromDmr(dmr_path, logger,
                           config_file='pymods/var_subsetter_config.yml')

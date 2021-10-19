@@ -564,7 +564,7 @@ class TestSubsetterEndToEnd(TestCase):
                 # OPeNDAP: the first should be the `.dmr`. The second should be
                 # the required variables.
                 self.assertEqual(mock_util_download.call_count, 3)
-                mock_util_download.assert_any_call(f'{self.granule_url}.dmr',
+                mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
                                                    self.tmp_dir,
                                                    subsetter.logger,
                                                    access_token=message_data['accessToken'],

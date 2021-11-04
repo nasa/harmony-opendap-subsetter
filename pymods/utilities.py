@@ -21,7 +21,7 @@ from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
 HTTP_REQUEST_ATTEMPTS = 3
 
 
-def get_file_mimetype(file_name: str) -> Tuple[Optional[str]]:
+def get_file_mimetype(file_name: str) -> Tuple[Optional[str], Optional[str]]:
     """ This function tries to infer the MIME type of a file string. If
         the `mimetypes.guess_type` function cannot guess the MIME type of the
         granule, a default value is returned, which assumes that the file is

@@ -101,7 +101,7 @@ class TestSubsetter(TestCase):
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            'africa.nc4',
+            'africa_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger
@@ -142,7 +142,7 @@ class TestSubsetter(TestCase):
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            'africa.nc4',
+            'africa_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger)
@@ -181,7 +181,7 @@ class TestSubsetter(TestCase):
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            'africa.nc4',
+            'africa_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger
@@ -220,7 +220,7 @@ class TestSubsetter(TestCase):
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
-            'africa.nc4',
+            'africa_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger
@@ -303,7 +303,8 @@ class TestSubsetter(TestCase):
 
         """
         output_paths = ['/path/to/output1.nc', '/path/to/output2.nc']
-        output_filenames = ['africa.nc4', 'f16_ssmis_20200102v7.nc4']
+        output_filenames = ['africa_subsetted.nc4',
+                            'f16_ssmis_20200102v7_subsetted.nc4']
 
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)

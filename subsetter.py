@@ -132,7 +132,8 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             # Stage the output file with a conventional filename
             mime, _ = get_file_mimetype(output_file_path)
             staged_filename = generate_output_filename(
-                asset.href, variable_subset=source.variables, ext='.nc4'
+                asset.href, variable_subset=source.variables, ext='.nc4',
+                is_subsetted=(bounding_box is not None or len(variables) > 0)
             )
             url = harmony.util.stage(output_file_path,
                                      staged_filename,

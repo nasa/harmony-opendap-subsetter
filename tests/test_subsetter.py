@@ -131,7 +131,7 @@ class TestSubsetterEndToEnd(TestCase):
         # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(
             f'{self.tmp_dir}/uuid.nc4',
-            'opendap_url_gt1r_geophys_corr_geoid.nc4',
+            'opendap_url_gt1r_geophys_corr_geoid_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=subsetter.logger
@@ -230,11 +230,13 @@ class TestSubsetterEndToEnd(TestCase):
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           'opendap_url_wind_speed.nc4',
-                                           'application/x-netcdf4',
-                                           location='s3://example-bucket/',
-                                           logger=subsetter.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_wind_speed_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -336,11 +338,13 @@ class TestSubsetterEndToEnd(TestCase):
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           'opendap_url_wind_speed.nc4',
-                                           'application/x-netcdf4',
-                                           location='s3://example-bucket/',
-                                           logger=subsetter.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_wind_speed_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled:
@@ -439,11 +443,13 @@ class TestSubsetterEndToEnd(TestCase):
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           'opendap_url_wind_speed.nc4',
-                                           'application/x-netcdf4',
-                                           location='s3://example-bucket/',
-                                           logger=subsetter.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_wind_speed_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure the final output was correctly filled (the unfilled file is
@@ -591,11 +597,13 @@ class TestSubsetterEndToEnd(TestCase):
                                                expected_index_ranges)
 
                 # Ensure the output was staged with the expected file name
-                mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                                   'opendap_url_wind_speed.nc4',
-                                                   'application/x-netcdf4',
-                                                   location='s3://example-bucket/',
-                                                   logger=subsetter.logger)
+                mock_stage.assert_called_once_with(
+                    f'{self.tmp_dir}/uuid2.nc4',
+                    'opendap_url_wind_speed_subsetted.nc4',
+                    'application/x-netcdf4',
+                    location='s3://example-bucket/',
+                    logger=subsetter.logger
+                )
                 mock_rmtree.assert_called_once_with(self.tmp_dir)
 
                 # Ensure no variables were filled
@@ -708,7 +716,7 @@ class TestSubsetterEndToEnd(TestCase):
 
         # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           'opendap_url.nc4',
+                                           'opendap_url_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
                                            logger=subsetter.logger)

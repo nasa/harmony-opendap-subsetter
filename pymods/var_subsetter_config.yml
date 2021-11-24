@@ -1,5 +1,5 @@
 Identification: var_subsetter_config
-Version: 13
+Version: 14
 
 # A list of hdf subdataset paths that provide the shortname value of the
 # collection for the data file being processed.  Processed in this order to
@@ -14,6 +14,7 @@ Collection_ShortName_Path:
   - '/HDF5_GLOBAL/id'
   - '/NC_GLOBAL/id'
   - 'short_name'
+  - 'ShortName' # Required for MERRA-2
 
 # A set of mission tagged shortname patterns defines a mission name for
 # matching shortname values.
@@ -22,6 +23,7 @@ Mission:
   'GEDI_L[1234][AB]|GEDI0[1234]_[AB]': 'GEDI'
   'SPL[1234].+': 'SMAP'
   'VIIRS_NPP-.+-L2P': 'VIIRS_PO'
+  'M2T1NXSLV': 'MERRA-2'
 
 # If CF_Overrides and CF_Supplements are not enough VarInfo class will assume
 # variables with a coordinates attribute are science variables. This setting
@@ -155,6 +157,31 @@ CF_Overrides:
       # attribute looks correct in raw HDF-5 file)
       - Name: 'coordinates'
         Value: '../../grid_x ../../grid_y'
+  # The MERRA-2 latitude and longitude data have valid range of order 1e14.
+  # This causes issues when trying to identify whether the longitude range is
+  # -180 ≤ longitude (degrees east) ≤ 180, or 0 ≤ longitude (degrees east) ≤ 360
+  - Applicability:
+      Mission: 'MERRA-2'
+      ShortNamePath: 'M2T1NXSLV'
+      Variable_Pattern: '/lon'
+    Attributes:
+      - Name: 'valid_range'
+        Value: [-180.3125, 179.6875]
+      - Name: 'valid_min'
+        Value: -180.3125
+      - Name: 'valid_max'
+        Value: 179.6875
+  - Applicability:
+      Mission: 'MERRA-2'
+      ShortNamePath: 'M2T1NXSLV'
+      Variable_Pattern: '/lat'
+    Attributes:
+      - Name: 'valid_range'
+        Value: [-90.0, 90.0]
+      - Name: 'valid_min'
+        Value: -90.0
+      - Name: 'valid_max'
+        Value: 90.0
 
 # For extending CF references. This allows for CF references to persist, while
 # supplemental information is provided. In particular, e.g. for subsetting

@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="http://opendap.uat.earthdata.nasa.gov/collections/C1238392622-EEDTEST/granules/f16_ssmis_20200102v7.nc" dapVersion="4.0" dmrVersion="1.0" name="f16_ssmis_20200102v7.nc">
-    <Dimension name="latitude" size="720"/>
-    <Dimension name="longitude" size="1440"/>
-    <Dimension name="time" size="2"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="http://opendap.uat.earthdata.nasa.gov/collections/C1222931739-GHRC_CLOUD/granules/f16_ssmis_20211108v7.nc" dapVersion="4.0" dmrVersion="1.0" name="f16_ssmis_20211108v7.nc">
+    <Dimension name="latitude" size="720" />
+    <Dimension name="longitude" size="1440" />
+    <Dimension name="time" size="2" />
     <Float32 name="latitude">
-        <Dim name="/latitude"/>
+        <Dim name="/latitude" />
         <Attribute name="units" type="String">
             <Value>degrees_north</Value>
         </Attribute>
@@ -23,7 +23,7 @@
         </Attribute>
     </Float32>
     <Float32 name="longitude">
-        <Dim name="/longitude"/>
+        <Dim name="/longitude" />
         <Attribute name="units" type="String">
             <Value>degrees_east</Value>
         </Attribute>
@@ -39,9 +39,9 @@
         </Attribute>
     </Float32>
     <Int16 name="time">
-        <Dim name="/time"/>
+        <Dim name="/time" />
         <Attribute name="units" type="String">
-            <Value>hours since 2020-01-02T00:00:00Z</Value>
+            <Value>hours since 2021-11-08T00:00:00Z</Value>
         </Attribute>
         <Attribute name="standard_name" type="String">
             <Value>time</Value>
@@ -55,11 +55,11 @@
         </Attribute>
     </Int16>
     <Int16 name="sst_dtime">
-        <Dim name="/time"/>
-        <Dim name="/latitude"/>
-        <Dim name="/longitude"/>
+        <Dim name="/time" />
+        <Dim name="/latitude" />
+        <Dim name="/longitude" />
         <Attribute name="units" type="String">
-            <Value>hours since 2020-01-02T00:00:00Z</Value>
+            <Value>hours since 2021-11-08T00:00:00Z</Value>
         </Attribute>
         <Attribute name="standard_name" type="String">
             <Value>sst_dtime</Value>
@@ -79,9 +79,9 @@
         </Attribute>
     </Int16>
     <Int16 name="wind_speed">
-        <Dim name="/time"/>
-        <Dim name="/latitude"/>
-        <Dim name="/longitude"/>
+        <Dim name="/time" />
+        <Dim name="/latitude" />
+        <Dim name="/longitude" />
         <Attribute name="units" type="String">
             <Value>m/s</Value>
         </Attribute>
@@ -113,9 +113,9 @@
         </Attribute>
     </Int16>
     <Int16 name="atmosphere_water_vapor_content">
-        <Dim name="/time"/>
-        <Dim name="/latitude"/>
-        <Dim name="/longitude"/>
+        <Dim name="/time" />
+        <Dim name="/latitude" />
+        <Dim name="/longitude" />
         <Attribute name="units" type="String">
             <Value>kg m-2</Value>
         </Attribute>
@@ -147,9 +147,9 @@
         </Attribute>
     </Int16>
     <Int16 name="atmosphere_cloud_liquid_water_content">
-        <Dim name="/time"/>
-        <Dim name="/latitude"/>
-        <Dim name="/longitude"/>
+        <Dim name="/time" />
+        <Dim name="/latitude" />
+        <Dim name="/longitude" />
         <Attribute name="units" type="String">
             <Value>kg m-2</Value>
         </Attribute>
@@ -181,9 +181,9 @@
         </Attribute>
     </Int16>
     <Int16 name="rainfall_rate">
-        <Dim name="/time"/>
-        <Dim name="/latitude"/>
-        <Dim name="/longitude"/>
+        <Dim name="/time" />
+        <Dim name="/latitude" />
+        <Dim name="/longitude" />
         <Attribute name="units" type="String">
             <Value>mm/hr</Value>
         </Attribute>
@@ -218,17 +218,16 @@
         <Value>90</Value>
     </Attribute>
     <Attribute name="comment" type="String">
-        <Value>Version-7 algorithm processing was performed during August 2011 and continues forward for active instruments.  Use data files with a date of August 2011 or newer.  The RSS SSMIS geophysical dataset consists of data derived from observations collected by SSMIS instruments carried onboard the DMSP series of polar orbiting satellites. These satellites are numbered:  F16 SSMIS Oct 2003 to present, F17 SSMIS Dec 2006 to present, F18 SSMIS Nov 2009 to present. Daily files of SSMIS geophysical parameters consist of data mapped to a regular grid complete with data gaps between orbits. Two maps exist for each parameter, one of ascending orbit segments and the other of descending orbit segments. Data on each of the maps are overwritten at both the high latitudes (where successive orbits cross) and at the 'seam' or the region where the last orbit of the day overlaps the first orbit of the day. Water vapor and cloud liquid water are given in kg/m2 (which is equivalent to 1 mm or 0.1 g/cm2).</Value>
+        <Value>Version-7 algorithm processing was performed during August 2011 and continues forward for active instruments. Use data files with a date of August 2011 or newer. The RSS SSMIS geophysical dataset consists of data derived from observations collected by SSMIS instruments carried onboard the DMSP series of polar orbiting satellites. These satellites are numbered: F16 SSMIS Oct 2003 to present, F17 SSMIS Dec 2006 to present, F18 SSMIS Nov 2009 to present. Daily files of SSMIS geophysical parameters consist of data mapped to a regular grid complete with data gaps between orbits. Two maps exist for each parameter, one of ascending orbit segments and the other of descending orbit segments. Data on each of the maps are overwritten at both the high latitudes (where successive orbits cross) and at the 'seam' or the region where the last orbit of the day overlaps the first orbit of the day. Water vapor and cloud liquid water are given in kg/m2 (which is equivalent to 1 mm or 0.1 g/cm2).</Value>
     </Attribute>
     <Attribute name="Conventions" type="String">
         <Value>CF-1.6</Value>
     </Attribute>
     <Attribute name="history" type="String">
-        <Value>Starting in August 2011, all SSMIS data were reprocessed from a preliminary beta version to the official Version-7.  Use data files that have a creation date of August 2011 or later.  At GHRC, RSS binary files are translated to netCDF-4 for archive, and for distribution to netCDF users.   RSS Provenance: processing location = Remote Sensing Systems, processing host = Ops1p, input files = SSMIS Level 2B data files (fSS_rRRRRR.dat, SS= sat number, RRRRR=orbital rev number), processing code name = ssmis_processor.exe, processing code version = 2011-08-08T02:55:51Z.  GHRC Provenance:  processing location = GHRC,  processing host = breeze.nsstc.nasa.gov, processing environment = ops, binary input file name = f16_20200102v7.gz (daily), processing script name = RSSbinary2netCDF.jar, processing script version = 2012-07-01T23:55:36Z, configuration file name = SSMIS_Daily.xml, configuration file version = 2012-06-29T21:06:34Z</Value>
+        <Value>Starting in August 2011, all SSMIS data were reprocessed from a preliminary beta version to the official Version-7. Use data files that have a creation date of August 2011 or later. At GHRC, RSS binary files are translated to netCDF-4 for archive, and for distribution to netCDF users. RSS Provenance: processing location = Remote Sensing Systems, processing host = Ops1p, input files = SSMIS Level 2B data files (fSS_rRRRRR.dat, SS= sat number, RRRRR=orbital rev number), processing code name = ssmis_processor.exe, processing code version = 2011-08-08T02:55:51Z. GHRC Provenance: processing location = GHRC, processing host = b3e12f5b5b57, processing environment = ops, binary input file name = f16_20211108v7.gz (daily), processing script name = RSSbinary2netCDF.jar, processing script version = 2020-09-24T16:08:58Z, configuration file name = SSMIS_Daily.xml, configuration file version = 2020-09-24T16:08:58Z</Value>
     </Attribute>
     <Attribute name="institution" type="String">
-        <Value>Remote Sensing Systems, Santa Rosa, California.  Sponsored by the NASA Earth Science MEaSUREs DISCOVER Project.
-Global Hydrology Resource Center, Huntsville, Alabama, a NASA earth science data center.</Value>
+        <Value>Remote Sensing Systems, Santa Rosa, California. Sponsored by the NASA Earth Science MEaSUREs DISCOVER Project. Global Hydrology Resource Center, Huntsville, Alabama, a NASA earth science data center.</Value>
     </Attribute>
     <Attribute name="numberofpasses" type="String">
         <Value>2</Value>
@@ -243,7 +242,7 @@ Global Hydrology Resource Center, Huntsville, Alabama, a NASA earth science data
         <Value>DMSP-F16</Value>
     </Attribute>
     <Attribute name="scale" type="String">
-        <Value>SSMIS data are scaled for storage and affect the resolution of the data:  time: x0.1 hrs, wind: x0.2 m/s, vapor: x0.3 kg/m2, cloud: x0.01 kg/m2, rain: x0.1 mm</Value>
+        <Value>SSMIS data are scaled for storage and affect the resolution of the data: time: x0.1 hrs, wind: x0.2 m/s, vapor: x0.3 kg/m2, cloud: x0.01 kg/m2, rain: x0.1 mm</Value>
     </Attribute>
     <Attribute name="sensorid" type="String">
         <Value>SSMIS</Value>
@@ -255,18 +254,35 @@ Global Hydrology Resource Center, Huntsville, Alabama, a NASA earth science data
         <Value>RSS SSMIS Ocean Product Grids Daily from DMSP F16 netCDF</Value>
     </Attribute>
     <Attribute name="value" type="String">
-        <Value>251(1506 for time)=missing wind speed due to rain, or missing water vapor due to heavy rain.  252(1512 for time)=sea ice. 253(1518 for time)=SSMIS observations exist,but are bad. 254(1524 for time)=no SSMIS observations. 255(1530 for time)=land mass.</Value>
+        <Value>251(1506 for time)=missing wind speed due to rain, or missing water vapor due to heavy rain. 252(1512 for time)=sea ice. 253(1518 for time)=SSMIS observations exist,but are bad. 254(1524 for time)=no SSMIS observations. 255(1530 for time)=land mass.</Value>
     </Attribute>
     <Attribute name="begin_time" type="String">
-        <Value>2020-01-02T00:00:00Z</Value>
+        <Value>2021-11-08T00:00:00Z</Value>
     </Attribute>
     <Attribute name="end_time" type="String">
-        <Value>2020-01-02T23:59:59Z</Value>
+        <Value>2021-11-08T23:59:59Z</Value>
     </Attribute>
     <Attribute name="identifier_product_DOI" type="String">
         <Value>10.5067/MEASURES/DMSP-F16/SSMIS/DATA301</Value>
     </Attribute>
     <Attribute name="identifier_product_DOI_authority" type="String">
         <Value>http://dx.doi.org</Value>
+    </Attribute>
+    <Attribute name="build_dmrpp_metadata" type="Container">
+        <Attribute name="build_dmrpp" type="String">
+            <Value>3.20.9-76</Value>
+        </Attribute>
+        <Attribute name="bes" type="String">
+            <Value>3.20.9-76</Value>
+        </Attribute>
+        <Attribute name="libdap" type="String">
+            <Value>libdap-3.20.8-33</Value>
+        </Attribute>
+        <Attribute name="configuration" type="String">
+            <Value># TheBESKeys::get_as_config() AllowedHosts=^https?:\/\/ BES.Catalog.catalog.Exclude=^\..*; BES.Catalog.catalog.FollowSymLinks=Yes BES.Catalog.catalog.Include=; BES.Catalog.catalog.RootDirectory=/tmp/tmplly98mdu/ BES.Catalog.catalog.TypeMatch=dmrpp:.*\.(dmrpp)$; BES.Catalog.catalog.TypeMatch+=h5:.*(\.bz2|\.gz|\.Z)?$; BES.Container.Persistence=strict BES.Data.RootDirectory=/dev/null BES.DefaultResponseMethod=POST BES.FollowSymLinks=Yes BES.Group=group_name BES.Info.Buffered=no BES.Info.Type=xml BES.LogName=./bes.log BES.LogVerbose=no BES.Memory.GlobalArea.ControlHeap=no BES.Memory.GlobalArea.EmergencyPoolSize=1 BES.Memory.GlobalArea.MaximumHeapSize=20 BES.Memory.GlobalArea.Verbose=no BES.ProcessManagerMethod=multiple BES.ServerAdministrator=admin.email.address@your.domain.name BES.Uncompress.NumTries=10 BES.Uncompress.Retry=2000 BES.UncompressCache.dir=/tmp/hyrax_ux BES.UncompressCache.prefix=ux_ BES.UncompressCache.size=500 BES.User=user_name BES.module.cmd=/usr/lib64/bes/libdap_xml_module.so BES.module.dap=/usr/lib64/bes/libdap_module.so BES.module.dmrpp=/usr/lib64/bes/libdmrpp_module.so BES.module.fonc=/usr/lib64/bes/libfonc_module.so BES.module.h5=/usr/lib64/bes/libhdf5_module.so BES.module.nc=/usr/lib64/bes/libnc_module.so BES.modules=dap,cmd,h5,dmrpp,nc,fonc FONc.ClassicModel=false FONc.NoGlobalAttrs=true H5.Cache.latlon.path=/tmp/latlon H5.Cache.latlon.prefix=l H5.Cache.latlon.size=20000 H5.CheckIgnoreObj=false H5.DefaultHandleDimension=true H5.DisableStructMetaAttr=true H5.DiskCacheComp=true H5.DiskCacheCompThreshold=2.0 H5.DiskCacheCompVarSize=10000 H5.DiskCacheDataPath=/tmp H5.DiskCacheFilePrefix=c H5.DiskCacheFloatOnlyComp=true H5.DiskCacheSize=10000 H5.DiskMetaDataCachePath=/tmp H5.EnableAddPathAttrs=true H5.EnableCF=false H5.EnableCFDMR=true H5.EnableCheckNameClashing=true H5.EnableDiskDDSCache=false H5.EnableDiskDataCache=false H5.EnableDiskMetaDataCache=false H5.EnableDropLongString=true H5.EnableEOSGeoCacheFile=false H5.EnableFillValueCheck=true H5.KeepVarLeadingUnderscore=false H5.LargeDataMemCacheEntries=0 H5.MetaDataMemCacheEntries=300 H5.SmallDataMemCacheEntries=0</Value>
+        </Attribute>
+        <Attribute name="invocation" type="String">
+            <Value>build_dmrpp -c /tmp/conf_YKmX -f /tmp/tmplly98mdu//f16_ssmis_20211108v7.nc -r /tmp/dmr_zRsD -u https://data.ghrc.uat.earthdata.nasa.gov/ghrcwuat-protected/rss/rssmif16d__7/f16_ssmis_20211108v7.nc" dmrpp:trust="true -M</Value>
+        </Attribute>
     </Attribute>
 </Dataset>

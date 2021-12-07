@@ -15,6 +15,7 @@ from varinfo import VarInfoFromDmr, VariableFromDmr
 import datetime as dt
 from pymods.dimension_utilities import (get_dimension_index_range, IndexRanges)
 from dateutil.parser import parse as parse_datetime
+from harmony.util import HarmonyException
 
 
 def get_temporal_index_ranges(required_variables: Set[str],
@@ -54,8 +55,8 @@ def get_temporal_index_ranges(required_variables: Set[str],
                     delta = dt.timedelta(minutes=1)
                 elif unit in units_second:
                     delta = dt.timedelta(seconds=1)
-            except TypeError:
-                pass
+            except Exception as exception:
+                raise HarmonyException('Subsetter failed with error: ' + str(exception)) from exception
 
             if (len(ref_time)<2):
                 ref_time_hms = "00:00:00"

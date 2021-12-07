@@ -34,7 +34,8 @@ class TestSubsetter(TestCase):
     def create_message(self, collection: str, granule_id: str, file_paths: List[str],
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None,
-                       bounding_box: Optional[List[float]] = None) -> Message:
+                       bounding_box: Optional[List[float]] = None,
+                       temporal_range: Optional[List[str]] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
         granules = [
             {
@@ -57,13 +58,57 @@ class TestSubsetter(TestCase):
             'callback': 'https://example.com/',
             'stagingLocation': 's3://example-bucket/',
             'accessToken': 'xyzzy',
-            'subset': {'bbox': bounding_box, 'shape': None}
+            'subset': {'bbox': bounding_box, 'shape': None},
+            'temporal':{'start':temporal_range[0],'end':temporal_range[1]}
         }
 
         if is_synchronous is not None:
             message_content['isSynchronous'] = is_synchronous
 
         return Message(json.dumps(message_content))
+
+    def test_temporal_request(self, mock_stage, mock_subset_granule,
+                          mock_get_mimetype):
+        """ A request that specifies a bounding box should result in a both a
+            variable and a spatial subset being made.
+
+        """
+        mock_subset_granule.return_value = '/path/to/output.nc'
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        bounding_box = [-20, -10, 20, 30]
+        temporal_range = ['2021-01-01T00:00:00', '2021-01-02T00:00:00']
+
+        message = self.create_message('C1233860183-EEDTEST',
+                                      'G1233860471-EEDTEST',
+                                      ['/home/tests/data/africa.nc'],
+                                      ['alpha_var', 'blue_var'],
+                                      'mcollins',
+                                      bounding_box=bounding_box,
+                                      temporal_range = temporal_range
+                                      )
+
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
+        granule = variable_subsetter.message.granules[0]
+
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    granule.variables,
+                                                    ANY,
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=bounding_box,
+                                                    temporal_range = temporal_range)
+        mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
+
+        mock_stage.assert_called_once_with(
+            '/path/to/output.nc',
+            'africa_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger
+        )
 
     def test_synchronous_request(self,
                                  mock_stage,

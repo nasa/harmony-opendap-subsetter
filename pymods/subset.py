@@ -16,12 +16,14 @@ from pymods.dimension_utilities import (add_index_range, get_fill_slice,
                                         IndexRanges,
                                         prefetch_dimension_variables)
 from pymods.spatial import get_geographic_index_ranges
+from pymods.temporal import get_temporal_index_ranges
 from pymods.utilities import download_url, get_opendap_nc4
 
 
 def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
                    output_dir: str, logger: Logger, access_token: str = None,
-                   config: Config = None, bounding_box: List[float] = None) -> str:
+                   config: Config = None, bounding_box: List[float] = None,
+                   temporal_range: List[str] = None) -> str:
     """ This function is the main business logic for retrieving a variable
         and/or spatial subset from OPeNDAP.
 
@@ -74,7 +76,18 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
                                                         varinfo,
                                                         dimensions_path,
                                                         bounding_box))
+    if temporal_range is not None:
+        # Don't need to prefetch
 
+        # Update `index_ranges` cache with ranges for temporal
+        # variables. This will convert information from the temporal range to
+        # array indices for each temporal dimension.
+        index_ranges.update(get_temporal_index_ranges(required_variables,
+                                                        varinfo,
+                                                        dimensions_path,
+                                                        bounding_box,
+                                                        temporal_range))
+                                                        
     # Add any range indices to variable names for DAP4 constraint expression.
     variables_with_ranges = set(
         add_index_range(variable, varinfo, index_ranges)

@@ -119,6 +119,11 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             else:
                 bounding_box = None
 
+            if self.message.temporal is not None:
+                temporal_range = [self.message.temporal.start,self.message.temporal.end]
+            else:
+                temporal_range = None
+
             # Subset
             output_file_path = subset_granule(
                 asset.href,
@@ -126,7 +131,8 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 self.logger,
                 access_token=self.message.accessToken,
                 config=self.config,
-                bounding_box=bounding_box
+                bounding_box=bounding_box,
+                temporal_range=temporal_range
             )
 
             # Stage the output file with a conventional filename

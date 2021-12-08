@@ -33,6 +33,7 @@ the service will behave synchronously.
 from argparse import ArgumentParser
 import shutil
 from tempfile import mkdtemp
+from dateutil.parser import parse as parse_datetime
 from pystac import Asset, Item
 
 import harmony
@@ -120,7 +121,8 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 bounding_box = None
 
             if self.message.temporal is not None:
-                temporal_range = [self.message.temporal.start,self.message.temporal.end]
+                temporal_range = [parse_datetime(self.message.temporal.start),
+                parse_datetime(self.message.temporal.end)]
             else:
                 temporal_range = None
 

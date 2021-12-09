@@ -32,7 +32,7 @@ class TestTemporal(TestCase):
         rmtree(self.test_dir)
 
     def test_get_temporal_index_ranges(self):
-        """ Ensure that correct index ranges can be calculated.
+        """ Ensure that correct temporal index ranges can be calculated.
 
         """
         test_file_name = f'{self.test_dir}/test.nc'
@@ -54,7 +54,7 @@ class TestTemporal(TestCase):
             )
 
     def test_get_time_ref(self):
-        """ Ensure that get_time_ref returns the correct time_ref and time_delta
+        """ Ensure the 'units' attribute tells the correct time_ref and time_delta
 
         """
 
@@ -64,7 +64,7 @@ class TestTemporal(TestCase):
                  timedelta(minutes=1)))
 
     def test_get_datetime_with_timezone(self):
-        """ Ensure that get_time_ref returns the correct time_ref and time_delta
+        """ Ensure the string is parsed to datetime with timezone
 
         """
 

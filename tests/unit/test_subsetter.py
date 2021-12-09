@@ -69,21 +69,21 @@ class TestSubsetter(TestCase):
 
     def test_temporal_request(self, mock_stage, mock_subset_granule,
                               mock_get_mimetype):
-        """ A request that specifies a bounding box should result in a both a
-            variable and a spatial subset being made.
+        """ A request that specifies a temporal range should result in a
+            temporal subset.
 
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
-        bounding_box = [-20, -10, 20, 30]
         temporal_range = {'start': '2021-01-01T00:00:00', 'end': '2021-01-02T00:00:00'}
+        temporal_list = [temporal_range['start'], temporal_range['end']]
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'mcollins',
-                                      bounding_box=bounding_box,
+                                      bounding_box=None,
                                       temporal_range=temporal_range
                                       )
 
@@ -98,8 +98,8 @@ class TestSubsetter(TestCase):
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
-                                                    bounding_box=bounding_box,
-                                                    temporal_range=temporal_range)
+                                                    bounding_box=None,
+                                                    temporal_range=temporal_list)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
@@ -140,7 +140,8 @@ class TestSubsetter(TestCase):
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
-                                                    bounding_box=None)
+                                                    bounding_box=None,
+                                                    temporal_range=None)
 
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -182,7 +183,8 @@ class TestSubsetter(TestCase):
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
-                                                    bounding_box=None)
+                                                    bounding_box=None,
+                                                    temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
@@ -221,7 +223,8 @@ class TestSubsetter(TestCase):
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
-                                                    bounding_box=None)
+                                                    bounding_box=None,
+                                                    temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
@@ -260,7 +263,8 @@ class TestSubsetter(TestCase):
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
-                                                    bounding_box=bounding_box)
+                                                    bounding_box=bounding_box,
+                                                    temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
@@ -373,7 +377,8 @@ class TestSubsetter(TestCase):
                                                 variable_subsetter.logger,
                                                 access_token=message.accessToken,
                                                 config=self.config,
-                                                bounding_box=None)
+                                                bounding_box=None,
+                                                temporal_range=None)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
             mock_stage.assert_any_call(
@@ -415,7 +420,8 @@ class TestSubsetter(TestCase):
                                                     variable_subsetter.logger,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
-                                                    bounding_box=None)
+                                                    bounding_box=None,
+                                                    temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(

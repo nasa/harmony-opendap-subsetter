@@ -97,12 +97,12 @@ class TestTemporal(TestCase):
             self.assertEqual(
                     get_datetime_with_timezone('2021-12-08T00:30:00'),
                     datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc))
-        
+
         with self.subTest('no space with trailing Z'):
             self.assertEqual(
                     get_datetime_with_timezone('2021-12-08T00:30:00Z'),
                     datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc))
-        
+
         with self.subTest('space with trailing Z'):
             self.assertEqual(
                     get_datetime_with_timezone('2021-12-08 00:30:00Z'),

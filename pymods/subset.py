@@ -80,13 +80,13 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
                                                             bounding_box))
         if temporal_range is not None:
             # Update `index_ranges` cache with ranges for temporal
-            # variables. This will convert information from the temporal range to
-            # array indices for each temporal dimension.
+            # variables. This will convert information from the temporal range
+            # to array indices for each temporal dimension.
             index_ranges.update(get_temporal_index_ranges(required_variables,
-                                                        varinfo,
-                                                        dimensions_path,
-                                                        temporal_range))
-                                                        
+                                                          varinfo,
+                                                          dimensions_path,
+                                                          temporal_range))
+
     # Add any range indices to variable names for DAP4 constraint expression.
     variables_with_ranges = set(
         add_index_range(variable, varinfo, index_ranges)

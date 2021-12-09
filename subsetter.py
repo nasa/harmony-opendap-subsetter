@@ -122,7 +122,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
             if self.message.temporal is not None:
                 temporal_range = [parse_datetime(self.message.temporal.start),
-                parse_datetime(self.message.temporal.end)]
+                                  parse_datetime(self.message.temporal.end)]
             else:
                 temporal_range = None
 

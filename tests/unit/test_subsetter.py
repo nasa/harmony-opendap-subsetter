@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Dict, Optional
 from unittest import TestCase
 from unittest.mock import patch, ANY
 import json
@@ -35,7 +35,7 @@ class TestSubsetter(TestCase):
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None,
                        bounding_box: Optional[List[float]] = None,
-                       temporal_range: Optional[List[str]] = None) -> Message:
+                       temporal_range: Optional[Dict[str, str]] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
         granules = [
             {
@@ -59,7 +59,7 @@ class TestSubsetter(TestCase):
             'stagingLocation': 's3://example-bucket/',
             'accessToken': 'xyzzy',
             'subset': {'bbox': bounding_box, 'shape': None},
-            'temporal':{'start':temporal_range[0],'end':temporal_range[1]}
+            'temporal': temporal_range
         }
 
         if is_synchronous is not None:
@@ -68,7 +68,7 @@ class TestSubsetter(TestCase):
         return Message(json.dumps(message_content))
 
     def test_temporal_request(self, mock_stage, mock_subset_granule,
-                          mock_get_mimetype):
+                              mock_get_mimetype):
         """ A request that specifies a bounding box should result in a both a
             variable and a spatial subset being made.
 
@@ -76,7 +76,7 @@ class TestSubsetter(TestCase):
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
         bounding_box = [-20, -10, 20, 30]
-        temporal_range = ['2021-01-01T00:00:00', '2021-01-02T00:00:00']
+        temporal_range = {'start': '2021-01-01T00:00:00', 'end': '2021-01-02T00:00:00'}
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -84,7 +84,7 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'mcollins',
                                       bounding_box=bounding_box,
-                                      temporal_range = temporal_range
+                                      temporal_range=temporal_range
                                       )
 
         variable_subsetter = HarmonyAdapter(message, config=self.config)
@@ -99,7 +99,7 @@ class TestSubsetter(TestCase):
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=bounding_box,
-                                                    temporal_range = temporal_range)
+                                                    temporal_range=temporal_range)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(

@@ -24,12 +24,13 @@ units_min = {'minutes', 'minute', 'min', 'mins'}
 units_second = {'second', 'seconds', 'sec', 'secs', 's'}
 
 
-def add_tzinfo(parsed_datetime: datetime) -> datetime:
-    """ A function to parse a datetime string, and ensure
-        it is timezone "aware". If a timezone is not
-        supplied, it is assumed to be UTC.
+def get_datetime_with_timezone(timestring: str) -> datetime:
+    """ function to parse string to datetime, and ensure datetime is timezone
+        "aware". If a timezone is not supplied, it is assumed to be UTC.
 
     """
+
+    parsed_datetime = parse_datetime(timestring)
 
     if parsed_datetime.tzinfo is None:
         parsed_datetime = parsed_datetime.replace(tzinfo=timezone.utc)
@@ -42,8 +43,7 @@ def get_time_ref(units_time: str) -> List[datetime]:
 
     """
     unit, epoch_str = units_time.split(' since ')
-    parsed_datetime = parse_datetime(epoch_str)
-    ref_time = add_tzinfo(parsed_datetime)
+    ref_time = get_datetime_with_timezone(epoch_str)
 
     if unit in units_day:
         time_delta = timedelta(days=1)
@@ -61,7 +61,7 @@ def get_time_ref(units_time: str) -> List[datetime]:
 
 def get_temporal_index_ranges(required_variables: Set[str],
                               varinfo: VarInfoFromDmr, dimensions_path: str,
-                              temporal_range: List[datetime]) -> IndexRanges:
+                              temporal_range: List[str]) -> IndexRanges:
     """ Iterate through the temporal dimension and extract the indices that
         correspond to the minimum and maximum extents in that dimension.
 
@@ -74,8 +74,8 @@ def get_temporal_index_ranges(required_variables: Set[str],
     index_ranges = {}
     temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
 
-    time_start = add_tzinfo(temporal_range[0])
-    time_end = add_tzinfo(temporal_range[1])
+    time_start = get_datetime_with_timezone(temporal_range[0])
+    time_end = get_datetime_with_timezone(temporal_range[1])
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dimension in temporal_dimensions:

@@ -162,7 +162,6 @@ CF_Overrides:
   # -180 ≤ longitude (degrees east) ≤ 180, or 0 ≤ longitude (degrees east) ≤ 360
   - Applicability:
       Mission: 'MERRA-2'
-      ShortNamePath: 'M2T1NXSLV'
       Variable_Pattern: '/lon'
     Attributes:
       - Name: 'valid_range'
@@ -173,7 +172,6 @@ CF_Overrides:
         Value: 179.6875
   - Applicability:
       Mission: 'MERRA-2'
-      ShortNamePath: 'M2T1NXSLV'
       Variable_Pattern: '/lat'
     Attributes:
       - Name: 'valid_range'
@@ -182,6 +180,16 @@ CF_Overrides:
         Value: -90.0
       - Name: 'valid_max'
         Value: 90.0
+  - Applicability:
+      Mission: 'MERRA-2'
+      Variable_Pattern: '/time'
+    Attributes:
+      - Name: 'valid_range'
+        Value: [-2147483648, 2147483647]
+      - Name: 'valid_min'
+        Value: -2147483647
+      - Name: 'valid_max'
+        Value: 2147483647
 
 # For extending CF references. This allows for CF references to persist, while
 # supplemental information is provided. In particular, e.g. for subsetting

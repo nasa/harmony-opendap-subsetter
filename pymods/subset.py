@@ -5,6 +5,7 @@
 """
 from logging import Logger
 from typing import List, Optional, Set
+from datetime import datetime
 
 from harmony.message import Variable as HarmonyVariable
 from harmony.util import Config
@@ -16,12 +17,14 @@ from pymods.dimension_utilities import (add_index_range, get_fill_slice,
                                         IndexRanges,
                                         prefetch_dimension_variables)
 from pymods.spatial import get_geographic_index_ranges
+from pymods.temporal import get_temporal_index_ranges
 from pymods.utilities import download_url, get_opendap_nc4
 
 
 def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
                    output_dir: str, logger: Logger, access_token: str = None,
-                   config: Config = None, bounding_box: List[float] = None) -> str:
+                   config: Config = None, bounding_box: List[float] = None,
+                   temporal_range: List[datetime] = None) -> str:
     """ This function is the main business logic for retrieving a variable
         and/or spatial subset from OPeNDAP.
 
@@ -60,20 +63,29 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
     # Define a catch to store all dimension index ranges (spatial, temporal):
     index_ranges = {}
 
-    if bounding_box is not None:
+    if bounding_box is not None or temporal_range is not None:
         # Prefetch all dimension variables in full:
         dimensions_path = prefetch_dimension_variables(opendap_url, varinfo,
                                                        required_variables,
                                                        output_dir, logger,
                                                        access_token, config)
 
-        # Update `index_ranges` cache with ranges for geographic grid-dimension
-        # variables. This will convert information from the bounding box to
-        # array indices for each geographic grid-dimension.
-        index_ranges.update(get_geographic_index_ranges(required_variables,
-                                                        varinfo,
-                                                        dimensions_path,
-                                                        bounding_box))
+        if bounding_box is not None:
+            # Update `index_ranges` cache with ranges for geographic grid-dimension
+            # variables. This will convert information from the bounding box to
+            # array indices for each geographic grid-dimension.
+            index_ranges.update(get_geographic_index_ranges(required_variables,
+                                                            varinfo,
+                                                            dimensions_path,
+                                                            bounding_box))
+        if temporal_range is not None:
+            # Update `index_ranges` cache with ranges for temporal
+            # variables. This will convert information from the temporal range
+            # to array indices for each temporal dimension.
+            index_ranges.update(get_temporal_index_ranges(required_variables,
+                                                          varinfo,
+                                                          dimensions_path,
+                                                          temporal_range))
 
     # Add any range indices to variable names for DAP4 constraint expression.
     variables_with_ranges = set(

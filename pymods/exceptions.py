@@ -18,8 +18,18 @@ class CustomError(Exception):
         super().__init__(self.message)
 
 
+class UnsupportedTemporalUnits(CustomError):
+    """ This exception is raised when the 'units' metadata attribute contains
+        a temporal unit that is not supported by HOSS.
+
+    """
+    def __init__(self, units_string):
+        super().__init__('UnsupportedTemporalUnits',
+                         f'Temporal units "{units_string}" not supported.')
+
+
 class UrlAccessFailed(CustomError):
-    """ This exception is raise when an HTTP request for a given URL has a non
+    """ This exception is raised when an HTTP request for a given URL has a non
         500 error, and is therefore not retried.
 
     """

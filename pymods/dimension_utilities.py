@@ -35,9 +35,12 @@ def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
         include projected spatial grid dimensions and temporal dimensions.
 
     """
-    spatial_dimensions = varinfo.get_spatial_dimensions(required_variables)
-    return get_opendap_nc4(opendap_url, spatial_dimensions, output_dir, logger,
-                           access_token, config)
+    required_dimensions = set().union(
+        varinfo.get_temporal_dimensions(required_variables),
+        varinfo.get_spatial_dimensions(required_variables)
+    )
+    return get_opendap_nc4(opendap_url, required_dimensions, output_dir,
+                           logger, access_token, config)
 
 
 def is_dimension_ascending(dimension: MaskedArray) -> bool:

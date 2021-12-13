@@ -213,10 +213,11 @@ class TestSubsetterEndToEnd(TestCase):
                                            cfg=subsetter.config)
 
         # Ensure the constraint expression for dimensions data included only
-        # geographic variables with no index ranges
+        # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-        self.assert_valid_request_data(dimensions_data,
-                                       {'%2Flatitude', '%2Flongitude'})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'}
+        )
         # Ensure the constraint expression contains all the required variables.
         # /wind_speed[][540:599][1320:1379], /time, /longitude[1320:1379]
         # /latitude[540:599]
@@ -321,10 +322,10 @@ class TestSubsetterEndToEnd(TestCase):
                                            cfg=subsetter.config)
 
         # Ensure the constraint expression for dimensions data included only
-        # geographic variables with no index ranges
+        # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-        self.assert_valid_request_data(dimensions_data,
-                                       {'%2Flatitude', '%2Flongitude'})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'})
         # Ensure the constraint expression contains all the required variables.
         # /wind_speed[][120:179][1320:1379], /time, /longitude[1320:1379]
         # /latitude[120:179]
@@ -426,10 +427,11 @@ class TestSubsetterEndToEnd(TestCase):
                                            cfg=subsetter.config)
 
         # Ensure the constraint expression for dimensions data included only
-        # geographic variables with no index ranges
+        # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-        self.assert_valid_request_data(dimensions_data,
-                                       {'%2Flatitude', '%2Flongitude'})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'}
+        )
         # Ensure the constraint expression contains all the required variables.
         # /wind_speed[][120:179][], /time, /longitude (full range),
         # /latitude[120:179]
@@ -587,10 +589,11 @@ class TestSubsetterEndToEnd(TestCase):
                                                    cfg=subsetter.config)
 
                 # Ensure the constraint expression for dimensions data included
-                # only geographic variables with no index ranges
+                # only geographic or temporal variables with no index ranges
                 dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-                self.assert_valid_request_data(dimensions_data,
-                                               {'%2Flatitude', '%2Flongitude'})
+                self.assert_valid_request_data(
+                    dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'}
+                )
                 # Ensure the constraint expression contains all the required variables.
                 index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
                 self.assert_valid_request_data(index_range_data,
@@ -691,10 +694,11 @@ class TestSubsetterEndToEnd(TestCase):
                                            cfg=subsetter.config)
 
         # Ensure the constraint expression for dimensions data included only
-        # geographic variables with no index ranges
+        # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-        self.assert_valid_request_data(dimensions_data,
-                                       {'%2Flatitude', '%2Flongitude'})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'}
+        )
         # Ensure the constraint expression contains all variables.
         # /atmosphere_cloud_liquid_water_content[][540:599][1320:1379],
         # /atmosphere_water_vapor_content[][540:599][1320:1379],

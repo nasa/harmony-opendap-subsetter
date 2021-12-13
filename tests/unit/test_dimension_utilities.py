@@ -146,7 +146,7 @@ class TestDimensionUtilities(TestCase):
     def test_prefetch_dimension_variables(self, mock_get_opendap_nc4):
         """ Ensure that when a list of required variables is specified, a
             request to OPeNDAP will be sent requesting only those that are
-            grid-dimension variables.
+            grid-dimension variables (both spatial and temporal).
 
             At this point only spatial dimensions will be included in a
             prefetch request.
@@ -160,7 +160,7 @@ class TestDimensionUtilities(TestCase):
         url = 'https://url_to_opendap_granule'
         required_variables = {'/latitude', '/longitude', '/time',
                               '/wind_speed'}
-        spatial_dimensions = {'/latitude', '/longitude'}
+        required_dimensions = {'/latitude', '/longitude', '/time'}
 
         self.assertEqual(prefetch_dimension_variables(url, self.varinfo,
                                                       required_variables,
@@ -170,6 +170,6 @@ class TestDimensionUtilities(TestCase):
                                                       self.config),
                          prefetch_path)
 
-        mock_get_opendap_nc4.assert_called_once_with(url, spatial_dimensions,
+        mock_get_opendap_nc4.assert_called_once_with(url, required_dimensions,
                                                      output_dir, self.logger,
                                                      access_token, self.config)

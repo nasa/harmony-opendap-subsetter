@@ -1,19 +1,17 @@
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import Mock
-from datetime import datetime, timedelta, timezone
-from dateutil.parser import parse as parse_datetime
 
 from netCDF4 import Dataset
 import numpy as np
-
 from varinfo import VarInfoFromDmr
-from harmony.util import HarmonyException
-from pymods.temporal import (get_temporal_index_ranges,
-                             get_time_ref,
-                             get_datetime_with_timezone)
+
+from pymods.exceptions import UnsupportedTemporalUnits
+from pymods.temporal import (get_datetime_with_timezone,
+                             get_temporal_index_ranges,
+                             get_time_ref)
 
 
 class TestTemporal(TestCase):
@@ -21,7 +19,7 @@ class TestTemporal(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.logger = getLogger('tests')
-        cls.varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV.5.12.4%3AMERRA2_400.tavg1_2d_slv_Nx.20210110.nc4.dmr',
+        cls.varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
                                      cls.logger,
                                      'tests/data/test_subsetter_config.yml')
         cls.test_dir = 'tests/output'
@@ -55,55 +53,56 @@ class TestTemporal(TestCase):
             )
 
     def test_get_time_ref(self):
-        """ Ensure the 'units' attribute tells the correct time_ref and time_delta
+        """ Ensure the 'units' attribute tells the correct time_ref and
+            time_delta
 
         """
+        expected_datetime = datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc)
 
-        self.assertEqual(
-                get_time_ref('minutes since 2021-12-08 00:30:00'),
-                (datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc),
-                 timedelta(minutes=1)))
+        with self.subTest('units of minutes'):
+            self.assertEqual(get_time_ref('minutes since 2021-12-08 00:30:00'),
+                             (expected_datetime, timedelta(minutes=1)))
 
         with self.subTest('Units of seconds'):
             self.assertEqual(get_time_ref('seconds since 2021-12-08 00:30:00'),
-                             (datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc),
-                             timedelta(seconds=1)))
+                             (expected_datetime, timedelta(seconds=1)))
 
         with self.subTest('Units of hours'):
             self.assertEqual(get_time_ref('hours since 2021-12-08 00:30:00'),
-                             (datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc),
-                             timedelta(hours=1)))
+                             (expected_datetime, timedelta(hours=1)))
 
         with self.subTest('Units of days'):
             self.assertEqual(get_time_ref('days since 2021-12-08 00:30:00'),
-                             (datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc),
-                             timedelta(days=1)))
+                             (expected_datetime, timedelta(days=1)))
 
         with self.subTest('Unrecognised unit'):
-            with self.assertRaises(HarmonyException):
+            with self.assertRaises(UnsupportedTemporalUnits):
                 get_time_ref('fortnights since 2021-12-08 00:30:00')
 
     def test_get_datetime_with_timezone(self):
-        """ Ensure the string is parsed to datetime with timezone
-
-        """
+        """ Ensure the string is parsed to datetime with timezone. """
+        expected_datetime = datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc)
 
         with self.subTest('with space'):
             self.assertEqual(
-                    get_datetime_with_timezone('2021-12-08 00:30:00'),
-                    datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc))
+                get_datetime_with_timezone('2021-12-08 00:30:00'),
+                expected_datetime
+            )
 
         with self.subTest('no space'):
             self.assertEqual(
-                    get_datetime_with_timezone('2021-12-08T00:30:00'),
-                    datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc))
+                get_datetime_with_timezone('2021-12-08T00:30:00'),
+                expected_datetime
+            )
 
         with self.subTest('no space with trailing Z'):
             self.assertEqual(
-                    get_datetime_with_timezone('2021-12-08T00:30:00Z'),
-                    datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc))
+                get_datetime_with_timezone('2021-12-08T00:30:00Z'),
+                expected_datetime
+            )
 
         with self.subTest('space with trailing Z'):
             self.assertEqual(
-                    get_datetime_with_timezone('2021-12-08 00:30:00Z'),
-                    datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc))
+                get_datetime_with_timezone('2021-12-08 00:30:00Z'),
+                expected_datetime
+            )

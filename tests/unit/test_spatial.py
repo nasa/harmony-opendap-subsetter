@@ -6,7 +6,6 @@ from unittest.mock import Mock
 
 from netCDF4 import Dataset
 import numpy as np
-
 from varinfo import VarInfoFromDmr, VariableFromDmr
 
 from pymods.spatial import (get_bounding_box_longitudes,

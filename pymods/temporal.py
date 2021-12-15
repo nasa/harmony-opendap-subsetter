@@ -8,14 +8,15 @@
     be combined with any other index ranges (e.g., spatial).
 
 """
-from typing import List, Set
 from datetime import datetime, timedelta, timezone
 from dateutil.parser import parse as parse_datetime
+from typing import List, Set
 
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
-from harmony.util import HarmonyException
-from pymods.dimension_utilities import (get_dimension_index_range, IndexRanges)
+
+from pymods.dimension_utilities import get_dimension_index_range, IndexRanges
+from pymods.exceptions import UnsupportedTemporalUnits
 
 
 units_day = {'day', 'days', 'd'}
@@ -54,8 +55,8 @@ def get_time_ref(units_time: str) -> List[datetime]:
     elif unit in units_second:
         time_delta = timedelta(seconds=1)
     else:
-        raise HarmonyException('Subsetter failed with error: temporal units ' +
-                               unit + ' is not supported yet.')
+        raise UnsupportedTemporalUnits(unit)
+
     return (ref_time, time_delta)
 
 

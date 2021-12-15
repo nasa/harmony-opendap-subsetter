@@ -28,6 +28,9 @@ class TestSubsetterEndToEnd(TestCase):
         with open('tests/data/rssmif16d_example.dmr', 'r') as file_handler:
             cls.rssmif16d_dmr = file_handler.read()
 
+        with open('tests/data/M2T1NXSLV_example.dmr', 'r') as file_handler:
+            cls.m2t1nxslv_dmr = file_handler.read()
+
     def setUp(self):
         """ Have to mock mkdtemp, to know where to put mock .dmr content. """
         self.tmp_dir = mkdtemp()
@@ -727,6 +730,221 @@ class TestSubsetterEndToEnd(TestCase):
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled:
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_temporal_end_to_end(self, mock_stage, mock_util_download,
+                                 mock_rmtree, mock_mkdtemp, mock_uuid,
+                                 mock_get_fill_slice):
+        """ Ensure a request with a temporal range will retrieve  variables,
+            but limited to the range specified by the temporal range.
+
+            The example granule has 24 hourly time slices, starting with
+            2021-01-10T00:30:00.
+
+        """
+        temporal_range = {'start': '2021-01-10T01:00:00',
+                          'end': '2021-01-10T03:00:00'}
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.m2t1nxslv_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/M2T1NXSLV_prefetch.nc4', dimensions_path)
+
+        temporal_variables_path = f'{self.tmp_dir}/temporal_variables.nc4'
+        copy('tests/data/M2T1NXSLV_temporal.nc4', temporal_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          temporal_variables_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2021-01-10T00:30:00.000Z',
+                        'end': '2021-01-11T00:30:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': '/PS',
+                               'fullPath': '/PS'}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': None,
+            'temporal': temporal_range,
+            'user': 'jyoung',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should be the required
+        # variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic or temporal variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(dimensions_data,
+                                       {'%2Flat', '%2Flon', '%2Ftime'})
+        # Ensure the constraint expression contains all the required variables.
+        # /PS[1:2][][], /time[1:2], /lon, /lat
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime%5B1%3A2%5D',
+             '%2Flat',
+             '%2Flon',
+             '%2FPS%5B1%3A2%5D%5B%5D%5B%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_PS_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_geo_temporal_end_to_end(self, mock_stage, mock_util_download,
+                                     mock_rmtree, mock_mkdtemp, mock_uuid,
+                                     mock_get_fill_slice):
+        """ Ensure a request with both a bounding box and a temporal range will
+            retrieve  variables, but limited to the ranges specified by the
+            bounding box and the temporal range.
+
+        """
+        temporal_range = {'start': '2021-01-10T01:00:00',
+                          'end': '2021-01-10T03:00:00'}
+        bounding_box = [40, -30, 50, -20]
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.m2t1nxslv_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/M2T1NXSLV_prefetch.nc4', dimensions_path)
+
+        geo_temporal_path = f'{self.tmp_dir}/geo_temporal.nc4'
+        copy('tests/data/M2T1NXSLV_temporal.nc4', geo_temporal_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          geo_temporal_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2021-01-10T00:30:00.000Z',
+                        'end': '2021-01-11T00:30:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': '/PS',
+                               'fullPath': '/PS'}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'bbox': bounding_box},
+            'temporal': temporal_range,
+            'user': 'jyoung',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should be the required
+        # variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic or temporal variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(dimensions_data,
+                                       {'%2Flat', '%2Flon', '%2Ftime'})
+        # Ensure the constraint expression contains all the required variables.
+        # /PS[1:2][120:140][352:368], /time[1:2], /lon[352:368], /lat[120:140]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime%5B1%3A2%5D',
+             '%2Flat%5B120%3A140%5D',
+             '%2Flon%5B352%3A368%5D',
+             '%2FPS%5B1%3A2%5D%5B120%3A140%5D%5B352%3A368%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_PS_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
     @patch('subsetter.mkdtemp')

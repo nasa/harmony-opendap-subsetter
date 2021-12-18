@@ -2,16 +2,13 @@ from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import Mock
 
 from netCDF4 import Dataset
 import numpy as np
-from varinfo import VarInfoFromDmr, VariableFromDmr
+from varinfo import VarInfoFromDmr
 
 from pymods.spatial import (get_bounding_box_longitudes,
-                            get_geographic_index_ranges,
-                            get_valid_longitude_range,
-                            unwrap_longitude, wrap_longitude)
+                            get_geographic_index_ranges, get_longitude_in_grid)
 
 
 class TestSpatial(TestCase):
@@ -162,72 +159,62 @@ class TestSpatial(TestCase):
         test_args = [['-180 ≤ lon (deg) < 180', -180, 180, [-150, -120]],
                      ['0 ≤ lon (deg) < 360', 0, 360, [210, 240]]]
 
-        longitude_variable = Mock(spec=VariableFromDmr)
-
         for description, valid_min, valid_max, results in test_args:
             with self.subTest(description):
                 data = np.ma.masked_array(data=np.linspace(valid_min, valid_max, 361))
-                longitude_variable.get_range.return_value = [valid_min, valid_max]
-
-                longitudes = get_bounding_box_longitudes(bounding_box, data,
-                                                         longitude_variable)
+                longitudes = get_bounding_box_longitudes(bounding_box, data)
                 self.assertListEqual(longitudes, results)
 
-    def test_wrap_longitude(self):
-        """ Ensure that longitudes are correctly mapped to the
-            -180 ≤ longitude (degrees) < 180 range.
+        partially_wrapped_longitudes = np.linspace(-180, 179.375, 576)
 
-            `TestCase.assertAlmostEqual` rounds to 7 decimal places.
+        test_args = [['W = -180, E = -140', -180, -140, [-180, -140]],
+                     ['W = 0, E = 179.6875', 0, 179.6875, [0, 179.6875]],
+                     ['W = 179.688, E = 180', 179.688, 180, [-180.312, -180]]]
 
-        """
-        longitudes = [['Needs wrapping', 190.0, -170.0],
-                      ['Already wrapped', 123.45, 123.45]]
+        for description, bbox_west, bbox_east, expected_output in test_args:
+            with self.subTest(f'Partial wrapping: {description}'):
+                self.assertListEqual(
+                    get_bounding_box_longitudes([bbox_west, -15, bbox_east, 15],
+                                                partially_wrapped_longitudes),
+                    expected_output
+                )
 
-        for description, longitude, expected_longitude in longitudes:
-            with self.subTest(description):
-                self.assertAlmostEqual(wrap_longitude(longitude),
-                                       expected_longitude)
-
-    def test_unwrap_longitudes(self):
-        """ Ensure that longitudes are correctly mapped to the
-            0 ≤ longitude (degrees) < 360 range.
-
-        """
-        longitudes = [['Needs unwrapping', -160.5, 199.5],
-                      ['Already unwrapped', 12.34, 12.34]]
-
-        for description, longitude, expected_longitude in longitudes:
-            with self.subTest(description):
-                self.assertAlmostEqual(unwrap_longitude(longitude),
-                                       expected_longitude)
-
-    def test_get_valid_longitude_range(self):
-        """ Ensure the valid longitude can be extracted from either the
-            valid_range or valid_min and valid_max metadata attributes. Ensure
-            that, if these metadata attributes are absent, the longitude range
-            can be identified from the data themselves.
+    def test_get_longitude_in_grid(self):
+        """ Ensure a longitude value is retrieved, where possible, that is
+            within the given grid. For example, if longitude = -10 degrees east
+            and the grid 0 ≤ longitude (degrees east) ≤ 360, the resulting
+            value should be 190 degrees east.
 
         """
-        unwrapped_data = np.ma.masked_array(data=np.linspace(0, 360, 361))
-        wrapped_data = np.ma.masked_array(data=np.linspace(-180, 180, 361))
+        rss_min, rss_max = (0, 360)
+        gpm_min, gpm_max = (-180, 180)
+        merra_min, merra_max = (-180.3125, 179.6875)
 
-        variable_with_range = Mock(spec=VariableFromDmr)
-        variable_with_range.get_range.return_value = [-30, 30]
+        test_args = [
+            ['RSSMIF16D antimeridian', rss_min, rss_max, -180, 180],
+            ['RSSMIF16D negative longitude', rss_min, rss_max, -140, 220],
+            ['RSSMIF16D Prime Meridian', rss_min, rss_max, 0, 0],
+            ['RSSMIF16D positive longitude', rss_min, rss_max, 40, 40],
+            ['RSSMIF16D antimeridian positive', rss_min, rss_max, 180, 180],
+            ['GPM antimeridian', gpm_min, gpm_max, -180, -180],
+            ['GPM negative longitude', gpm_min, gpm_max, -140, -140],
+            ['GPM Prime Meridian', gpm_min, gpm_max, 0, 0],
+            ['GPM positive longitude', gpm_min, gpm_max, 40, 40],
+            ['GPM antimeridian positive', gpm_min, gpm_max, 180, 180],
+            ['MERRA-2 antimeridian', merra_min, merra_max, -180, -180],
+            ['MERRA-2 negative longitude', merra_min, merra_max, -140, -140],
+            ['MERRA-2 Prime Meridian', merra_min, merra_max, 0, 0],
+            ['MERRA-2 positive longitude', merra_min, merra_max, 40, 40],
+            ['MERRA-2 antimeridian positive', merra_min, merra_max, 180, -180],
+            ['MERRA-2 partial wrapping', merra_min, merra_max, 179.69, -180.31],
+            ['MERRA-2 grid_max', merra_min, merra_max, merra_max, merra_max],
+            ['Greater than grid max', 0, 10, 12, 12],
+            ['Less than grid min', 0, 10, -1, -1],
+        ]
 
-        variable_without_range = Mock(spec=VariableFromDmr)
-        variable_without_range.get_range.return_value = None
-
-        with self.subTest('Range data available from VariableFromDmr'):
-            valid_range = get_valid_longitude_range(variable_with_range,
-                                                    wrapped_data)
-            self.assertListEqual(valid_range, [-30, 30])
-
-        with self.subTest('No metadata attributes, data > 180 degrees'):
-            valid_range = get_valid_longitude_range(variable_without_range,
-                                                    unwrapped_data)
-            self.assertListEqual(valid_range, [0, 360])
-
-        with self.subTest('No metadata attributes, data ≤ 180 degrees'):
-            valid_range = get_valid_longitude_range(variable_without_range,
-                                                    wrapped_data)
-            self.assertListEqual(valid_range, [-180, 180])
+        for test, grid_min, grid_max, input_lon, expected_output in test_args:
+            with self.subTest(test):
+                self.assertEqual(
+                    get_longitude_in_grid(grid_min, grid_max, input_lon),
+                    expected_output
+                )

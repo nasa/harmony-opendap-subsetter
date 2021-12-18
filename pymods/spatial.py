@@ -25,11 +25,11 @@ from typing import List, Set
 
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
-from varinfo import VarInfoFromDmr, VariableFromDmr
-import numpy as np
+from varinfo import VarInfoFromDmr
 
 
-from pymods.dimension_utilities import (get_dimension_index_range, IndexRanges,
+from pymods.dimension_utilities import (get_dimension_extents,
+                                        get_dimension_index_range, IndexRanges,
                                         is_dimension_ascending)
 
 
@@ -70,7 +70,7 @@ def get_geographic_index_ranges(required_variables: Set[str],
                 # First, convert the bounding box western and eastern extents
                 # to match the valid range of the dimension data
                 west_extent, east_extent = get_bounding_box_longitudes(
-                    bounding_box, dimensions_file[dimension][:], variable
+                    bounding_box, dimensions_file[dimension][:]
                 )
                 if is_dimension_ascending(dimensions_file[dimension][:]):
                     # dimension array runs -180 to 180 (or 0 to 360) degrees.
@@ -91,69 +91,51 @@ def get_geographic_index_ranges(required_variables: Set[str],
 
 
 def get_bounding_box_longitudes(bounding_box: List[float],
-                                longitude_array: MaskedArray,
-                                longitude: VariableFromDmr) -> List[float]:
-    """ Ensure the bounding box longitude extents are in the valid range for
-        the longitude variable. The bounding box values are expected to range
-        from -180 ≤ longitude (degrees) < 180, whereas some collections have
-        grids with discontinuities at the Prime Meridian.
-
-        The bounding box from the Harmony message is ordered: [W, S, E, N]
+                                longitude_array: MaskedArray) -> List[float]:
+    """ Ensure the bounding box extents are compatible with the range of the
+        longitude variable. The Harmony bounding box values are expressed in
+        the range from -180 ≤ longitude (degrees east) ≤ 180, whereas some
+        collections have grids with discontinuities at the Prime Meridian and
+        others have sub-pixel wrap-around at the Antimeridian.
 
     """
-    valid_range = get_valid_longitude_range(longitude, longitude_array)
+    min_longitude, max_longitude = get_dimension_extents(longitude_array)
 
-    if valid_range[1] > 180:
-        # Discontinuity at Prime Meridian: 0 ≤ longitude (degrees) < 360
-        western_box_extent = unwrap_longitude(bounding_box[0])
-        eastern_box_extent = unwrap_longitude(bounding_box[2])
-    else:
-        # Discontinuity at Antimeridian: -180 ≤ longitude (degrees) < 180
-        western_box_extent = bounding_box[0]
-        eastern_box_extent = bounding_box[2]
+    western_box_extent = get_longitude_in_grid(min_longitude, max_longitude,
+                                               bounding_box[0])
+    eastern_box_extent = get_longitude_in_grid(min_longitude, max_longitude,
+                                               bounding_box[2])
 
     return [western_box_extent, eastern_box_extent]
 
 
-def wrap_longitude(longitude: float) -> float:
-    """ Wrap longitude to be in the -180 ≤ longitude (degrees) < 180 range.
-        For longitudes already in this range, this is a no-op.
+def get_longitude_in_grid(grid_min: float, grid_max: float,
+                          longitude: float) -> float:
+    """ Ensure that a longitude value from the bounding box extents is within
+        the full longitude range of the grid. If it is not, check the same
+        value +/- 360 degrees, to see if either of those are present in the
+        grid. This function returns the value of the three options that lies
+        within the grid. If none of these values are within the grid, then the
+        original longitude value is returned.
+
+        This functionality is used for grids where the longitude values are not
+        -180 ≤ longitude (degrees east) ≤ 180. This includes:
+
+        * RSSMIF16D: 0 ≤ longitude (degrees east) ≤ 360.
+        * MERRA-2 products:  -180.3125 ≤ longitude (degrees east) ≤ 179.6875.
 
     """
-    return ((longitude + 180) % 360) - 180
+    decremented_longitude = longitude - 360
+    incremented_longitude = longitude + 360
 
+    if grid_min <= longitude <= grid_max:
+        adjusted_longitude = longitude
+    elif grid_min <= decremented_longitude <= grid_max:
+        adjusted_longitude = decremented_longitude
+    elif grid_min <= incremented_longitude <= grid_max:
+        adjusted_longitude = incremented_longitude
+    else:
+        # None of the values are in the grid, so return the original value.
+        adjusted_longitude = longitude
 
-def unwrap_longitude(wrapped_longitude: float) -> float:
-    """ Convert longitude from the -180 ≤ longitude (degrees) < 180 range to
-        0 ≤ longitude (degrees) < 360. This allows that bounding box to be
-        converted from its native range to match that of collections in this
-        latter format (e.g., RSSMIF16D). The bounding box needs to be evaluated
-        in the same range as the collection's grid, to ensure the longitude
-        discontinuity is preserved and discontinuous array indices can be
-        identified.
-
-    """
-    return ((wrapped_longitude % 360) + 360) % 360
-
-
-def get_valid_longitude_range(longitude: VariableFromDmr,
-                              longitude_array: MaskedArray) -> List[float]:
-    """ Check the variable metadata for `valid_range` or `valid_min` and
-        `valid_max`. If no metadata data attributes indicating the valid range
-        are present, check if the data contain a value in the range
-        180 < longitude < 360 to determine the adopted convention.
-
-        The expected options are:
-
-        * Discontinuity at Antimeridian: -180 ≤ longitude (degrees) < 180
-        * Discontinuity at Prime Meridian: 0 ≤ longitude (degrees) < 360
-
-    """
-    valid_range = longitude.get_range()
-
-    if valid_range is None and np.max(longitude_array) > 180.0:
-        valid_range = [0.0, 360.0]
-    elif valid_range is None:
-        valid_range = [-180.0, 180.0]
-
-    return valid_range
+    return adjusted_longitude

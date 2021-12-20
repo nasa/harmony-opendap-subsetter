@@ -6,7 +6,7 @@ from harmony.util import config
 from varinfo import VarInfoFromDmr
 import numpy as np
 
-from pymods.dimension_utilities import (add_index_range,
+from pymods.dimension_utilities import (add_index_range, get_dimension_extents,
                                         get_dimension_index_range,
                                         get_fill_slice, is_dimension_ascending,
                                         prefetch_dimension_variables)
@@ -173,3 +173,32 @@ class TestDimensionUtilities(TestCase):
         mock_get_opendap_nc4.assert_called_once_with(url, required_dimensions,
                                                      output_dir, self.logger,
                                                      access_token, self.config)
+
+    def test_get_dimension_extents(self):
+        """ Ensure that the expected dimension extents are retrieved.
+
+            The three grids below correspond to longitude dimensions of three
+            collections used with HOSS:
+
+            * GPM: -180 ≤ longitude (degrees east) ≤ 180.
+            * RSSMIF16D: 0 ≤ longitude (degrees east) ≤ 360.
+            * MERRA-2: -180.3125 ≤ longitude (degrees east) ≤ 179.6875.
+
+            These represent fully wrapped longitudes (GPM), fully unwrapped
+            longitudes (RSSMIF16D) and partially wrapped longitudes (MERRA-2).
+
+        """
+        gpm_lons = np.linspace(-179.950, 179.950, 3600)
+        rss_lons = np.linspace(0.125, 359.875, 1440)
+        merra_lons = np.linspace(-180.0, 179.375, 576)
+
+        test_args = [
+            ['Fully wrapped dimension', gpm_lons, -180, 180],
+            ['Fully unwrapped dimension', rss_lons, 0, 360],
+            ['Partially wrapped dimension', merra_lons, -180.3125, 179.6875]
+        ]
+
+        for description, dim_array, expected_min, expected_max in test_args:
+            with self.subTest(description):
+                self.assertTupleEqual(get_dimension_extents(dim_array),
+                                      (expected_min, expected_max))

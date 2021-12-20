@@ -184,3 +184,18 @@ def get_fill_slice(dimension: str, fill_ranges: IndexRanges) -> slice:
         fill_slice = slice(None)
 
     return fill_slice
+
+
+def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
+    """ Fit the dimension with a straight line, and find the outer edge of the
+        first and last pixel, assuming the supplied values lie at the centre of
+        each pixel.
+
+    """
+    dimension_indices = np.arange(dimension_array.size)
+    gradient, _ = np.polyfit(dimension_indices, dimension_array, 1)
+
+    min_extent = dimension_array.min() - np.abs(gradient) / 2.0
+    max_extent = dimension_array.max() + np.abs(gradient) / 2.0
+
+    return (min_extent, max_extent)

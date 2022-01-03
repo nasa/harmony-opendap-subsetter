@@ -4,12 +4,21 @@
 # Pushes the latest version of the sds/variable-subsetter image to an AWS ECR
 # repository. This script requires AWS credentials to be set.
 #
+# This script can be called with an optional parameter denoting the tag to
+# associate with the Docker image. The Bamboo build plan should use the
+# semantic version number saved in `docker/service_version.txt`. This script
+# will default to use "latest" if no tag is supplied as an argument.
+#
 # Adapted from SwotRepr: 2020-05-07
 #
 ###############################################################################
 set -ex
 
 image="sds/variable-subsetter"
+
+# This tag should be supplied by Bamboo during deployment. If not, it will
+# default to "latest".
+#
 tag=${1:-latest}
 
 region=${AWS_DEFAULT_REGION-"us-west-2"}

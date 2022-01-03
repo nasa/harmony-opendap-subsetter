@@ -190,8 +190,8 @@ def fill_variable(output_dataset: Dataset, fill_ranges: IndexRanges,
     variable = varinfo.get_variable(variable_path)
 
     if (
-            not variable.is_longitude() and
-            len(dimensions_to_fill.intersection(variable.dimensions)) > 0
+            not variable.is_longitude()
+            and len(dimensions_to_fill.intersection(variable.dimensions)) > 0
     ):
         fill_index_tuple = tuple(
             get_fill_slice(dimension, fill_ranges)

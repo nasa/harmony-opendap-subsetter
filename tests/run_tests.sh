@@ -3,10 +3,10 @@
 #
 # A script invoked by the test Dockerfile to run the Python `unittest` suite
 # for the Harmonised variable subsetter. The script first runs the test suite,
-# then it checks for linting errors, then checks for dependencies with known
-# security vulnerabilities.
+# then it checks for linting errors.
 #
-# Adapted from SwotRepr project, 2020-05-07
+# 2020-05-07: Adapted from SwotRepr project.
+# 2022-01-03: Removed safety checks, as these are now run in Snyk.
 #
 ####################################
 
@@ -37,15 +37,6 @@ RESULT=$((3 & $RESULT))
 if [ "$RESULT" -ne "0" ]; then
     STATUS=1
     echo "ERROR: pylint generated errors"
-fi
-
-# Run the python safety check
-safety check
-RESULT=$?
-
-if [ "$RESULT" -ne "0" ]; then
-    STATUS=1
-    echo "ERROR: safety check generated errors"
 fi
 
 exit $STATUS

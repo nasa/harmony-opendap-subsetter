@@ -84,8 +84,8 @@ def get_temporal_index_ranges(required_variables: Set[str],
             units_time = time_variable.get_attribute_value('units')
             time_ref, time_delta = get_time_ref(units_time)
 
-            minimum_extent = (time_start - time_ref)/time_delta
-            maximum_extent = (time_end - time_ref)/time_delta
+            minimum_extent = (time_start - time_ref) / time_delta
+            maximum_extent = (time_end - time_ref) / time_delta
 
             index_ranges[dimension] = get_dimension_index_range(
                 dimensions_file[dimension][:], minimum_extent, maximum_extent

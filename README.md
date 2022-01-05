@@ -1,15 +1,60 @@
 ## Data Services service for variable subsetting
 
-This repository contains the Data Services variable subsetter offered as a
-[Harmony](https://wiki.earthdata.nasa.gov/spaces/viewspace.action?key=HARMONY)
-service. It will be capable of receiving a granule, with a list of variables to
-return in an output file. This output file will contain both those variables
-specified in the input message, and the relevant supporting variables (such as
-coordinates).
+This repository contains two [Harmony](https://wiki.earthdata.nasa.gov/spaces/viewspace.action?key=HARMONY)
+services developed by the Data Services team: the Variable Subsetter and the
+Harmony OPeNDAP SubSetter (HOSS). These services currently both use the same
+Docker image, `sds/variable-subsetter`.
 
-Currently, if the request is synchronous, the variable subsetter will only
-allow processing of a single granule, and will raise an exception if there are
-multiple granules defined.
+Both services perform subsetting by making requests to Hyrax, an OPeNDAP
+instance hosted in the Cloud. Both are currently accessed via the same
+`HarmonyAdapter` class in `subsetter.py`, with that class determining the type
+of request by the parameters included in the inbound Harmony message. The two
+services are distinguished within the main
+[services.yml](https://github.com/nasa/harmony/blob/main/config/services.yml)
+configuration file for Harmony, and with different UMM-S records.
+
+Both services require data to be ingested such that the granules can be
+accessed via Hyrax. This means:
+
+* Generating a sidecar `.dmrpp` file. The file should then be placed in the
+  same location (S3 bucket) as the granule itself, and have the same filename,
+  with an additional `.dmrpp` suffix.
+* Having a `RelatedUrl` entry in the UMM-G record for each granule with a `Type`
+  of `USE SERVICE API` and `Subtype` of `OPENDAP DATA`. This can be generated
+  via [a Cumulus task](https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates).
+
+#### HOSS:
+
+The Harmony OPeNDAP SubSetter (HOSS) is designed for use with gridded data
+(levels 3 or 4). HOSS can perform spatial, temporal and variable subsetting.
+
+Variable subsets will include both variables requested by the end-user, as well
+as variables that are referred to in CF-Convention attributes of the requested
+variables. Such references include coordinates and grid mappings.
+
+Spatial and temporal subsets are accomplished by identifying grid dimension
+variables, which are retrieved in full. The requested spatial or temporal
+ranges are then converted to indices corresponding to the dimension pixel
+containing that value. The spatial and temporal subsets are then retrieved by
+including those indices for all gridded variables in the OPeNDAP DAP4
+constraint expression.
+
+To perform a successful temporal subset, it is expected that the temporal
+variables adhere to [CF-Conventions](https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html#time-coordinate).
+
+#### Variable Subsetter:
+
+The Variable Subsetter uses the same functionality, and therefore a lot of the
+same code, as HOSS, but only offers the option of variable subsetting. This
+means that it is compatible with collections that have been processed to lower
+levels, including level 2.
+
+As with HOSS, an end-user can specify the variables they want, and the Variable
+Subsetter will also retrieve any variables referred to in specific
+CF-Convention metadata attributes of the requested variables. This ensures the
+output files from the Variable Subsetter remain viable as relevant information,
+such as spatial and temporal coordinates, cannot be omitted from the output due
+to being forgotten in the initial request to Harmony.
 
 ### Local usage:
 
@@ -26,40 +71,40 @@ cd var_subsetter
 ./bin/build-image
 ```
 
-To run the service in a Docker container, after building the image:
+HOSS and the Variable Subsetter are best run locally using a local instance of
+Harmony, available from [here](https://github.com/nasa/harmony). After building
+the service Docker image locally via the `./bin/build-image` script, make sure
+your local Harmony instance lists "var-subsetter" in the comma-separated list
+of services under the `LOCALLY_DEPLOYED_SERVICES` environment variable
+contained in your local Harmony `.env` file.
 
-```bash
-./bin/run-image \
-	--harmony-action 'invoke' \
-	--harmony-input '{"sources": [{"variables": [{"id": "V0001-EXAMPLE", "name": "science_variable", "fullPath": "/path/to/science_variable"}], "granules": [{"url": "..."}]}], "user": "urs_user", "isSynchronous": true, "callback": "URL for callback"}'
-```
-
-The `--harmony-action` and `--harmony-input` parameters mimic how Harmony would
-invoke the variable subsetter service. A set of example messages can be found
-[here](https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse/tests/example_messages.py). In the example above, the message requests
-for a subset of a granule (at URL: "...") to contain the "/path/to/science"
-variable. The variable subsetter will extract this and other variables that it
-refers to in its CF attributes.
-
-Passing environment variables to the Docker container is done via a `.env` file
-in the root of the repository. The `bin/run-image` will automatically detect
-the presence of this file. To run the variable subsetter service container
-locally, use the following template for `.env`. This template assumes there is
-no Harmony local instance running.
+Once a local Harmony instance is configured to run the Variable Subsetter and
+HOSS, the service can be invoked to run on UAT-hosted data via
+[`harmony-py`](https://github.com/nasa/harmony-py):
 
 ```
-ENV=test
+from harmony import BBox, Client, Collection, Environment, Request
+
+harmony_client = Client(env=Environment.LOCAL)
+bbox = BBox(w=20, s=-10, e=40, n=10)
+collection = Collection(id='<UAT collection concept ID>')
+variables = ['/fullpath/var_one', '/fullpath/var_two']
+request = Request(collection=collection, variables=variables, spatial=bbox,
+				  max_results=1)
+
+job_id = harmony_client.submit(request)
 ```
 
-Note, when `ENV` is set to `test` or `dev`, the Harmony adapter will not try to
-stage the output results unless a local Harmony instance is present. However, a
-`callback` is still required in the Harmony message, as the logging will try to
-concatenate this string in a warning stating that the service will not reply to
-Harmony.
+Requests should be visible at `localhost:3000/jobs`. Debugging can be performed
+by looking at logs for the Kubernetes pods associated with Harmony in Docker
+Desktop.
+
+Note: There are issues if you try to have a Python environment (e.g., conda)
+that contains both the `harmony-py` and `harmony-service-lib-py` packages.
 
 ### Development notes:
 
-The variable subsetter runs within a Docker container (both the project itself,
+The Variable Subsetter runs within a Docker container (both the project itself,
 and the tests that are run for CI/CD. If you add a new Python package to be
 used within the project (or remove a third party package), the change in
 dependencies will need to be recorded in the relevant requirements file:
@@ -69,38 +114,43 @@ dependencies will need to be recorded in the relevant requirements file:
 * `var_subsetter/pip_requirements.txt`: Additional requirements installed
 	within the container's conda environment via Pip. These are also required
 	for the source code of the variable subsetter to run.
-* `var_subsetter/test/pip_test_requirements.txt`: Requirements only used while
+* `var_subsetter/tests/pip_test_requirements.txt`: Requirements only used while
 	running tests, such as `pylint` or `coverage`. These are kept separate to
 	reduce the dependencies in the delivered software.
 
 ### Running tests:
 
 The variable subsetter has Python tests that use the `unittest` package. These
-can be run within a Docker container using the following two scripts:
+can be run within a Docker container using the following scripts:
 
 ```bash
+# Build the service image, which is a base for the test image
+./bin/build-image
+
+# Build the test image.
 ./bin/build-test
-./bin/run-test /full/path/to/var_subsetter-coverage
+
+# Run the tests.
+./bin/run-test
 ```
 
 Coverage reports are being generate for each build in Bamboo, and saved as artifacts.
-Following URL is an example coverage report in Bamboo:
 
-https://ci.earthdata.nasa.gov/artifact/HITC-SVS20/BRT/build-3/Coverage-Report/source/tests/coverage/index.html
+### Versioning
 
-For faster iteration, one can use the `build-env` and `run-dev` scripts:
+As a Harmony service, the Variable Subsetter and HOSS are meant to follow
+semantic version numbers (e.g., `major.minor.patch`). This version is included
+in the `docker/service_version.txt` file. When updating the Python service
+code, the version number contained in the `service_version.txt` file should be
+incremented before creating a pull request.
 
-```bash
-./bin/build-env
+The general rules for which version number to increment are:
 
-# Do some development
-./bin/run-dev
-# Do some more development
-./bin/run-dev
-```
+* Major: When API changes are made to the service that are not backwards
+  compatible.
+* Minor: When functionality is added in a backwards compatible way.
+* Patch: Used for backwards compatible bug fixes or performance improvements,
+  these changes should not affect how an end user calls the service.
 
-The `build-env` script creates a conda environment installing the requisite
-Python packages from conda and pip. The `run-dev` script uses the output from
-`build-env` as a base image, and copies the source code for the variable
-subsetter into a new container, which is then executed to run the `unittest`
-suite.
+When the Docker image is built in Bamboo, it will be tagged with the semantic
+version number as stored in `docker/service_version.txt`.

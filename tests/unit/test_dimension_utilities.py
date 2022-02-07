@@ -200,5 +200,7 @@ class TestDimensionUtilities(TestCase):
 
         for description, dim_array, expected_min, expected_max in test_args:
             with self.subTest(description):
-                self.assertTupleEqual(get_dimension_extents(dim_array),
-                                      (expected_min, expected_max))
+                np.testing.assert_almost_equal(
+                    get_dimension_extents(dim_array),
+                    (expected_min, expected_max)
+                )

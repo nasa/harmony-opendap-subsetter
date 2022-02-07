@@ -1,14 +1,17 @@
 from logging import getLogger
 from unittest import TestCase
 from unittest.mock import Mock, patch
-from urllib.error import HTTPError
+# from urllib.error import HTTPError
 
+from harmony.exceptions import ForbiddenException
 from harmony.util import config
 
 from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
-from pymods.utilities import (download_url, get_constraint_expression,
-                              get_file_mimetype, get_opendap_nc4,
-                              HTTP_REQUEST_ATTEMPTS, move_downloaded_nc4)
+from pymods.utilities import (download_url, format_dictionary_string,
+                              format_variable_set_string,
+                              get_constraint_expression, get_file_mimetype,
+                              get_opendap_nc4, HTTP_REQUEST_ATTEMPTS,
+                              is_internal_server_error, move_downloaded_nc4)
 
 
 class TestUtilities(TestCase):
@@ -16,6 +19,8 @@ class TestUtilities(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.harmony_500_error = Exception('Unable to download.')
+        cls.harmony_auth_error = ForbiddenException('I can\'t do that.')
         cls.config = config(validate=False)
         cls.logger = getLogger('tests')
 
@@ -48,12 +53,8 @@ class TestUtilities(TestCase):
         test_url = 'test.org'
         test_data = {'dap4.ce': '%2Flatitude%3B%2Flongitude'}
         access_token = 'xyzzy'
-        message_retry = 'Internal Server Error'
-        message_other = 'Authentication Error'
 
         http_response = f'{output_directory}/output.nc'
-        http_error_retry = HTTPError(test_url, 500, message_retry, {}, None)
-        http_error_other = HTTPError(test_url, 403, message_other, {}, None)
 
         with self.subTest('Successful response, only make one request.'):
             mock_util_download.return_value = http_response
@@ -89,7 +90,8 @@ class TestUtilities(TestCase):
             mock_util_download.reset_mock()
 
         with self.subTest('500 error triggers a retry.'):
-            mock_util_download.side_effect = [http_error_retry, http_response]
+            mock_util_download.side_effect = [self.harmony_500_error,
+                                              http_response]
 
             response = download_url(test_url, output_directory, self.logger)
 
@@ -97,7 +99,8 @@ class TestUtilities(TestCase):
             self.assertEqual(mock_util_download.call_count, 2)
 
         with self.subTest('Non-500 error does not retry, and is re-raised.'):
-            mock_util_download.side_effect = [http_error_other, http_response]
+            mock_util_download.side_effect = [self.harmony_auth_error,
+                                              http_response]
 
             with self.assertRaises(UrlAccessFailed):
                 download_url(test_url, output_directory, self.logger)
@@ -106,7 +109,9 @@ class TestUtilities(TestCase):
                                                            self.logger)
 
         with self.subTest('Maximum number of attempts not exceeded.'):
-            mock_util_download.side_effect = [http_error_retry] * (HTTP_REQUEST_ATTEMPTS + 1)
+            mock_util_download.side_effect = [
+                self.harmony_500_error
+            ] * (HTTP_REQUEST_ATTEMPTS + 1)
             with self.assertRaises(UrlAccessFailedWithRetries):
                 download_url(test_url, output_directory, self.logger)
                 self.assertEqual(mock_util_download.call_count,
@@ -186,3 +191,46 @@ class TestUtilities(TestCase):
 
         mock_move.assert_called_once_with('/tmp/path/to/file.nc4',
                                           '/tmp/path/to/uuid4.nc4')
+
+    def test_is_internal_server_error(self):
+        """ Ensure the returned errors from `harmony-service-lib-py`
+            (`harmony.http.download`) are correctly recognised.
+
+        """
+        with self.subTest('Internal service error'):
+            self.assertTrue(is_internal_server_error(self.harmony_500_error))
+
+        with self.subTest('ForbiddenException, e.g., EULA, 401, 403'):
+            self.assertFalse(is_internal_server_error(self.harmony_auth_error))
+
+        with self.subTest('Other bare exception'):
+            self.assertFalse(
+                is_internal_server_error(Exception('Random message'))
+            )
+
+    def test_format_variable_set(self):
+        """ Ensure a set of variable strings is printed out as expected, and
+            does not contain any curly braces.
+
+            The test is a little convoluted, because sets are unordered, so the
+            exact ordering of the variables within the string may not be
+            identical.
+
+        """
+        variable_set = {'/var_one', '/var_two', '/var_three'}
+        formatted_string = format_variable_set_string(variable_set)
+
+        self.assertNotIn('{', formatted_string)
+        self.assertNotIn('}', formatted_string)
+        self.assertSetEqual(variable_set, set(formatted_string.split(', ')))
+
+    def test_format_dictionary_string(self):
+        """ Ensure a dictionary is formatted to a string without curly braces.
+            This function assumes only a single level dictionary, without any
+            sets for values.
+
+        """
+        input_dictionary = {'key_one': 'value_one', 'key_two': 'value_two'}
+
+        self.assertEqual(format_dictionary_string(input_dictionary),
+                         'key_one: value_one\nkey_two: value_two')

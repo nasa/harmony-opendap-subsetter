@@ -18,7 +18,8 @@ from pymods.dimension_utilities import (add_index_range, get_fill_slice,
                                         prefetch_dimension_variables)
 from pymods.spatial import get_geographic_index_ranges
 from pymods.temporal import get_temporal_index_ranges
-from pymods.utilities import download_url, get_opendap_nc4
+from pymods.utilities import (download_url, format_variable_set_string,
+                              get_opendap_nc4)
 
 
 def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
@@ -53,12 +54,14 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
 
     requested_variables = get_requested_variables(varinfo, variables,
                                                   bounding_box)
-    logger.info(f'Requested variables: {requested_variables}')
+    logger.info('Requested variables: '
+                f'{format_variable_set_string(requested_variables)}')
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.
     required_variables = varinfo.get_required_variables(requested_variables)
-    logger.info(f'All required variables: {required_variables}')
+    logger.info('All required variables: '
+                f'{format_variable_set_string(required_variables)}')
 
     # Define a catch to store all dimension index ranges (spatial, temporal):
     index_ranges = {}

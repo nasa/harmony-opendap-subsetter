@@ -21,7 +21,7 @@ WORKDIR "/home"
 COPY ./conda_requirements.txt conda_requirements.txt
 
 # Create Conda environment
-RUN conda create -y --name subsetter --file conda_requirements.txt python=3.7 -q \
+RUN conda create -y --name subsetter --file conda_requirements.txt python=3.8 -q \
 	--channel conda-forge \
 	--channel defaults
 

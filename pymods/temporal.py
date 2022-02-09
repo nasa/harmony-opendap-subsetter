@@ -9,9 +9,9 @@
 
 """
 from datetime import datetime, timedelta, timezone
-from dateutil.parser import parse as parse_datetime
 from typing import List, Set
 
+from dateutil.parser import parse as parse_datetime
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 

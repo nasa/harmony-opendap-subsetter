@@ -7,6 +7,7 @@ from netCDF4 import Dataset
 import numpy as np
 from varinfo import VarInfoFromDmr
 
+from pymods.bbox_utilities import BBox
 from pymods.spatial import (get_bounding_box_longitudes,
                             get_geographic_index_ranges, get_longitude_in_grid)
 
@@ -42,8 +43,8 @@ class TestSpatial(TestCase):
 
         """
         test_file_name = f'{self.test_dir}/test.nc'
-        bounding_box = [160, 45, 200, 85]
-        bounding_box_floats = [160.1, 44.9, 200.1, 84.9]
+        bounding_box = BBox(160, 45, 200, 85)
+        bounding_box_floats = BBox(160.1, 44.9, 200.1, 84.9)
 
         with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
             test_file.createDimension('latitude', size=180)
@@ -98,7 +99,7 @@ class TestSpatial(TestCase):
             # Western longitude = -20 => 340 => index = 340 (min index, so round up)
             # longitude[19] = 19.5, longitude[20] = 20.5:
             # Eastern longitude = 20 => index 19 (max index, so round down)
-            bbox_crossing = [-20, 45, 20, 85]
+            bbox_crossing = BBox(-20, 45, 20, 85)
             self.assertDictEqual(
                 get_geographic_index_ranges({'/longitude'}, self.varinfo,
                                             test_file_name, bbox_crossing),
@@ -154,7 +155,7 @@ class TestSpatial(TestCase):
             values should be converted to this range.
 
         """
-        bounding_box = [-150, -15, -120, 15]
+        bounding_box = BBox(-150, -15, -120, 15)
 
         test_args = [['-180 ≤ lon (deg) < 180', -180, 180, [-150, -120]],
                      ['0 ≤ lon (deg) < 360', 0, 360, [210, 240]]]
@@ -173,8 +174,9 @@ class TestSpatial(TestCase):
 
         for description, bbox_west, bbox_east, expected_output in test_args:
             with self.subTest(f'Partial wrapping: {description}'):
+                input_bounding_box = BBox(bbox_west, -15, bbox_east, 15)
                 self.assertListEqual(
-                    get_bounding_box_longitudes([bbox_west, -15, bbox_east, 15],
+                    get_bounding_box_longitudes(input_bounding_box,
                                                 partially_wrapped_longitudes),
                     expected_output
                 )

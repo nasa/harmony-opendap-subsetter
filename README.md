@@ -42,6 +42,18 @@ constraint expression.
 To perform a successful temporal subset, it is expected that the temporal
 variables adhere to [CF-Conventions](https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html#time-coordinate).
 
+Given that HOSS retrieves data from OPeNDAP using ranges of indices, the
+returned output for each variable is a hyperrectangle. This precludes shape
+file spatial subsetting via only HOSS. Instead, when receiving a shape file in
+an inbound Harmony message, HOSS determines a bounding box that minimally
+encompasses all features in the GeoJSON shape file. HOSS will then use this
+bounding box to perform a spatial subset, before sending its output to
+MaskFill. MaskFill will then assign fill values to all pixels within the HOSS
+hyperrectangle, but outside the GeoJSON shape.
+
+Note, if both a bounding box and a shape file are specified in the same Harmony
+message, HOSS will use the bounding box information from the message.
+
 #### Variable Subsetter:
 
 The Variable Subsetter uses the same functionality, and therefore a lot of the

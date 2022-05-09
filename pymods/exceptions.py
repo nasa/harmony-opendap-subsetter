@@ -18,6 +18,29 @@ class CustomError(Exception):
         super().__init__(self.message)
 
 
+class InvalidInputGeoJSON(CustomError):
+    """ This exception is raised when a supplied GeoJSON object does not
+        adhere the GeoJSON schema. For example, if a GeoJSON geometry does not
+        contain either a `bbox` or a `coordinates` attribute.
+
+    """
+    def __init__(self):
+        super().__init__('InvalidInputGeoJSON',
+                         'The supplied shape file cannot be parsed according '
+                         'to the GeoJSON format defined in RFC 7946.')
+
+
+class UnsupportedShapeFileFormat(CustomError):
+    """ This exception is raised when the shape file included in the input
+        Harmony message is not GeoJSON.
+
+    """
+    def __init__(self, shape_file_mime_type: str):
+        super().__init__('UnsupportedShapeFileFormat',
+                         f'Shape file format "{shape_file_mime_type}" not '
+                         'supported.')
+
+
 class UnsupportedTemporalUnits(CustomError):
     """ This exception is raised when the 'units' metadata attribute contains
         a temporal unit that is not supported by HOSS.

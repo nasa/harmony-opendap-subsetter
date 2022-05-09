@@ -39,6 +39,8 @@ import harmony
 from harmony.message import Source
 from harmony.util import generate_output_filename, HarmonyException
 
+from pymods.bbox_utilities import (get_harmony_message_bbox,
+                                   get_request_shape_file)
 from pymods.subset import subset_granule
 from pymods.utilities import get_file_mimetype
 
@@ -112,12 +114,10 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             # Mark any fields the service processes so later services do not
             # repeat work. Unspecified `Message` attributes default to `None`.
             variables = source.process('variables') or []
+            bounding_box = get_harmony_message_bbox(self.message)
 
-            # Future work, DAS-1193: Move bounding box extraction to new module
-            if self.message.subset is not None:
-                bounding_box = self.message.subset.process('bbox')
-            else:
-                bounding_box = None
+            shape_file_path = get_request_shape_file(self.message, workdir,
+                                                     self.logger, self.config)
 
             if self.message.temporal is not None:
                 temporal_range = [self.message.temporal.start,
@@ -133,6 +133,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 access_token=self.message.accessToken,
                 config=self.config,
                 bounding_box=bounding_box,
+                shape_file_path=shape_file_path,
                 temporal_range=temporal_range
             )
 

@@ -13,6 +13,8 @@ from netCDF4 import Dataset
 from numpy.ma import masked
 from varinfo import VarInfoFromDmr
 
+from pymods.bbox_utilities import (BBox, get_shape_file_geojson,
+                                   get_geographic_bbox)
 from pymods.dimension_utilities import (add_index_range, get_fill_slice,
                                         IndexRanges,
                                         prefetch_dimension_variables)
@@ -24,7 +26,8 @@ from pymods.utilities import (download_url, format_variable_set_string,
 
 def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
                    output_dir: str, logger: Logger, access_token: str = None,
-                   config: Config = None, bounding_box: List[float] = None,
+                   config: Config = None, bounding_box: BBox = None,
+                   shape_file_path: str = None,
                    temporal_range: List[datetime] = None) -> str:
     """ This function is the main business logic for retrieving a variable
         and/or spatial subset from OPeNDAP.
@@ -65,6 +68,12 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
 
     # Define a catch to store all dimension index ranges (spatial, temporal):
     index_ranges = {}
+
+    # If there is no bounding box, but there is a shape-file, calculate a
+    # bounding box to encapsulate the GeoJSON shape:
+    if bounding_box is None and shape_file_path is not None:
+        geojson_content = get_shape_file_geojson(shape_file_path)
+        bounding_box = get_geographic_bbox(geojson_content)
 
     if bounding_box is not None or temporal_range is not None:
         # Prefetch all dimension variables in full:
@@ -122,7 +131,7 @@ def get_varinfo(opendap_url: str, output_dir: str, logger: Logger,
 
 def get_requested_variables(varinfo: VarInfoFromDmr,
                             variables: List[HarmonyVariable],
-                            bounding_box: Optional[List[float]]) -> Set[str]:
+                            bounding_box: Optional[BBox]) -> Set[str]:
     """ Iterate through all requested variables from the Harmony message and
         extract their full paths.
 

@@ -28,6 +28,7 @@ from numpy.ma.core import MaskedArray
 from varinfo import VarInfoFromDmr
 
 
+from pymods.bbox_utilities import BBox
 from pymods.dimension_utilities import (get_dimension_extents,
                                         get_dimension_index_range, IndexRanges,
                                         is_dimension_ascending)
@@ -35,7 +36,7 @@ from pymods.dimension_utilities import (get_dimension_extents,
 
 def get_geographic_index_ranges(required_variables: Set[str],
                                 varinfo: VarInfoFromDmr, dimensions_path: str,
-                                bounding_box: List[float]) -> IndexRanges:
+                                bounding_box: BBox) -> IndexRanges:
     """ Iterate through all geographic dimensions and extract the indices that
         correspond to the minimum and maximum extents in that dimension. For
         longitudes, it is assumed that the western extent should be considered
@@ -59,13 +60,13 @@ def get_geographic_index_ranges(required_variables: Set[str],
                 if is_dimension_ascending(dimensions_file[dimension][:]):
                     # dimension array runs -90 to 90 degrees.
                     # The minimum index will be the south extent
-                    minimum_extent = bounding_box[1]
-                    maximum_extent = bounding_box[3]
+                    minimum_extent = bounding_box.south
+                    maximum_extent = bounding_box.north
                 else:
                     # dimension array runs 90 to -90 degrees.
                     # The minimum index will be the north extent
-                    minimum_extent = bounding_box[3]
-                    maximum_extent = bounding_box[1]
+                    minimum_extent = bounding_box.north
+                    maximum_extent = bounding_box.south
             else:
                 # First, convert the bounding box western and eastern extents
                 # to match the valid range of the dimension data
@@ -90,7 +91,7 @@ def get_geographic_index_ranges(required_variables: Set[str],
     return index_ranges
 
 
-def get_bounding_box_longitudes(bounding_box: List[float],
+def get_bounding_box_longitudes(bounding_box: BBox,
                                 longitude_array: MaskedArray) -> List[float]:
     """ Ensure the bounding box extents are compatible with the range of the
         longitude variable. The Harmony bounding box values are expressed in
@@ -102,9 +103,9 @@ def get_bounding_box_longitudes(bounding_box: List[float],
     min_longitude, max_longitude = get_dimension_extents(longitude_array)
 
     western_box_extent = get_longitude_in_grid(min_longitude, max_longitude,
-                                               bounding_box[0])
+                                               bounding_box.west)
     eastern_box_extent = get_longitude_in_grid(min_longitude, max_longitude,
-                                               bounding_box[2])
+                                               bounding_box.east)
 
     return [western_box_extent, eastern_box_extent]
 

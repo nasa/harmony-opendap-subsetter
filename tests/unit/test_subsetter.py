@@ -6,6 +6,7 @@ import json
 from harmony.message import Message
 from harmony.util import config
 
+from pymods.bbox_utilities import BBox
 from subsetter import HarmonyAdapter
 from tests.utilities import spy_on
 
@@ -35,7 +36,8 @@ class TestSubsetter(TestCase):
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None,
                        bounding_box: Optional[List[float]] = None,
-                       temporal_range: Optional[Dict[str, str]] = None) -> Message:
+                       temporal_range: Optional[Dict[str, str]] = None,
+                       shape_file: Optional[str] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
         granules = [
             {
@@ -46,7 +48,8 @@ class TestSubsetter(TestCase):
                     'end': '2020-01-02T00:00:00.000Z'
                 },
                 'bbox': [-180, -90, 180, 90]
-            } for file_path in file_paths]
+            } for file_path in file_paths
+        ]
         variables = [{'name': variable} for variable in variable_list]
         message_content = {
             'sources': [{
@@ -61,6 +64,12 @@ class TestSubsetter(TestCase):
             'subset': {'bbox': bounding_box, 'shape': None},
             'temporal': temporal_range
         }
+
+        if shape_file is not None:
+            message_content['subset']['shape'] = {
+                'href': shape_file,
+                'type': 'application/geo+json'
+            }
 
         if is_synchronous is not None:
             message_content['isSynchronous'] = is_synchronous
@@ -99,6 +108,7 @@ class TestSubsetter(TestCase):
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
+                                                    shape_file_path=None,
                                                     temporal_range=temporal_list)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -141,6 +151,7 @@ class TestSubsetter(TestCase):
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
+                                                    shape_file_path=None,
                                                     temporal_range=None)
 
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -184,6 +195,7 @@ class TestSubsetter(TestCase):
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
+                                                    shape_file_path=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -224,6 +236,7 @@ class TestSubsetter(TestCase):
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
+                                                    shape_file_path=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -235,15 +248,17 @@ class TestSubsetter(TestCase):
             logger=variable_subsetter.logger
         )
 
-    def test_hoss_request(self, mock_stage, mock_subset_granule,
-                          mock_get_mimetype):
+    @patch('subsetter.get_request_shape_file')
+    def test_hoss_bbox_request(self, mock_get_request_shape_file, mock_stage,
+                               mock_subset_granule, mock_get_mimetype):
         """ A request that specifies a bounding box should result in a both a
-            variable and a spatial subset being made.
+            variable and a bounding box spatial subset being made.
 
         """
+        mock_get_request_shape_file.return_value = None
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
-        bounding_box = [-20, -10, 20, 30]
+        bounding_box = BBox(-20, -10, 20, 30)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       'G1233860471-EEDTEST',
@@ -257,6 +272,9 @@ class TestSubsetter(TestCase):
             variable_subsetter.invoke()
         granule = variable_subsetter.message.granules[0]
 
+        mock_get_request_shape_file.assert_called_once_with(
+            message, ANY, variable_subsetter.logger, variable_subsetter.config
+        )
         mock_subset_granule.assert_called_once_with(granule.url,
                                                     granule.variables,
                                                     ANY,
@@ -264,6 +282,56 @@ class TestSubsetter(TestCase):
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=bounding_box,
+                                                    shape_file_path=None,
+                                                    temporal_range=None)
+        mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
+
+        mock_stage.assert_called_once_with(
+            '/path/to/output.nc',
+            'africa_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger
+        )
+
+    @patch('subsetter.get_request_shape_file')
+    def test_hoss_shape_file_request(self, mock_get_request_shape_file,
+                                     mock_stage, mock_subset_granule,
+                                     mock_get_mimetype):
+        """ A request that specifies a shape file should result in a both a
+            variable and a spatial subset being made.
+
+        """
+        shape_file_url = 'www.example.com/shape.geo.json'
+        local_shape_file = '/path/to/shape.geo.json'
+        mock_get_request_shape_file.return_value = local_shape_file
+        mock_subset_granule.return_value = '/path/to/output.nc'
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+
+        message = self.create_message('C1233860183-EEDTEST',
+                                      'G1233860471-EEDTEST',
+                                      ['/home/tests/data/africa.nc'],
+                                      ['alpha_var', 'blue_var'],
+                                      'mcollins',
+                                      shape_file=shape_file_url)
+
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
+
+        granule = variable_subsetter.message.granules[0]
+
+        mock_get_request_shape_file.assert_called_once_with(
+            message, ANY, variable_subsetter.logger, variable_subsetter.config
+        )
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    granule.variables,
+                                                    ANY,
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=None,
+                                                    shape_file_path=local_shape_file,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -378,6 +446,7 @@ class TestSubsetter(TestCase):
                                                 access_token=message.accessToken,
                                                 config=self.config,
                                                 bounding_box=None,
+                                                shape_file_path=None,
                                                 temporal_range=None)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
@@ -421,6 +490,7 @@ class TestSubsetter(TestCase):
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
+                                                    shape_file_path=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 

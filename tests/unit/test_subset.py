@@ -816,14 +816,18 @@ class TestSubset(TestCase):
             * Test case 2: variables in message, some without leading slash -
                            the variables paths should be extracted with a
                            slash prepended to each.
-            * Test case 3: variables in message, with bounding box - the same
-                           variable paths from the message should be extracted.
-            * Test case 4: variables not in message, no bounding box - the
-                           output should be an empty set (straight variable
-                           subset, all variables from OPeNDAP).
-            * Test case 5: variables not in message, bounding box, - the
-                           return should include all non-dimension variables
-                           from the `VarInfoFromDmr` instance.
+            * Test case 3: variables in message, index ranges required (e.g.,
+                           for bounding box, shape file or temporal subset)
+                           - the same variable paths from the message should be
+                           extracted.
+            * Test case 4: variables not in message, no index ranges required
+                           - the output should be an empty set (straight
+                           variable subset, all variables from OPeNDAP).
+            * Test case 5: variables not in message, index ranges required
+                           (e.g., for bounding box, shape file or temporal
+                           subset) - the return value should include all
+                           non-dimension variables from the `VarInfoFromDmr`
+                           instance.
 
         """
         # This list excludes /latitude, /longitude and /time, as they are
@@ -833,13 +837,13 @@ class TestSubset(TestCase):
                          '/atmosphere_water_vapor_content', '/rainfall_rate',
                          '/sst_dtime', '/wind_speed'}
         test_args = [
-            ['Variables, no bbox', ['/lat', '/lon'], None, {'/lat', '/lon'}],
-            ['Variables, no slash', ['lat', 'lon'], None, {'/lat', '/lon'}],
-            ['Variables, with bbox', ['/lat', '/lon'], self.bounding_box, {'/lat', '/lon'}],
-            ['No variables, no bbox', [], None, set()],
-            ['No variables, bbox', [], self.bounding_box, all_variables]
+            ['Variables, no bbox', ['/lat', '/lon'], False, {'/lat', '/lon'}],
+            ['Variables, no slash', ['lat', 'lon'], False, {'/lat', '/lon'}],
+            ['Variables, with bbox', ['/lat', '/lon'], True, {'/lat', '/lon'}],
+            ['No variables, no bbox', [], False, set()],
+            ['No variables, bbox', [], True, all_variables]
         ]
-        for description, variable_strings, bbox, output_vars in test_args:
+        for description, variable_strings, index_request, output_vars in test_args:
             with self.subTest(description):
                 harmony_variables = [
                     HarmonyVariable({'fullPath': variable_string,
@@ -849,7 +853,7 @@ class TestSubset(TestCase):
                 ]
                 self.assertSetEqual(get_requested_variables(self.varinfo,
                                                             harmony_variables,
-                                                            bbox),
+                                                            index_request),
                                     output_vars)
 
     def test_fill_variables(self):

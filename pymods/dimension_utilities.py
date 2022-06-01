@@ -9,8 +9,9 @@
     unwrapped in accordance with the longitude dimension values.
 
 """
+from datetime import datetime
 from logging import Logger
-from typing import Dict, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from numpy.ma.core import MaskedArray
 import numpy as np
@@ -18,11 +19,30 @@ import numpy as np
 from harmony.util import Config
 from varinfo import VarInfoFromDmr
 
+from pymods.bbox_utilities import BBox
 from pymods.utilities import get_opendap_nc4
 
 
 IndexRange = Tuple[int]
 IndexRanges = Dict[str, IndexRange]
+
+
+def is_index_subset(bounding_box: Optional[BBox],
+                    shape_file_path: Optional[str],
+                    temporal_range: Optional[List[datetime]]) -> bool:
+    """ Determine if the inbound Harmony request specified any parameters that
+        will require an index range subset. These will be:
+
+        * Bounding box spatial requests
+        * Shape file spatial requests
+        * Temporal requests
+        * General dimension range subsetting requests (to be implemented during
+          TRT-199)
+
+    """
+    return any(subset_parameters is not None
+               for subset_parameters in [bounding_box, shape_file_path,
+                                         temporal_range])
 
 
 def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,

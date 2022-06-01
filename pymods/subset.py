@@ -16,7 +16,7 @@ from varinfo import VarInfoFromDmr
 from pymods.bbox_utilities import (BBox, get_shape_file_geojson,
                                    get_geographic_bbox)
 from pymods.dimension_utilities import (add_index_range, get_fill_slice,
-                                        IndexRanges,
+                                        IndexRanges, is_index_subset,
                                         prefetch_dimension_variables)
 from pymods.spatial import get_geographic_index_ranges
 from pymods.temporal import get_temporal_index_ranges
@@ -52,11 +52,15 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
         existing `index_ranges` cache.
 
     """
+    # Determine if index range subsetting will be required:
+    request_is_index_subset = is_index_subset(bounding_box, shape_file_path,
+                                              temporal_range)
+
     # Produce a map of variable dependencies with `sds-varinfo` and the `.dmr`.
     varinfo = get_varinfo(opendap_url, output_dir, logger, access_token, config)
 
     requested_variables = get_requested_variables(varinfo, variables,
-                                                  bounding_box)
+                                                  request_is_index_subset)
     logger.info('Requested variables: '
                 f'{format_variable_set_string(requested_variables)}')
 
@@ -75,7 +79,7 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
         geojson_content = get_shape_file_geojson(shape_file_path)
         bounding_box = get_geographic_bbox(geojson_content)
 
-    if bounding_box is not None or temporal_range is not None:
+    if request_is_index_subset:
         # Prefetch all dimension variables in full:
         dimensions_path = prefetch_dimension_variables(opendap_url, varinfo,
                                                        required_variables,
@@ -131,11 +135,11 @@ def get_varinfo(opendap_url: str, output_dir: str, logger: Logger,
 
 def get_requested_variables(varinfo: VarInfoFromDmr,
                             variables: List[HarmonyVariable],
-                            bounding_box: Optional[BBox]) -> Set[str]:
+                            request_is_index_subset: bool) -> Set[str]:
     """ Iterate through all requested variables from the Harmony message and
         extract their full paths.
 
-        If spatial subsetting is required, but no variables are specified
+        If index range subsetting is required, but no variables are specified
         (e.g., all variables are requested) then the requested variables should
         be set to all variables (science and non-science), so that index-range
         subsets can be specified in a DAP4 constraint expression.
@@ -149,7 +153,7 @@ def get_requested_variables(varinfo: VarInfoFromDmr,
                               else f'/{variable.fullPath}'
                               for variable in variables)
 
-    if bounding_box is not None and len(requested_variables) == 0:
+    if request_is_index_subset and len(requested_variables) == 0:
         requested_variables = varinfo.get_science_variables().union(
             varinfo.get_metadata_variables()
         )

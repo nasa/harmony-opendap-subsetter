@@ -41,6 +41,7 @@ from harmony.util import generate_output_filename, HarmonyException
 
 from pymods.bbox_utilities import (get_harmony_message_bbox,
                                    get_request_shape_file)
+from pymods.dimension_utilities import is_index_subset
 from pymods.subset import subset_granule
 from pymods.utilities import get_file_mimetype
 
@@ -139,9 +140,12 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
             # Stage the output file with a conventional filename
             mime, _ = get_file_mimetype(output_file_path)
+            is_subsetted = is_index_subset(bounding_box, shape_file_path,
+                                           temporal_range)
+
             staged_filename = generate_output_filename(
                 asset.href, variable_subset=source.variables, ext='.nc4',
-                is_subsetted=(bounding_box is not None or len(variables) > 0)
+                is_subsetted=(is_subsetted or len(variables) > 0)
             )
             url = harmony.util.stage(output_file_path,
                                      staged_filename,

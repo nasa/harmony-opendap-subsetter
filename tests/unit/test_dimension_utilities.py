@@ -6,9 +6,11 @@ from harmony.util import config
 from varinfo import VarInfoFromDmr
 import numpy as np
 
+from pymods.bbox_utilities import BBox
 from pymods.dimension_utilities import (add_index_range, get_dimension_extents,
                                         get_dimension_index_range,
                                         get_fill_slice, is_dimension_ascending,
+                                        is_index_subset,
                                         prefetch_dimension_variables)
 
 
@@ -204,3 +206,27 @@ class TestDimensionUtilities(TestCase):
                     get_dimension_extents(dim_array),
                     (expected_min, expected_max)
                 )
+
+    def test_is_index_subset(self):
+        """ Ensure the function correctly determines when a HOSS request will
+            be an index subset (i.e., bounding box, shape file or temporal).
+
+        """
+        bounding_box = BBox(10, 20, 30, 40)
+        shape_file_path = 'path/to/shape.geo.json'
+        temporal_range = ['2021-01-01T01:30:00', '2021-01-01T02:00:00']
+
+        test_args = [
+            ['Bounding box', bounding_box, None, None],
+            ['Shape file', None, shape_file_path, None],
+            ['Temporal', None, None, temporal_range],
+            ['Bounding box and temporal', bounding_box, None, temporal_range],
+            ['Shape file and temporal', None, shape_file_path, temporal_range],
+        ]
+
+        for description, bbox, shape_file, time_range in test_args:
+            with self.subTest(description):
+                self.assertTrue(is_index_subset(bbox, shape_file, time_range))
+
+        with self.subTest('Not an index range subset'):
+            self.assertFalse(is_index_subset(None, None, None))

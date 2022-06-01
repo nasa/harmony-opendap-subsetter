@@ -853,6 +853,163 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
+    def test_temporal_all_variables(self, mock_stage, mock_util_download,
+                                    mock_rmtree, mock_mkdtemp, mock_uuid,
+                                    mock_get_fill_slice):
+        """ Ensure a request with a temporal range and no specified variables
+            will retrieve the expected output. Note - because a temporal range
+            is specified, HOSS will need to perform an index range subset. This
+            means that the prefetch will still have to occur, and all variables
+            with the temporal grid dimension will need to include their index
+            ranges in the final DAP4 constraint expression.
+
+            The example granule has 24 hourly time slices, starting with
+            2021-01-10T00:30:00.
+
+        """
+        temporal_range = {'start': '2021-01-10T01:00:00',
+                          'end': '2021-01-10T03:00:00'}
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.m2t1nxslv_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/M2T1NXSLV_prefetch.nc4', dimensions_path)
+
+        temporal_variables_path = f'{self.tmp_dir}/temporal_variables.nc4'
+        copy('tests/data/M2T1NXSLV_temporal.nc4', temporal_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          temporal_variables_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2021-01-10T00:30:00.000Z',
+                        'end': '2021-01-11T00:30:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+            }],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': None,
+            'temporal': temporal_range,
+            'user': 'jyoung',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should fetch a NetCDF-4
+        # file containing the full 1-D dimension variables only, and the third
+        # should retrieve the final NetCDF-4 with all required variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic or temporal variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(dimensions_data,
+                                       {'%2Flat', '%2Flon', '%2Ftime'})
+        # Ensure the constraint expression contains all the required variables.
+        # /<science_variable>[1:2][][], /time[1:2], /lon, /lat
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime%5B1%3A2%5D',
+             '%2Flat',
+             '%2Flon',
+             '%2FCLDPRS%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FCLDTMP%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FDISPH%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FH1000%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FH250%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FH500%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FH850%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FPBLTOP%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FPS%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FOMEGA500%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FQ250%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FQ500%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FQ850%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FQV10M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FQV2M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FSLP%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FT10M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FT250%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FT2M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FT2MDEW%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FT2MWET%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FT500%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FT850%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTO3%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTOX%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTQL%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTQI%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTQV%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTROPPB%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTROPPV%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTROPQ%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTROPT%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTROPPT%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FTS%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FU10M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FU250%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FU2M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FU500%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FU50M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FU850%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FV10M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FV250%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FV2M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FV500%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FV50M%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FV850%5B1%3A2%5D%5B%5D%5B%5D',
+             '%2FZLCL%5B1%3A2%5D%5B%5D%5B%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
     def test_geo_temporal_end_to_end(self, mock_stage, mock_util_download,
                                      mock_rmtree, mock_mkdtemp, mock_uuid,
                                      mock_get_fill_slice):
@@ -1068,6 +1225,135 @@ class TestSubsetterEndToEnd(TestCase):
         mock_stage.assert_called_once_with(
             f'{self.tmp_dir}/uuid2.nc4',
             'opendap_url_wind_speed_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.bbox_utilities.download')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_geo_shapefile_all_variables(self, mock_stage, mock_util_download,
+                                         mock_geojson_download, mock_rmtree,
+                                         mock_mkdtemp, mock_uuid,
+                                         mock_get_fill_slice):
+        """ Ensure an all variable request with a shape file specified will
+            retrieve all variables, but limited to the ranges of a bounding box
+            that encloses the specified GeoJSON shape.
+
+            Because a shape file is specified, index range subsetting will be
+            performed, so a prefetch request will be performed, and the final
+            DAP4 constraint expression will include all variables with index
+            ranges.
+
+        """
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.rssmif16d_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/f16_ssmis_lat_lon.nc', dimensions_path)
+
+        all_variables_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/f16_ssmis_geo.nc', all_variables_path)
+
+        geojson_path = f'{self.tmp_dir}/polygon.geo.json'
+        copy('tests/geojson_examples/polygon.geo.json', geojson_path)
+
+        shape_file_url = 'www.example.com/polygon.geo.json'
+        mock_geojson_download.return_value = geojson_path
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          all_variables_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+            }],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'shape': {'href': shape_file_url,
+                                 'type': 'application/geo+json'}},
+            'user': 'dscott',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the shape file in the Harmony message was downloaded:
+        mock_geojson_download.assert_called_once_with(shape_file_url,
+                                                      self.tmp_dir,
+                                                      logger=subsetter.logger,
+                                                      access_token=message_data['accessToken'],
+                                                      cfg=subsetter.config)
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should fetch a NetCDF-4
+        # file containing the full 1-D dimension variables only, and the third
+        # should retrieve the final NetCDF-4 with all required variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic or temporal variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'}
+        )
+
+        # Ensure the constraint expression contains all the required variables;
+        # the polygon in the GeoJSON is the state of Utah:
+        # /<science_variable>[][508:527][983:1003], /time, /longitude[983:1003]
+        # /latitude[508:527]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime',
+             '%2Flatitude%5B508%3A527%5D',
+             '%2Flongitude%5B983%3A1003%5D',
+             '%2Fatmosphere_cloud_liquid_water_content%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+             '%2Fatmosphere_water_vapor_content%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+             '%2Frainfall_rate%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+             '%2Fsst_dtime%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+             '%2Fwind_speed%5B%5D%5B508%3A527%5D%5B983%3A1003%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=subsetter.logger

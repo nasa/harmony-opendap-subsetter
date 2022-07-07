@@ -70,3 +70,14 @@ class UrlAccessFailedWithRetries(CustomError):
         super().__init__('UrlAccessFailedWithRetries',
                          f'URL: {url} was unsuccessfully requested the '
                          'maximum number of times.')
+
+
+class InvalidNamedDimension(CustomError):
+    """ This exception is raised when a user-supplied dimension name
+        is not in the list of required dimensions for the subset.
+
+    """
+    def __init__(self, dim_name):
+        super().__init__('InvalidNamedDimension',
+                         f'"{dim_name}" is not a dimension for '
+                         'any of the requested variables.')

@@ -126,6 +126,15 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             else:
                 temporal_range = None
 
+            # Get the subset dimension names and ranges
+            if (
+                self.message.subset is not None
+                and self.message.subset.dimensions is not None
+            ):
+                dim_request = self.message.subset.dimensions
+            else:
+                dim_request = None
+
             # Subset
             output_file_path = subset_granule(
                 asset.href,
@@ -135,13 +144,14 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 config=self.config,
                 bounding_box=bounding_box,
                 shape_file_path=shape_file_path,
+                dim_request=dim_request,
                 temporal_range=temporal_range
             )
 
             # Stage the output file with a conventional filename
             mime, _ = get_file_mimetype(output_file_path)
             is_subsetted = is_index_subset(bounding_box, shape_file_path,
-                                           temporal_range)
+                                           dim_request, temporal_range)
 
             staged_filename = generate_output_filename(
                 asset.href, variable_subset=source.variables, ext='.nc4',

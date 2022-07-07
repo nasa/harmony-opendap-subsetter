@@ -13,14 +13,17 @@ from datetime import datetime
 from logging import Logger
 from typing import Dict, List, Optional, Set, Tuple
 
+from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 import numpy as np
 
 from harmony.util import Config
+from harmony.message import Dimension
 from varinfo import VarInfoFromDmr
 
 from pymods.bbox_utilities import BBox
-from pymods.utilities import get_opendap_nc4
+from pymods.utilities import get_opendap_nc4, format_variable_set_string
+from pymods.exceptions import InvalidNamedDimension
 
 
 IndexRange = Tuple[int]
@@ -29,6 +32,7 @@ IndexRanges = Dict[str, IndexRange]
 
 def is_index_subset(bounding_box: Optional[BBox],
                     shape_file_path: Optional[str],
+                    dim_request: Optional[List[Dimension]],
                     temporal_range: Optional[List[datetime]]) -> bool:
     """ Determine if the inbound Harmony request specified any parameters that
         will require an index range subset. These will be:
@@ -36,13 +40,12 @@ def is_index_subset(bounding_box: Optional[BBox],
         * Bounding box spatial requests
         * Shape file spatial requests
         * Temporal requests
-        * General dimension range subsetting requests (to be implemented during
-          TRT-199)
+        * General dimension range subsetting requests
 
     """
     return any(subset_parameters is not None
                for subset_parameters in [bounding_box, shape_file_path,
-                                         temporal_range])
+                                         dim_request, temporal_range])
 
 
 def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
@@ -50,15 +53,14 @@ def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
                                  logger: Logger, access_token: str,
                                  config: Config) -> str:
     """ Determine the dimensions that need to be "pre-fetched" from OPeNDAP in
-        order to derive index ranges upon them. Initially, this is just
-        geographic spatial dimensions, however, this will be extended to
-        include projected spatial grid dimensions and temporal dimensions.
+        order to derive index ranges upon them. Initially, this was just
+        spatial and temporal dimensions, but to support generic dimension
+        subsets, all required dimensions must be prefetched.
 
     """
-    required_dimensions = set().union(
-        varinfo.get_temporal_dimensions(required_variables),
-        varinfo.get_spatial_dimensions(required_variables)
-    )
+    required_dimensions = varinfo.get_required_dimensions(required_variables)
+    logger.info('All required dimensions: '
+                f'{format_variable_set_string(required_variables)}')
     return get_opendap_nc4(opendap_url, required_dimensions, output_dir,
                            logger, access_token, config)
 
@@ -219,3 +221,70 @@ def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
     max_extent = dimension_array.max() + np.abs(gradient) / 2.0
 
     return (min_extent, max_extent)
+
+
+def get_requested_index_ranges(required_variables: Set[str],
+                               varinfo: VarInfoFromDmr,
+                               dimensions_path: str,
+                               dim_request: List[Dimension]) -> IndexRanges:
+    """ Examines the requested dimension names and ranges and extracts
+        the indices that correspond to the specified range of values
+        for each requested dimension.
+        When dimensions such as atmospheric pressure or ocean depth have
+        values that are descending (getting smaller from start to finish),
+        then the min/max values of the requested range are flipped. If the
+        dimension is descending, the specified range must also be descending.
+
+        The return value from this function is a dictionary that contains the
+        index ranges for the named dimension, such as: {'/lev': [1, 5]}
+
+    """
+    required_dimensions = varinfo.get_required_dimensions(required_variables)
+
+    dim_index_ranges = {}
+
+    with Dataset(dimensions_path, 'r') as dimensions_file:
+        for dim in dim_request:
+            # Check if named dimension is in required_dimensions
+            if dim.name in required_dimensions:
+                dim_is_valid = True
+            elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
+                # Add the leading slash
+                dim.name = f'/{dim.name}'
+                dim_is_valid = True
+            else:
+                dim_is_valid = False
+
+            if dim_is_valid:
+                # get the dimension scale values
+                dim_data = dimensions_file[dim.name][:]
+
+                # Harmony validates that requested min <= max,
+                # but min or max may also be 'None'. If this is the case,
+                # Use extreme values from the dimension scale array
+                if is_dimension_ascending(dim_data):
+                    if dim.min is None:
+                        dim.min = dim_data[0]
+                    if dim.max is None:
+                        dim.max = dim_data[-1]
+                else:
+                    if dim.min is None:
+                        dim.min = dim_data[-1]
+                    if dim.max is None:
+                        dim.max = dim_data[0]
+
+                # Range values must be swapped (if they are not equal)
+                # when requested dimension is descending.
+                if not is_dimension_ascending(dim_data):
+                    if dim.min < dim.max:
+                        # tuple unpacking for swapping variables
+                        dim.min, dim.max = dim.max, dim.min
+
+                # Update the ranges for all requested dimensions
+                dim_index_ranges[dim.name] = get_dimension_index_range(dim_data,
+                                                                       dim.min,
+                                                                       dim.max)
+            else:
+                # This requested dimension is not in the Required Dimension set
+                raise InvalidNamedDimension(dim.name)
+    return dim_index_ranges

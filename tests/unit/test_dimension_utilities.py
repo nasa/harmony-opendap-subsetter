@@ -3,15 +3,19 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from harmony.util import config
+from harmony.message import Dimension
 from varinfo import VarInfoFromDmr
 import numpy as np
 
 from pymods.bbox_utilities import BBox
 from pymods.dimension_utilities import (add_index_range, get_dimension_extents,
                                         get_dimension_index_range,
-                                        get_fill_slice, is_dimension_ascending,
+                                        get_fill_slice,
+                                        get_requested_index_ranges,
+                                        is_dimension_ascending,
                                         is_index_subset,
                                         prefetch_dimension_variables)
+from pymods.exceptions import InvalidNamedDimension
 
 
 class TestDimensionUtilities(TestCase):
@@ -215,18 +219,128 @@ class TestDimensionUtilities(TestCase):
         bounding_box = BBox(10, 20, 30, 40)
         shape_file_path = 'path/to/shape.geo.json'
         temporal_range = ['2021-01-01T01:30:00', '2021-01-01T02:00:00']
+        dim_range = [['lev',800,900]]
 
         test_args = [
-            ['Bounding box', bounding_box, None, None],
-            ['Shape file', None, shape_file_path, None],
-            ['Temporal', None, None, temporal_range],
-            ['Bounding box and temporal', bounding_box, None, temporal_range],
-            ['Shape file and temporal', None, shape_file_path, temporal_range],
+            ['Bounding box', bounding_box, None, None, None],
+            ['Shape file', None, shape_file_path, None, None],
+            ['Temporal', None, None, None, temporal_range],
+            ['Bounding box and temporal', bounding_box, None, None, \
+             temporal_range],
+            ['Shape file and temporal', None, shape_file_path, None, \
+             temporal_range],
+            ['Dimension', None, None, dim_range, None],
+            ['Bounding box and dimension', bounding_box, None, dim_range, None],
         ]
 
-        for description, bbox, shape_file, time_range in test_args:
+        for description, bbox, shape_file, dim_request, time_range in test_args:
             with self.subTest(description):
-                self.assertTrue(is_index_subset(bbox, shape_file, time_range))
+                self.assertTrue(is_index_subset(bbox, shape_file,
+                                                dim_request, time_range))
 
         with self.subTest('Not an index range subset'):
-            self.assertFalse(is_index_subset(None, None, None))
+            self.assertFalse(is_index_subset(None, None, None, None))
+
+    def test_get_requested_index_ranges(self):
+        """ Ensure the function correctly retrieves all index ranges from
+            explicitly named dimensions.
+
+            This test will use the `latitude` and `longitude` variables in the
+            RSSMIF16D example files.
+
+            If one extent is not specified, the returned index range should
+            extend to either the first or last element (depending on whether
+            the omitted extent is a maximum or a minimum and whether the
+            dimension array is ascending or descending).
+
+            f16_ssmis_lat_lon_desc.nc has a descending latitude dimension
+            array.
+
+        """
+        ascending_file = 'tests/data/f16_ssmis_lat_lon.nc'
+        descending_file = 'tests/data/f16_ssmis_lat_lon_desc.nc'
+
+        required_variables = {'/rainfall_rate', '/latitude', '/longitude'}
+
+        with self.subTest('Ascending dimension'):
+            # 20.0 ≤ latitude[440] ≤ 20.25, 29.75 ≤ latitude[479] ≤ 30.0
+            dim_request = [Dimension({'name': '/latitude', 'min': 20, 'max': 30})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           ascending_file, dim_request),
+                {'/latitude': (440, 479)}
+            )
+
+        with self.subTest('Multiple ascending dimensions'):
+            # 20.0 ≤ latitude[440] ≤ 20.25, 29.75 ≤ latitude[479] ≤ 30.0
+            # 140.0 ≤ longitude[560] ≤ 140.25, 149.75 ≤ longitude[599] ≤ 150.0
+            dim_request = [Dimension({'name': '/latitude', 'min': 20, 'max': 30}),
+                           Dimension({'name': '/longitude', 'min': 140, 'max': 150})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           ascending_file, dim_request),
+                {'/latitude': (440, 479), '/longitude': (560, 599)}
+            )
+
+
+        with self.subTest('Descending dimension'):
+            # 30.0 ≥ latitude[240] ≥ 29.75, 20.25 ≥ latitude[279] ≥ 20.0
+            dim_request = [Dimension({'name': '/latitude', 'min': 20, 'max': 30})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           descending_file, dim_request),
+                {'/latitude': (240, 279)}
+            )
+
+        with self.subTest('Dimension has no leading slash'):
+            # 20.0 ≤ latitude[440] ≤ 20.25, 29.75 ≤ latitude[479] ≤ 30.0
+            dim_request = [Dimension({'name': 'latitude', 'min': 20, 'max': 30})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           ascending_file, dim_request),
+                {'/latitude': (440, 479)}
+            )
+
+        with self.subTest('Unspecified minimum value'):
+            # 29.75 ≤ latitude[479] ≤ 30.0
+            dim_request = [Dimension({'name': '/latitude', 'min': None, 'max':30})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           ascending_file, dim_request),
+                {'/latitude': (0, 479)}
+            )
+
+        with self.subTest('Unspecified maximum value'):
+            # 20.0 ≤ latitude[440] ≤ 20.25, 179.75 ≤ latitude[719] ≤ 180.0
+            dim_request = [Dimension({'name': '/latitude', 'min': 20, 'max': None})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           ascending_file, dim_request),
+                {'/latitude': (440, 719)}
+            )
+
+        with self.subTest('Descending, unspecified minimum value'):
+            # 30.0 ≥ latitude[240] ≥ 29.75, 0.25 ≥ latitude[719] ≥ 0.0
+            dim_request = [Dimension({'name': '/latitude', 'min': None, 'max': 30})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           descending_file, dim_request),
+                {'/latitude': (240, 719)}
+            )
+
+        with self.subTest('Descending, unspecified maximum value'):
+            # 20.25 ≥ latitude[279] ≥ 20.0
+            dim_request = [Dimension({'name': '/latitude', 'min': 20, 'max': None})]
+            self.assertDictEqual(
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           descending_file, dim_request),
+                {'/latitude': (0, 279)}
+            )
+
+        with self.subTest('Unrecognised dimension'):
+            # Check for a non-existent named dimension
+            dim_request = [Dimension({'name': '/FooBar', 'min': None, 'max': 10})]
+            with self.assertRaises(InvalidNamedDimension):
+                get_requested_index_ranges(required_variables, self.varinfo,
+                                           descending_file, dim_request),
+

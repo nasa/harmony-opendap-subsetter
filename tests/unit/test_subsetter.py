@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import patch, ANY
 import json
 
-from harmony.message import Message
+from harmony.message import Message, Dimension
 from harmony.util import config
 
 from pymods.bbox_utilities import BBox
@@ -37,7 +37,8 @@ class TestSubsetter(TestCase):
                        is_synchronous: Optional[bool] = None,
                        bounding_box: Optional[List[float]] = None,
                        temporal_range: Optional[Dict[str, str]] = None,
-                       shape_file: Optional[str] = None) -> Message:
+                       shape_file: Optional[str] = None,
+                       dimensions: Optional[List[Dict]] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
         granules = [
             {
@@ -61,7 +62,8 @@ class TestSubsetter(TestCase):
             'callback': 'https://example.com/',
             'stagingLocation': 's3://example-bucket/',
             'accessToken': 'xyzzy',
-            'subset': {'bbox': bounding_box, 'shape': None},
+            'subset': {'bbox': bounding_box, 'dimensions': dimensions,
+                       'shape': None},
             'temporal': temporal_range
         }
 
@@ -109,6 +111,7 @@ class TestSubsetter(TestCase):
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
                                                     shape_file_path=None,
+                                                    dim_request=None,
                                                     temporal_range=temporal_list)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -152,6 +155,7 @@ class TestSubsetter(TestCase):
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
                                                     shape_file_path=None,
+                                                    dim_request=None,
                                                     temporal_range=None)
 
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -196,6 +200,7 @@ class TestSubsetter(TestCase):
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
                                                     shape_file_path=None,
+                                                    dim_request=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -237,6 +242,7 @@ class TestSubsetter(TestCase):
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
                                                     shape_file_path=None,
+                                                    dim_request=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -283,6 +289,7 @@ class TestSubsetter(TestCase):
                                                     config=variable_subsetter.config,
                                                     bounding_box=bounding_box,
                                                     shape_file_path=None,
+                                                    dim_request=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -332,12 +339,62 @@ class TestSubsetter(TestCase):
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
                                                     shape_file_path=local_shape_file,
+                                                    dim_request=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with(
             '/path/to/output.nc',
             'africa_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=variable_subsetter.logger
+        )
+
+    def test_hoss_named_dimension(self, mock_stage, mock_subset_granule,
+                                  mock_get_mimetype):
+        """ A request with a message that specifies a named dimension within a
+            granule, with a specific range of data, should have that
+            information extracted from the input message and passed along to
+            the `subset_granule` function.
+
+            This unit test refers to a file that is not actually stored in the
+            repository, as it would be large.
+
+        """
+        mock_subset_granule.return_value = '/path/to/output.nc'
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+
+        message = self.create_message('C1245663527-EEDTEST',
+                                      'G1245663563-EEDTEST',
+                                      ['/home/tests/data/M2I3NPASM.nc4'],
+                                      ['H1000'],
+                                      'dbowman',
+                                      dimensions=[{'name': 'lev',
+                                                   'min': 800,
+                                                   'max': 1000}])
+
+        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
+            variable_subsetter.invoke()
+
+        granule = variable_subsetter.message.granules[0]
+
+        mock_subset_granule.assert_called_once_with(granule.url,
+                                                    granule.variables,
+                                                    ANY,
+                                                    variable_subsetter.logger,
+                                                    access_token=message.accessToken,
+                                                    config=variable_subsetter.config,
+                                                    bounding_box=None,
+                                                    shape_file_path=None,
+                                                    dim_request=message.subset.dimensions,
+                                                    temporal_range=None)
+        mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
+
+        mock_stage.assert_called_once_with(
+            '/path/to/output.nc',
+            'M2I3NPASM_H1000_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=variable_subsetter.logger
@@ -447,6 +504,7 @@ class TestSubsetter(TestCase):
                                                 config=self.config,
                                                 bounding_box=None,
                                                 shape_file_path=None,
+                                                dim_request=None,
                                                 temporal_range=None)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
@@ -491,6 +549,7 @@ class TestSubsetter(TestCase):
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
                                                     shape_file_path=None,
+                                                    dim_request=None,
                                                     temporal_range=None)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 

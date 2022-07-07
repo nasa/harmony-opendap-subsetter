@@ -150,11 +150,14 @@ Coverage reports are being generate for each build in Bamboo, and saved as artif
 
 ### Versioning
 
-As a Harmony service, the Variable Subsetter and HOSS are meant to follow
-semantic version numbers (e.g., `major.minor.patch`). This version is included
-in the `docker/service_version.txt` file. When updating the Python service
-code, the version number contained in the `service_version.txt` file should be
+As a Harmony service, the Variable Subsetter and HOSS follow semantic version
+numbers (e.g., `major.minor.patch`). This version is included in the
+`docker/service_version.txt` file. When updating the Python service code, the
+version number contained in the `service_version.txt` file should be
 incremented before creating a pull request.
+
+In addition, the changes for the new service version should be described at a
+high level in `CHANGELOG.md`.
 
 The general rules for which version number to increment are:
 

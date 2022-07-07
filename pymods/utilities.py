@@ -12,7 +12,7 @@ from urllib.parse import quote
 from uuid import uuid4
 import mimetypes
 
-from harmony.exceptions import ForbiddenException
+from harmony.exceptions import ForbiddenException, ServerException
 from harmony.util import Config, download as util_download
 
 from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
@@ -47,7 +47,11 @@ def get_opendap_nc4(url: str, required_variables: Set[str], output_dir: str,
     """
     constraint_expression = get_constraint_expression(required_variables)
     netcdf4_url = f'{url}.dap.nc4'
-    request_data = {'dap4.ce': constraint_expression}
+
+    if constraint_expression != '':
+        request_data = {'dap4.ce': constraint_expression}
+    else:
+        request_data = None
 
     downloaded_nc4 = download_url(netcdf4_url, output_dir, logger,
                                   access_token=access_token, config=config,
@@ -120,27 +124,16 @@ def download_url(url: str, destination: str, logger: Logger,
             request_completed = True
         except ForbiddenException as harmony_exception:
             raise UrlAccessFailed(url, 400) from harmony_exception
-        except Exception as harmony_exception:
-            if (
-                is_internal_server_error(harmony_exception)
-                and attempts < HTTP_REQUEST_ATTEMPTS
-            ):
+        except ServerException as harmony_exception:
+            if attempts < HTTP_REQUEST_ATTEMPTS:
                 logger.info('500 error returned, retrying request.')
-            elif is_internal_server_error(harmony_exception):
-                raise UrlAccessFailedWithRetries(url) from harmony_exception
             else:
-                # Not a 500 error, so raise immediately and exit the loop.
-                raise UrlAccessFailed(url, 'Unknown') from harmony_exception
+                raise UrlAccessFailedWithRetries(url) from harmony_exception
+        except Exception as harmony_exception:
+            # Not a 500 error, so raise immediately and exit the loop.
+            raise UrlAccessFailed(url, 'Unknown') from harmony_exception
 
     return response
-
-
-def is_internal_server_error(exception: Exception) -> bool:
-    """ A helper function to identify if a raised exception conforms to the
-        expected output format of a 500 error from `harmony-service-lib-py`.
-
-    """
-    return str(exception).startswith('Unable to download.')
 
 
 def format_variable_set_string(variable_set: Set[str]) -> str:

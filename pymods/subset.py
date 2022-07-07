@@ -4,11 +4,10 @@
 
 """
 from logging import Logger
-from typing import List, Optional, Set
+from typing import List, Set
 from datetime import datetime
 
-from harmony.message import Variable as HarmonyVariable
-from harmony.message import Dimension
+from harmony.message import Dimension, Variable as HarmonyVariable
 from harmony.util import Config
 from netCDF4 import Dataset
 from numpy.ma import masked
@@ -94,7 +93,6 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
         # user names a specific Time, Latitude, or Longitude dimension.
         # If temporal/lat/lon args are also in the request, they will
         # override the index ranges derived from the requested dimension.
-
         if dim_request is not None:
             # Update `index_ranges` cache with ranges for the requested
             # dimension(s). This will convert the requested min and max

@@ -1,9 +1,8 @@
 from logging import getLogger
 from unittest import TestCase
 from unittest.mock import Mock, patch
-# from urllib.error import HTTPError
 
-from harmony.exceptions import ForbiddenException
+from harmony.exceptions import ForbiddenException, ServerException
 from harmony.util import config
 
 from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
@@ -11,7 +10,7 @@ from pymods.utilities import (download_url, format_dictionary_string,
                               format_variable_set_string,
                               get_constraint_expression, get_file_mimetype,
                               get_opendap_nc4, HTTP_REQUEST_ATTEMPTS,
-                              is_internal_server_error, move_downloaded_nc4)
+                              move_downloaded_nc4)
 
 
 class TestUtilities(TestCase):
@@ -19,8 +18,8 @@ class TestUtilities(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.harmony_500_error = Exception('Unable to download.')
-        cls.harmony_auth_error = ForbiddenException('I can\'t do that.')
+        cls.harmony_500_error = ServerException('I can\'t do that')
+        cls.harmony_auth_error = ForbiddenException('You can\'t do that.')
         cls.config = config(validate=False)
         cls.logger = getLogger('tests')
 
@@ -138,16 +137,33 @@ class TestUtilities(TestCase):
         access_token = 'secret_token!!!'
         expected_data = {'dap4.ce': 'variable'}
 
-        output_file = get_opendap_nc4(url, required_variables, output_dir,
-                                      self.logger, access_token, self.config)
+        with self.subTest('Request with variables includes dap4.ce'):
+            output_file = get_opendap_nc4(url, required_variables, output_dir,
+                                          self.logger, access_token,
+                                          self.config)
 
-        self.assertEqual(output_file, moved_file_name)
-        mock_download.assert_called_once_with(
-            f'{url}.dap.nc4', output_dir, self.logger,
-            access_token=access_token, data=expected_data, cfg=self.config
-        )
-        mock_move_download.assert_called_once_with(output_dir,
-                                                   downloaded_file_name)
+            self.assertEqual(output_file, moved_file_name)
+            mock_download.assert_called_once_with(
+                f'{url}.dap.nc4', output_dir, self.logger,
+                access_token=access_token, data=expected_data, cfg=self.config
+            )
+            mock_move_download.assert_called_once_with(output_dir,
+                                                       downloaded_file_name)
+
+        mock_download.reset_mock()
+        mock_move_download.reset_mock()
+
+        with self.subTest('Request with no variables omits dap4.ce'):
+            output_file = get_opendap_nc4(url, {}, output_dir, self.logger,
+                                          access_token, self.config)
+
+            self.assertEqual(output_file, moved_file_name)
+            mock_download.assert_called_once_with(
+                f'{url}.dap.nc4', output_dir, self.logger,
+                access_token=access_token, data=None, cfg=self.config
+            )
+            mock_move_download.assert_called_once_with(output_dir,
+                                                       downloaded_file_name)
 
     def test_get_constraint_expression(self):
         """ Ensure a correctly encoded DAP4 constraint expression is
@@ -191,22 +207,6 @@ class TestUtilities(TestCase):
 
         mock_move.assert_called_once_with('/tmp/path/to/file.nc4',
                                           '/tmp/path/to/uuid4.nc4')
-
-    def test_is_internal_server_error(self):
-        """ Ensure the returned errors from `harmony-service-lib-py`
-            (`harmony.http.download`) are correctly recognised.
-
-        """
-        with self.subTest('Internal service error'):
-            self.assertTrue(is_internal_server_error(self.harmony_500_error))
-
-        with self.subTest('ForbiddenException, e.g., EULA, 401, 403'):
-            self.assertFalse(is_internal_server_error(self.harmony_auth_error))
-
-        with self.subTest('Other bare exception'):
-            self.assertFalse(
-                is_internal_server_error(Exception('Random message'))
-            )
 
     def test_format_variable_set(self):
         """ Ensure a set of variable strings is printed out as expected, and

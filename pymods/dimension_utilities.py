@@ -17,13 +17,13 @@ from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 import numpy as np
 
-from harmony.util import Config
 from harmony.message import Dimension
+from harmony.util import Config
 from varinfo import VarInfoFromDmr
 
 from pymods.bbox_utilities import BBox
-from pymods.utilities import get_opendap_nc4, format_variable_set_string
 from pymods.exceptions import InvalidNamedDimension
+from pymods.utilities import get_opendap_nc4, format_variable_set_string
 
 
 IndexRange = Tuple[int]
@@ -287,4 +287,5 @@ def get_requested_index_ranges(required_variables: Set[str],
             else:
                 # This requested dimension is not in the Required Dimension set
                 raise InvalidNamedDimension(dim.name)
+
     return dim_index_ranges

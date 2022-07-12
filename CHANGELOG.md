@@ -1,3 +1,9 @@
+## v0.2.2
+### 2022-07-11
+
+This version of HOSS updates the `harmony-service-lib` dependency to v1.0.20
+in support of changes to the handling of STAC objects.
+
 ## v0.2.1
 ### 2022-07-07
 

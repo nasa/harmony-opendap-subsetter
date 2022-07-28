@@ -424,8 +424,8 @@ class TestSubsetter(TestCase):
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
                 variable_subsetter.invoke()
 
-            self.assertEqual(str(context_manager.exception),
-                             'No granules specified for variable subsetting')
+        self.assertEqual(str(context_manager.exception),
+                         'No granules specified for variable subsetting')
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
@@ -459,8 +459,8 @@ class TestSubsetter(TestCase):
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
                 variable_subsetter.invoke()
 
-            self.assertEqual(str(context_manager.exception),
-                             'Synchronous requests accept only one granule')
+        self.assertEqual(str(context_manager.exception),
+                         'Synchronous requests accept only one granule')
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()

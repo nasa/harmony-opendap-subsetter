@@ -134,7 +134,7 @@ class TestBBoxUtilities(TestCase):
                 get_request_shape_file(message, local_dir, self.logger,
                                        self.config)
 
-                mock_download.assert_not_called()
+            mock_download.assert_not_called()
 
         with self.subTest('No shape file in message'):
             message = Message({

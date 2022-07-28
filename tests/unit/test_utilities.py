@@ -67,8 +67,8 @@ class TestUtilities(TestCase):
                 self.logger,
                 access_token=access_token,
                 data=None,
-                cfg=self.config)
-
+                cfg=self.config
+            )
             mock_util_download.reset_mock()
 
         with self.subTest('A request with data passes the data to Harmony.'):
@@ -85,7 +85,6 @@ class TestUtilities(TestCase):
                 data=test_data,
                 cfg=self.config
             )
-
             mock_util_download.reset_mock()
 
         with self.subTest('500 error triggers a retry.'):
@@ -96,16 +95,25 @@ class TestUtilities(TestCase):
 
             self.assertEqual(response, http_response)
             self.assertEqual(mock_util_download.call_count, 2)
+            mock_util_download.reset_mock()
 
         with self.subTest('Non-500 error does not retry, and is re-raised.'):
             mock_util_download.side_effect = [self.harmony_auth_error,
                                               http_response]
 
             with self.assertRaises(UrlAccessFailed):
-                download_url(test_url, output_directory, self.logger)
-                mock_util_download.assert_called_once_with(test_url,
-                                                           output_directory,
-                                                           self.logger)
+                download_url(test_url, output_directory, self.logger,
+                             access_token, self.config)
+
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config
+            )
+            mock_util_download.reset_mock()
 
         with self.subTest('Maximum number of attempts not exceeded.'):
             mock_util_download.side_effect = [
@@ -113,8 +121,10 @@ class TestUtilities(TestCase):
             ] * (HTTP_REQUEST_ATTEMPTS + 1)
             with self.assertRaises(UrlAccessFailedWithRetries):
                 download_url(test_url, output_directory, self.logger)
-                self.assertEqual(mock_util_download.call_count,
-                                 HTTP_REQUEST_ATTEMPTS)
+
+            self.assertEqual(mock_util_download.call_count,
+                             HTTP_REQUEST_ATTEMPTS)
+            mock_util_download.reset_mock()
 
     @patch('pymods.utilities.move_downloaded_nc4')
     @patch('pymods.utilities.util_download')

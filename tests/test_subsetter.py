@@ -61,10 +61,12 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
-    def test_non_geo_end_to_end(self, mock_stage, mock_util_download,
-                                mock_rmtree, mock_mkdtemp, mock_uuid):
+    def test_non_spatial_end_to_end(self, mock_stage, mock_util_download,
+                                    mock_rmtree, mock_mkdtemp, mock_uuid):
         """ Ensure the subsetter will run end-to-end, only mocking the
             HTTP responses, and the output interactions with Harmony.
+
+            This test should only perform a variable subset.
 
         """
         mock_uuid.return_value = Mock(hex='uuid')
@@ -147,11 +149,13 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
-    def test_geo_end_to_end(self, mock_stage, mock_util_download, mock_rmtree,
-                            mock_mkdtemp, mock_uuid, mock_get_fill_slice):
-        """ Ensure a request with a bounding box will be correctly processed,
-            requesting only the expected variables, with index ranges
-            corresponding to the bounding box specified.
+    def test_geo_bbox_end_to_end(self, mock_stage, mock_util_download,
+                                 mock_rmtree, mock_mkdtemp, mock_uuid,
+                                 mock_get_fill_slice):
+        """ Ensure a request with a bounding box will be correctly processed
+            for a geographically gridded collection, requesting only the
+            expected variables, with index ranges corresponding to the bounding
+            box specified.
 
         """
         bounding_box = [-30, 45, -15, 60]
@@ -253,15 +257,16 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
-    def test_geo_descending_latitude(self, mock_stage, mock_util_download,
-                                     mock_rmtree, mock_mkdtemp, mock_uuid,
-                                     mock_get_fill_slice):
+    def test_bbox_geo_descending_latitude(self, mock_stage, mock_util_download,
+                                          mock_rmtree, mock_mkdtemp, mock_uuid,
+                                          mock_get_fill_slice):
         """ Ensure a request with a bounding box will be correctly processed,
-            requesting only the expected variables, with index ranges
-            corresponding to the bounding box specified. The latitude dimension
-            returned from the geographic dimensions request to OPeNDAP will be
-            descending. This test is to ensure the correct dimension indices
-            are identified and the correct DAP4 constraint expression is built.
+            for a geographically gridded collection, requesting only the
+            expected variables, with index ranges corresponding to the bounding
+            box specified. The latitude dimension returned from the geographic
+            dimensions request to OPeNDAP will be descending. This test is to
+            ensure the correct dimension indices are identified and the correct
+            DAP4 constraint expression is built.
 
         """
         bounding_box = [-30, 45, -15, 60]
@@ -361,8 +366,8 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
-    def test_geo_crossing_grid_edge(self, mock_stage, mock_util_download,
-                                    mock_rmtree, mock_mkdtemp, mock_uuid):
+    def test_geo_bbox_crossing_grid_edge(self, mock_stage, mock_util_download,
+                                         mock_rmtree, mock_mkdtemp, mock_uuid):
         """ Ensure a request with a bounding box that crosses a longitude edge
             (360 degrees east) requests the expected variables from OPeNDAP and
             does so only in the expected latitude range. The full longitude
@@ -633,9 +638,9 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
-    def test_geo_no_variables(self, mock_stage, mock_util_download,
-                              mock_rmtree, mock_mkdtemp, mock_uuid,
-                              mock_get_fill_slice):
+    def test_spatial_bbox_no_variables(self, mock_stage, mock_util_download,
+                                       mock_rmtree, mock_mkdtemp, mock_uuid,
+                                       mock_get_fill_slice):
         """ Ensure a request with a bounding box that does not specify any
             variables will retrieve all variables, but limited to the range
             specified by the bounding box.
@@ -1010,9 +1015,9 @@ class TestSubsetterEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('pymods.utilities.util_download')
     @patch('harmony.util.stage')
-    def test_geo_temporal_end_to_end(self, mock_stage, mock_util_download,
-                                     mock_rmtree, mock_mkdtemp, mock_uuid,
-                                     mock_get_fill_slice):
+    def test_bbox_temporal_end_to_end(self, mock_stage, mock_util_download,
+                                      mock_rmtree, mock_mkdtemp, mock_uuid,
+                                      mock_get_fill_slice):
         """ Ensure a request with both a bounding box and a temporal range will
             retrieve variables, but limited to the ranges specified by the
             bounding box and the temporal range.
@@ -1123,9 +1128,10 @@ class TestSubsetterEndToEnd(TestCase):
                                       mock_geojson_download, mock_rmtree,
                                       mock_mkdtemp, mock_uuid,
                                       mock_get_fill_slice):
-        """ Ensure a request with a shape file specified will retrieve
-            variables, but limited to the ranges of a bounding box that
-            encloses the specified GeoJSON shape.
+        """ Ensure a request with a shape file specified against a
+            geographically gridded collection will retrieve variables, but
+            limited to the ranges of a bounding box that encloses the specified
+            GeoJSON shape.
 
         """
         mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
@@ -1247,7 +1253,8 @@ class TestSubsetterEndToEnd(TestCase):
                                          mock_get_fill_slice):
         """ Ensure an all variable request with a shape file specified will
             retrieve all variables, but limited to the ranges of a bounding box
-            that encloses the specified GeoJSON shape.
+            that encloses the specified GeoJSON shape. This request uses a
+            collection that is geographically gridded.
 
             Because a shape file is specified, index range subsetting will be
             performed, so a prefetch request will be performed, and the final
@@ -1593,6 +1600,228 @@ class TestSubsetterEndToEnd(TestCase):
         mock_stage.assert_called_once_with(
             f'{self.tmp_dir}/uuid2.nc4',
             'opendap_url_wind_speed_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_projected_grid_bbox(self, mock_stage, mock_util_download,
+                                 mock_rmtree, mock_mkdtemp, mock_uuid,
+                                 mock_get_fill_slice):
+        """ Make a request specifying a bounding box for a collection that is
+            gridded to a non-geographic projection. This example will use
+            ABoVE TVPRM, which uses an Albers Conical Equal Area projection
+            with data covering Alaska.
+
+        """
+        bounding_box = [-160, 68, -145, 70]
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = 'tests/data/ABoVE_TVPRM_example.dmr'
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/ABoVE_TVPRM_prefetch.nc4', dimensions_path)
+
+        output_path = f'{self.tmp_dir}/ABoVE_TVPRM_bbox.nc4'
+        copy('tests/data/ABoVE_TVPRM_prefetch.nc4', output_path)
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          output_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': '/NEE',
+                               'fullPath': '/NEE'}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'bbox': bounding_box},
+            'user': 'wfunk',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should fetch a NetCDF-4
+        # file containing the full 1-D dimension variables only, and the third
+        # should retrieve the final NetCDF-4 with all required variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # spatial or temporal variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2Fx', '%2Fy', '%2Ftime'}
+        )
+        # Ensure the constraint expression contains all the required variables.
+        # /NEE[][7:26][37:56], /time, /x[37:56], /y[7:26]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime',
+             '%2Ftime_bnds',
+             '%2Fcrs',
+             '%2Fx%5B37%3A56%5D',
+             '%2Fy%5B7%3A26%5D',
+             '%2FNEE%5B%5D%5B7%3A26%5D%5B37%3A56%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_NEE_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.bbox_utilities.download')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_projected_grid_shape(self, mock_stage, mock_util_download,
+                                  mock_geojson_download, mock_rmtree,
+                                  mock_mkdtemp, mock_uuid, mock_get_fill_slice):
+        """ Make a request specifying a shape file for a collection that is
+            gridded to a non-geographic projection. This example will use
+            ABoVE TVPRM, which uses an Albers Conical Equal Area projection
+            with data covering Alaska.
+
+        """
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = 'tests/data/ABoVE_TVPRM_example.dmr'
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/ABoVE_TVPRM_prefetch.nc4', dimensions_path)
+
+        geojson_path = f'{self.tmp_dir}/polygon.geo.json'
+        copy('tests/geojson_examples/above_polygon.geo.json', geojson_path)
+
+        shape_file_url = 'www.example.com/polygon.geo.json'
+        mock_geojson_download.return_value = geojson_path
+
+        output_path = f'{self.tmp_dir}/ABoVE_TVPRM_bbox.nc4'
+        copy('tests/data/ABoVE_TVPRM_prefetch.nc4', output_path)
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          output_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': '/NEE',
+                               'fullPath': '/NEE'}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'shape': {'href': shape_file_url,
+                                 'type': 'application/geo+json'}},
+            'user': 'wfunk',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should fetch a NetCDF-4
+        # file containing the full 1-D dimension variables only, and the third
+        # should retrieve the final NetCDF-4 with all required variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # geographic or temporal variables with no index ranges
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2Fx', '%2Fy', '%2Ftime'}
+        )
+        # Ensure the constraint expression contains all the required variables.
+        # /NEE[][11:26][37:56], /time, /x[37:56], /y[11:26]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Ftime',
+             '%2Ftime_bnds',
+             '%2Fcrs',
+             '%2Fx%5B37%3A56%5D',
+             '%2Fy%5B11%3A26%5D',
+             '%2FNEE%5B%5D%5B11%3A26%5D%5B37%3A56%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_NEE_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=subsetter.logger

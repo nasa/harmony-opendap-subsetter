@@ -47,12 +47,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_granule_not_geo(self, mock_get_varinfo,
                                     mock_prefetch_dimensions,
-                                    mock_get_geo_index_ranges,
+                                    mock_get_spatial_index_ranges,
                                     mock_get_temporal_index_ranges,
                                     mock_get_requested_index_ranges,
                                     mock_get_opendap_nc4, mock_fill_variables):
@@ -89,7 +89,7 @@ class TestSubset(TestCase):
                                                     {})
 
         mock_prefetch_dimensions.assert_not_called()
-        mock_get_geo_index_ranges.assert_not_called()
+        mock_get_spatial_index_ranges.assert_not_called()
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_requested_index_ranges.assert_not_called()
 
@@ -97,12 +97,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_granule_geo(self, mock_get_varinfo,
                                 mock_prefetch_dimensions,
-                                mock_get_geo_index_ranges,
+                                mock_get_spatial_index_ranges,
                                 mock_get_temporal_index_ranges,
                                 mock_get_requested_index_ranges,
                                 mock_get_opendap_nc4, mock_fill_variables):
@@ -121,7 +121,7 @@ class TestSubset(TestCase):
 
         mock_get_varinfo.return_value = self.varinfo
         mock_prefetch_dimensions.return_value = prefetch_path
-        mock_get_geo_index_ranges.return_value = index_ranges
+        mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, self.variables,
@@ -146,10 +146,10 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
-        mock_get_geo_index_ranges.assert_called_once_with(self.required_variables,
-                                                          self.varinfo,
-                                                          prefetch_path,
-                                                          self.bounding_box)
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            self.required_variables, self.varinfo, prefetch_path,
+            self.bounding_box
+        )
 
         mock_get_requested_index_ranges.assert_not_called()
         mock_get_opendap_nc4.assert_called_once_with(self.granule_url,
@@ -168,12 +168,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_non_geo_no_variables(self, mock_get_varinfo,
                                          mock_prefetch_dimensions,
-                                         mock_get_geo_index_ranges,
+                                         mock_get_spatial_index_ranges,
                                          mock_get_temporal_index_ranges,
                                          mock_get_requested_index_ranges,
                                          mock_get_opendap_nc4,
@@ -215,7 +215,7 @@ class TestSubset(TestCase):
                                                     index_ranges)
 
         mock_prefetch_dimensions.assert_not_called()
-        mock_get_geo_index_ranges.assert_not_called()
+        mock_get_spatial_index_ranges.assert_not_called()
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_requested_index_ranges.assert_not_called()
 
@@ -223,12 +223,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_geo_no_variables(self, mock_get_varinfo,
                                      mock_prefetch_dimensions,
-                                     mock_get_geo_index_ranges,
+                                     mock_get_spatial_index_ranges,
                                      mock_get_temporal_index_ranges,
                                      mock_get_requested_index_ranges,
                                      mock_get_opendap_nc4,
@@ -243,7 +243,6 @@ class TestSubset(TestCase):
             the HOSS functionality in `pymods.spatial.py` should be called.
             However, because there is no specified `temporal_range`, the
             functionality in `pymods.temporal.py` should not be called.
-
 
         """
         expected_variables = {'/atmosphere_cloud_liquid_water_content',
@@ -263,7 +262,7 @@ class TestSubset(TestCase):
 
         mock_get_varinfo.return_value = self.varinfo
         mock_prefetch_dimensions.return_value = prefetch_path
-        mock_get_geo_index_ranges.return_value = index_ranges
+        mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, [], self.output_dir,
@@ -287,10 +286,10 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
-        mock_get_geo_index_ranges.assert_called_once_with(expected_variables,
-                                                          self.varinfo,
-                                                          prefetch_path,
-                                                          self.bounding_box)
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            expected_variables, self.varinfo, prefetch_path, self.bounding_box,
+            None
+        )
 
         mock_get_requested_index_ranges.assert_not_called()
         mock_get_opendap_nc4.assert_called_once_with(self.granule_url,
@@ -309,12 +308,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_non_variable_dimensions(self, mock_get_varinfo,
                                             mock_prefetch_dimensions,
-                                            mock_get_geo_index_ranges,
+                                            mock_get_spatial_index_ranges,
                                             mock_get_temporal_index_ranges,
                                             mock_get_requested_index_ranges,
                                             mock_get_opendap_nc4,
@@ -364,7 +363,7 @@ class TestSubset(TestCase):
 
         mock_get_varinfo.return_value = varinfo
         mock_prefetch_dimensions.return_value = prefetch_path
-        mock_get_geo_index_ranges.return_value = index_ranges
+        mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = expected_output_path
 
         output_path = subset_granule(url, [], self.output_dir, self.logger,
@@ -386,10 +385,10 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
-        mock_get_geo_index_ranges.assert_called_once_with(expected_variables,
-                                                          varinfo,
-                                                          prefetch_path,
-                                                          self.bounding_box)
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            expected_variables, varinfo, prefetch_path, self.bounding_box,
+            None
+        )
 
         mock_get_requested_index_ranges.assert_not_called()
         mock_get_opendap_nc4.assert_called_once_with(url,
@@ -408,12 +407,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_bounds_reference(self, mock_get_varinfo,
                                      mock_prefetch_dimensions,
-                                     mock_get_geo_index_ranges,
+                                     mock_get_spatial_index_ranges,
                                      mock_get_temporal_index_ranges,
                                      mock_get_requested_index_ranges,
                                      mock_get_opendap_nc4,
@@ -444,7 +443,7 @@ class TestSubset(TestCase):
 
         mock_get_varinfo.return_value = varinfo
         mock_prefetch_dimensions.return_value = prefetch_path
-        mock_get_geo_index_ranges.return_value = index_ranges
+        mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = expected_output_path
 
         output_path = subset_granule(url, requested_variables, self.output_dir,
@@ -466,10 +465,9 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
-        mock_get_geo_index_ranges.assert_called_once_with(expected_variables,
-                                                          varinfo,
-                                                          prefetch_path,
-                                                          self.bounding_box)
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            expected_variables, varinfo, prefetch_path, self.bounding_box, None
+        )
 
         mock_get_requested_index_ranges.assert_not_called()
         mock_get_opendap_nc4.assert_called_once_with(url,
@@ -488,11 +486,11 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_temporal(self, mock_get_varinfo, mock_prefetch_dimensions,
-                             mock_get_geo_index_ranges,
+                             mock_get_spatial_index_ranges,
                              mock_get_temporal_index_ranges,
                              mock_get_requested_index_ranges,
                              mock_get_opendap_nc4, mock_fill_variables):
@@ -543,7 +541,7 @@ class TestSubset(TestCase):
                                                          self.access_token,
                                                          self.config)
 
-        mock_get_geo_index_ranges.assert_not_called()
+        mock_get_spatial_index_ranges.assert_not_called()
         mock_get_temporal_index_ranges.assert_called_once_with(
             expected_variables, varinfo, prefetch_path, temporal_range
         )
@@ -565,12 +563,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_geo_temporal(self, mock_get_varinfo,
                                  mock_prefetch_dimensions,
-                                 mock_get_geo_index_ranges,
+                                 mock_get_spatial_index_ranges,
                                  mock_get_temporal_index_ranges,
                                  mock_get_requested_index_ranges,
                                  mock_get_opendap_nc4, mock_fill_variables):
@@ -604,7 +602,7 @@ class TestSubset(TestCase):
         mock_get_varinfo.return_value = varinfo
         mock_prefetch_dimensions.return_value = prefetch_path
         mock_get_temporal_index_ranges.return_value = temporal_index_ranges
-        mock_get_geo_index_ranges.return_value = geo_index_ranges
+        mock_get_spatial_index_ranges.return_value = geo_index_ranges
         mock_get_opendap_nc4.return_value = expected_output_path
 
         output_path = subset_granule(url, requested_variables, self.output_dir,
@@ -626,10 +624,9 @@ class TestSubset(TestCase):
                                                          self.access_token,
                                                          self.config)
 
-        mock_get_geo_index_ranges.assert_called_once_with(expected_variables,
-                                                          varinfo,
-                                                          prefetch_path,
-                                                          self.bounding_box)
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            expected_variables, varinfo, prefetch_path, self.bounding_box, None
+        )
 
         mock_get_temporal_index_ranges.assert_called_once_with(
             expected_variables, varinfo, prefetch_path, temporal_range
@@ -652,25 +649,23 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_geographic_bbox')
     @patch('pymods.subset.get_varinfo')
     def test_subset_granule_shape(self, mock_get_varinfo,
-                                  mock_get_geographic_bbox,
                                   mock_prefetch_dimensions,
-                                  mock_get_geo_index_ranges,
+                                  mock_get_spatial_index_ranges,
                                   mock_get_temporal_index_ranges,
                                   mock_get_requested_index_ranges,
                                   mock_get_opendap_nc4, mock_fill_variables):
         """ Ensure a request to extract both a variable and spatial subset runs
             without error. This request will have specified a shape file rather
-            than a bounding box, so HOSS should calculate a bounding box that
-            encompasses the specified GeoJSON geometries. The prefetch
-            dimension utility functionality and the HOSS functionality in
-            `pymods.spatial.py` should be called. However, because there is no
-            specified `temporal_range`, the functionality in
-            `pymods.temporal.py` should not be called.
+            than a bounding box, which should be passed along to the
+            `get_spatial_index_ranges` function. The prefetch dimension utility
+            functionality and the HOSS functionality in `pymods.spatial.py`
+            should be called. However, because there is no specified
+            `temporal_range`, the functionality in `pymods.temporal.py` should
+            not be called.
 
         """
         shape_file_path = 'tests/geojson_examples/polygon.geo.json'
@@ -682,9 +677,8 @@ class TestSubset(TestCase):
                                  '/time'}
 
         mock_get_varinfo.return_value = self.varinfo
-        mock_get_geographic_bbox.return_value = shape_file_bbox
         mock_prefetch_dimensions.return_value = prefetch_path
-        mock_get_geo_index_ranges.return_value = index_ranges
+        mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, self.variables,
@@ -700,7 +694,6 @@ class TestSubset(TestCase):
                                                  self.access_token,
                                                  self.config)
 
-        mock_get_geographic_bbox.assert_called_once()
         mock_prefetch_dimensions.assert_called_once_with(self.granule_url,
                                                          self.varinfo,
                                                          self.required_variables,
@@ -710,10 +703,10 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
-        mock_get_geo_index_ranges.assert_called_once_with(self.required_variables,
-                                                          self.varinfo,
-                                                          prefetch_path,
-                                                          shape_file_bbox)
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            self.required_variables, self.varinfo, prefetch_path, None,
+            shape_file_path
+        )
 
         mock_get_requested_index_ranges.assert_not_called()
         mock_get_opendap_nc4.assert_called_once_with(self.granule_url,
@@ -732,22 +725,20 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_geographic_bbox')
     @patch('pymods.subset.get_varinfo')
     def test_subset_granule_shape_and_bbox(self, mock_get_varinfo,
-                                           mock_get_geographic_bbox,
                                            mock_prefetch_dimensions,
-                                           mock_get_geo_index_ranges,
+                                           mock_get_spatial_index_ranges,
                                            mock_get_temporal_index_ranges,
                                            mock_get_requested_index_ranges,
                                            mock_get_opendap_nc4,
                                            mock_fill_variables):
         """ Ensure a request to extract both a variable and spatial subset runs
             without error. This request will have specified both a bounding box
-            and a shape file. HOSS should ignore the shape file and only use
-            the horizontal spatial information specified in the bounding box.
+            and a shape file, both of which will be passed along to
+            `get_spatial_index_ranges`, so that it can determine which to use.
             The prefetch dimension utility functionality and the HOSS
             functionality in `pymods.spatial.py` should be called. However,
             because there is no specified `temporal_range`, the functionality
@@ -763,9 +754,8 @@ class TestSubset(TestCase):
                                  '/rainfall_rate[][240:279][160:199]', '/time'}
 
         mock_get_varinfo.return_value = self.varinfo
-        mock_get_geographic_bbox.return_value = shape_file_bbox
         mock_prefetch_dimensions.return_value = prefetch_path
-        mock_get_geo_index_ranges.return_value = index_ranges
+        mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, self.variables,
@@ -782,7 +772,6 @@ class TestSubset(TestCase):
                                                  self.access_token,
                                                  self.config)
 
-        mock_get_geographic_bbox.assert_not_called()
         mock_prefetch_dimensions.assert_called_once_with(self.granule_url,
                                                          self.varinfo,
                                                          self.required_variables,
@@ -792,10 +781,10 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
-        mock_get_geo_index_ranges.assert_called_once_with(self.required_variables,
-                                                          self.varinfo,
-                                                          prefetch_path,
-                                                          self.bounding_box)
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            self.required_variables, self.varinfo, prefetch_path,
+            self.bounding_box, shape_file_path
+        )
 
         mock_get_requested_index_ranges.asset_not_called()
         mock_get_opendap_nc4.assert_called_once_with(self.granule_url,
@@ -814,12 +803,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_opendap_nc4')
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_geographic_index_ranges')
+    @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_granule_geo(self, mock_get_varinfo,
                                 mock_prefetch_dimensions,
-                                mock_get_geo_index_ranges,
+                                mock_get_spatial_index_ranges,
                                 mock_get_temporal_index_ranges,
                                 mock_get_requested_index_ranges,
                                 mock_get_opendap_nc4, mock_fill_variables):
@@ -868,7 +857,7 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
-        mock_get_geo_index_ranges.assert_not_called()
+        mock_get_spatial_index_ranges.assert_not_called()
         mock_get_requested_index_ranges.assert_called_once_with(
             self.required_variables, self.varinfo, prefetch_path, dim_request
         )

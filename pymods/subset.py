@@ -13,13 +13,12 @@ from netCDF4 import Dataset
 from numpy.ma import masked
 from varinfo import VarInfoFromDmr
 
-from pymods.bbox_utilities import (BBox, get_shape_file_geojson,
-                                   get_geographic_bbox)
+from pymods.bbox_utilities import BBox
 from pymods.dimension_utilities import (add_index_range, get_fill_slice,
                                         IndexRanges, is_index_subset,
                                         get_requested_index_ranges,
                                         prefetch_dimension_variables)
-from pymods.spatial import get_geographic_index_ranges
+from pymods.spatial import get_spatial_index_ranges
 from pymods.temporal import get_temporal_index_ranges
 from pymods.utilities import (download_url, format_variable_set_string,
                               get_opendap_nc4)
@@ -41,17 +40,13 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
         those requested (e.g., grid dimension variables or CF-Convention
         metadata references).
 
-        The optional `bounding_box` argument can be supplied for geographically
+        The optional `bounding_box` argument can be supplied for spatially
         gridded data. In this case dimension variables will first be retrieved
-        in a "prefetch" request to OPeNDAP. Then the bounding-box extents are
-        converted to index-ranges.
+        in a "prefetch" request to OPeNDAP. Then the bounding-box or shape file
+        extents are converted to index-ranges.
 
         Once the required variables, and index-ranges if needed, are derived,
         a request is made to OPeNDAP to retrieve only the requested data.
-
-        Future work: When temporal subsetting is to be added, the temporal
-        index ranges should be extracted in a new module and added to the
-        existing `index_ranges` cache.
 
     """
     # Determine if index range subsetting will be required:
@@ -72,14 +67,8 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
     logger.info('All required variables: '
                 f'{format_variable_set_string(required_variables)}')
 
-    # Define a catch to store all dimension index ranges (spatial, temporal):
+    # Define a cache to store all dimension index ranges (spatial, temporal):
     index_ranges = {}
-
-    # If there is no bounding box, but there is a shape-file, calculate a
-    # bounding box to encapsulate the GeoJSON shape:
-    if bounding_box is None and shape_file_path is not None:
-        geojson_content = get_shape_file_geojson(shape_file_path)
-        bounding_box = get_geographic_bbox(geojson_content)
 
     if request_is_index_subset:
         # Prefetch all dimension variables in full:
@@ -90,9 +79,9 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
 
         # Note regarding precedence of user requests ...
         # We handle the general dimension request first, in case the
-        # user names a specific Time, Latitude, or Longitude dimension.
-        # If temporal/lat/lon args are also in the request, they will
-        # override the index ranges derived from the requested dimension.
+        # user names a specific temporal or spatial dimension (e.g.,
+        # "latitude").  If temporal/lat/lon args are also in the request, they
+        # will override the index ranges derived from the requested dimension.
         if dim_request is not None:
             # Update `index_ranges` cache with ranges for the requested
             # dimension(s). This will convert the requested min and max
@@ -102,14 +91,16 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
                                                            varinfo,
                                                            dimensions_path,
                                                            dim_request))
-        if bounding_box is not None:
-            # Update `index_ranges` cache with ranges for geographic grid-dimension
-            # variables. This will convert information from the bounding box to
-            # array indices for each geographic grid-dimension.
-            index_ranges.update(get_geographic_index_ranges(required_variables,
-                                                            varinfo,
-                                                            dimensions_path,
-                                                            bounding_box))
+
+        if bounding_box is not None or shape_file_path is not None:
+            # Update `index_ranges` cache with ranges for horizontal grid
+            # dimension variables (geographic and projected).
+            index_ranges.update(get_spatial_index_ranges(required_variables,
+                                                         varinfo,
+                                                         dimensions_path,
+                                                         bounding_box,
+                                                         shape_file_path))
+
         if temporal_range is not None:
             # Update `index_ranges` cache with ranges for temporal
             # variables. This will convert information from the temporal range

@@ -59,8 +59,9 @@ def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
 
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
-    logger.info('All required dimensions: '
-                f'{format_variable_set_string(required_variables)}')
+
+    logger.info('Variables being retrieved in prefetch request: '
+                f'{format_variable_set_string(required_dimensions)}')
     return get_opendap_nc4(opendap_url, required_dimensions, output_dir,
                            logger, access_token, config)
 
@@ -74,8 +75,34 @@ def is_dimension_ascending(dimension: MaskedArray) -> bool:
     return dimension[first_index] < dimension[last_index]
 
 
-def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
-                              maximum_extent: float) -> IndexRange:
+def get_dimension_index_range(dimension_values: MaskedArray,
+                              requested_min: float,
+                              requested_max: float) -> IndexRange:
+    """ Ensure that both a minimum and maximum value are defined from the
+        message, if not, use the first or last value in the dimension array,
+        accordingly. The minimum and maximum values must be ordered to be
+        ascending or descending in a way that matches the dimension index
+        values.
+
+        Once the minimum and maximum values are determined, and sorted in the
+        same order as the dimension array values, retrieve the index values
+        that correspond to the requested dimension values.
+
+    """
+    if is_dimension_ascending(dimension_values):
+        dimension_min = requested_min or dimension_values[0]
+        dimension_max = requested_max or dimension_values[-1]
+    else:
+        dimension_min = requested_max or dimension_values[0]
+        dimension_max = requested_min or dimension_values[-1]
+
+    return get_dimension_min_max_indices(dimension_values, dimension_min,
+                                         dimension_max)
+
+
+def get_dimension_min_max_indices(dimension: MaskedArray,
+                                  minimum_extent: float,
+                                  maximum_extent: float) -> IndexRange:
     """ Find the indices closest to the interpolated values of the minimum and
         maximum extents in that dimension.
 
@@ -88,18 +115,16 @@ def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
         If an extent is requested that is a single point in this dimension, the
         range should be the two surrounding pixels that border the point.
 
-        For a latitude dimension:
+        For an ascending dimension:
 
-        * `minimum_extent` is the southern extent of the bounding box.
-        * `maximum_extent` is the northern extent of the bounding box.
+        * `minimum_extent` ≤ `maximum_extent`.
 
-        For a longitude dimension:
+        For a descending dimension:
 
-        * `minimum_extent` is the western extent of the bounding box.
-        * `maximum_extent` is the eastern extent of the bounding box.
+        * `minimum_extent` ≥ `maximum_extent`
 
-        The input longitude extent values must conform to the valid range of
-        the native dimension data.
+        Input longitude extent values must conform to the valid range of the
+        native dimension data.
 
     """
     dimension_range = [minimum_extent, maximum_extent]
@@ -108,7 +133,7 @@ def get_dimension_index_range(dimension: MaskedArray, minimum_extent: float,
     if is_dimension_ascending(dimension):
         dimension_values = dimension
     else:
-        # second argument to `np.linterp` must be ascending.
+        # second argument to `np.interp` must be ascending.
         # The dimension indices also should be flipped to still be correct
         dimension_values = np.flip(dimension)
         dimension_indices = np.flip(dimension_indices)
@@ -227,13 +252,14 @@ def get_requested_index_ranges(required_variables: Set[str],
                                varinfo: VarInfoFromDmr,
                                dimensions_path: str,
                                dim_request: List[Dimension]) -> IndexRanges:
-    """ Examines the requested dimension names and ranges and extracts
-        the indices that correspond to the specified range of values
-        for each requested dimension.
-        When dimensions such as atmospheric pressure or ocean depth have
-        values that are descending (getting smaller from start to finish),
-        then the min/max values of the requested range are flipped. If the
-        dimension is descending, the specified range must also be descending.
+    """ Examines the requested dimension names and ranges and extracts the
+        indices that correspond to the specified range of values for each
+        dimension that is requested specifically by name.
+
+        When dimensions, such as atmospheric pressure or ocean depth, have
+        values that are descending (getting smaller from start to finish), then
+        the min/max values of the requested range are flipped. If the dimension
+        is descending, the specified range must also be descending.
 
         The return value from this function is a dictionary that contains the
         index ranges for the named dimension, such as: {'/lev': [1, 5]}
@@ -245,47 +271,21 @@ def get_requested_index_ranges(required_variables: Set[str],
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dim in dim_request:
-            # Check if named dimension is in required_dimensions
             if dim.name in required_dimensions:
                 dim_is_valid = True
             elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
-                # Add the leading slash
                 dim.name = f'/{dim.name}'
                 dim_is_valid = True
             else:
                 dim_is_valid = False
 
             if dim_is_valid:
-                # get the dimension scale values
-                dim_data = dimensions_file[dim.name][:]
-
-                # Harmony validates that requested min <= max,
-                # but min or max may also be 'None'. If this is the case,
-                # Use extreme values from the dimension scale array
-                if is_dimension_ascending(dim_data):
-                    if dim.min is None:
-                        dim.min = dim_data[0]
-                    if dim.max is None:
-                        dim.max = dim_data[-1]
-                else:
-                    if dim.min is None:
-                        dim.min = dim_data[-1]
-                    if dim.max is None:
-                        dim.max = dim_data[0]
-
-                # Range values must be swapped (if they are not equal)
-                # when requested dimension is descending.
-                if not is_dimension_ascending(dim_data):
-                    if dim.min < dim.max:
-                        # tuple unpacking for swapping variables
-                        dim.min, dim.max = dim.max, dim.min
-
-                # Update the ranges for all requested dimensions
-                dim_index_ranges[dim.name] = get_dimension_index_range(dim_data,
-                                                                       dim.min,
-                                                                       dim.max)
+                # Retrieve index ranges for the specifically named dimension:
+                dim_index_ranges[dim.name] = get_dimension_index_range(
+                    dimensions_file[dim.name][:], dim.min, dim.max
+                )
             else:
-                # This requested dimension is not in the Required Dimension set
+                # This requested dimension is not in the required dimension set
                 raise InvalidNamedDimension(dim.name)
 
     return dim_index_ranges

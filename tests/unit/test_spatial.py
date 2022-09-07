@@ -2,14 +2,20 @@ from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
+from unittest.mock import ANY, patch
 
+from pyproj import CRS
 from netCDF4 import Dataset
-import numpy as np
+from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
+import numpy as np
 
 from pymods.bbox_utilities import BBox
 from pymods.spatial import (get_bounding_box_longitudes,
-                            get_geographic_index_ranges, get_longitude_in_grid)
+                            get_geographic_index_range,
+                            get_projected_x_y_index_ranges,
+                            get_longitude_in_grid,
+                            get_spatial_index_ranges)
 
 
 class TestSpatial(TestCase):
@@ -28,7 +34,25 @@ class TestSpatial(TestCase):
     def tearDown(self):
         rmtree(self.test_dir)
 
-    def test_get_geographic_index_ranges(self):
+    def test_get_spatial_index_ranges_projected(self):
+        """ Ensure that correct index ranges can be calculated for an ABoVE
+            TVPRM granule. This granule has variables that use a grid with an
+            Albers Conic Equal Area projection, in the Alaska region.
+
+        """
+        bounding_box = BBox(-160, 68, -145, 70)
+        above_varinfo = VarInfoFromDmr('tests/data/ABoVE_TVPRM_example.dmr',
+                                       self.logger)
+
+        self.assertDictEqual(
+            get_spatial_index_ranges({'/NEE', '/x', '/y', '/time'},
+                                     above_varinfo,
+                                     'tests/data/ABoVE_TVPRM_prefetch.nc4',
+                                     bounding_box),
+            {'/x': (37, 56), '/y': (7, 26)}
+        )
+
+    def test_get_spatial_index_ranges_geographic(self):
         """ Ensure that correct index ranges can be calculated for:
 
             - Latitude dimensions
@@ -66,8 +90,8 @@ class TestSpatial(TestCase):
             # latitude[174] = 84.5, latitude[175] = 85.5:
             # Northern extent = 85 => index = 174 (max index so round down)
             self.assertDictEqual(
-                get_geographic_index_ranges({'/latitude'}, self.varinfo,
-                                            test_file_name, bounding_box),
+                get_spatial_index_ranges({'/latitude'}, self.varinfo,
+                                         test_file_name, bounding_box),
                 {'/latitude': (135, 174)}
             )
 
@@ -77,9 +101,9 @@ class TestSpatial(TestCase):
             # latitude[174] = 84.5, latitude[175] = 85.5:
             # Northern extent = 84.9 => index = 174
             self.assertDictEqual(
-                get_geographic_index_ranges({'/latitude'}, self.varinfo,
-                                            test_file_name,
-                                            bounding_box_floats),
+                get_spatial_index_ranges({'/latitude'}, self.varinfo,
+                                         test_file_name,
+                                         bounding_box_floats),
                 {'/latitude': (134, 174)}
             )
 
@@ -89,8 +113,8 @@ class TestSpatial(TestCase):
             # longitude[199] = 199.5, longitude[200] = 200.5:
             # Eastern extent = 200 => index = 199 (max index so round down)
             self.assertDictEqual(
-                get_geographic_index_ranges({'/longitude'}, self.varinfo,
-                                            test_file_name, bounding_box),
+                get_spatial_index_ranges({'/longitude'}, self.varinfo,
+                                         test_file_name, bounding_box),
                 {'/longitude': (160, 199)}
             )
 
@@ -101,8 +125,8 @@ class TestSpatial(TestCase):
             # Eastern longitude = 20 => index 19 (max index, so round down)
             bbox_crossing = BBox(-20, 45, 20, 85)
             self.assertDictEqual(
-                get_geographic_index_ranges({'/longitude'}, self.varinfo,
-                                            test_file_name, bbox_crossing),
+                get_spatial_index_ranges({'/longitude'}, self.varinfo,
+                                         test_file_name, bbox_crossing),
                 {'/longitude': (340, 19)}
             )
 
@@ -126,9 +150,9 @@ class TestSpatial(TestCase):
             # longitude[159] = 200.5, longitude[160] = 199.5, lon = 200.1 => 159
             # longitude[199] = 160.5, longitude[200] = 159.5, lon = 160.1 => 199
             self.assertDictEqual(
-                get_geographic_index_ranges({'/latitude', '/longitude'},
-                                            self.varinfo, test_file_name,
-                                            bounding_box_floats),
+                get_spatial_index_ranges({'/latitude', '/longitude'},
+                                         self.varinfo, test_file_name,
+                                         bounding_box_floats),
                 {'/latitude': (5, 45), '/longitude': (159, 199)}
             )
 
@@ -138,11 +162,167 @@ class TestSpatial(TestCase):
             # longitude[159] = 200.5, longitude[160] = 199.5, lon = 200 => index = 160
             # longitude[199] = 160.5, longitude[200] = 159.5, lon = 160 => index = 199
             self.assertDictEqual(
-                get_geographic_index_ranges({'/latitude', '/longitude'},
-                                            self.varinfo, test_file_name,
-                                            bounding_box),
+                get_spatial_index_ranges({'/latitude', '/longitude'},
+                                         self.varinfo, test_file_name,
+                                         bounding_box),
                 {'/latitude': (5, 44), '/longitude': (160, 199)}
             )
+
+    @patch('pymods.spatial.get_dimension_index_range')
+    @patch('pymods.spatial.get_projected_x_y_extents')
+    def test_get_projected_x_y_index_ranges(self, mock_get_x_y_extents,
+                                            mock_get_dimension_index_range):
+        """ Ensure that x and y index ranges are only requested when there are
+            projected grid dimensions, and the values have not already been
+            calculated.
+
+            The example used in this test is for the ABoVE TVPRM collection,
+            which uses an Albers Conical Equal Area CRS for a projected grid,
+            with data in Alaska.
+
+        """
+        above_varinfo = VarInfoFromDmr(
+            'tests/data/ABoVE_TVPRM_example.dmr', self.logger
+        )
+        above_file_path = 'tests/data/ABoVE_TVPRM_prefetch.nc4'
+        expected_index_ranges = {'/x': (37, 56), '/y': (7, 26)}
+        bbox = BBox(-160, 68, -145, 70)
+
+        crs = CRS.from_cf({'false_easting': 0.0,
+                           'false_northing': 0.0,
+                           'latitude_of_projection_origin': 40.0,
+                           'longitude_of_central_meridian': -96.0,
+                           'standard_parallel': [50.0, 70.0],
+                           'long_name': 'CRS definition',
+                           'longitude_of_prime_meridian': 0.0,
+                           'semi_major_axis': 6378137.0,
+                           'inverse_flattening': 298.257222101,
+                           'grid_mapping_name': 'albers_conical_equal_area'})
+
+        x_y_extents = {'x_min': -2273166.953240025,
+                       'x_max': -1709569.3224678137,
+                       'y_min': 3832621.3156695124,
+                       'y_max': 4425654.159834823}
+
+        mock_get_x_y_extents.return_value = x_y_extents
+
+        # When ranges are derived, they are first calculated for x, then y:
+        mock_get_dimension_index_range.side_effect = [(37, 56), (7, 26)]
+
+        with self.subTest('Projected grid gets expected dimension ranges'):
+            with Dataset(above_file_path, 'r') as above_prefetch:
+                self.assertDictEqual(
+                    get_projected_x_y_index_ranges('/NEE', above_varinfo,
+                                                   above_prefetch, {},
+                                                   bounding_box=bbox),
+                    expected_index_ranges
+                )
+
+                # Assertions don't like direct comparisons of numpy arrays, so
+                # have to extract the call arguments and compare those
+                mock_get_x_y_extents.assert_called_once_with(ANY, ANY, crs,
+                                                             shape_file=None,
+                                                             bounding_box=bbox)
+
+                actual_x_values = mock_get_x_y_extents.call_args_list[0][0][0]
+                actual_y_values = mock_get_x_y_extents.call_args_list[0][0][1]
+
+                assert_array_equal(actual_x_values, above_prefetch['/x'][:])
+                assert_array_equal(actual_y_values, above_prefetch['/y'][:])
+
+                self.assertEqual(mock_get_dimension_index_range.call_count, 2)
+                mock_get_dimension_index_range.assert_any_call(
+                    ANY, x_y_extents['x_min'], x_y_extents['x_max']
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[0][0][0],
+                    above_prefetch['/x'][:]
+                )
+
+                mock_get_dimension_index_range.assert_any_call(
+                    ANY, x_y_extents['y_min'],
+                    x_y_extents['y_max']
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[1][0][0],
+                    above_prefetch['/y'][:]
+                )
+
+        mock_get_x_y_extents.reset_mock()
+        mock_get_dimension_index_range.reset_mock()
+
+        with self.subTest('Non projected grid not try to get index ranges'):
+            with Dataset(above_file_path, 'r') as above_prefetch:
+                self.assertDictEqual(
+                    get_projected_x_y_index_ranges('/x', above_varinfo,
+                                                   above_prefetch, {},
+                                                   bounding_box=bbox),
+                    {}
+                )
+
+            mock_get_x_y_extents.assert_not_called()
+            mock_get_dimension_index_range.assert_not_called()
+
+        with self.subTest('Function does not rederive known index ranges'):
+            with Dataset(above_file_path, 'r') as above_prefetch:
+                self.assertDictEqual(
+                    get_projected_x_y_index_ranges('/NEE', above_varinfo,
+                                                   above_prefetch,
+                                                   expected_index_ranges,
+                                                   bounding_box=bbox),
+                    {}
+                )
+
+            mock_get_x_y_extents.assert_not_called()
+            mock_get_dimension_index_range.assert_not_called()
+
+    @patch('pymods.spatial.get_dimension_index_range')
+    def test_get_geographic_index_range(self, mock_get_dimension_index_range):
+        """ Ensure both a latitude and longitude variable is correctly handled.
+
+            The numpy arrays cannot be compared directly as part of the
+            `unittest.mock.Mock.assert_called_once_with`, and so require the
+            use of `numpy.testing.assert_array_equal`.
+
+        """
+        bounding_box = BBox(10, 20, 30, 40)
+        mock_get_dimension_index_range.return_value = (1, 2)
+
+        with self.subTest('Latitude variable'):
+            with Dataset('tests/data/f16_ssmis_lat_lon.nc', 'r') as prefetch:
+                self.assertEqual(get_geographic_index_range('/latitude',
+                                                            self.varinfo,
+                                                            prefetch,
+                                                            bounding_box),
+                                 (1, 2))
+
+                mock_get_dimension_index_range.assert_called_once_with(
+                    ANY, bounding_box.south, bounding_box.north
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[0][0][0],
+                    prefetch['/latitude'][:]
+                )
+
+        mock_get_dimension_index_range.reset_mock()
+
+        with self.subTest('Longitude variable'):
+            with Dataset('tests/data/f16_ssmis_lat_lon.nc', 'r') as prefetch:
+                self.assertEqual(get_geographic_index_range('/longitude',
+                                                            self.varinfo,
+                                                            prefetch,
+                                                            bounding_box),
+                                 (1, 2))
+
+                mock_get_dimension_index_range.assert_called_once_with(
+                    ANY, bounding_box.west, bounding_box.east
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[0][0][0],
+                    prefetch['/longitude'][:]
+                )
+
+        mock_get_dimension_index_range.reset_mock()
 
     def test_get_bounding_box_longitudes(self):
         """ Ensure the western and eastern extents of a bounding box are

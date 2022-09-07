@@ -1,3 +1,18 @@
+## v0.3.0
+### 2022-08-25
+
+This version of HOSS updates the service to support spatial subsetting of
+collections with projected grids (e.g., non-geographic). This functionality
+works by utilitising the chained service of HOSS and MaskFill. HOSS derives an
+approximate mimimum geographic resolution of the projected grid and populates
+points around the perimeter of the input bounding box or GeoJSON polygon(s) at
+this resolution. The minimum and maximum indices of the points corresponding to
+these perimeter points is determined. The rectangular region in the projected
+horizontal spatial plane is retreived from OPeNDAP as before. The output is
+then sent to MaskFill in order to fill those points that are within the
+retrieved rectangular portion of the array, but outside of the specified
+GeoJSON shape.
+
 ## v0.2.2
 ### 2022-07-11
 

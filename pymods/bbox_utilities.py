@@ -74,7 +74,7 @@ def get_shape_file_geojson(local_shape_file_path: str) -> GeoJSON:
         by the Harmony request.
 
     """
-    with open(local_shape_file_path, 'r') as file_handler:
+    with open(local_shape_file_path, 'r', encoding='utf-8') as file_handler:
         geojson_content = json.load(file_handler)
 
     return geojson_content

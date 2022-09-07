@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="https://opendap.uat.earthdata.nasa.gov/collections/C1245804308-EEDTEST/granules/NorthSlope_NEE_TVPRM.TVPRM_IVO_BES_ABoVE-LC_NARR_GOSIF_2008.nc4" dapVersion="4.0" dmrVersion="1.0" name="TVPRM_IVO_BES_ABoVE-LC_NARR_GOSIF_2008.nc4">
+  <Dimension name="y" size="36"/>
+  <Dimension name="x" size="72"/>
+  <Dimension name="time" size="8784"/>
+  <Dimension name="nv" size="2"/>
+  <Float64 name="y">
+    <Dim name="/y"/>
+    <Attribute name="units" type="String">
+      <Value>m</Value>
+    </Attribute>
+    <Attribute name="long_name" type="String">
+      <Value>y coordinate of projection</Value>
+    </Attribute>
+    <Attribute name="standard_name" type="String">
+      <Value>projection_y_coordinate</Value>
+    </Attribute>
+  </Float64>
+  <Float32 name="lon">
+    <Dim name="/y"/>
+    <Dim name="/x"/>
+    <Attribute name="units" type="String">
+      <Value>degrees_east</Value>
+    </Attribute>
+    <Attribute name="long_name" type="String">
+      <Value>longitude coordinate</Value>
+    </Attribute>
+    <Attribute name="standard_name" type="String">
+      <Value>longitude</Value>
+    </Attribute>
+  </Float32>
+  <Float64 name="time">
+    <Dim name="/time"/>
+    <Attribute name="long_name" type="String">
+      <Value>time</Value>
+    </Attribute>
+    <Attribute name="standard_name" type="String">
+      <Value>time</Value>
+    </Attribute>
+    <Attribute name="units" type="String">
+      <Value>hours since 2008-01-01 00:00:00</Value>
+    </Attribute>
+    <Attribute name="calendar" type="String">
+      <Value>standard</Value>
+    </Attribute>
+    <Attribute name="description" type="String">
+      <Value>middle of each hour</Value>
+    </Attribute>
+    <Attribute name="bounds" type="String">
+      <Value>time_bnds</Value>
+    </Attribute>
+  </Float64>
+  <Float32 name="lat">
+    <Dim name="/y"/>
+    <Dim name="/x"/>
+    <Attribute name="units" type="String">
+      <Value>degrees_north</Value>
+    </Attribute>
+    <Attribute name="long_name" type="String">
+      <Value>latitude coordinate</Value>
+    </Attribute>
+    <Attribute name="standard_name" type="String">
+      <Value>latitude</Value>
+    </Attribute>
+  </Float32>
+  <Float32 name="NEE">
+    <Dim name="/time"/>
+    <Dim name="/y"/>
+    <Dim name="/x"/>
+    <Attribute name="units" type="String">
+      <Value>umol m-2 s-1</Value>
+    </Attribute>
+    <Attribute name="_FillValue" type="Float32">
+      <Value>-9999.</Value>
+    </Attribute>
+    <Attribute name="grid_mapping" type="String">
+      <Value>crs</Value>
+    </Attribute>
+    <Attribute name="long_name" type="String">
+      <Value>TVPRM net ecosystem exchange</Value>
+    </Attribute>
+    <Attribute name="standard_name" type="String">
+      <Value>surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_natural_sources</Value>
+    </Attribute>
+  </Float32>
+  <Float64 name="time_bnds">
+    <Dim name="/time"/>
+    <Dim name="/nv"/>
+    <Attribute name="calendar" type="String">
+      <Value>standard</Value>
+    </Attribute>
+    <Attribute name="description" type="String">
+      <Value>start and end time for each time stamp</Value>
+    </Attribute>
+    <Attribute name="units" type="String">
+      <Value>hours since 2008-01-01 00:00:00</Value>
+    </Attribute>
+  </Float64>
+  <String name="crs">
+    <Attribute name="false_easting" type="Float64">
+      <Value>0.</Value>
+    </Attribute>
+    <Attribute name="false_northing" type="Float64">
+      <Value>0.</Value>
+    </Attribute>
+    <Attribute name="latitude_of_projection_origin" type="Float64">
+      <Value>40.</Value>
+    </Attribute>
+    <Attribute name="longitude_of_central_meridian" type="Float64">
+      <Value>-96.</Value>
+    </Attribute>
+    <Attribute name="standard_parallel" type="Float64">
+      <Value>50.</Value>
+      <Value>70.</Value>
+    </Attribute>
+    <Attribute name="long_name" type="String">
+      <Value>CRS definition</Value>
+    </Attribute>
+    <Attribute name="longitude_of_prime_meridian" type="Float64">
+      <Value>0.</Value>
+    </Attribute>
+    <Attribute name="semi_major_axis" type="Float64">
+      <Value>6378137.</Value>
+    </Attribute>
+    <Attribute name="inverse_flattening" type="Float64">
+      <Value>298.25722210100002</Value>
+    </Attribute>
+    <Attribute name="grid_mapping_name" type="String">
+      <Value>albers_conical_equal_area</Value>
+    </Attribute>
+  </String>
+  <Float64 name="x">
+    <Dim name="/x"/>
+    <Attribute name="units" type="String">
+      <Value>m</Value>
+    </Attribute>
+    <Attribute name="long_name" type="String">
+      <Value>x coordinate of projection</Value>
+    </Attribute>
+    <Attribute name="standard_name" type="String">
+      <Value>projection_x_coordinate</Value>
+    </Attribute>
+  </Float64>
+  <Attribute name="Conventions" type="String">
+    <Value>CF-1.6</Value>
+  </Attribute>
+  <Attribute name="TVPRM config" type="String">
+    <Value>IVO_BES_ABoVE-LC_NARR_GOSIF for 2008</Value>
+  </Attribute>
+  <Attribute name="references" type="String">
+    <Value>Luke Schiferl, et al.</Value>
+  </Attribute>
+  <Attribute name="title" type="String">
+    <Value>Hourly NEE for 30km x 30km gridboxes on ABoVE grid (Ah000v000, Ah001v000) and projection</Value>
+  </Attribute>
+  <Attribute name="source" type="String">
+    <Value>Tundra Vegetation Photosynthesis and Respiration Model (TVPRM)</Value>
+  </Attribute>
+  <Attribute name="publisher_institution" type="String">
+    <Value>Oak Ridge National Laboratory Distributed Active Archive Center (ORNL DAAC)</Value>
+  </Attribute>
+  <Attribute name="publisher_url" type="String">
+    <Value>https://daac.ornl.gov</Value>
+  </Attribute>
+  <Attribute name="publisher_email" type="String">
+    <Value>uso@daac.ornl.gov</Value>
+  </Attribute>
+  <Attribute name="institution" type="String">
+    <Value>Columbia University</Value>
+  </Attribute>
+  <Attribute name="project" type="String">
+    <Value>Arctic-Boreal Vulnerability Experiment (ABoVE)</Value>
+  </Attribute>
+  <Attribute name="contact" type="String">
+    <Value>schiferl@ldeo.columbia.edu</Value>
+  </Attribute>
+  <Attribute name="build_dmrpp_metadata" type="Container">
+  <Attribute name="build_dmrpp" type="String">
+    <Value>3.20.12-0</Value>
+  </Attribute>
+  <Attribute name="bes" type="String">
+    <Value>3.20.12-0</Value>
+  </Attribute>
+  <Attribute name="libdap" type="String">
+    <Value>libdap-3.20.10-0</Value>
+  </Attribute>
+  <Attribute name="configuration" type="String">
+    <Value> # TheBESKeys::get_as_config() AllowedHosts=^https?:\/\/ BES.Catalog.catalog.FollowSymLinks=Yes BES.Catalog.catalog.RootDirectory=/usr/share/hyrax BES.Catalog.catalog.TypeMatch=dmrpp:.*\.(dmrpp)$; BES.Catalog.catalog.TypeMatch+=h5:.*(\.bz2|\.gz|\.Z)?$; BES.Data.RootDirectory=/dev/null BES.LogName=./bes.log BES.UncompressCache.dir=/tmp/hyrax_ux BES.UncompressCache.prefix=ux_ BES.UncompressCache.size=500 BES.module.cmd=/usr/lib64/bes/libdap_xml_module.so BES.module.dap=/usr/lib64/bes/libdap_module.so BES.module.dmrpp=/usr/lib64/bes/libdmrpp_module.so BES.module.h5=/usr/lib64/bes/libhdf5_module.so BES.modules=dap,cmd,h5,dmrpp H5.DefaultHandleDimensions=true H5.EnableCF=false H5.EnableCheckNameClashing=true </Value>
+  </Attribute>
+  <Attribute name="invocation" type="String">
+    <Value>build_dmrpp -c /tmp/bes_conf_A6p6 -f /usr/share/hyrax/ABoVE_TVPRM/TVPRM_IVO_BES_ABoVE-LC_NARR_GOSIF_2008.nc4 -r /tmp/dmr__yPnt1P -u OPeNDAP_DMRpp_DATA_ACCESS_URL -M</Value>
+  </Attribute>
+  </Attribute>
+</Dataset>

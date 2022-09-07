@@ -30,6 +30,55 @@ class InvalidInputGeoJSON(CustomError):
                          'to the GeoJSON format defined in RFC 7946.')
 
 
+class InvalidNamedDimension(CustomError):
+    """ This exception is raised when a user-supplied dimension name
+        is not in the list of required dimensions for the subset.
+
+    """
+    def __init__(self, dimension_name):
+        super().__init__('InvalidNamedDimension',
+                         f'"{dimension_name}" is not a dimension for '
+                         'any of the requested variables.')
+
+
+class MissingGridMappingMetadata(CustomError):
+    """ This exception is raised when HOSS tries to obtain the `grid_mapping`
+        metadata attribute for a projected variable and it is not present in
+        either the input granule or the CF-Convention overrides defined in the
+        sds-varinfo configuration file.
+
+    """
+    def __init__(self, variable_name):
+        super().__init__('MissingGridMappingMetadata',
+                         f'Projected variable "{variable_name}" does not have '
+                         'an associated "grid_mapping" metadata attribute.')
+
+
+class MissingGridMappingVariable(CustomError):
+    """ This exception is raised when HOSS tries to extract attributes from a
+        `grid_mapping` variable referred to by another variable, but that
+        `grid_mapping` variable is not present in the `.dmr` for that granule.
+
+    """
+    def __init__(self, grid_mapping_variable, referring_variable):
+        super().__init__('MissingGridMappingVariable',
+                         f'Grid mapping variable "{grid_mapping_variable}" '
+                         f'referred to by variable "{referring_variable}" is '
+                         'not present in granule .dmr file.')
+
+
+class MissingSpatialSubsetInformation(CustomError):
+    """ This exception is raised when HOSS reaches a branch of the code that
+        requires spatial subset information, but neither a bounding box, nor a
+        shape file is specified.
+
+    """
+    def __init__(self):
+        super().__init__('MissingSpatialSubsetInformation',
+                         'Either a bounding box or shape file must be '
+                         'specified when performing spatial subsetting.')
+
+
 class UnsupportedShapeFileFormat(CustomError):
     """ This exception is raised when the shape file included in the input
         Harmony message is not GeoJSON.
@@ -70,14 +119,3 @@ class UrlAccessFailedWithRetries(CustomError):
         super().__init__('UrlAccessFailedWithRetries',
                          f'URL: {url} was unsuccessfully requested the '
                          'maximum number of times.')
-
-
-class InvalidNamedDimension(CustomError):
-    """ This exception is raised when a user-supplied dimension name
-        is not in the list of required dimensions for the subset.
-
-    """
-    def __init__(self, dim_name):
-        super().__init__('InvalidNamedDimension',
-                         f'"{dim_name}" is not a dimension for '
-                         'any of the requested variables.')

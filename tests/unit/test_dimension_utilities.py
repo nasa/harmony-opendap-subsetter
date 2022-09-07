@@ -4,12 +4,14 @@ from unittest.mock import patch
 
 from harmony.util import config
 from harmony.message import Dimension
+from numpy.ma import masked_array
 from varinfo import VarInfoFromDmr
 import numpy as np
 
 from pymods.bbox_utilities import BBox
 from pymods.dimension_utilities import (add_index_range, get_dimension_extents,
                                         get_dimension_index_range,
+                                        get_dimension_min_max_indices,
                                         get_fill_slice,
                                         get_requested_index_ranges,
                                         is_dimension_ascending,
@@ -30,6 +32,8 @@ class TestDimensionUtilities(TestCase):
         cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
                                      cls.logger,
                                      'tests/data/test_subsetter_config.yml')
+        cls.ascending_dimension = masked_array(np.linspace(0, 200, 101))
+        cls.descending_dimension = masked_array(np.linspace(200, 0, 101))
 
     def test_is_dimension_ascending(self):
         """ Ensure that a dimension variable is correctly identified as
@@ -38,23 +42,20 @@ class TestDimensionUtilities(TestCase):
             array.
 
         """
-        ascending_data = np.linspace(0, 200, 101)
-        descending_data = np.linspace(200, 0, 101)
-
         # Create a mask that will mask the first and last element of an array
-        mask = np.zeros(ascending_data.shape)
+        mask = np.zeros(self.ascending_dimension.shape)
         mask[0] = 1
         mask[-1] = 1
 
-        ascending_dimension = np.ma.masked_array(data=ascending_data)
-        descending_dimension = np.ma.masked_array(data=descending_data)
-        ascending_masked = np.ma.masked_array(data=ascending_data, mask=mask)
-        descending_masked = np.ma.masked_array(data=descending_data, mask=mask)
+        ascending_masked = masked_array(data=self.ascending_dimension.data,
+                                        mask=mask)
+        descending_masked = masked_array(data=self.descending_dimension.data,
+                                         mask=mask)
 
         test_args = [
-            ['Ascending dimension returns True', ascending_dimension, True],
+            ['Ascending dimension returns True', self.ascending_dimension, True],
             ['Ascending masked dimension returns True', ascending_masked, True],
-            ['Descending dimension returns False', descending_dimension, False],
+            ['Descending dimension returns False', self.descending_dimension, False],
             ['Descending masked dimension returns False', descending_masked, False]
         ]
         for description, dimension, expected_result in test_args:
@@ -62,7 +63,76 @@ class TestDimensionUtilities(TestCase):
                 self.assertEqual(is_dimension_ascending(dimension),
                                  expected_result)
 
-    def test_get_dimension_index_range(self):
+    @patch('pymods.dimension_utilities.get_dimension_min_max_indices')
+    def test_get_dimension_index_range(self, mock_get_min_max_indices):
+        """ Ensure that the dimension variable is correctly determined to be
+            ascending or descending, such that `get_dimension_min_max_indices`
+            is called with the correct ordering of minimum and maximum values.
+            This function should also handle when either the minimum or maximum
+            requested value is unspecified, indicating that the beginning or
+            end of the array should be used accordingly.
+
+            data_ascending[20] = data_descending[80] = 40.0
+            data_ascending[87] = data_descending[13] = 174.0
+
+        """
+        requested_min_value = 39.0
+        requested_max_value = 174.3
+
+        with self.subTest('Ascending, minimum and maximum extents specified'):
+            get_dimension_index_range(self.ascending_dimension,
+                                      requested_min_value, requested_max_value)
+            mock_get_min_max_indices.called_once_with(self.ascending_dimension,
+                                                      requested_min_value,
+                                                      requested_max_value)
+            mock_get_min_max_indices.reset_mock()
+
+        with self.subTest('Ascending, only minimum extent specified'):
+            get_dimension_index_range(self.ascending_dimension,
+                                      requested_min_value, None)
+            mock_get_min_max_indices.called_once_with(
+                self.ascending_dimension, requested_min_value,
+                self.ascending_dimension[:][-1]
+            )
+            mock_get_min_max_indices.reset_mock()
+
+        with self.subTest('Ascending, only maximum extent specified'):
+            get_dimension_index_range(self.ascending_dimension, None,
+                                      requested_max_value)
+            mock_get_min_max_indices.called_once_with(
+                self.ascending_dimension, self.ascending_dimension[:][0],
+                requested_max_value
+            )
+            mock_get_min_max_indices.reset_mock()
+
+        with self.subTest('Descending, minimum and maximum extents specified'):
+            get_dimension_index_range(self.descending_dimension,
+                                      requested_min_value, requested_max_value)
+            mock_get_min_max_indices.called_once_with(
+                self.descending_dimension, requested_max_value,
+                requested_min_value
+            )
+            mock_get_min_max_indices.reset_mock()
+
+        with self.subTest('Descending, only minimum extent specified'):
+            get_dimension_index_range(self.descending_dimension,
+                                      requested_min_value, None)
+            mock_get_min_max_indices.called_once_with(
+                self.descending_dimension, self.descending_dimension[:][0],
+                requested_min_value
+            )
+            mock_get_min_max_indices.reset_mock()
+
+        with self.subTest('Descending, only maximum extent specified'):
+            get_dimension_index_range(self.descending_dimension, None,
+                                      requested_max_value)
+            mock_get_min_max_indices.called_once_with(
+                self.descending_dimension, requested_max_value,
+                self.descending_dimension[:][-1]
+            )
+            mock_get_min_max_indices.reset_mock()
+
+    def test_get_dimension_min_max_indices(self):
         """ Ensure the expected index values are retrieved for the minimum and
             maximum values of an expected range. This should correspond to the
             nearest integer, to ensure partial pixels are included in a
@@ -76,24 +146,19 @@ class TestDimensionUtilities(TestCase):
             between pixels should not include the outer pixel.
 
         """
-        data_ascending = np.linspace(0, 200, 101)
-        data_descending = np.linspace(200, 0, 101)
-
         test_args = [
-            ['Ascending dimension', data_ascending, 39, 174.3, (20, 87)],
-            ['Descending dimension', data_descending, 174.3, 39, (13, 80)],
-            ['Ascending halfway between', data_ascending, 39, 175, (20, 87)],
-            ['Descending halfway between', data_descending, 175, 39, (13, 80)],
-            ['Single point inside pixel', data_ascending, 10, 10, (5, 5)],
-            ['Single point on pixel edges', data_ascending, 9, 9, (4, 5)],
+            ['Ascending dimension', self.ascending_dimension, 39, 174.3, (20, 87)],
+            ['Descending dimension', self.descending_dimension, 174.3, 39, (13, 80)],
+            ['Ascending halfway between', self.ascending_dimension, 39, 175, (20, 87)],
+            ['Descending halfway between', self.descending_dimension, 175, 39, (13, 80)],
+            ['Single point inside pixel', self.ascending_dimension, 10, 10, (5, 5)],
+            ['Single point on pixel edges', self.ascending_dimension, 9, 9, (4, 5)],
         ]
 
-        for description, data, min_extent, max_extent, expected_results in test_args:
+        for description, dimension, min_extent, max_extent, expected_results in test_args:
             with self.subTest(description):
-                dimension_data = np.ma.masked_array(data=data, mask=False)
-                results = get_dimension_index_range(dimension_data,
-                                                    min_extent,
-                                                    max_extent)
+                results = get_dimension_min_max_indices(dimension, min_extent,
+                                                        max_extent)
 
                 self.assertIsInstance(results[0], int)
                 self.assertIsInstance(results[1], int)
@@ -343,4 +408,3 @@ class TestDimensionUtilities(TestCase):
             with self.assertRaises(InvalidNamedDimension):
                 get_requested_index_ranges(required_variables, self.varinfo,
                                            descending_file, dim_request),
-

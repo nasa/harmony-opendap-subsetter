@@ -1,3 +1,13 @@
+## v0.3.1
+### 2022-09-07
+
+This version of HOSS updates the service to extract the collection short name
+from the input Harmony message and STAC item. This collection short name is
+then used by `sds-varinfo` when instantiating the `VarInfoFromDmr` object used
+to map variable and dimension dependencies. This change supports collections
+where the short name is not stored as a global attribute directly within a
+granule.
+
 ## v0.3.0
 ### 2022-08-25
 

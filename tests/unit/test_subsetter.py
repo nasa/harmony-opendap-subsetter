@@ -32,7 +32,8 @@ class TestSubsetter(TestCase):
         self.config = config(validate=False)
         self.process_item_spy = spy_on(HarmonyAdapter.process_item)
 
-    def create_message(self, collection: str, granule_id: str, file_paths: List[str],
+    def create_message(self, collection_id: str, collection_short_name: str,
+                       granule_id: str, file_paths: List[str],
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None,
                        bounding_box: Optional[List[float]] = None,
@@ -54,8 +55,9 @@ class TestSubsetter(TestCase):
         variables = [{'name': variable} for variable in variable_list]
         message_content = {
             'sources': [{
-                'collection': collection,
+                'collection': collection_id,
                 'granules': granules,
+                'shortName': collection_short_name,
                 'variables': variables
             }],
             'user': user,
@@ -88,8 +90,10 @@ class TestSubsetter(TestCase):
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
         temporal_range = {'start': '2021-01-01T00:00:00', 'end': '2021-01-02T00:00:00'}
         temporal_list = [temporal_range['start'], temporal_range['end']]
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
@@ -107,6 +111,7 @@ class TestSubsetter(TestCase):
                                                     granule.variables,
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
@@ -134,8 +139,10 @@ class TestSubsetter(TestCase):
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
@@ -151,6 +158,7 @@ class TestSubsetter(TestCase):
                                                     granule.variables,
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
@@ -179,8 +187,10 @@ class TestSubsetter(TestCase):
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
@@ -196,6 +206,7 @@ class TestSubsetter(TestCase):
                                                     granule.variables,
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
@@ -222,8 +233,10 @@ class TestSubsetter(TestCase):
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
@@ -238,6 +251,7 @@ class TestSubsetter(TestCase):
                                                     granule.variables,
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
@@ -265,8 +279,10 @@ class TestSubsetter(TestCase):
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
         bounding_box = BBox(-20, -10, 20, 30)
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
@@ -285,6 +301,7 @@ class TestSubsetter(TestCase):
                                                     granule.variables,
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=bounding_box,
@@ -309,6 +326,7 @@ class TestSubsetter(TestCase):
             variable and a spatial subset being made.
 
         """
+        collection_short_name = 'harmony_example_l2'
         shape_file_url = 'www.example.com/shape.geo.json'
         local_shape_file = '/path/to/shape.geo.json'
         mock_get_request_shape_file.return_value = local_shape_file
@@ -316,6 +334,7 @@ class TestSubsetter(TestCase):
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
@@ -335,6 +354,7 @@ class TestSubsetter(TestCase):
                                                     granule.variables,
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
@@ -362,10 +382,12 @@ class TestSubsetter(TestCase):
             repository, as it would be large.
 
         """
+        collection_short_name = 'M2I3NPASM'
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1245663527-EEDTEST',
+                                      collection_short_name,
                                       'G1245663563-EEDTEST',
                                       ['/home/tests/data/M2I3NPASM.nc4'],
                                       ['H1000'],
@@ -384,6 +406,7 @@ class TestSubsetter(TestCase):
                                                     granule.variables,
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,
@@ -408,10 +431,12 @@ class TestSubsetter(TestCase):
             should raise an exception.
 
         """
+        collection_short_name = 'harmony_example_l2'
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       [],
                                       ['alpha_var', 'blue_var'],
@@ -444,8 +469,10 @@ class TestSubsetter(TestCase):
 
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc',
                                        '/home/tests/data/f16_ssmis_20200102v7.nc'],
@@ -482,8 +509,10 @@ class TestSubsetter(TestCase):
 
         mock_subset_granule.side_effect = output_paths
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc',
                                        '/home/tests/data/f16_ssmis_20200102v7.nc'],
@@ -493,6 +522,7 @@ class TestSubsetter(TestCase):
         variable_subsetter = HarmonyAdapter(message, config=self.config)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
+
         granules = variable_subsetter.message.granules
 
         for index, granule in enumerate(granules):
@@ -500,6 +530,7 @@ class TestSubsetter(TestCase):
                                                 granule.variables,
                                                 ANY,
                                                 variable_subsetter.logger,
+                                                collection_short_name,
                                                 access_token=message.accessToken,
                                                 config=self.config,
                                                 bounding_box=None,
@@ -528,8 +559,10 @@ class TestSubsetter(TestCase):
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
+                                      collection_short_name,
                                       'G1233860471-EEDTEST',
                                       ['/home/tests/data/africa.nc'],
                                       [],
@@ -545,6 +578,7 @@ class TestSubsetter(TestCase):
                                                     [],
                                                     ANY,
                                                     variable_subsetter.logger,
+                                                    collection_short_name,
                                                     access_token=message.accessToken,
                                                     config=variable_subsetter.config,
                                                     bounding_box=None,

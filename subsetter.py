@@ -112,6 +112,10 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                     #                            if 'opendap' in (v.roles or []))
                     asset = item_asset
 
+            # Get collection information associated with this STAC item:
+            collection_short_name = self._get_item_source(item).shortName
+            self.logger.info(f'Collection short_name: {collection_short_name}')
+
             # Mark any fields the service processes so later services do not
             # repeat work. Unspecified `Message` attributes default to `None`.
             variables = source.process('variables') or []
@@ -140,6 +144,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 asset.href,
                 variables, workdir,
                 self.logger,
+                collection_short_name,
                 access_token=self.message.accessToken,
                 config=self.config,
                 bounding_box=bounding_box,

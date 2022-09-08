@@ -24,6 +24,9 @@ Mission:
   'SPL[1234].+': 'SMAP'
   'VIIRS_NPP-.+-L2P': 'VIIRS_PO'
   'M2T1NXSLV': 'MERRA-2'
+  'M2I3NPASM': 'MERRA-2'
+  'ABoVE_ForestDisturbance_Agents_1924': 'ABoVE'
+  'NorthSlope_NEE_TVPRM_1920': 'ABoVE'
 
 # If CF_Overrides and CF_Supplements are not enough VarInfo class will assume
 # variables with a coordinates attribute are science variables. This setting
@@ -190,6 +193,20 @@ CF_Overrides:
         Value: -2147483647
       - Name: 'valid_max'
         Value: 2147483647
+  - Applicability:
+      Mission: 'ABoVE'
+      ShortNamePath: 'NorthSlope_NEE_TVPRM_1920'
+      Variable_Pattern: '/l(at|on)'
+    Attributes:
+      - Name: 'grid_mapping'
+        Value: '/crs'
+  - Applicability:
+      Mission: 'ABoVE'
+      ShortNamePath: 'ABoVE_ForestDisturbance_Agents_1924'
+      Variable_Pattern: '/l(at|on)'
+    Attributes:
+      - Name: 'grid_mapping'
+        Value: '/albers_conical_equal_area'
 
 # For extending CF references. This allows for CF references to persist, while
 # supplemental information is provided. In particular, e.g. for subsetting

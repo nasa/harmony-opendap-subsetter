@@ -24,6 +24,7 @@ class TestSubset(TestCase):
         cls.access_token = 'access'
         cls.bounding_box = [40, -30, 50, -20]
         cls.config = config(validate=False)
+        cls.collection_short_name = 'RSSMIF16D'
         cls.granule_url = 'https://harmony.earthdata.nasa.gov/bucket/rssmif16d'
         cls.logger = Logger('tests')
         cls.output_path = 'f16_ssmis_subset.nc4'
@@ -68,6 +69,7 @@ class TestSubset(TestCase):
 
         output_path = subset_granule(self.granule_url, self.variables,
                                      self.output_dir, self.logger,
+                                     self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config)
 
@@ -75,6 +77,7 @@ class TestSubset(TestCase):
 
         mock_get_varinfo.assert_called_once_with(self.granule_url,
                                                  self.output_dir, self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
         mock_get_opendap_nc4.assert_called_once_with(self.granule_url,
@@ -127,6 +130,7 @@ class TestSubset(TestCase):
         output_path = subset_granule(self.granule_url, self.variables,
                                      self.output_dir,
                                      self.logger,
+                                     self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config,
                                      bounding_box=self.bounding_box)
@@ -134,6 +138,7 @@ class TestSubset(TestCase):
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
                                                  self.output_dir, self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -192,13 +197,14 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, [], self.output_dir,
-                                     self.logger,
+                                     self.logger, self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config, bounding_box=None)
 
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
                                                  self.output_dir, self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -266,7 +272,7 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, [], self.output_dir,
-                                     self.logger,
+                                     self.logger, self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config,
                                      bounding_box=self.bounding_box)
@@ -274,6 +280,7 @@ class TestSubset(TestCase):
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
                                                  self.output_dir, self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -367,6 +374,7 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = expected_output_path
 
         output_path = subset_granule(url, [], self.output_dir, self.logger,
+                                     self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config,
                                      bounding_box=self.bounding_box)
@@ -374,6 +382,7 @@ class TestSubset(TestCase):
         self.assertEqual(output_path, expected_output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
                                                  self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -447,13 +456,14 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = expected_output_path
 
         output_path = subset_granule(url, requested_variables, self.output_dir,
-                                     self.logger, access_token='access',
-                                     config=self.config,
+                                     self.logger, self.collection_short_name,
+                                     access_token='access', config=self.config,
                                      bounding_box=self.bounding_box)
 
         self.assertIn('GPM_3IMERGHH_subset.nc4', output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
                                                  self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -523,14 +533,15 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = expected_output_path
 
         output_path = subset_granule(url, requested_variables, self.output_dir,
-                                     self.logger, access_token='access',
-                                     config=self.config,
+                                     self.logger, self.collection_short_name,
+                                     access_token='access', config=self.config,
                                      bounding_box=None,
                                      temporal_range=temporal_range)
 
         self.assertIn('M2T1NXSLV_subset.nc4', output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
                                                  self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -606,14 +617,15 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = expected_output_path
 
         output_path = subset_granule(url, requested_variables, self.output_dir,
-                                     self.logger, access_token='access',
-                                     config=self.config,
+                                     self.logger, self.collection_short_name,
+                                     access_token='access', config=self.config,
                                      bounding_box=self.bounding_box,
                                      temporal_range=temporal_range)
 
         self.assertIn('M2T1NXSLV_subset.nc4', output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
                                                  self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -682,8 +694,8 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir,
-                                     self.logger,
+                                     self.output_dir, self.logger,
+                                     self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config,
                                      shape_file_path=shape_file_path)
@@ -691,6 +703,7 @@ class TestSubset(TestCase):
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
                                                  self.output_dir, self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -759,8 +772,8 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir,
-                                     self.logger,
+                                     self.output_dir, self.logger,
+                                     self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config,
                                      bounding_box=self.bounding_box,
@@ -769,6 +782,7 @@ class TestSubset(TestCase):
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
                                                  self.output_dir, self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -836,8 +850,8 @@ class TestSubset(TestCase):
         mock_get_opendap_nc4.return_value = self.output_path
 
         output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir,
-                                     self.logger,
+                                     self.output_dir, self.logger,
+                                     self.collection_short_name,
                                      access_token=self.access_token,
                                      config=self.config,
                                      dim_request=dim_request)
@@ -845,6 +859,7 @@ class TestSubset(TestCase):
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
                                                  self.output_dir, self.logger,
+                                                 self.collection_short_name,
                                                  self.access_token,
                                                  self.config)
 
@@ -886,7 +901,8 @@ class TestSubset(TestCase):
         mock_download_url.return_value = dmr_path
 
         varinfo = get_varinfo(self.granule_url, self.output_dir, self.logger,
-                              self.access_token, self.config)
+                              self.collection_short_name, self.access_token,
+                              self.config)
 
         self.assertIsInstance(varinfo, VarInfoFromDmr)
 

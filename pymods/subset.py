@@ -25,9 +25,9 @@ from pymods.utilities import (download_url, format_variable_set_string,
 
 
 def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
-                   output_dir: str, logger: Logger, access_token: str = None,
-                   config: Config = None, bounding_box: BBox = None,
-                   shape_file_path: str = None,
+                   output_dir: str, logger: Logger, collection_short_name: str,
+                   access_token: str = None, config: Config = None,
+                   bounding_box: BBox = None, shape_file_path: str = None,
                    dim_request: List[Dimension] = None,
                    temporal_range: List[datetime] = None) -> str:
     """ This function is the main business logic for retrieving a variable
@@ -54,7 +54,8 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
                                               dim_request, temporal_range)
 
     # Produce a map of variable dependencies with `sds-varinfo` and the `.dmr`.
-    varinfo = get_varinfo(opendap_url, output_dir, logger, access_token, config)
+    varinfo = get_varinfo(opendap_url, output_dir, logger,
+                          collection_short_name, access_token, config)
 
     requested_variables = get_requested_variables(varinfo, variables,
                                                   request_is_index_subset)
@@ -131,14 +132,15 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
 
 
 def get_varinfo(opendap_url: str, output_dir: str, logger: Logger,
-                access_token: str, config: Config) -> str:
+                collection_short_name: str, access_token: str,
+                config: Config) -> str:
     """ Retrieve the `.dmr` from OPeNDAP and use `sds-varinfo` to populate a
         representation of the granule that maps dependencies between variables.
 
     """
     dmr_path = download_url(f'{opendap_url}.dmr.xml', output_dir, logger,
                             access_token=access_token, config=config)
-    return VarInfoFromDmr(dmr_path, logger,
+    return VarInfoFromDmr(dmr_path, logger, short_name=collection_short_name,
                           config_file='pymods/var_subsetter_config.yml')
 
 

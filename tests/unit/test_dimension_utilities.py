@@ -1,23 +1,30 @@
 from logging import getLogger
+from os.path import exists
+from shutil import copy, rmtree
+from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from harmony.util import config
 from harmony.message import Dimension
+from netCDF4 import Dataset
 from numpy.ma import masked_array
+from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
 import numpy as np
 
 from pymods.bbox_utilities import BBox
-from pymods.dimension_utilities import (add_index_range, get_dimension_extents,
+from pymods.dimension_utilities import (add_index_range, get_dimension_bounds,
+                                        get_dimension_extents,
                                         get_dimension_index_range,
-                                        get_dimension_min_max_indices,
+                                        get_dimension_indices_from_bounds,
+                                        get_dimension_indices_from_values,
                                         get_fill_slice,
                                         get_requested_index_ranges,
-                                        is_dimension_ascending,
+                                        is_almost_in, is_dimension_ascending,
                                         is_index_subset,
                                         prefetch_dimension_variables)
-from pymods.exceptions import InvalidNamedDimension
+from pymods.exceptions import InvalidNamedDimension, InvalidRequestedRange
 
 
 class TestDimensionUtilities(TestCase):
@@ -27,6 +34,7 @@ class TestDimensionUtilities(TestCase):
     """
     @classmethod
     def setUpClass(cls):
+        """ Create fixtures that can be reused for all tests. """
         cls.config = config(validate=False)
         cls.logger = getLogger('tests')
         cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
@@ -34,6 +42,18 @@ class TestDimensionUtilities(TestCase):
                                      'tests/data/test_subsetter_config.yml')
         cls.ascending_dimension = masked_array(np.linspace(0, 200, 101))
         cls.descending_dimension = masked_array(np.linspace(200, 0, 101))
+        cls.varinfo_with_bounds = VarInfoFromDmr(
+            'tests/data/GPM_3IMERGHH_example.dmr', cls.logger
+        )
+
+    def setUp(self):
+        """ Create fixtures that should be unique per test. """
+        self.temp_dir = mkdtemp()
+
+    def tearDown(self):
+        """ Remove per-test fixtures. """
+        if exists(self.temp_dir):
+            rmtree(self.temp_dir)
 
     def test_is_dimension_ascending(self):
         """ Ensure that a dimension variable is correctly identified as
@@ -51,10 +71,12 @@ class TestDimensionUtilities(TestCase):
                                         mask=mask)
         descending_masked = masked_array(data=self.descending_dimension.data,
                                          mask=mask)
+        single_element = masked_array(data=np.array([1]))
 
         test_args = [
             ['Ascending dimension returns True', self.ascending_dimension, True],
             ['Ascending masked dimension returns True', ascending_masked, True],
+            ['Single element array returns True', single_element, True],
             ['Descending dimension returns False', self.descending_dimension, False],
             ['Descending masked dimension returns False', descending_masked, False]
         ]
@@ -63,8 +85,8 @@ class TestDimensionUtilities(TestCase):
                 self.assertEqual(is_dimension_ascending(dimension),
                                  expected_result)
 
-    @patch('pymods.dimension_utilities.get_dimension_min_max_indices')
-    def test_get_dimension_index_range(self, mock_get_min_max_indices):
+    @patch('pymods.dimension_utilities.get_dimension_indices_from_values')
+    def test_get_dimension_index_range(self, mock_get_indices_from_values):
         """ Ensure that the dimension variable is correctly determined to be
             ascending or descending, such that `get_dimension_min_max_indices`
             is called with the correct ordering of minimum and maximum values.
@@ -82,57 +104,93 @@ class TestDimensionUtilities(TestCase):
         with self.subTest('Ascending, minimum and maximum extents specified'):
             get_dimension_index_range(self.ascending_dimension,
                                       requested_min_value, requested_max_value)
-            mock_get_min_max_indices.called_once_with(self.ascending_dimension,
-                                                      requested_min_value,
-                                                      requested_max_value)
-            mock_get_min_max_indices.reset_mock()
+            mock_get_indices_from_values.called_once_with(
+                self.ascending_dimension, requested_min_value,
+                requested_max_value
+            )
+            mock_get_indices_from_values.reset_mock()
 
         with self.subTest('Ascending, only minimum extent specified'):
             get_dimension_index_range(self.ascending_dimension,
                                       requested_min_value, None)
-            mock_get_min_max_indices.called_once_with(
+            mock_get_indices_from_values.called_once_with(
                 self.ascending_dimension, requested_min_value,
                 self.ascending_dimension[:][-1]
             )
-            mock_get_min_max_indices.reset_mock()
+            mock_get_indices_from_values.reset_mock()
 
         with self.subTest('Ascending, only maximum extent specified'):
             get_dimension_index_range(self.ascending_dimension, None,
                                       requested_max_value)
-            mock_get_min_max_indices.called_once_with(
+            mock_get_indices_from_values.called_once_with(
                 self.ascending_dimension, self.ascending_dimension[:][0],
                 requested_max_value
             )
-            mock_get_min_max_indices.reset_mock()
+            mock_get_indices_from_values.reset_mock()
 
         with self.subTest('Descending, minimum and maximum extents specified'):
             get_dimension_index_range(self.descending_dimension,
                                       requested_min_value, requested_max_value)
-            mock_get_min_max_indices.called_once_with(
+            mock_get_indices_from_values.called_once_with(
                 self.descending_dimension, requested_max_value,
                 requested_min_value
             )
-            mock_get_min_max_indices.reset_mock()
+            mock_get_indices_from_values.reset_mock()
 
         with self.subTest('Descending, only minimum extent specified'):
             get_dimension_index_range(self.descending_dimension,
                                       requested_min_value, None)
-            mock_get_min_max_indices.called_once_with(
+            mock_get_indices_from_values.called_once_with(
                 self.descending_dimension, self.descending_dimension[:][0],
                 requested_min_value
             )
-            mock_get_min_max_indices.reset_mock()
+            mock_get_indices_from_values.reset_mock()
 
         with self.subTest('Descending, only maximum extent specified'):
             get_dimension_index_range(self.descending_dimension, None,
                                       requested_max_value)
-            mock_get_min_max_indices.called_once_with(
+            mock_get_indices_from_values.called_once_with(
                 self.descending_dimension, requested_max_value,
                 self.descending_dimension[:][-1]
             )
-            mock_get_min_max_indices.reset_mock()
+            mock_get_indices_from_values.reset_mock()
 
-    def test_get_dimension_min_max_indices(self):
+    @patch('pymods.dimension_utilities.get_dimension_indices_from_values')
+    def test_get_dimension_index_range_requested_zero_values(self,
+                                                             mock_get_indices_from_values):
+        """ Ensure that a 0 is treated correctly, and not interpreted as a
+            False boolean value.
+
+        """
+        with self.subTest('Ascending dimension values, min = 0'):
+            get_dimension_index_range(self.ascending_dimension, 0, 10)
+            mock_get_indices_from_values.assert_called_once_with(
+                self.ascending_dimension, 0, 10
+            )
+            mock_get_indices_from_values.reset_mock()
+
+        with self.subTest('Ascending dimension values, max = 0'):
+            get_dimension_index_range(self.ascending_dimension, -10, 0)
+            mock_get_indices_from_values.assert_called_once_with(
+                self.ascending_dimension, -10, 0
+            )
+            mock_get_indices_from_values.reset_mock()
+
+        with self.subTest('Descending dimension values, min = 0'):
+            get_dimension_index_range(self.descending_dimension, 0, 10)
+            mock_get_indices_from_values.assert_called_once_with(
+                self.descending_dimension, 10, 0
+            )
+            mock_get_indices_from_values.reset_mock()
+
+        with self.subTest('Descending dimension values, max = 0'):
+            get_dimension_index_range(self.descending_dimension, -10, 0)
+            mock_get_indices_from_values.assert_called_once_with(
+                self.descending_dimension, 0, -10
+            )
+            mock_get_indices_from_values.reset_mock()
+
+    def test_get_dimension_indices_from_indices(self):
         """ Ensure the expected index values are retrieved for the minimum and
             maximum values of an expected range. This should correspond to the
             nearest integer, to ensure partial pixels are included in a
@@ -157,8 +215,9 @@ class TestDimensionUtilities(TestCase):
 
         for description, dimension, min_extent, max_extent, expected_results in test_args:
             with self.subTest(description):
-                results = get_dimension_min_max_indices(dimension, min_extent,
-                                                        max_extent)
+                results = get_dimension_indices_from_values(dimension,
+                                                            min_extent,
+                                                            max_extent)
 
                 self.assertIsInstance(results[0], int)
                 self.assertIsInstance(results[1], int)
@@ -245,6 +304,39 @@ class TestDimensionUtilities(TestCase):
                                                      output_dir, self.logger,
                                                      access_token, self.config)
 
+    @patch('pymods.dimension_utilities.get_opendap_nc4')
+    def test_prefetch_dimensions_with_bounds(self, mock_get_opendap_nc4):
+        """ Ensure that a variable which has dimensions with `bounds` metadata
+            retrieves both the dimension variables and the bounds variables to
+            which their metadata refers.
+
+        """
+        prefetch_path = 'prefetch.nc4'
+        mock_get_opendap_nc4.return_value = prefetch_path
+
+        access_token = 'access'
+        url = 'https://url_to_opendap_granule'
+        required_variables = {'/Grid/precipitationCal', '/Grid/lat',
+                              '/Grid/lon', '/Grid/time'}
+        dimensions_and_bounds = {'/Grid/lat', '/Grid/lat_bnds', '/Grid/lon',
+                                 '/Grid/lon_bnds', '/Grid/time',
+                                 '/Grid/time_bnds'}
+
+        self.assertEqual(prefetch_dimension_variables(url,
+                                                      self.varinfo_with_bounds,
+                                                      required_variables,
+                                                      self.temp_dir,
+                                                      self.logger,
+                                                      access_token,
+                                                      self.config),
+                         prefetch_path)
+
+        mock_get_opendap_nc4.assert_called_once_with(url,
+                                                     dimensions_and_bounds,
+                                                     self.temp_dir,
+                                                     self.logger, access_token,
+                                                     self.config)
+
     def test_get_dimension_extents(self):
         """ Ensure that the expected dimension extents are retrieved.
 
@@ -284,7 +376,7 @@ class TestDimensionUtilities(TestCase):
         bounding_box = BBox(10, 20, 30, 40)
         shape_file_path = 'path/to/shape.geo.json'
         temporal_range = ['2021-01-01T01:30:00', '2021-01-01T02:00:00']
-        dim_range = [['lev',800,900]]
+        dim_range = [['lev', 800, 900]]
 
         test_args = [
             ['Bounding box', bounding_box, None, None, None],
@@ -347,7 +439,6 @@ class TestDimensionUtilities(TestCase):
                 {'/latitude': (440, 479), '/longitude': (560, 599)}
             )
 
-
         with self.subTest('Descending dimension'):
             # 30.0 ≥ latitude[240] ≥ 29.75, 20.25 ≥ latitude[279] ≥ 20.0
             dim_request = [Dimension({'name': '/latitude', 'min': 20, 'max': 30})]
@@ -368,7 +459,7 @@ class TestDimensionUtilities(TestCase):
 
         with self.subTest('Unspecified minimum value'):
             # 29.75 ≤ latitude[479] ≤ 30.0
-            dim_request = [Dimension({'name': '/latitude', 'min': None, 'max':30})]
+            dim_request = [Dimension({'name': '/latitude', 'min': None, 'max': 30})]
             self.assertDictEqual(
                 get_requested_index_ranges(required_variables, self.varinfo,
                                            ascending_file, dim_request),
@@ -408,3 +499,257 @@ class TestDimensionUtilities(TestCase):
             with self.assertRaises(InvalidNamedDimension):
                 get_requested_index_ranges(required_variables, self.varinfo,
                                            descending_file, dim_request),
+
+    @patch('pymods.dimension_utilities.get_dimension_index_range')
+    def test_get_requested_index_ranges_bounds(self,
+                                               mock_get_dimension_index_range):
+        """ Ensure that if bounds are present for a dimension, they are used
+            as an argument in the call to get_dimension_index_range.
+
+        """
+        mock_get_dimension_index_range.return_value = (2000, 2049)
+
+        gpm_varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
+                                     self.logger, short_name='GPM_3IMERGHH')
+        gpm_prefetch_path = 'tests/data/GPM_3IMERGHH_prefetch.nc4'
+
+        requested_ranges = [Dimension({'name': '/Grid/lon', 'min': 20,
+                                       'max': 25})]
+
+        self.assertDictEqual(
+            get_requested_index_ranges({'/Grid/lon'}, gpm_varinfo,
+                                       gpm_prefetch_path, requested_ranges),
+            {'/Grid/lon': (2000, 2049)}
+        )
+        mock_get_dimension_index_range.assert_called_once_with(ANY, 20, 25,
+                                                               bounds_values=ANY)
+
+        with Dataset(gpm_prefetch_path) as prefetch:
+            assert_array_equal(
+                mock_get_dimension_index_range.call_args_list[0][0][0],
+                prefetch['/Grid/lon'][:]
+            )
+            assert_array_equal(
+                mock_get_dimension_index_range.call_args_list[0][1]['bounds_values'],
+                prefetch['/Grid/lon_bnds'][:]
+            )
+
+    @patch('pymods.dimension_utilities.get_dimension_indices_from_bounds')
+    @patch('pymods.dimension_utilities.get_dimension_indices_from_values')
+    def test_get_dimension_index_range_bounds(self,
+                                              mock_get_indices_from_values,
+                                              mock_get_indices_from_bounds):
+        """ Ensure that the correct branch of the code is used depending on
+            whether bounds are specified or not.
+
+            Also ensure that the minimum and maximum requested extent are
+            always in ascending order in calls to
+            `get_dimension_indices_from_bounds`, regardless of if the
+            dimension is ascending or descending.
+
+        """
+        dimension_values = np.ma.MaskedArray(np.linspace(0.5, 9.5, 10))
+
+        lower_bounds = np.linspace(0, 9, 10)
+        upper_bounds = np.linspace(1, 10, 10)
+        dimension_bounds = np.ma.MaskedArray(np.array([lower_bounds,
+                                                       upper_bounds]).T)
+
+        with self.subTest('No bounds are specified'):
+            get_dimension_index_range(dimension_values, 2.3, 4.6)
+            mock_get_indices_from_values.assert_called_once_with(ANY, 2.3, 4.6)
+            assert_array_equal(
+                mock_get_indices_from_values.call_args_list[0][0][0],
+                dimension_values
+            )
+            mock_get_indices_from_values.reset_mock()
+            mock_get_indices_from_bounds.assert_not_called()
+
+        with self.subTest('Bounds are specified'):
+            get_dimension_index_range(dimension_values, 2.3, 4.6,
+                                      dimension_bounds)
+            mock_get_indices_from_values.assert_not_called()
+            mock_get_indices_from_bounds.assert_called_once_with(ANY, 2.3, 4.6)
+            assert_array_equal(
+                mock_get_indices_from_bounds.call_args_list[0][0][0],
+                dimension_bounds
+            )
+            mock_get_indices_from_bounds.reset_mock()
+
+        with self.subTest('Bounds are specified, descending dimension'):
+            get_dimension_index_range(np.flip(dimension_values), 2.3, 4.6,
+                                      np.flip(dimension_bounds))
+            mock_get_indices_from_values.assert_not_called()
+            mock_get_indices_from_bounds.assert_called_once_with(ANY, 2.3, 4.6)
+            assert_array_equal(
+                mock_get_indices_from_bounds.call_args_list[0][0][0],
+                np.flip(dimension_bounds)
+            )
+            mock_get_indices_from_bounds.reset_mock()
+
+    def test_get_dimension_bounds(self):
+        """ Ensure that if a dimension variable has a `bounds` metadata
+            attribute, the values in the associated bounds variable are
+            returned. Ensure graceful handling if the dimension variable lacks
+            bounds metadata, or the referred to bounds variable is absent from
+            the NetCDF-4 dataset.
+
+        """
+        with self.subTest('Bounds are retrieved'):
+            with Dataset('tests/data/GPM_3IMERGHH_prefetch.nc4') as dataset:
+                assert_array_equal(
+                    get_dimension_bounds('/Grid/lat', self.varinfo_with_bounds,
+                                         dataset),
+                    dataset['/Grid/lat_bnds'][:]
+                )
+
+        with self.subTest('Variable has no bounds, None is returned'):
+            with Dataset('tests/data/f16_ssmis_lat_lon.nc') as dataset:
+                self.assertIsNone(get_dimension_bounds('/latitude',
+                                                       self.varinfo, dataset))
+
+        with self.subTest('Incorrect bounds metadata, None is returned'):
+            prefetch_bad_bounds = f'{self.temp_dir}/f16_ssmis_lat_lon.nc'
+            copy('tests/data/f16_ssmis_lat_lon.nc', prefetch_bad_bounds)
+
+            with Dataset(prefetch_bad_bounds, 'r+') as dataset:
+                dataset['/latitude'].setncattr('bounds', '/does_not_exist')
+                self.assertIsNone(get_dimension_bounds('/latitude',
+                                                       self.varinfo, dataset))
+
+    def test_get_dimension_indices_from_bounds(self):
+        """ Ensure that the correct index ranges are retrieved for a variety
+            of requested dimension ranges, including values that lie within
+            pixels and others on the boundary between two adjacent pixels.
+
+        """
+        ascending_bounds = np.array([[0, 10], [10, 20], [20, 30], [30, 40],
+                                     [40, 50]])
+        descending_bounds = np.array([[0, -10], [-10, -20], [-20, -30],
+                                      [-30, -40], [-40, -50]])
+
+        with self.subTest('Ascending dimension, values within pixels'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(ascending_bounds, 5, 15),
+                (0, 1)
+            )
+
+        with self.subTest('Ascending dimension, min_value on pixel edge'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(ascending_bounds, 10, 15),
+                (1, 1)
+            )
+
+        with self.subTest('Ascending dimension, max_value on pixel edge'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(ascending_bounds, 5, 20),
+                (0, 1)
+            )
+
+        with self.subTest('Ascending dimension, min=max on pixel edge'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(ascending_bounds, 20, 20),
+                (1, 2)
+            )
+
+        with self.subTest('Ascending dimension, min=max within a pixel'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(ascending_bounds, 15, 15),
+                (1, 1)
+            )
+
+        with self.subTest('Ascending dimension, min_value < lowest bounds'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(ascending_bounds, -10, 15),
+                (0, 1)
+            )
+
+        with self.subTest('Ascending dimension, max_value > highest bound'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(ascending_bounds, 45, 55),
+                (4, 4)
+            )
+
+        with self.subTest('Ascending dimension, max_value < lowest bound'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_dimension_indices_from_bounds(ascending_bounds, -15, -5)
+
+        with self.subTest('Ascending dimension, min_value > highest bound'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_dimension_indices_from_bounds(ascending_bounds, 55, 65)
+
+        with self.subTest('Descending dimension, values within pixels'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(descending_bounds, -15, -5),
+                (0, 1)
+            )
+
+        with self.subTest('Descending dimension, max_value on pixel edge'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(descending_bounds, -15, -10),
+                (1, 1)
+            )
+
+        with self.subTest('Descending dimension, min_value on pixel edge'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(descending_bounds, -20, -5),
+                (0, 1)
+            )
+
+        with self.subTest('Descending dimension, min=max on pixel edge'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(descending_bounds, -20, -20),
+                (1, 2)
+            )
+
+        with self.subTest('Descending dimension, min=max within a pixel'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(descending_bounds, -15, -15),
+                (1, 1)
+            )
+
+        with self.subTest('Descending dimension, max_value > highest bounds'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(descending_bounds, -15, 10),
+                (0, 1)
+            )
+
+        with self.subTest('Descending dimension, min_value > lowest bound'):
+            self.assertTupleEqual(
+                get_dimension_indices_from_bounds(descending_bounds, -55, -45),
+                (4, 4)
+            )
+
+        with self.subTest('Descending dimension, min_value > highest bound'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_dimension_indices_from_bounds(descending_bounds, 5, 15)
+
+        with self.subTest('Descending dimension, max_value > lowest bound'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_dimension_indices_from_bounds(descending_bounds, -65, -55)
+
+    def test_is_almost_in(self):
+        """ Ensure that only values within an acceptable tolerance of data are
+            determined to have nearby values within the input array.
+
+        """
+        test_array = np.linspace(0, 1, 1001)
+
+        true_tests = [
+            ['0.1, value in test_array', test_array, 0.1],
+            ['0.01, value in test_array ', test_array, 0.01],
+            ['0.001, value in test_array', test_array, 0.001],
+            ['0.0000001, below tolerance rounds to zero', test_array, 0.0000001]
+        ]
+        false_tests = [
+            ['0.0001 - not in array, above tolerance', test_array, 0.0001],
+            ['0.00001 - not in array, above tolerance', test_array, 0.00001],
+        ]
+
+        for description, input_array, input_value in true_tests:
+            with self.subTest(description):
+                self.assertTrue(is_almost_in(input_value, input_array))
+
+        for description, input_array, input_value in false_tests:
+            with self.subTest(description):
+                self.assertFalse(is_almost_in(input_value, input_array))

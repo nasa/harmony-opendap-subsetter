@@ -31,6 +31,9 @@ class TestSubsetterEndToEnd(TestCase):
         with open('tests/data/M2T1NXSLV_example.dmr', 'r') as file_handler:
             cls.m2t1nxslv_dmr = file_handler.read()
 
+        with open('tests/data/GPM_3IMERGHH_example.dmr', 'r') as file_handler:
+            cls.gpm_imerghh_dmr = file_handler.read()
+
     def setUp(self):
         """ Have to mock mkdtemp, to know where to put mock .dmr content. """
         self.tmp_dir = mkdtemp()
@@ -1512,8 +1515,8 @@ class TestSubsetterEndToEnd(TestCase):
             To minimise test data in the repository, this test uses geographic
             dimension of latitude and longitude, but within the
             `subset.dimensions` region of the inbound Harmony message.
+
         """
-        bounding_box = [-30, 45, -15, 60]
 
         mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
         mock_mkdtemp.return_value = self.tmp_dir
@@ -1689,7 +1692,7 @@ class TestSubsetterEndToEnd(TestCase):
         # spatial or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
         self.assert_valid_request_data(
-            dimensions_data, {'%2Fx', '%2Fy', '%2Ftime'}
+            dimensions_data, {'%2Fx', '%2Fy', '%2Ftime', '%2Ftime_bnds'}
         )
         # Ensure the constraint expression contains all the required variables.
         # /NEE[][7:26][37:56], /time, /x[37:56], /y[7:26]
@@ -1803,7 +1806,7 @@ class TestSubsetterEndToEnd(TestCase):
         # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
         self.assert_valid_request_data(
-            dimensions_data, {'%2Fx', '%2Fy', '%2Ftime'}
+            dimensions_data, {'%2Fx', '%2Fy', '%2Ftime', '%2Ftime_bnds'}
         )
         # Ensure the constraint expression contains all the required variables.
         # /NEE[][11:26][37:56], /time, /x[37:56], /y[11:26]
@@ -1822,6 +1825,265 @@ class TestSubsetterEndToEnd(TestCase):
         mock_stage.assert_called_once_with(
             f'{self.tmp_dir}/uuid2.nc4',
             'opendap_url_NEE_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_bounds_end_to_end(self, mock_stage, mock_util_download,
+                               mock_rmtree, mock_mkdtemp, mock_uuid,
+                               mock_get_fill_slice):
+        """ Ensure a request with a bounding box and temporal range will be
+            correctly processed for a geographically gridded collection that
+            has bounds variables for each dimension.
+
+            Note: Each GPM IMERGHH granule has a single time slice, so the full
+            range will be retrieved (e.g., /Grid/time[0:0]
+
+            * -30.0 ≤ /Grid/lon[1500] ≤ -29.9
+            * 45.0 ≤ /Grid/lat[1350] ≤ 45.1
+            * -14.9 ≤ /Grid/lon[1649] ≤ -15.0
+            * 59.9 ≤ /Grid/lat[1499] ≤ 60.0
+
+        """
+        bounding_box = [-30, 45, -15, 60]
+        temporal_range = {'start': '2020-01-01T12:15:00',
+                          'end': '2020-01-01T12:45:00'}
+        gpm_variable = '/Grid/precipitationCal'
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.gpm_imerghh_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/GPM_3IMERGHH_prefetch.nc4', dimensions_path)
+
+        all_variables_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/GPM_3IMERGHH_bounds.nc4', all_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          all_variables_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': gpm_variable,
+                               'fullPath': gpm_variable}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'bbox': bounding_box},
+            'temporal': temporal_range,
+            'user': 'jlovell',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should fetch a NetCDF-4
+        # file containing the full 1-D dimension variables and their associated
+        # bounds only, and the third should retrieve the final NetCDF-4 with
+        # all required variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # dimension variables and their associated bounds variables.
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2FGrid%2Flat', '%2FGrid%2Flat_bnds',
+                              '%2FGrid%2Flon', '%2FGrid%2Flon_bnds',
+                              '%2FGrid%2Ftime', '%2FGrid%2Ftime_bnds'}
+        )
+        # Ensure the constraint expression contains all the required variables.
+        # /Grid/precipitationCal[0:0][1500:1649][1350:1499],
+        # /Grid/time[0:0], /Grid/time_bnds[0:0][]
+        # /Grid/lat[1350:1499], /Grid/lat_bnds[1350:1499][],
+        # /Grid/lon[1500:1649], /Grid/lon_bnds[1500:1649][]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2FGrid%2Flat%5B1350%3A1499%5D',
+             '%2FGrid%2Flat_bnds%5B1350%3A1499%5D%5B%5D',
+             '%2FGrid%2Flon%5B1500%3A1649%5D',
+             '%2FGrid%2Flon_bnds%5B1500%3A1649%5D%5B%5D',
+             '%2FGrid%2Ftime%5B0%3A0%5D',
+             '%2FGrid%2Ftime_bnds%5B0%3A0%5D%5B%5D',
+             '%2FGrid%2FprecipitationCal%5B0%3A0%5D%5B1500%3A1649%5D%5B1350%3A1499%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_Grid_precipitationCal_subsetted.nc4',
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=subsetter.logger
+        )
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()
+
+    @patch('pymods.dimension_utilities.get_fill_slice')
+    @patch('pymods.utilities.uuid4')
+    @patch('subsetter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('pymods.utilities.util_download')
+    @patch('harmony.util.stage')
+    def test_requested_dimensions_bounds_end_to_end(self, mock_stage,
+                                                    mock_util_download,
+                                                    mock_rmtree, mock_mkdtemp,
+                                                    mock_uuid,
+                                                    mock_get_fill_slice):
+        """ Ensure a request with a spatial range specified by variable names,
+            not just subset=lat(), subset=lon(), will be correctly processed
+            for a geographically gridded collection that has bounds variables
+            for each dimension.
+
+            Note: Each GPM IMERGHH granule has a single time slice, so the full
+            range will be retrieved (e.g., /Grid/time[0:0]
+
+            * -30.0 ≤ /Grid/lon[1500] ≤ -29.9
+            * 45.0 ≤ /Grid/lat[1350] ≤ 45.1
+            * -14.9 ≤ /Grid/lon[1649] ≤ -15.0
+            * 59.9 ≤ /Grid/lat[1499] ≤ 60.0
+
+        """
+        temporal_range = {'start': '2020-01-01T12:15:00',
+                          'end': '2020-01-01T12:45:00'}
+        gpm_variable = '/Grid/precipitationCal'
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        dmr_path = write_dmr(self.tmp_dir, self.gpm_imerghh_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/GPM_3IMERGHH_prefetch.nc4', dimensions_path)
+
+        all_variables_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/GPM_3IMERGHH_bounds.nc4', all_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          all_variables_path]
+
+        message_data = {
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'granules': [{
+                    'id': 'G000-TEST',
+                    'url': self.granule_url,
+                    'temporal': {
+                        'start': '2020-01-01T00:00:00.000Z',
+                        'end': '2020-01-02T00:00:00.000Z'
+                    },
+                    'bbox': [-180, -90, 180, 90]
+                }],
+                'variables': [{'id': '',
+                               'name': gpm_variable,
+                               'fullPath': gpm_variable}]}],
+            'stagingLocation': 's3://example-bucket/',
+            'subset': {'dimensions': [
+                {'name': '/Grid/lat', 'min': 45, 'max': 60},
+                {'name': '/Grid/lon', 'min': -30, 'max': -15},
+            ]},
+            'temporal': temporal_range,
+            'user': 'jlovell',
+        }
+        message = Message(message_data)
+
+        subsetter = HarmonyAdapter(message, config=config(False))
+        subsetter.invoke()
+
+        # Ensure the correct number of downloads were requested from OPeNDAP:
+        # the first should be the `.dmr`. The second should fetch a NetCDF-4
+        # file containing the full 1-D dimension variables and their associated
+        # bounds only, and the third should retrieve the final NetCDF-4 with
+        # all required variables.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_any_call(f'{self.granule_url}.dmr.xml',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=None,
+                                           cfg=subsetter.config)
+
+        # Because of the `ANY` match for the request data, the requests for
+        # dimensions and all variables will look the same.
+        mock_util_download.assert_any_call(f'{self.granule_url}.dap.nc4',
+                                           self.tmp_dir,
+                                           subsetter.logger,
+                                           access_token=message_data['accessToken'],
+                                           data=ANY,
+                                           cfg=subsetter.config)
+
+        # Ensure the constraint expression for dimensions data included only
+        # dimension variables and their associated bounds variables.
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(
+            dimensions_data, {'%2FGrid%2Flat', '%2FGrid%2Flat_bnds',
+                              '%2FGrid%2Flon', '%2FGrid%2Flon_bnds',
+                              '%2FGrid%2Ftime', '%2FGrid%2Ftime_bnds'}
+        )
+        # Ensure the constraint expression contains all the required variables.
+        # /Grid/precipitationCal[0:0][1500:1649][1350:1499],
+        # /Grid/time[0:0], /Grid/time_bnds[0:0][]
+        # /Grid/lat[1350:1499], /Grid/lat_bnds[1350:1499][],
+        # /Grid/lon[1500:1649], /Grid/lon_bnds[1500:1649][]
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2FGrid%2Flat%5B1350%3A1499%5D',
+             '%2FGrid%2Flat_bnds%5B1350%3A1499%5D%5B%5D',
+             '%2FGrid%2Flon%5B1500%3A1649%5D',
+             '%2FGrid%2Flon_bnds%5B1500%3A1649%5D%5B%5D',
+             '%2FGrid%2Ftime%5B0%3A0%5D',
+             '%2FGrid%2Ftime_bnds%5B0%3A0%5D%5B%5D',
+             '%2FGrid%2FprecipitationCal%5B0%3A0%5D%5B1500%3A1649%5D%5B1350%3A1499%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            'opendap_url_Grid_precipitationCal_subsetted.nc4',
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=subsetter.logger

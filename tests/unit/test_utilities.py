@@ -9,8 +9,8 @@ from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
 from pymods.utilities import (download_url, format_dictionary_string,
                               format_variable_set_string,
                               get_constraint_expression, get_file_mimetype,
-                              get_opendap_nc4, HTTP_REQUEST_ATTEMPTS,
-                              move_downloaded_nc4)
+                              get_opendap_nc4, get_value_or_default,
+                              HTTP_REQUEST_ATTEMPTS, move_downloaded_nc4)
 
 
 class TestUtilities(TestCase):
@@ -244,3 +244,17 @@ class TestUtilities(TestCase):
 
         self.assertEqual(format_dictionary_string(input_dictionary),
                          'key_one: value_one\nkey_two: value_two')
+
+    def test_get_value_or_default(self):
+        """ Ensure a value is retrieved if supplied, even if it is 0, or a
+            default value is returned if not.
+
+        """
+        with self.subTest('Value is returned'):
+            self.assertEqual(get_value_or_default(10, 20), 10)
+
+        with self.subTest('Value = 0 is returned'):
+            self.assertEqual(get_value_or_default(0, 20), 0)
+
+        with self.subTest('Value = None returns the supplied default'):
+            self.assertEqual(get_value_or_default(None, 20), 20)

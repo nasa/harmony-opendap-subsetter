@@ -28,6 +28,16 @@ accessed via Hyrax. This means:
 The Harmony OPeNDAP SubSetter (HOSS) is designed for use with gridded data
 (levels 3 or 4). HOSS can perform spatial, temporal and variable subsetting.
 
+To perform a successful subset with HOSS, a collection must:
+
+* Be configured for data access via OPeNDAP. This means having a `.dmrpp`
+  sidecar file with each granule, and having the OPeNDAP URL within the
+  related URLs of each UMM-G record.
+* Contain 1-D dimension variables within each granule.
+* Each gridded variable must refer to the 1-D dimension variables for the grid.
+  Failing this, configuration file entries must be provided to override missing
+  CF-Convention metadata.
+
 Variable subsets will include both variables requested by the end-user, as well
 as variables that are referred to in CF-Convention attributes of the requested
 variables. Such references include coordinates and grid mappings.
@@ -53,6 +63,17 @@ hyperrectangle, but outside the GeoJSON shape.
 
 Note, if both a bounding box and a shape file are specified in the same Harmony
 message, HOSS will use the bounding box information from the message.
+
+#### Dimensions that can be subsetted:
+
+* Dimensions must be monotonic, e.g., the array must either always increase or
+  always decrease as the values are scanned from start to finish.
+* If a dimension does not have an associated `bounds` array, the values stored
+  in the dimension array must be in the centre points of the pixels.
+* If a dimension has an associated `bounds` array, as indicated by the `bounds`
+  CF-Convention metadata attribute, these bounds will be used to determine
+  index ranges. Such dimensions with `bounds` arrays can therefore have
+  dimension pixel values anywhere within the pixel, not just the centre.
 
 #### Variable Subsetter:
 

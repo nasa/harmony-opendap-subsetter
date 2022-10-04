@@ -578,7 +578,7 @@ class TestProjectionUtilities(TestCase):
 
         # GeoJSON with a list of multiple features:
         multi_feature_geojson = self.read_geojson('multi_feature.geo.json')
-        first_shape =shape(multi_feature_geojson['features'][0]['geometry'])
+        first_shape = shape(multi_feature_geojson['features'][0]['geometry'])
         second_shape = shape(multi_feature_geojson['features'][1]['geometry'])
         multi_feature_side_effect = [[(-75.565, 39.662)],
                                      [(-75.696, 38.471), (-75.795, 39.716),

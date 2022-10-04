@@ -151,3 +151,11 @@ def format_dictionary_string(dictionary: Dict) -> str:
 
     """
     return '\n'.join([f'{key}: {value}' for key, value in dictionary.items()])
+
+
+def get_value_or_default(value: Optional[float], default: float) -> float:
+    """ A helper function that will either return the value, if it is supplied,
+        or a default value if not.
+
+    """
+    return value if value is not None else default

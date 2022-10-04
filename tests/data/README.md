@@ -14,9 +14,16 @@
 * ATL03_example.dmr - An example `.dmr` file from the ICESat-2/ATL03 collection,
   as obtained from OPeNDAP. ATL03 is a trajectory data set and should only be
   used (currently) with the variable subsetting operations of the service.
+* GPM_3IMERGHH_bounds.nc4 - An example output from a bounding box and temporal
+  subset request for a collection containing bounds variables. The bounding box
+  is -30 ≤ longitude (degrees east) ≤ -15, 45 ≤ latitude (degrees north) ≤ 60.
 * GPM_3IMERGHH_example.dmr - An example `.dmr` file for the GPM/3IMERGHH
   collection, as obtained from OPeNDAP. GPM/3IMERGHH has a half-hourly time
   dimension to the grid. It also contains bounds variable references.
+* GPM_3IMERGHH_prefetch.nc4 - An example dimension prefetch output from OPeNDAP
+  for the GPM/IMERGHH colleciton. This contains the `/Grid/time`, `/Grid/lat`,
+  and `/Grid/lon` dimension variables along with their associated bounds
+  variables.
 * M2T1NXSLV_example.dmr` - An example `.dmr` file for a MERRA-2 collection.
   Granules in this collection are geographically gridded and contain a time
   dimension that has half-hour resolution.

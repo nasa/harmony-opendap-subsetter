@@ -232,7 +232,8 @@ class TestSpatial(TestCase):
 
                 self.assertEqual(mock_get_dimension_index_range.call_count, 2)
                 mock_get_dimension_index_range.assert_any_call(
-                    ANY, x_y_extents['x_min'], x_y_extents['x_max']
+                    ANY, x_y_extents['x_min'], x_y_extents['x_max'],
+                    bounds_values=None
                 )
                 assert_array_equal(
                     mock_get_dimension_index_range.call_args_list[0][0][0],
@@ -240,8 +241,8 @@ class TestSpatial(TestCase):
                 )
 
                 mock_get_dimension_index_range.assert_any_call(
-                    ANY, x_y_extents['y_min'],
-                    x_y_extents['y_max']
+                    ANY, x_y_extents['y_min'], x_y_extents['y_max'],
+                    bounds_values=None
                 )
                 assert_array_equal(
                     mock_get_dimension_index_range.call_args_list[1][0][0],
@@ -290,21 +291,22 @@ class TestSpatial(TestCase):
 
         with self.subTest('Latitude variable'):
             with Dataset('tests/data/f16_ssmis_lat_lon.nc', 'r') as prefetch:
-                self.assertEqual(get_geographic_index_range('/latitude',
-                                                            self.varinfo,
-                                                            prefetch,
-                                                            bounding_box),
-                                 (1, 2))
+                self.assertTupleEqual(get_geographic_index_range('/latitude',
+                                                                 self.varinfo,
+                                                                 prefetch,
+                                                                 bounding_box),
+                                      (1, 2))
 
                 mock_get_dimension_index_range.assert_called_once_with(
-                    ANY, bounding_box.south, bounding_box.north
+                    ANY, bounding_box.south, bounding_box.north,
+                    bounds_values=None
                 )
                 assert_array_equal(
                     mock_get_dimension_index_range.call_args_list[0][0][0],
                     prefetch['/latitude'][:]
                 )
 
-        mock_get_dimension_index_range.reset_mock()
+            mock_get_dimension_index_range.reset_mock()
 
         with self.subTest('Longitude variable'):
             with Dataset('tests/data/f16_ssmis_lat_lon.nc', 'r') as prefetch:
@@ -315,14 +317,74 @@ class TestSpatial(TestCase):
                                  (1, 2))
 
                 mock_get_dimension_index_range.assert_called_once_with(
-                    ANY, bounding_box.west, bounding_box.east
+                    ANY, bounding_box.west, bounding_box.east,
+                    bounds_values=None
                 )
                 assert_array_equal(
                     mock_get_dimension_index_range.call_args_list[0][0][0],
                     prefetch['/longitude'][:]
                 )
 
-        mock_get_dimension_index_range.reset_mock()
+            mock_get_dimension_index_range.reset_mock()
+
+    @patch('pymods.spatial.get_dimension_index_range')
+    def test_get_geographic_index_range_bounds(self,
+                                               mock_get_dimension_index_range):
+        """ Ensure the expected bounds values can be extracted for a variable
+            that has the appropriate metadata, and that these bounds values are
+            used in the call to `get_dimension_index_range`.
+
+        """
+        gpm_varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
+                                     self.logger, short_name='GPM_3IMERGHH')
+        bounding_box = BBox(10, 20, 30, 40)
+        mock_get_dimension_index_range.return_value = (1, 2)
+
+        with self.subTest('Latitude variable with bounds'):
+            with Dataset('tests/data/GPM_3IMERGHH_prefetch.nc4', 'r') as prefetch:
+                self.assertEqual(get_geographic_index_range('/Grid/lat',
+                                                            gpm_varinfo,
+                                                            prefetch,
+                                                            bounding_box),
+                                 (1, 2))
+
+                mock_get_dimension_index_range.assert_called_once_with(
+                    ANY, bounding_box.south, bounding_box.north,
+                    bounds_values=ANY
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[0][0][0],
+                    prefetch['/Grid/lat'][:]
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[0][1]['bounds_values'],
+                    prefetch['/Grid/lat_bnds'][:]
+                )
+
+            mock_get_dimension_index_range.reset_mock()
+
+        with self.subTest('Longitude variable with bounds'):
+            with Dataset('tests/data/GPM_3IMERGHH_prefetch.nc4', 'r') as prefetch:
+                self.assertEqual(get_geographic_index_range('/Grid/lon',
+                                                            gpm_varinfo,
+                                                            prefetch,
+                                                            bounding_box),
+                                 (1, 2))
+
+                mock_get_dimension_index_range.assert_called_once_with(
+                    ANY, bounding_box.west, bounding_box.east,
+                    bounds_values=ANY
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[0][0][0],
+                    prefetch['/Grid/lon'][:]
+                )
+                assert_array_equal(
+                    mock_get_dimension_index_range.call_args_list[0][1]['bounds_values'],
+                    prefetch['/Grid/lon_bnds'][:]
+                )
+
+            mock_get_dimension_index_range.reset_mock()
 
     def test_get_bounding_box_longitudes(self):
         """ Ensure the western and eastern extents of a bounding box are

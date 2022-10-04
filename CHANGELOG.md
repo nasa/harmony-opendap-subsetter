@@ -1,3 +1,14 @@
+## v0.3.2
+### 2022-09-23
+This version of HOSS updates the service to use bounds variables to determine
+dimension index ranges when they are present in a granule. (e.g, `/lon_bnds`).
+If bounds variables are not present, the dimension values themselves will be
+used as before.
+
+In addition to this change, a bug fix is included in
+`pymods.dimension_utilities.get_dimension_index_range` to ensure requested
+dimension ranges including a value of 0 are handled correctly.
+
 ## v0.3.1
 ### 2022-09-07
 

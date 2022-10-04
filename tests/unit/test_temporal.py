@@ -3,8 +3,10 @@ from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
+from unittest.mock import ANY, patch
 
 from netCDF4 import Dataset
+from numpy.testing import assert_array_equal
 import numpy as np
 from varinfo import VarInfoFromDmr
 
@@ -31,9 +33,7 @@ class TestTemporal(TestCase):
         rmtree(self.test_dir)
 
     def test_get_temporal_index_ranges(self):
-        """ Ensure that correct temporal index ranges can be calculated.
-
-        """
+        """ Ensure that correct temporal index ranges can be calculated. """
         test_file_name = f'{self.test_dir}/test.nc'
         temporal_range = ['2021-01-10T01:30:00', '2021-01-10T05:30:00']
 
@@ -50,6 +50,43 @@ class TestTemporal(TestCase):
                 get_temporal_index_ranges({'/time'}, self.varinfo,
                                           test_file_name, temporal_range),
                 {'/time': (1, 5)}
+            )
+
+    @patch('pymods.temporal.get_dimension_index_range')
+    def test_get_temporal_index_ranges_bounds(self,
+                                              mock_get_dimension_index_range):
+        """ Ensure that bounds are correctly extracted and used as an argument
+            for the `get_dimension_index_range` utility function if they are
+            present in the prefetch file.
+
+            The GPM IMERG prefetch data are for a granule with a temporal range
+            of 2020-01-01T12:00:00 to 2020-01-01T12:30:00.
+
+        """
+        mock_get_dimension_index_range.return_value = (1, 2)
+        gpm_varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
+                                     self.logger)
+        gpm_prefetch_path = 'tests/data/GPM_3IMERGHH_prefetch.nc4'
+
+        temporal_range = ['2020-01-01T12:15:00', '2020-01-01T12:45:00']
+
+        self.assertDictEqual(
+            get_temporal_index_ranges({'/Grid/time'}, gpm_varinfo,
+                                      gpm_prefetch_path, temporal_range),
+            {'/Grid/time': (1, 2)}
+        )
+        mock_get_dimension_index_range.assert_called_once_with(
+            ANY, 1577880900.0, 1577882700, bounds_values=ANY
+        )
+
+        with Dataset(gpm_prefetch_path) as prefetch:
+            assert_array_equal(
+                mock_get_dimension_index_range.call_args_list[0][0][0],
+                prefetch['/Grid/time'][:]
+            )
+            assert_array_equal(
+                mock_get_dimension_index_range.call_args_list[0][1]['bounds_values'],
+                prefetch['/Grid/time_bnds'][:]
             )
 
     def test_get_time_ref(self):

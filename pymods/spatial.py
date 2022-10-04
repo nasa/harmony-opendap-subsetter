@@ -29,7 +29,8 @@ from varinfo import VarInfoFromDmr
 
 from pymods.bbox_utilities import (BBox, get_shape_file_geojson,
                                    get_geographic_bbox)
-from pymods.dimension_utilities import (get_dimension_extents,
+from pymods.dimension_utilities import (get_dimension_bounds,
+                                        get_dimension_extents,
                                         get_dimension_index_range, IndexRange,
                                         IndexRanges)
 from pymods.projection_utilities import (get_projected_x_y_extents,
@@ -141,14 +142,17 @@ def get_projected_x_y_index_ranges(non_spatial_variable: str,
             shape_file=shape_file_path, bounding_box=bounding_box
         )
 
+        x_bounds = get_dimension_bounds(projected_x, varinfo, dimensions_file)
+        y_bounds = get_dimension_bounds(projected_y, varinfo, dimensions_file)
+
         x_index_ranges = get_dimension_index_range(
             dimensions_file[projected_x][:], x_y_extents['x_min'],
-            x_y_extents['x_max']
+            x_y_extents['x_max'], bounds_values=x_bounds
         )
 
         y_index_ranges = get_dimension_index_range(
             dimensions_file[projected_y][:], x_y_extents['y_min'],
-            x_y_extents['y_max']
+            x_y_extents['y_max'], bounds_values=y_bounds
         )
 
         x_y_index_ranges = {projected_x: x_index_ranges,
@@ -166,7 +170,7 @@ def get_geographic_index_range(dimension: str, varinfo: VarInfoFromDmr,
         for a specific geographic dimension (longitude or latitude). For
         longitudes, it is assumed that the western extent should be considered
         the minimum extent. If the bounding box crosses a longitude
-        discontinuity this will be later identifed by the minimum extent index
+        discontinuity this will be later identified by the minimum extent index
         being larger than the maximum extent index.
 
         The return value from this function is an `IndexRange` tuple of format:
@@ -174,6 +178,8 @@ def get_geographic_index_range(dimension: str, varinfo: VarInfoFromDmr,
 
     """
     variable = varinfo.get_variable(dimension)
+    bounds = get_dimension_bounds(dimension, varinfo, dimensions_file)
+
     if variable.is_latitude():
         # dimension_utilities.get_dimension_index_range will determine if the
         # dimension is ascending or descending, and flip the North and South
@@ -195,7 +201,8 @@ def get_geographic_index_range(dimension: str, varinfo: VarInfoFromDmr,
         )
 
     return get_dimension_index_range(dimensions_file[dimension][:],
-                                     minimum_extent, maximum_extent)
+                                     minimum_extent, maximum_extent,
+                                     bounds_values=bounds)
 
 
 def get_bounding_box_longitudes(bounding_box: BBox,

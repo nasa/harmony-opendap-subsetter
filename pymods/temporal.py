@@ -15,7 +15,8 @@ from dateutil.parser import parse as parse_datetime
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 
-from pymods.dimension_utilities import get_dimension_index_range, IndexRanges
+from pymods.dimension_utilities import (get_dimension_bounds,
+                                        get_dimension_index_range, IndexRanges)
 from pymods.exceptions import UnsupportedTemporalUnits
 
 
@@ -83,12 +84,14 @@ def get_temporal_index_ranges(required_variables: Set[str],
             time_variable = varinfo.get_variable(dimension)
             units_time = time_variable.get_attribute_value('units')
             time_ref, time_delta = get_time_ref(units_time)
+            bounds = get_dimension_bounds(dimension, varinfo, dimensions_file)
 
             minimum_extent = (time_start - time_ref) / time_delta
             maximum_extent = (time_end - time_ref) / time_delta
 
             index_ranges[dimension] = get_dimension_index_range(
-                dimensions_file[dimension][:], minimum_extent, maximum_extent
+                dimensions_file[dimension][:], minimum_extent, maximum_extent,
+                bounds_values=bounds
             )
 
     return index_ranges

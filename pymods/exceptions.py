@@ -41,6 +41,18 @@ class InvalidNamedDimension(CustomError):
                          'any of the requested variables.')
 
 
+class InvalidRequestedRange(CustomError):
+    """ This exception is raised when a user-supplied dimension range lies
+        entirely outside the range of a dimension with an associated bounds
+        variable.
+
+    """
+    def __init__(self):
+        super().__init__('InvalidRequestedRange',
+                         'Input request specified range outside supported '
+                         'dimension range')
+
+
 class MissingGridMappingMetadata(CustomError):
     """ This exception is raised when HOSS tries to obtain the `grid_mapping`
         metadata attribute for a projected variable and it is not present in

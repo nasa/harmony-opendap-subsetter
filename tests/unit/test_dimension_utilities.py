@@ -39,7 +39,7 @@ class TestDimensionUtilities(TestCase):
         cls.logger = getLogger('tests')
         cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
                                      cls.logger,
-                                     'tests/data/test_subsetter_config.yml')
+                                     'tests/data/test_subsetter_config.json')
         cls.ascending_dimension = masked_array(np.linspace(0, 200, 101))
         cls.descending_dimension = masked_array(np.linspace(200, 0, 101))
         cls.varinfo_with_bounds = VarInfoFromDmr(

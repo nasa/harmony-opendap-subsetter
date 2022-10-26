@@ -1,5 +1,14 @@
+## v0.3.3
+### 2022-10-26
+
+This version of HOSS updates the configuration file settings to also support
+SMAP level 4 collections. In addition, the `sds-varinfo` dependency is updated
+to version 3.0.0, and so the configuration file used by `VarInfoFromDmr` has
+been converted to a JSON format.
+
 ## v0.3.2
 ### 2022-09-23
+
 This version of HOSS updates the service to use bounds variables to determine
 dimension index ranges when they are present in a granule. (e.g, `/lon_bnds`).
 If bounds variables are not present, the dimension values themselves will be
@@ -24,12 +33,12 @@ granule.
 
 This version of HOSS updates the service to support spatial subsetting of
 collections with projected grids (e.g., non-geographic). This functionality
-works by utilitising the chained service of HOSS and MaskFill. HOSS derives an
-approximate mimimum geographic resolution of the projected grid and populates
+works by utilising the chained service of HOSS and MaskFill. HOSS derives an
+approximate minimum geographic resolution of the projected grid and populates
 points around the perimeter of the input bounding box or GeoJSON polygon(s) at
 this resolution. The minimum and maximum indices of the points corresponding to
 these perimeter points is determined. The rectangular region in the projected
-horizontal spatial plane is retreived from OPeNDAP as before. The output is
+horizontal spatial plane is retrieved from OPeNDAP as before. The output is
 then sent to MaskFill in order to fill those points that are within the
 retrieved rectangular portion of the array, but outside of the specified
 GeoJSON shape.

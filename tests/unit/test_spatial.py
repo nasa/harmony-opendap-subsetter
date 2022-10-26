@@ -25,7 +25,7 @@ class TestSpatial(TestCase):
         cls.logger = getLogger('tests')
         cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
                                      cls.logger,
-                                     'tests/data/test_subsetter_config.yml')
+                                     'tests/data/test_subsetter_config.json')
         cls.test_dir = 'tests/output'
 
     def setUp(self):

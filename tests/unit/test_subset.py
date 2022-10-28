@@ -513,7 +513,7 @@ class TestSubset(TestCase):
         temporal_range = ['2021-01-10T01:00:00', '2021-01-10T03:00:00']
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
                                  logger=self.logger,
-                                 config_file='pymods/var_subsetter_config.yml')
+                                 config_file='pymods/var_subsetter_config.json')
 
         requested_variables = [HarmonyVariable({'fullPath': '/PS',
                                                 'id': 'V123-EEDTEST',
@@ -592,7 +592,7 @@ class TestSubset(TestCase):
         temporal_range = ['2021-01-10T01:00:00', '2021-01-10T03:00:00']
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
                                  logger=self.logger,
-                                 config_file='pymods/var_subsetter_config.yml')
+                                 config_file='pymods/var_subsetter_config.json')
 
         requested_variables = [HarmonyVariable({'fullPath': '/PS',
                                                 'id': 'V123-EEDTEST',
@@ -974,7 +974,7 @@ class TestSubset(TestCase):
         """
         varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
                                  self.logger,
-                                 'tests/data/test_subsetter_config.yml')
+                                 'tests/data/test_subsetter_config.json')
         input_file = 'tests/data/f16_ssmis_20200102v7.nc'
         test_file = shutil.copy(input_file, self.output_dir)
         index_ranges = {'/latitude': [0, 719], '/longitude': [1400, 10]}

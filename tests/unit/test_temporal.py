@@ -5,6 +5,7 @@ from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import ANY, patch
 
+from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
 import numpy as np
@@ -35,7 +36,10 @@ class TestTemporal(TestCase):
     def test_get_temporal_index_ranges(self):
         """ Ensure that correct temporal index ranges can be calculated. """
         test_file_name = f'{self.test_dir}/test.nc'
-        temporal_range = ['2021-01-10T01:30:00', '2021-01-10T05:30:00']
+        harmony_message = Message({
+            'temporal': {'start': '2021-01-10T01:30:00',
+                         'end': '2021-01-10T05:30:00'}
+        })
 
         with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
             test_file.createDimension('time', size=24)
@@ -48,7 +52,7 @@ class TestTemporal(TestCase):
         with self.subTest('Time dimension, halfway between the whole hours'):
             self.assertDictEqual(
                 get_temporal_index_ranges({'/time'}, self.varinfo,
-                                          test_file_name, temporal_range),
+                                          test_file_name, harmony_message),
                 {'/time': (1, 5)}
             )
 
@@ -68,11 +72,14 @@ class TestTemporal(TestCase):
                                      self.logger)
         gpm_prefetch_path = 'tests/data/GPM_3IMERGHH_prefetch.nc4'
 
-        temporal_range = ['2020-01-01T12:15:00', '2020-01-01T12:45:00']
+        harmony_message = Message({
+            'temporal': {'start': '2020-01-01T12:15:00',
+                         'end': '2020-01-01T12:45:00'}
+        })
 
         self.assertDictEqual(
             get_temporal_index_ranges({'/Grid/time'}, gpm_varinfo,
-                                      gpm_prefetch_path, temporal_range),
+                                      gpm_prefetch_path, harmony_message),
             {'/Grid/time': (1, 2)}
         )
         mock_get_dimension_index_range.assert_called_once_with(

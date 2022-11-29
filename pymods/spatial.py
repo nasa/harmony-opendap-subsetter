@@ -23,12 +23,13 @@
 """
 from typing import List, Set
 
+from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 from varinfo import VarInfoFromDmr
 
-from pymods.bbox_utilities import (BBox, get_shape_file_geojson,
-                                   get_geographic_bbox)
+from pymods.bbox_utilities import (BBox, get_harmony_message_bbox,
+                                   get_shape_file_geojson, get_geographic_bbox)
 from pymods.dimension_utilities import (get_dimension_bounds,
                                         get_dimension_extents,
                                         get_dimension_index_range, IndexRange,
@@ -40,7 +41,7 @@ from pymods.projection_utilities import (get_projected_x_y_extents,
 
 def get_spatial_index_ranges(required_variables: Set[str],
                              varinfo: VarInfoFromDmr, dimensions_path: str,
-                             bounding_box: BBox = None,
+                             harmony_message: Message,
                              shape_file_path: str = None) -> IndexRanges:
     """ Return a dictionary containing indices that correspond to the minimum
         and maximum extents for all horizontal spatial coordinate variables
@@ -65,6 +66,7 @@ def get_spatial_index_ranges(required_variables: Set[str],
         correct extents are derived.
 
     """
+    bounding_box = get_harmony_message_bbox(harmony_message)
     index_ranges = {}
 
     geographic_dimensions = varinfo.get_geographic_spatial_dimensions(

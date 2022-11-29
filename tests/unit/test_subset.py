@@ -1,18 +1,17 @@
 from logging import Logger
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import call, patch
 import shutil
 from tempfile import mkdtemp
 
-from harmony.message import Variable as HarmonyVariable
+from harmony.message import Message, Source, Variable as HarmonyVariable
 from harmony.util import config
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 import numpy as np
 
 from pymods.subset import (fill_variables, fill_variable,
-                           get_requested_variables, get_varinfo,
-                           subset_granule)
+                           get_required_variables, get_varinfo, subset_granule)
 
 
 class TestSubset(TestCase):
@@ -30,9 +29,13 @@ class TestSubset(TestCase):
         cls.output_path = 'f16_ssmis_subset.nc4'
         cls.required_variables = {'/latitude', '/longitude', '/time',
                                   '/rainfall_rate'}
-        cls.variables = [HarmonyVariable({'id': 'V1238395077-EEDTEST',
-                                          'name': '/rainfall_rate',
-                                          'fullPath': '/rainfall_rate'})]
+        cls.harmony_source = Source({
+            'collection': 'C1234567890-PROV',
+            'shortName': cls.collection_short_name,
+            'variables': [{'id': 'V1238395077-EEDTEST',
+                           'name': '/rainfall_rate',
+                           'fullPath': '/rainfall_rate'}]
+        })
         cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
                                      logger=cls.logger)
 
@@ -64,14 +67,13 @@ class TestSubset(TestCase):
             `pymods.temporal.py` should not be called.
 
         """
+        harmony_message = Message({'accessToken': self.access_token})
         mock_get_varinfo.return_value = self.varinfo
         mock_get_opendap_nc4.return_value = self.output_path
 
-        output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir, self.logger,
-                                     self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config)
+        output_path = subset_granule(self.granule_url, self.harmony_source,
+                                     self.output_dir, harmony_message,
+                                     self.logger, self.config)
 
         self.assertEqual(output_path, self.output_path)
 
@@ -117,6 +119,8 @@ class TestSubset(TestCase):
             in `pymods.temporal.py` should not be called.
 
         """
+        harmony_message = Message({'accessToken': self.access_token,
+                                   'subset': {'bbox': self.bounding_box}})
         index_ranges = {'/latitude': (240, 279), '/longitude': (160, 199)}
         prefetch_path = 'prefetch.nc4'
         variables_with_ranges = {'/latitude[240:279]', '/longitude[160:199]',
@@ -127,13 +131,9 @@ class TestSubset(TestCase):
         mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
-        output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir,
-                                     self.logger,
-                                     self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config,
-                                     bounding_box=self.bounding_box)
+        output_path = subset_granule(self.granule_url, self.harmony_source,
+                                     self.output_dir, harmony_message,
+                                     self.logger, self.config)
 
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
@@ -153,7 +153,7 @@ class TestSubset(TestCase):
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_spatial_index_ranges.assert_called_once_with(
             self.required_variables, self.varinfo, prefetch_path,
-            self.bounding_box
+            harmony_message, None
         )
 
         mock_get_requested_index_ranges.assert_not_called()
@@ -191,15 +191,17 @@ class TestSubset(TestCase):
             `pymods.temporal.py` should not be called.
 
         """
+        harmony_source = Source({'collection': 'C1234567890-EEDTEST',
+                                 'shortName': self.collection_short_name})
+        harmony_message = Message({'accessToken': self.access_token})
         expected_variables = set()
         index_ranges = {}
         mock_get_varinfo.return_value = self.varinfo
         mock_get_opendap_nc4.return_value = self.output_path
 
-        output_path = subset_granule(self.granule_url, [], self.output_dir,
-                                     self.logger, self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config, bounding_box=None)
+        output_path = subset_granule(self.granule_url, harmony_source,
+                                     self.output_dir, harmony_message,
+                                     self.logger, self.config)
 
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
@@ -251,6 +253,10 @@ class TestSubset(TestCase):
             functionality in `pymods.temporal.py` should not be called.
 
         """
+        harmony_source = Source({'collection': 'C1234567890-EEDTEST',
+                                 'shortName': self.collection_short_name})
+        harmony_message = Message({'accessToken': self.access_token,
+                                   'subset': {'bbox': self.bounding_box}})
         expected_variables = {'/atmosphere_cloud_liquid_water_content',
                               '/atmosphere_water_vapor_content',
                               '/latitude', '/longitude', '/rainfall_rate',
@@ -271,11 +277,9 @@ class TestSubset(TestCase):
         mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
-        output_path = subset_granule(self.granule_url, [], self.output_dir,
-                                     self.logger, self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config,
-                                     bounding_box=self.bounding_box)
+        output_path = subset_granule(self.granule_url, harmony_source,
+                                     self.output_dir, harmony_message,
+                                     self.logger, self.config)
 
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
@@ -294,7 +298,7 @@ class TestSubset(TestCase):
 
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_spatial_index_ranges.assert_called_once_with(
-            expected_variables, self.varinfo, prefetch_path, self.bounding_box,
+            expected_variables, self.varinfo, prefetch_path, harmony_message,
             None
         )
 
@@ -326,7 +330,7 @@ class TestSubset(TestCase):
                                             mock_get_opendap_nc4,
                                             mock_fill_variables):
         """ Ensure a request with a bounding box, without specified variables,
-            will not include non-variable dimensions in the  DAP4 constraint
+            will not include non-variable dimensions in the DAP4 constraint
             expression of the final request to OPeNDAP
 
             In the GPM_3IMERGHH data, the specific dimensions that should not
@@ -335,6 +339,10 @@ class TestSubset(TestCase):
             `time_bnds` variables.
 
         """
+        harmony_source = Source({'collection': 'C1234567890-EEDTEST',
+                                 'shortName': self.collection_short_name})
+        harmony_message = Message({'accessToken': self.access_token,
+                                   'subset': {'bbox': self.bounding_box}})
         url = 'https://harmony.earthdata.nasa.gov/bucket/GPM'
         varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
                                  logger=self.logger)
@@ -373,11 +381,8 @@ class TestSubset(TestCase):
         mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = expected_output_path
 
-        output_path = subset_granule(url, [], self.output_dir, self.logger,
-                                     self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config,
-                                     bounding_box=self.bounding_box)
+        output_path = subset_granule(url, harmony_source, self.output_dir,
+                                     harmony_message, self.logger, self.config)
 
         self.assertEqual(output_path, expected_output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
@@ -395,7 +400,7 @@ class TestSubset(TestCase):
 
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_spatial_index_ranges.assert_called_once_with(
-            expected_variables, varinfo, prefetch_path, self.bounding_box,
+            expected_variables, varinfo, prefetch_path, harmony_message,
             None
         )
 
@@ -434,12 +439,18 @@ class TestSubset(TestCase):
             have `lat_bnds`, `lon_bnds` and `time_bnds`, respectively.
 
         """
+        harmony_source = Source({
+            'collection': 'C1234567890-EEDTEST',
+            'shortName': self.collection_short_name,
+            'variables': [{'fullPath': '/Grid/lon',
+                           'id': 'V123-EEDTEST',
+                           'name': '/Grid/lon'}]
+        })
+        harmony_message = Message({'accessToken': self.access_token,
+                                   'subset': {'bbox': self.bounding_box}})
         url = 'https://harmony.earthdata.nasa.gov/bucket/GPM'
         varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
                                  logger=self.logger)
-        requested_variables = [HarmonyVariable({'fullPath': '/Grid/lon',
-                                                'id': 'V123-EEDTEST',
-                                                'name': '/Grid/lon'})]
 
         expected_variables = {'/Grid/lon', '/Grid/lon_bnds'}
 
@@ -455,10 +466,8 @@ class TestSubset(TestCase):
         mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = expected_output_path
 
-        output_path = subset_granule(url, requested_variables, self.output_dir,
-                                     self.logger, self.collection_short_name,
-                                     access_token='access', config=self.config,
-                                     bounding_box=self.bounding_box)
+        output_path = subset_granule(url, harmony_source, self.output_dir,
+                                     harmony_message, self.logger, self.config)
 
         self.assertIn('GPM_3IMERGHH_subset.nc4', output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
@@ -476,7 +485,7 @@ class TestSubset(TestCase):
 
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_spatial_index_ranges.assert_called_once_with(
-            expected_variables, varinfo, prefetch_path, self.bounding_box, None
+            expected_variables, varinfo, prefetch_path, harmony_message, None
         )
 
         mock_get_requested_index_ranges.assert_not_called()
@@ -510,14 +519,19 @@ class TestSubset(TestCase):
 
         """
         url = 'https://harmony.earthdata.nasa.gov/bucket/M2T1NXSLV'
-        temporal_range = ['2021-01-10T01:00:00', '2021-01-10T03:00:00']
+        harmony_source = Source({'collection': 'C1234567890-PROVIDER',
+                                 'shortName': self.collection_short_name,
+                                 'variables': [{'fullPath': '/PS',
+                                                'id': 'V123-EEDTEST',
+                                                'name': '/PS'}]})
+        harmony_message = Message({
+            'accessToken': self.access_token,
+            'temporal': {'start': '2021-01-10T01:00:00',
+                         'end': '2021-01-10T03:00:00'}
+        })
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
                                  logger=self.logger,
                                  config_file='pymods/var_subsetter_config.json')
-
-        requested_variables = [HarmonyVariable({'fullPath': '/PS',
-                                                'id': 'V123-EEDTEST',
-                                                'name': '/PS'})]
 
         expected_variables = {'/PS', '/lat', '/lon', '/time'}
 
@@ -532,11 +546,8 @@ class TestSubset(TestCase):
         mock_get_temporal_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = expected_output_path
 
-        output_path = subset_granule(url, requested_variables, self.output_dir,
-                                     self.logger, self.collection_short_name,
-                                     access_token='access', config=self.config,
-                                     bounding_box=None,
-                                     temporal_range=temporal_range)
+        output_path = subset_granule(url, harmony_source, self.output_dir,
+                                     harmony_message, self.logger, self.config)
 
         self.assertIn('M2T1NXSLV_subset.nc4', output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
@@ -554,7 +565,7 @@ class TestSubset(TestCase):
 
         mock_get_spatial_index_ranges.assert_not_called()
         mock_get_temporal_index_ranges.assert_called_once_with(
-            expected_variables, varinfo, prefetch_path, temporal_range
+            expected_variables, varinfo, prefetch_path, harmony_message
         )
 
         mock_get_requested_index_ranges.assert_not_called()
@@ -589,14 +600,20 @@ class TestSubset(TestCase):
 
         """
         url = 'https://harmony.earthdata.nasa.gov/bucket/M2T1NXSLV'
-        temporal_range = ['2021-01-10T01:00:00', '2021-01-10T03:00:00']
+        harmony_source = Source({'collection': 'C1234567890-EEDTEST',
+                                 'shortName': self.collection_short_name,
+                                 'variables': [{'fullPath': '/PS',
+                                                'id': 'V123-EEDTEST',
+                                                'name': '/PS'}]})
+        harmony_message = Message({
+            'accessToken': self.access_token,
+            'subset': {'bbox': self.bounding_box},
+            'temporal': {'start': '2021-01-10T01:00:00',
+                         'end': '2021-01-10T03:00:00'}
+        })
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
                                  logger=self.logger,
                                  config_file='pymods/var_subsetter_config.json')
-
-        requested_variables = [HarmonyVariable({'fullPath': '/PS',
-                                                'id': 'V123-EEDTEST',
-                                                'name': '/PS'})]
 
         expected_variables = {'/PS', '/lat', '/lon', '/time'}
 
@@ -616,11 +633,8 @@ class TestSubset(TestCase):
         mock_get_spatial_index_ranges.return_value = geo_index_ranges
         mock_get_opendap_nc4.return_value = expected_output_path
 
-        output_path = subset_granule(url, requested_variables, self.output_dir,
-                                     self.logger, self.collection_short_name,
-                                     access_token='access', config=self.config,
-                                     bounding_box=self.bounding_box,
-                                     temporal_range=temporal_range)
+        output_path = subset_granule(url, harmony_source, self.output_dir,
+                                     harmony_message, self.logger, self.config)
 
         self.assertIn('M2T1NXSLV_subset.nc4', output_path)
         mock_get_varinfo.assert_called_once_with(url, self.output_dir,
@@ -637,11 +651,11 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_spatial_index_ranges.assert_called_once_with(
-            expected_variables, varinfo, prefetch_path, self.bounding_box, None
+            expected_variables, varinfo, prefetch_path, harmony_message, None
         )
 
         mock_get_temporal_index_ranges.assert_called_once_with(
-            expected_variables, varinfo, prefetch_path, temporal_range
+            expected_variables, varinfo, prefetch_path, harmony_message
         )
 
         mock_get_requested_index_ranges.assert_not_called()
@@ -662,10 +676,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
     @patch('pymods.subset.get_spatial_index_ranges')
+    @patch('pymods.subset.get_request_shape_file')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_granule_shape(self, mock_get_varinfo,
                                   mock_prefetch_dimensions,
+                                  mock_get_request_shape_file,
                                   mock_get_spatial_index_ranges,
                                   mock_get_temporal_index_ranges,
                                   mock_get_requested_index_ranges,
@@ -681,7 +697,12 @@ class TestSubset(TestCase):
 
         """
         shape_file_path = 'tests/geojson_examples/polygon.geo.json'
-        shape_file_bbox = [-114.05, 37.0, -109.04, 42.0]
+        mock_get_request_shape_file.return_value = shape_file_path
+        harmony_message = Message({
+            'accessToken': self.access_token,
+            'subset': {'shape': {'href': 'https://example.com/polygon.geo.json',
+                                 'type': 'application/geo+json'}}
+        })
         index_ranges = {'/latitude': (508, 527), '/longitude': (983, 1003)}
         prefetch_path = 'prefetch.nc4'
         variables_with_ranges = {'/latitude[508:527]', '/longitude[983:1003]',
@@ -693,12 +714,9 @@ class TestSubset(TestCase):
         mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
-        output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir, self.logger,
-                                     self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config,
-                                     shape_file_path=shape_file_path)
+        output_path = subset_granule(self.granule_url, self.harmony_source,
+                                     self.output_dir, harmony_message,
+                                     self.logger, self.config)
 
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
@@ -716,9 +734,13 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
+        mock_get_request_shape_file.assert_called_once_with(harmony_message,
+                                                            self.output_dir,
+                                                            self.logger,
+                                                            self.config)
         mock_get_spatial_index_ranges.assert_called_once_with(
-            self.required_variables, self.varinfo, prefetch_path, None,
-            shape_file_path
+            self.required_variables, self.varinfo, prefetch_path,
+            harmony_message, shape_file_path
         )
 
         mock_get_requested_index_ranges.assert_not_called()
@@ -739,10 +761,12 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_requested_index_ranges')
     @patch('pymods.subset.get_temporal_index_ranges')
     @patch('pymods.subset.get_spatial_index_ranges')
+    @patch('pymods.subset.get_request_shape_file')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
     def test_subset_granule_shape_and_bbox(self, mock_get_varinfo,
                                            mock_prefetch_dimensions,
+                                           mock_get_request_shape_file,
                                            mock_get_spatial_index_ranges,
                                            mock_get_temporal_index_ranges,
                                            mock_get_requested_index_ranges,
@@ -759,7 +783,15 @@ class TestSubset(TestCase):
 
         """
         shape_file_path = 'tests/geojson_examples/polygon.geo.json'
-        shape_file_bbox = [-114.05, 37.0, -109.04, 42.0]
+        mock_get_request_shape_file.return_value = shape_file_path
+        harmony_message = Message({
+            'accessToken': self.access_token,
+            'subset': {
+                'bbox': self.bounding_box,
+                'shape': {'href': 'https://example.com/polygon.geo.json',
+                          'type': 'application/geo+json'}
+            }
+        })
 
         index_ranges = {'/latitude': (240, 279), '/longitude': (160, 199)}
         prefetch_path = 'prefetch.nc4'
@@ -771,13 +803,9 @@ class TestSubset(TestCase):
         mock_get_spatial_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
-        output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir, self.logger,
-                                     self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config,
-                                     bounding_box=self.bounding_box,
-                                     shape_file_path=shape_file_path)
+        output_path = subset_granule(self.granule_url, self.harmony_source,
+                                     self.output_dir, harmony_message,
+                                     self.logger, self.config)
 
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
@@ -795,9 +823,13 @@ class TestSubset(TestCase):
                                                          self.config)
 
         mock_get_temporal_index_ranges.assert_not_called()
+        mock_get_request_shape_file.assert_called_once_with(harmony_message,
+                                                            self.output_dir,
+                                                            self.logger,
+                                                            self.config)
         mock_get_spatial_index_ranges.assert_called_once_with(
             self.required_variables, self.varinfo, prefetch_path,
-            self.bounding_box, shape_file_path
+            harmony_message, shape_file_path
         )
 
         mock_get_requested_index_ranges.asset_not_called()
@@ -820,12 +852,13 @@ class TestSubset(TestCase):
     @patch('pymods.subset.get_spatial_index_ranges')
     @patch('pymods.subset.prefetch_dimension_variables')
     @patch('pymods.subset.get_varinfo')
-    def test_subset_granule_geo(self, mock_get_varinfo,
-                                mock_prefetch_dimensions,
-                                mock_get_spatial_index_ranges,
-                                mock_get_temporal_index_ranges,
-                                mock_get_requested_index_ranges,
-                                mock_get_opendap_nc4, mock_fill_variables):
+    def test_subset_granule_geo_named(self, mock_get_varinfo,
+                                      mock_prefetch_dimensions,
+                                      mock_get_spatial_index_ranges,
+                                      mock_get_temporal_index_ranges,
+                                      mock_get_requested_index_ranges,
+                                      mock_get_opendap_nc4,
+                                      mock_fill_variables):
         """ Ensure a request to extract both a variable and named dimension
             subset runs without error. Because a dimension is specified in this
             request, the prefetch dimension utility functionality and the HOSS
@@ -837,24 +870,26 @@ class TestSubset(TestCase):
             instead of using a bounding box.
 
         """
+        harmony_message = Message({
+            'accessToken': self.access_token,
+            'subset': {
+                'dimensions': [{'name': '/latitude', 'min': -30, 'max': -20},
+                               {'name': '/longitude', 'min': 40, 'max': 50}]
+            }
+        })
         index_ranges = {'/latitude': (240, 279), '/longitude': (160, 199)}
         prefetch_path = 'prefetch.nc4'
         variables_with_ranges = {'/latitude[240:279]', '/longitude[160:199]',
                                  '/rainfall_rate[][240:279][160:199]', '/time'}
-
-        dim_request = [['/latitude', -30, -20], ['/longitude', 40, 50]]
 
         mock_get_varinfo.return_value = self.varinfo
         mock_prefetch_dimensions.return_value = prefetch_path
         mock_get_requested_index_ranges.return_value = index_ranges
         mock_get_opendap_nc4.return_value = self.output_path
 
-        output_path = subset_granule(self.granule_url, self.variables,
-                                     self.output_dir, self.logger,
-                                     self.collection_short_name,
-                                     access_token=self.access_token,
-                                     config=self.config,
-                                     dim_request=dim_request)
+        output_path = subset_granule(self.granule_url, self.harmony_source,
+                                     self.output_dir, harmony_message,
+                                     self.logger, self.config)
 
         self.assertEqual(output_path, self.output_path)
         mock_get_varinfo.assert_called_once_with(self.granule_url,
@@ -874,7 +909,8 @@ class TestSubset(TestCase):
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_spatial_index_ranges.assert_not_called()
         mock_get_requested_index_ranges.assert_called_once_with(
-            self.required_variables, self.varinfo, prefetch_path, dim_request
+            self.required_variables, self.varinfo, prefetch_path,
+            harmony_message
         )
 
         mock_get_opendap_nc4.assert_called_once_with(self.granule_url,
@@ -916,10 +952,14 @@ class TestSubset(TestCase):
                              '/longitude', '/rainfall_rate', '/sst_dtime',
                              '/time', '/wind_speed'})
 
-    def test_get_requested_variables(self):
+    def test_get_required_variables(self):
         """ Ensure that all requested variables are extracted from the list of
             variables in the Harmony message. Alternatively, if no variables
             are specified, all variables in the `.dmr` should be returned.
+
+            After the requested variables have been identified, the return
+            value should also include all those variables that support those
+            requested (e.g., dimensions, coordinates, etc).
 
             * Test case 1: variables in message - the variable paths should be
                            extracted.
@@ -940,31 +980,50 @@ class TestSubset(TestCase):
                            instance.
 
         """
-        # This list excludes /latitude, /longitude and /time, as they are
-        # grid dimension variables, and therefore excluded from the output of
-        # VarInfoFromDmr.get_metadata_variables().
         all_variables = {'/atmosphere_cloud_liquid_water_content',
-                         '/atmosphere_water_vapor_content', '/rainfall_rate',
-                         '/sst_dtime', '/wind_speed'}
-        test_args = [
-            ['Variables, no bbox', ['/lat', '/lon'], False, {'/lat', '/lon'}],
-            ['Variables, no slash', ['lat', 'lon'], False, {'/lat', '/lon'}],
-            ['Variables, with bbox', ['/lat', '/lon'], True, {'/lat', '/lon'}],
-            ['No variables, no bbox', [], False, set()],
-            ['No variables, bbox', [], True, all_variables]
-        ]
-        for description, variable_strings, index_request, output_vars in test_args:
-            with self.subTest(description):
-                harmony_variables = [
-                    HarmonyVariable({'fullPath': variable_string,
-                                     'id': 'V1234-PROVIDER',
-                                     'name': variable_string})
-                    for variable_string in variable_strings
-                ]
-                self.assertSetEqual(get_requested_variables(self.varinfo,
-                                                            harmony_variables,
-                                                            index_request),
-                                    output_vars)
+                         '/atmosphere_water_vapor_content', '/latitude',
+                         '/longitude', '/rainfall_rate', '/sst_dtime', '/time',
+                         '/wind_speed'}
+
+        with self.subTest('Variables specified, no index range subset:'):
+            harmony_variables = [HarmonyVariable({'fullPath': '/rainfall_rate',
+                                                  'id': 'V1234-PROVIDER',
+                                                  'name': '/rainfall_rate'})]
+            self.assertSetEqual(get_required_variables(self.varinfo,
+                                                       harmony_variables,
+                                                       False, self.logger),
+                                {'/latitude', '/longitude', '/rainfall_rate',
+                                 '/time'})
+
+        with self.subTest('Variable without leading slash can be handled'):
+            harmony_variables = [HarmonyVariable({'fullPath': 'rainfall_rate',
+                                                  'id': 'V1234-PROVIDER',
+                                                  'name': 'rainfall_rate'})]
+            self.assertSetEqual(get_required_variables(self.varinfo,
+                                                       harmony_variables,
+                                                       False, self.logger),
+                                {'/latitude', '/longitude', '/rainfall_rate',
+                                 '/time'})
+
+        with self.subTest('Variables specified for an index_range_subset'):
+            harmony_variables = [HarmonyVariable({'fullPath': '/rainfall_rate',
+                                                  'id': 'V1234-PROVIDER',
+                                                  'name': '/rainfall_rate'})]
+            self.assertSetEqual(get_required_variables(self.varinfo,
+                                                       harmony_variables,
+                                                       True, self.logger),
+                                {'/latitude', '/longitude', '/rainfall_rate',
+                                 '/time'})
+
+        with self.subTest('No variables, no index range subset returns none'):
+            self.assertSetEqual(get_required_variables(self.varinfo, [], False,
+                                                       self.logger),
+                                set())
+
+        with self.subTest('No variables, index-range subset, returns all'):
+            self.assertSetEqual(get_required_variables(self.varinfo, [], True,
+                                                       self.logger),
+                                all_variables)
 
     def test_fill_variables(self):
         """ Ensure only the expected variables are filled (e.g., those with
@@ -1078,7 +1137,9 @@ class TestSubset(TestCase):
                               dimensions_to_fill)
 
                 self.assertTrue(dataset['/sst_dtime'][:].all() is np.ma.masked)
-                mock_get_fill_slice.assert_any_call('/latitude', fill_ranges)
-                mock_get_fill_slice.assert_any_call('/longitude', fill_ranges)
-                mock_get_fill_slice.assert_any_call('/time', fill_ranges)
+                mock_get_fill_slice.assert_has_calls([
+                    call('/time', fill_ranges),
+                    call('/latitude', fill_ranges),
+                    call('/longitude', fill_ranges),
+                ])
                 mock_get_fill_slice.reset_mock()

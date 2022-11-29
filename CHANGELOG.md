@@ -1,3 +1,9 @@
+## v0.3.4
+### 2022-11-23
+
+This version of HOSS is primarily internal code clean-up, in particular making
+more extensive use of the Harmony `Message` object throughout the service.
+
 ## v0.3.3
 ### 2022-10-26
 

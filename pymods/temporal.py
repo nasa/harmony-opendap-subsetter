@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Set
 
 from dateutil.parser import parse as parse_datetime
+from harmony.message import Message
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 
@@ -24,6 +25,46 @@ units_day = {'day', 'days', 'd'}
 units_hour = {'hour', 'hours', 'hr', 'h'}
 units_min = {'minutes', 'minute', 'min', 'mins'}
 units_second = {'second', 'seconds', 'sec', 'secs', 's'}
+
+
+def get_temporal_index_ranges(required_variables: Set[str],
+                              varinfo: VarInfoFromDmr, dimensions_path: str,
+                              harmony_message: Message) -> IndexRanges:
+    """ Iterate through the temporal dimension and extract the indices that
+        correspond to the minimum and maximum extents in that dimension.
+
+        The return value from this function is a dictionary that contains the
+        index ranges for the time dimension, such as:
+
+        index_range = {'/time': [1, 5]}
+
+    """
+    index_ranges = {}
+    temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
+
+    time_start = get_datetime_with_timezone(harmony_message.temporal.start)
+    time_end = get_datetime_with_timezone(harmony_message.temporal.end)
+
+    with Dataset(dimensions_path, 'r') as dimensions_file:
+        for dimension in temporal_dimensions:
+            time_variable = varinfo.get_variable(dimension)
+            time_ref, time_delta = get_time_ref(
+                time_variable.get_attribute_value('units')
+            )
+
+            # Convert the Harmony message start and end datetime values into
+            # integer or floating point values (e.g., a number of seconds since
+            # 1970-01-01) using the variable epoch and unit.
+            minimum_extent = (time_start - time_ref) / time_delta
+            maximum_extent = (time_end - time_ref) / time_delta
+
+            index_ranges[dimension] = get_dimension_index_range(
+                dimensions_file[dimension][:], minimum_extent, maximum_extent,
+                bounds_values=get_dimension_bounds(dimension, varinfo,
+                                                   dimensions_file)
+            )
+
+    return index_ranges
 
 
 def get_datetime_with_timezone(timestring: str) -> datetime:
@@ -41,9 +82,7 @@ def get_datetime_with_timezone(timestring: str) -> datetime:
 
 
 def get_time_ref(units_time: str) -> List[datetime]:
-    """ retrieve the reference time and time step size
-
-    """
+    """ Retrieve the reference time (epoch) and time step size. """
     unit, epoch_str = units_time.split(' since ')
     ref_time = get_datetime_with_timezone(epoch_str)
 
@@ -59,39 +98,3 @@ def get_time_ref(units_time: str) -> List[datetime]:
         raise UnsupportedTemporalUnits(unit)
 
     return (ref_time, time_delta)
-
-
-def get_temporal_index_ranges(required_variables: Set[str],
-                              varinfo: VarInfoFromDmr, dimensions_path: str,
-                              temporal_range: List[str]) -> IndexRanges:
-    """ Iterate through the temporal dimension and extract the indices that
-        correspond to the minimum and maximum extents in that dimension.
-
-        The return value from this function is a dictionary that contains the
-        index ranges for the time dimension, such as:
-
-        index_range = {'/time': [1, 5]}
-
-    """
-    index_ranges = {}
-    temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
-
-    time_start = get_datetime_with_timezone(temporal_range[0])
-    time_end = get_datetime_with_timezone(temporal_range[1])
-
-    with Dataset(dimensions_path, 'r') as dimensions_file:
-        for dimension in temporal_dimensions:
-            time_variable = varinfo.get_variable(dimension)
-            units_time = time_variable.get_attribute_value('units')
-            time_ref, time_delta = get_time_ref(units_time)
-            bounds = get_dimension_bounds(dimension, varinfo, dimensions_file)
-
-            minimum_extent = (time_start - time_ref) / time_delta
-            maximum_extent = (time_end - time_ref) / time_delta
-
-            index_ranges[dimension] = get_dimension_index_range(
-                dimensions_file[dimension][:], minimum_extent, maximum_extent,
-                bounds_values=bounds
-            )
-
-    return index_ranges

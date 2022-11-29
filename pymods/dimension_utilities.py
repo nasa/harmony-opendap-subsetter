@@ -9,44 +9,41 @@
     unwrapped in accordance with the longitude dimension values.
 
 """
-from datetime import datetime
 from logging import Logger
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Set, Tuple
 
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 import numpy as np
 
-from harmony.message import Dimension
+from harmony.message import Message
 from harmony.util import Config
 from varinfo import VarInfoFromDmr
 
-from pymods.bbox_utilities import BBox, flatten_list
+from pymods.bbox_utilities import flatten_list
 from pymods.exceptions import InvalidNamedDimension, InvalidRequestedRange
 from pymods.utilities import (format_variable_set_string, get_opendap_nc4,
-                              get_value_or_default)
+                              get_value_or_default, rgetattr)
 
 
 IndexRange = Tuple[int]
 IndexRanges = Dict[str, IndexRange]
 
 
-def is_index_subset(bounding_box: Optional[BBox],
-                    shape_file_path: Optional[str],
-                    dim_request: Optional[List[Dimension]],
-                    temporal_range: Optional[List[datetime]]) -> bool:
+def is_index_subset(message: Message) -> bool:
     """ Determine if the inbound Harmony request specified any parameters that
         will require an index range subset. These will be:
 
-        * Bounding box spatial requests
-        * Shape file spatial requests
-        * Temporal requests
-        * General dimension range subsetting requests
+        * Bounding box spatial requests (Message.subset.bbox)
+        * Shape file spatial requests (Message.subset.shape)
+        * Temporal requests (Message.temporal)
+        * Named dimension range subsetting requests (Message.subset.dimensions)
 
     """
-    return any(subset_parameters is not None
-               for subset_parameters in [bounding_box, shape_file_path,
-                                         dim_request, temporal_range])
+    return any(rgetattr(message, subset_parameter, None) is not None
+               for subset_parameter
+               in ['subset.bbox', 'subset.shape', 'subset.dimensions',
+                   'temporal'])
 
 
 def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
@@ -313,9 +310,8 @@ def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
 
 
 def get_requested_index_ranges(required_variables: Set[str],
-                               varinfo: VarInfoFromDmr,
-                               dimensions_path: str,
-                               dim_request: List[Dimension]) -> IndexRanges:
+                               varinfo: VarInfoFromDmr, dimensions_path: str,
+                               harmony_message: Message) -> IndexRanges:
     """ Examines the requested dimension names and ranges and extracts the
         indices that correspond to the specified range of values for each
         dimension that is requested specifically by name.
@@ -334,7 +330,7 @@ def get_requested_index_ranges(required_variables: Set[str],
     dim_index_ranges = {}
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
-        for dim in dim_request:
+        for dim in harmony_message.subset.dimensions:
             if dim.name in required_dimensions:
                 dim_is_valid = True
             elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:

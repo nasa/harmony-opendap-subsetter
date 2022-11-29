@@ -1,5 +1,14 @@
 """ Utility classes used to extend the unittest capabilities """
+from collections import namedtuple
+from datetime import datetime
+from typing import List
 from unittest.mock import MagicMock
+
+from harmony.util import bbox_to_geometry
+from pystac import Asset, Catalog, Item
+
+
+Granule = namedtuple('Granule', ['url', 'media_type', 'roles'])
 
 
 def write_dmr(output_dir: str, content: str):
@@ -10,7 +19,7 @@ def write_dmr(output_dir: str, content: str):
     """
     dmr_name = f'{output_dir}/downloaded.dmr'
 
-    with open(dmr_name, 'w') as file_handler:
+    with open(dmr_name, 'w', encoding='utf-8') as file_handler:
         file_handler.write(content)
 
     return dmr_name
@@ -54,3 +63,28 @@ def spy_on(method):
     wrapper.return_values = return_values
     wrapper.errors = errors
     return wrapper
+
+
+def create_stac(granules: List[Granule]) -> Catalog:
+    """ Create a SpatioTemporal Asset Catalog (STAC). These are used as inputs
+        for Harmony requests, containing the URL and other information for
+        input granules.
+
+        For simplicity the geometry and temporal properties of each item are
+        set to default values, as only the URL, media type and role are used by
+        HOSS.
+
+    """
+    catalog = Catalog(id='input', description='test input')
+
+    for granule_index, granule in enumerate(granules):
+        item = Item(id=f'granule_{granule_index}',
+                    geometry=bbox_to_geometry([-180, -90, 180, 90]),
+                    bbox=[-180, -90, 180, 90],
+                    datetime=datetime(2020, 1, 1), properties=None)
+        item.add_asset('input_data',
+                       Asset(granule.url, media_type=granule.media_type,
+                             roles=granule.roles))
+        catalog.add_item(item)
+
+    return catalog

@@ -159,3 +159,22 @@ def get_value_or_default(value: Optional[float], default: float) -> float:
 
     """
     return value if value is not None else default
+
+
+def rgetattr(input_object, requested_attribute, *args):
+    """ This is a recursive version of the inbuilt `getattr` method, such that
+        it can be called to retrieve nested attributes. For example:
+        the Message.subset.shape within the input Harmony message.
+
+        Note, if a default value is specified, this will be returned if any
+        attribute in the specified chain is absent from the supplied object.
+
+    """
+    if '.' not in requested_attribute:
+        result = getattr(input_object, requested_attribute, *args)
+    else:
+        attribute_pieces = requested_attribute.split('.')
+        result = rgetattr(getattr(input_object, attribute_pieces[0], *args),
+                          '.'.join(attribute_pieces[1:]), *args)
+
+    return result

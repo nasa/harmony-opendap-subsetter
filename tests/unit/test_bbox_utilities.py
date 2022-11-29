@@ -56,7 +56,7 @@ class TestBBoxUtilities(TestCase):
         """ A helper function to extract GeoJSON from a supplied file path. """
         geojson_path = path_join('tests/geojson_examples', geojson_basename)
 
-        with open(geojson_path, 'r') as file_handler:
+        with open(geojson_path, 'r', encoding='utf-8') as file_handler:
             geojson_content = json.load(file_handler)
 
         return geojson_content

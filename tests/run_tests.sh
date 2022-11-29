@@ -30,7 +30,11 @@ coverage report --omit="*tests/*"
 coverage html --omit="*tests/*" -d /home/tests/coverage
 
 # Run pylint
-pylint pymods subsetter.py --disable=E0401 --extension-pkg-whitelist=netCDF4
+# Ignored errors/warnings:
+# W1203 - use of f-strings in log statements. This warning is leftover from
+#         using ''.format() vs % notation. For more information, see:
+#     	  https://github.com/PyCQA/pylint/issues/2354#issuecomment-414526879
+pylint pymods subsetter.py --disable=W1203 --extension-pkg-whitelist=netCDF4
 RESULT=$?
 RESULT=$((3 & $RESULT))
 

@@ -39,8 +39,6 @@ import harmony
 from harmony.message import Source
 from harmony.util import generate_output_filename, HarmonyException
 
-from pymods.bbox_utilities import (get_harmony_message_bbox,
-                                   get_request_shape_file)
 from pymods.dimension_utilities import is_index_subset
 from pymods.subset import subset_granule
 from pymods.utilities import get_file_mimetype
@@ -70,7 +68,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         return super().invoke()
 
     def process_item(self, item: Item, source: Source):
-        """ Processes a single input item.  Services that are not aggregating
+        """ Processes a single input item. Services that are not aggregating
             multiple input files should prefer to implement this method rather
             than `invoke`
 
@@ -99,68 +97,22 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
         workdir = mkdtemp()
         try:
             # Get the data file
-            asset = None
-            for item_asset in item.assets.values():
-                if item_asset.roles and 'opendap' in item_asset.roles:
-                    asset = item_asset
-                    break
-                if item_asset.roles and 'data' in item_asset.roles:
-                    # Legacy workflows won't provide a data role of 'opendap'.
-                    # After workflows are converted to chaining, this can all be
-                    # condensed to:
-                    # asset = next(v for k, v in item.assets.items()
-                    #                            if 'opendap' in (v.roles or []))
-                    asset = item_asset
+            asset = next((item_asset for item_asset in item.assets.values()
+                          if 'opendap' in (item_asset.roles or [])), None)
 
-            # Get collection information associated with this STAC item:
-            collection_short_name = self._get_item_source(item).shortName
-            self.logger.info(f'Collection short_name: {collection_short_name}')
+            self.logger.info(f'Collection short name: {source.shortName}')
 
-            # Mark any fields the service processes so later services do not
-            # repeat work. Unspecified `Message` attributes default to `None`.
-            variables = source.process('variables') or []
-            bounding_box = get_harmony_message_bbox(self.message)
-
-            shape_file_path = get_request_shape_file(self.message, workdir,
-                                                     self.logger, self.config)
-
-            if self.message.temporal is not None:
-                temporal_range = [self.message.temporal.start,
-                                  self.message.temporal.end]
-            else:
-                temporal_range = None
-
-            # Get the subset dimension names and ranges
-            if (
-                self.message.subset is not None
-                and self.message.subset.dimensions is not None
-            ):
-                dim_request = self.message.subset.dimensions
-            else:
-                dim_request = None
-
-            # Subset
-            output_file_path = subset_granule(
-                asset.href,
-                variables, workdir,
-                self.logger,
-                collection_short_name,
-                access_token=self.message.accessToken,
-                config=self.config,
-                bounding_box=bounding_box,
-                shape_file_path=shape_file_path,
-                dim_request=dim_request,
-                temporal_range=temporal_range
-            )
+            # Invoke service logic to retrieve subset of file from OPeNDAP
+            output_file_path = subset_granule(asset.href, source, workdir,
+                                              self.message, self.logger,
+                                              self.config)
 
             # Stage the output file with a conventional filename
             mime, _ = get_file_mimetype(output_file_path)
-            is_subsetted = is_index_subset(bounding_box, shape_file_path,
-                                           dim_request, temporal_range)
-
             staged_filename = generate_output_filename(
                 asset.href, variable_subset=source.variables, ext='.nc4',
-                is_subsetted=(is_subsetted or len(variables) > 0)
+                is_subsetted=(is_index_subset(self.message)
+                              or len(source.variables) > 0)
             )
             url = harmony.util.stage(output_file_path,
                                      staged_filename,
@@ -209,10 +161,6 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
         if not has_granules and not has_items:
             raise Exception('No granules specified for variable subsetting')
-        if self.message.isSynchronous and len(self.message.granules) > 1:
-            # TODO: remove this condition when synchronous requests can handle
-            # multiple granules.
-            raise Exception('Synchronous requests accept only one granule')
 
         for source in self.message.sources:
             if not hasattr(source, 'variables') or not source.variables:

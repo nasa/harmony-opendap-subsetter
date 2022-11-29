@@ -3,12 +3,12 @@ from unittest import TestCase
 from unittest.mock import patch, ANY
 import json
 
-from harmony.message import Message, Dimension
+from harmony.message import Message
 from harmony.util import config
 
 from pymods.bbox_utilities import BBox
 from subsetter import HarmonyAdapter
-from tests.utilities import spy_on
+from tests.utilities import create_stac, Granule, spy_on
 
 
 @patch('subsetter.get_file_mimetype')
@@ -27,13 +27,15 @@ class TestSubsetter(TestCase):
         cls.operations = {'is_variable_subset': True,
                           'is_regridded': False,
                           'is_subsetted': False}
+        cls.africa_granule_url = '/home/tests/data/africa.nc'
+        cls.africa_stac = create_stac([Granule(cls.africa_granule_url, None,
+                                               ['opendap', 'data'])])
 
     def setUp(self):
         self.config = config(validate=False)
         self.process_item_spy = spy_on(HarmonyAdapter.process_item)
 
     def create_message(self, collection_id: str, collection_short_name: str,
-                       granule_id: str, file_paths: List[str],
                        variable_list: List[str], user: str,
                        is_synchronous: Optional[bool] = None,
                        bounding_box: Optional[List[float]] = None,
@@ -41,25 +43,11 @@ class TestSubsetter(TestCase):
                        shape_file: Optional[str] = None,
                        dimensions: Optional[List[Dict]] = None) -> Message:
         """ Create a Harmony Message object with the requested attributes. """
-        granules = [
-            {
-                'id': granule_id,
-                'url': file_path,
-                'temporal': {
-                    'start': '2020-01-01T00:00:00.000Z',
-                    'end': '2020-01-02T00:00:00.000Z'
-                },
-                'bbox': [-180, -90, 180, 90]
-            } for file_path in file_paths
-        ]
         variables = [{'name': variable} for variable in variable_list]
         message_content = {
-            'sources': [{
-                'collection': collection_id,
-                'granules': granules,
-                'shortName': collection_short_name,
-                'variables': variables
-            }],
+            'sources': [{'collection': collection_id,
+                         'shortName': collection_short_name,
+                         'variables': variables}],
             'user': user,
             'callback': 'https://example.com/',
             'stagingLocation': 's3://example-bucket/',
@@ -88,45 +76,36 @@ class TestSubsetter(TestCase):
         """
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
-        temporal_range = {'start': '2021-01-01T00:00:00', 'end': '2021-01-02T00:00:00'}
-        temporal_list = [temporal_range['start'], temporal_range['end']]
+        temporal_range = {'start': '2021-01-01T00:00:00',
+                          'end': '2021-01-02T00:00:00'}
         collection_short_name = 'harmony_example_l2'
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'mcollins',
                                       bounding_box=None,
-                                      temporal_range=temporal_range
-                                      )
+                                      temporal_range=temporal_range)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=self.africa_stac)
+
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
-        granule = variable_subsetter.message.granules[0]
 
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    granule.variables,
+        mock_subset_granule.assert_called_once_with(self.africa_granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=None,
-                                                    shape_file_path=None,
-                                                    dim_request=None,
-                                                    temporal_range=temporal_list)
+                                                    variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'africa_subsetted.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger
-        )
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'africa_subsetted.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)
 
     def test_synchronous_request(self,
                                  mock_stage,
@@ -143,38 +122,30 @@ class TestSubsetter(TestCase):
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'narmstrong',
                                       True)
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=self.africa_stac)
+
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
 
-        granule = variable_subsetter.message.granules[0]
-
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    granule.variables,
+        mock_subset_granule.assert_called_once_with(self.africa_granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=None,
-                                                    shape_file_path=None,
-                                                    dim_request=None,
-                                                    temporal_range=None)
+                                                    variable_subsetter.config)
 
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'africa_subsetted.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger
-        )
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'africa_subsetted.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)
 
     def test_asynchronous_request(self,
                                   mock_stage,
@@ -191,36 +162,29 @@ class TestSubsetter(TestCase):
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'ealdrin',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=self.africa_stac)
+
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
-        granule = variable_subsetter.message.granules[0]
 
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    granule.variables,
+        mock_subset_granule.assert_called_once_with(self.africa_granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=None,
-                                                    shape_file_path=None,
-                                                    dim_request=None,
-                                                    temporal_range=None)
+                                                    variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'africa_subsetted.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger)
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'africa_subsetted.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)
 
     def test_unspecified_synchronous_request(self,
                                              mock_stage,
@@ -237,45 +201,35 @@ class TestSubsetter(TestCase):
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'mcollins')
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=self.africa_stac)
+
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
-        granule = variable_subsetter.message.granules[0]
 
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    granule.variables,
+        mock_subset_granule.assert_called_once_with(self.africa_granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=None,
-                                                    shape_file_path=None,
-                                                    dim_request=None,
-                                                    temporal_range=None)
+                                                    variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'africa_subsetted.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger
-        )
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'africa_subsetted.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)
 
-    @patch('subsetter.get_request_shape_file')
-    def test_hoss_bbox_request(self, mock_get_request_shape_file, mock_stage,
-                               mock_subset_granule, mock_get_mimetype):
+    def test_hoss_bbox_request(self, mock_stage, mock_subset_granule,
+                               mock_get_mimetype):
         """ A request that specifies a bounding box should result in a both a
             variable and a bounding box spatial subset being made.
 
         """
-        mock_get_request_shape_file.return_value = None
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
         bounding_box = BBox(-20, -10, 20, 30)
@@ -283,44 +237,31 @@ class TestSubsetter(TestCase):
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'mcollins',
                                       bounding_box=bounding_box)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=self.africa_stac)
+
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
-        granule = variable_subsetter.message.granules[0]
 
-        mock_get_request_shape_file.assert_called_once_with(
-            message, ANY, variable_subsetter.logger, variable_subsetter.config
-        )
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    granule.variables,
+        mock_subset_granule.assert_called_once_with(self.africa_granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=bounding_box,
-                                                    shape_file_path=None,
-                                                    dim_request=None,
-                                                    temporal_range=None)
+                                                    variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'africa_subsetted.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger
-        )
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'africa_subsetted.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)
 
-    @patch('subsetter.get_request_shape_file')
-    def test_hoss_shape_file_request(self, mock_get_request_shape_file,
-                                     mock_stage, mock_subset_granule,
+    def test_hoss_shape_file_request(self, mock_stage, mock_subset_granule,
                                      mock_get_mimetype):
         """ A request that specifies a shape file should result in a both a
             variable and a spatial subset being made.
@@ -328,48 +269,34 @@ class TestSubsetter(TestCase):
         """
         collection_short_name = 'harmony_example_l2'
         shape_file_url = 'www.example.com/shape.geo.json'
-        local_shape_file = '/path/to/shape.geo.json'
-        mock_get_request_shape_file.return_value = local_shape_file
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc'],
                                       ['alpha_var', 'blue_var'],
                                       'mcollins',
                                       shape_file=shape_file_url)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=self.africa_stac)
+
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
 
-        granule = variable_subsetter.message.granules[0]
-
-        mock_get_request_shape_file.assert_called_once_with(
-            message, ANY, variable_subsetter.logger, variable_subsetter.config
-        )
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    granule.variables,
+        mock_subset_granule.assert_called_once_with(self.africa_granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=None,
-                                                    shape_file_path=local_shape_file,
-                                                    dim_request=None,
-                                                    temporal_range=None)
+                                                    variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'africa_subsetted.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger
-        )
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'africa_subsetted.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)
 
     def test_hoss_named_dimension(self, mock_stage, mock_subset_granule,
                                   mock_get_mimetype):
@@ -383,45 +310,39 @@ class TestSubsetter(TestCase):
 
         """
         collection_short_name = 'M2I3NPASM'
+        granule_url = '/home/tests/data/M2I3NPASM.nc4'
         mock_subset_granule.return_value = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
 
         message = self.create_message('C1245663527-EEDTEST',
                                       collection_short_name,
-                                      'G1245663563-EEDTEST',
-                                      ['/home/tests/data/M2I3NPASM.nc4'],
                                       ['H1000'],
                                       'dbowman',
                                       dimensions=[{'name': 'lev',
                                                    'min': 800,
                                                    'max': 1000}])
+        input_stac = create_stac([Granule(granule_url, None,
+                                          ['opendap', 'data'])])
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=input_stac)
+
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
 
-        granule = variable_subsetter.message.granules[0]
-
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    granule.variables,
+        mock_subset_granule.assert_called_once_with(granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=None,
-                                                    shape_file_path=None,
-                                                    dim_request=message.subset.dimensions,
-                                                    temporal_range=None)
+                                                    variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'M2I3NPASM_H1000_subsetted.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger
-        )
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'M2I3NPASM_H1000_subsetted.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)
 
     def test_missing_granules(self,
                               mock_stage,
@@ -437,13 +358,12 @@ class TestSubsetter(TestCase):
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      [],
                                       ['alpha_var', 'blue_var'],
                                       'pconrad',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=create_stac([]))
 
         with self.assertRaises(Exception) as context_manager:
             with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
@@ -451,43 +371,6 @@ class TestSubsetter(TestCase):
 
         self.assertEqual(str(context_manager.exception),
                          'No granules specified for variable subsetting')
-
-        mock_subset_granule.assert_not_called()
-        mock_get_mimetype.assert_not_called()
-
-        mock_stage.assert_not_called()
-
-    def test_synchronous_multiple_granules(self,
-                                           mock_stage,
-                                           mock_subset_granule,
-                                           mock_get_mimetype):
-        """ A request for synchronous processing, with multiple granules
-            specified should raise an exception.
-
-        """
-        output_paths = ['/path/to/output1.nc', '/path/to/output2.nc']
-
-        mock_subset_granule.side_effect = output_paths
-        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
-        collection_short_name = 'harmony_example_l2'
-
-        message = self.create_message('C1233860183-EEDTEST',
-                                      collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc',
-                                       '/home/tests/data/f16_ssmis_20200102v7.nc'],
-                                      ['alpha_var', 'blue_var'],
-                                      'rgordon',
-                                      True)
-
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
-
-        with self.assertRaises(Exception) as context_manager:
-            with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-                variable_subsetter.invoke()
-
-        self.assertEqual(str(context_manager.exception),
-                         'Synchronous requests accept only one granule')
 
         mock_subset_granule.assert_not_called()
         mock_get_mimetype.assert_not_called()
@@ -513,13 +396,16 @@ class TestSubsetter(TestCase):
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc',
-                                       '/home/tests/data/f16_ssmis_20200102v7.nc'],
                                       ['alpha_var', 'blue_var'], 'abean',
                                       False)
+        input_stac = create_stac([
+            Granule(self.africa_granule_url, None, ['opendap', 'data']),
+            Granule('/home/tests/data/f16_ssmis_20200102v7.nc', None,
+                    ['opendap', 'data'])
+        ])
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=input_stac)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
 
@@ -527,25 +413,18 @@ class TestSubsetter(TestCase):
 
         for index, granule in enumerate(granules):
             mock_subset_granule.assert_any_call(granule.url,
-                                                granule.variables,
+                                                message.sources[0],
                                                 ANY,
+                                                variable_subsetter.message,
                                                 variable_subsetter.logger,
-                                                collection_short_name,
-                                                access_token=message.accessToken,
-                                                config=self.config,
-                                                bounding_box=None,
-                                                shape_file_path=None,
-                                                dim_request=None,
-                                                temporal_range=None)
+                                                self.config)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
-            mock_stage.assert_any_call(
-                output_paths[index],
-                output_filenames[index],
-                'application/x-netcdf4',
-                location=message.stagingLocation,
-                logger=variable_subsetter.logger,
-            )
+            mock_stage.assert_any_call(output_paths[index],
+                                       output_filenames[index],
+                                       'application/x-netcdf4',
+                                       location=message.stagingLocation,
+                                       logger=variable_subsetter.logger)
 
     def test_missing_variables(self,
                                mock_stage,
@@ -563,34 +442,24 @@ class TestSubsetter(TestCase):
 
         message = self.create_message('C1233860183-EEDTEST',
                                       collection_short_name,
-                                      'G1233860471-EEDTEST',
-                                      ['/home/tests/data/africa.nc'],
                                       [],
                                       'jlovell')
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config)
+        variable_subsetter = HarmonyAdapter(message, config=self.config,
+                                            catalog=self.africa_stac)
         with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
             variable_subsetter.invoke()
 
-        granule = variable_subsetter.message.granules[0]
-
-        mock_subset_granule.assert_called_once_with(granule.url,
-                                                    [],
+        mock_subset_granule.assert_called_once_with(self.africa_granule_url,
+                                                    message.sources[0],
                                                     ANY,
+                                                    variable_subsetter.message,
                                                     variable_subsetter.logger,
-                                                    collection_short_name,
-                                                    access_token=message.accessToken,
-                                                    config=variable_subsetter.config,
-                                                    bounding_box=None,
-                                                    shape_file_path=None,
-                                                    dim_request=None,
-                                                    temporal_range=None)
+                                                    variable_subsetter.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
-        mock_stage.assert_called_once_with(
-            '/path/to/output.nc',
-            'africa.nc4',
-            'application/x-netcdf4',
-            location='s3://example-bucket/',
-            logger=variable_subsetter.logger
-        )
+        mock_stage.assert_called_once_with('/path/to/output.nc',
+                                           'africa.nc4',
+                                           'application/x-netcdf4',
+                                           location='s3://example-bucket/',
+                                           logger=variable_subsetter.logger)

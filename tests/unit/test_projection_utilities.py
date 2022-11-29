@@ -9,7 +9,7 @@ from os.path import join as path_join
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import call, patch
 import json
 
 from pyproj import CRS
@@ -451,7 +451,7 @@ class TestProjectionUtilities(TestCase):
         latitudes = np.array([[10, 10, 10], [15, 15, 15], [25, 25, 25]])
         longitudes = np.array([[10, 15, 25], [10, 15, 25], [10, 15, 25]])
         expected_resolution = 7.071
-        self.assertAlmostEqual(get_geographic_resolution(latitudes, longitudes),
+        self.assertAlmostEqual(get_geographic_resolution(longitudes, latitudes),
                                expected_resolution, places=3)
 
     @patch('pymods.projection_utilities.get_bbox_polygon')
@@ -595,8 +595,9 @@ class TestProjectionUtilities(TestCase):
                 resolved_multi_feature
             )
             self.assertEqual(mock_get_resolved_feature.call_count, 2)
-            mock_get_resolved_feature.assert_any_call(first_shape, resolution)
-            mock_get_resolved_feature.assert_any_call(second_shape, resolution)
+            mock_get_resolved_feature.assert_has_calls(
+                [call(first_shape, resolution), call(second_shape, resolution)]
+            )
 
         mock_get_resolved_feature.reset_mock()
 
@@ -699,14 +700,12 @@ class TestProjectionUtilities(TestCase):
                                                       resolution),
                                  resolved_mlinestring)
             self.assertEqual(mock_get_resolved_geometry.call_count, 2)
-            mock_get_resolved_geometry.assert_any_call(
-                list(self.multi_linestring.geoms[0].coords), resolution,
-                is_closed=False
-            )
-            mock_get_resolved_geometry.assert_any_call(
-                list(self.multi_linestring.geoms[1].coords), resolution,
-                is_closed=False
-            )
+            mock_get_resolved_geometry.assert_has_calls([
+                call(list(self.multi_linestring.geoms[0].coords), resolution,
+                     is_closed=False),
+                call(list(self.multi_linestring.geoms[1].coords), resolution,
+                     is_closed=False)
+            ])
 
         mock_get_resolved_geometry.reset_mock()
 

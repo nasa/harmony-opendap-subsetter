@@ -5,31 +5,27 @@
 """
 from logging import Logger
 from typing import List, Set
-from datetime import datetime
 
-from harmony.message import Dimension, Variable as HarmonyVariable
+from harmony.message import Message, Source, Variable as HarmonyVariable
 from harmony.util import Config
 from netCDF4 import Dataset
 from numpy.ma import masked
 from varinfo import VarInfoFromDmr
 
-from pymods.bbox_utilities import BBox
+from pymods.bbox_utilities import get_request_shape_file
 from pymods.dimension_utilities import (add_index_range, get_fill_slice,
                                         IndexRanges, is_index_subset,
                                         get_requested_index_ranges,
-                                        prefetch_dimension_variables)
+                                        prefetch_dimension_variables, rgetattr)
 from pymods.spatial import get_spatial_index_ranges
 from pymods.temporal import get_temporal_index_ranges
 from pymods.utilities import (download_url, format_variable_set_string,
                               get_opendap_nc4)
 
 
-def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
-                   output_dir: str, logger: Logger, collection_short_name: str,
-                   access_token: str = None, config: Config = None,
-                   bounding_box: BBox = None, shape_file_path: str = None,
-                   dim_request: List[Dimension] = None,
-                   temporal_range: List[datetime] = None) -> str:
+def subset_granule(opendap_url: str, harmony_source: Source, output_dir: str,
+                   harmony_message: Message, logger: Logger,
+                   config: Config) -> str:
     """ This function is the main business logic for retrieving a variable
         and/or spatial subset from OPeNDAP.
 
@@ -40,31 +36,30 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
         those requested (e.g., grid dimension variables or CF-Convention
         metadata references).
 
-        The optional `bounding_box` argument can be supplied for spatially
-        gridded data. In this case dimension variables will first be retrieved
-        in a "prefetch" request to OPeNDAP. Then the bounding-box or shape file
-        extents are converted to index-ranges.
+        When the input Harmony message specifies a bounding box, shape file or
+        named dimensions that require index-range subsetting, dimension
+        variables will first be retrieved in a "prefetch" request to OPeNDAP.
+        Then the bounding-box or shape file extents are converted to
+        index-ranges.
 
         Once the required variables, and index-ranges if needed, are derived,
         a request is made to OPeNDAP to retrieve only the requested data.
 
     """
     # Determine if index range subsetting will be required:
-    request_is_index_subset = is_index_subset(bounding_box, shape_file_path,
-                                              dim_request, temporal_range)
+    request_is_index_subset = is_index_subset(harmony_message)
 
     # Produce a map of variable dependencies with `sds-varinfo` and the `.dmr`.
     varinfo = get_varinfo(opendap_url, output_dir, logger,
-                          collection_short_name, access_token, config)
-
-    requested_variables = get_requested_variables(varinfo, variables,
-                                                  request_is_index_subset)
-    logger.info('Requested variables: '
-                f'{format_variable_set_string(requested_variables)}')
+                          harmony_source.shortName,
+                          harmony_message.accessToken, config)
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.
-    required_variables = varinfo.get_required_variables(requested_variables)
+    required_variables = get_required_variables(varinfo,
+                                                harmony_source.variables,
+                                                request_is_index_subset,
+                                                logger)
     logger.info('All required variables: '
                 f'{format_variable_set_string(required_variables)}')
 
@@ -76,14 +71,15 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
         dimensions_path = prefetch_dimension_variables(opendap_url, varinfo,
                                                        required_variables,
                                                        output_dir, logger,
-                                                       access_token, config)
+                                                       harmony_message.accessToken,
+                                                       config)
 
         # Note regarding precedence of user requests ...
         # We handle the general dimension request first, in case the
         # user names a specific temporal or spatial dimension (e.g.,
         # "latitude").  If temporal/lat/lon args are also in the request, they
         # will override the index ranges derived from the requested dimension.
-        if dim_request is not None:
+        if rgetattr(harmony_message, 'subset.dimensions', None) is not None:
             # Update `index_ranges` cache with ranges for the requested
             # dimension(s). This will convert the requested min and max
             # values to array indices in the proper order. Each item in
@@ -91,25 +87,31 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
             index_ranges.update(get_requested_index_ranges(required_variables,
                                                            varinfo,
                                                            dimensions_path,
-                                                           dim_request))
+                                                           harmony_message))
 
-        if bounding_box is not None or shape_file_path is not None:
+        if (
+            rgetattr(harmony_message, 'subset.bbox', None) is not None
+            or rgetattr(harmony_message, 'subset.shape', None) is not None
+        ):
             # Update `index_ranges` cache with ranges for horizontal grid
             # dimension variables (geographic and projected).
+            shape_file_path = get_request_shape_file(harmony_message,
+                                                     output_dir, logger,
+                                                     config)
             index_ranges.update(get_spatial_index_ranges(required_variables,
                                                          varinfo,
                                                          dimensions_path,
-                                                         bounding_box,
+                                                         harmony_message,
                                                          shape_file_path))
 
-        if temporal_range is not None:
+        if harmony_message.temporal is not None:
             # Update `index_ranges` cache with ranges for temporal
             # variables. This will convert information from the temporal range
             # to array indices for each temporal dimension.
             index_ranges.update(get_temporal_index_ranges(required_variables,
                                                           varinfo,
                                                           dimensions_path,
-                                                          temporal_range))
+                                                          harmony_message))
 
     # Add any range indices to variable names for DAP4 constraint expression.
     variables_with_ranges = set(
@@ -122,7 +124,8 @@ def subset_granule(opendap_url: str, variables: List[HarmonyVariable],
     # Retrieve OPeNDAP data including only the specified variables in the
     # specified ranges.
     output_path = get_opendap_nc4(opendap_url, variables_with_ranges,
-                                  output_dir, logger, access_token, config)
+                                  output_dir, logger,
+                                  harmony_message.accessToken, config)
 
     # Fill the data outside the requested ranges for variables that cross a
     # dimensional discontinuity (for example longitude and the anti-meridian).
@@ -144,19 +147,19 @@ def get_varinfo(opendap_url: str, output_dir: str, logger: Logger,
                           config_file='pymods/var_subsetter_config.json')
 
 
-def get_requested_variables(varinfo: VarInfoFromDmr,
-                            variables: List[HarmonyVariable],
-                            request_is_index_subset: bool) -> Set[str]:
+def get_required_variables(varinfo: VarInfoFromDmr,
+                           variables: List[HarmonyVariable],
+                           request_is_index_subset: bool,
+                           logger: Logger) -> Set[str]:
     """ Iterate through all requested variables from the Harmony message and
-        extract their full paths.
+        extract their full paths. Then use the
+        `VarInfoFromDmr.get_required_variables` method to also return all those
+        variables that are required to support
 
         If index range subsetting is required, but no variables are specified
         (e.g., all variables are requested) then the requested variables should
         be set to all variables (science and non-science), so that index-range
         subsets can be specified in a DAP4 constraint expression.
-
-        NOTE: When adding temporal subsetting, a condition will need to be
-        added, so the check is: if (spatial or temporal) and not variables
 
     """
     requested_variables = set(variable.fullPath
@@ -169,7 +172,10 @@ def get_requested_variables(varinfo: VarInfoFromDmr,
             varinfo.get_metadata_variables()
         )
 
-    return requested_variables
+    logger.info('Requested variables: '
+                f'{format_variable_set_string(requested_variables)}')
+
+    return varinfo.get_required_variables(requested_variables)
 
 
 def fill_variables(output_path: str, varinfo: VarInfoFromDmr,

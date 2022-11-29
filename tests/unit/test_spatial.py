@@ -2,11 +2,12 @@ from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, call, patch
 
-from pyproj import CRS
+from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
+from pyproj import CRS
 from varinfo import VarInfoFromDmr
 import numpy as np
 
@@ -40,7 +41,7 @@ class TestSpatial(TestCase):
             Albers Conic Equal Area projection, in the Alaska region.
 
         """
-        bounding_box = BBox(-160, 68, -145, 70)
+        harmony_message = Message({'subset': {'bbox': [-160, 68, -145, 70]}})
         above_varinfo = VarInfoFromDmr('tests/data/ABoVE_TVPRM_example.dmr',
                                        self.logger)
 
@@ -48,7 +49,7 @@ class TestSpatial(TestCase):
             get_spatial_index_ranges({'/NEE', '/x', '/y', '/time'},
                                      above_varinfo,
                                      'tests/data/ABoVE_TVPRM_prefetch.nc4',
-                                     bounding_box),
+                                     harmony_message),
             {'/x': (37, 56), '/y': (7, 26)}
         )
 
@@ -67,8 +68,12 @@ class TestSpatial(TestCase):
 
         """
         test_file_name = f'{self.test_dir}/test.nc'
-        bounding_box = BBox(160, 45, 200, 85)
-        bounding_box_floats = BBox(160.1, 44.9, 200.1, 84.9)
+        harmony_message_ints = Message({
+            'subset': {'bbox': [160, 45, 200, 85]}
+        })
+        harmony_message_floats = Message({
+            'subset': {'bbox': [160.1, 44.9, 200.1, 84.9]}
+        })
 
         with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
             test_file.createDimension('latitude', size=180)
@@ -91,7 +96,7 @@ class TestSpatial(TestCase):
             # Northern extent = 85 => index = 174 (max index so round down)
             self.assertDictEqual(
                 get_spatial_index_ranges({'/latitude'}, self.varinfo,
-                                         test_file_name, bounding_box),
+                                         test_file_name, harmony_message_ints),
                 {'/latitude': (135, 174)}
             )
 
@@ -103,7 +108,7 @@ class TestSpatial(TestCase):
             self.assertDictEqual(
                 get_spatial_index_ranges({'/latitude'}, self.varinfo,
                                          test_file_name,
-                                         bounding_box_floats),
+                                         harmony_message_floats),
                 {'/latitude': (134, 174)}
             )
 
@@ -114,7 +119,7 @@ class TestSpatial(TestCase):
             # Eastern extent = 200 => index = 199 (max index so round down)
             self.assertDictEqual(
                 get_spatial_index_ranges({'/longitude'}, self.varinfo,
-                                         test_file_name, bounding_box),
+                                         test_file_name, harmony_message_ints),
                 {'/longitude': (160, 199)}
             )
 
@@ -123,10 +128,13 @@ class TestSpatial(TestCase):
             # Western longitude = -20 => 340 => index = 340 (min index, so round up)
             # longitude[19] = 19.5, longitude[20] = 20.5:
             # Eastern longitude = 20 => index 19 (max index, so round down)
-            bbox_crossing = BBox(-20, 45, 20, 85)
+            harmony_message_crossing = Message({
+                'subset': {'bbox': [-20, 45, 20, 85]}
+            })
             self.assertDictEqual(
                 get_spatial_index_ranges({'/longitude'}, self.varinfo,
-                                         test_file_name, bbox_crossing),
+                                         test_file_name,
+                                         harmony_message_crossing),
                 {'/longitude': (340, 19)}
             )
 
@@ -152,7 +160,7 @@ class TestSpatial(TestCase):
             self.assertDictEqual(
                 get_spatial_index_ranges({'/latitude', '/longitude'},
                                          self.varinfo, test_file_name,
-                                         bounding_box_floats),
+                                         harmony_message_floats),
                 {'/latitude': (5, 45), '/longitude': (159, 199)}
             )
 
@@ -164,7 +172,7 @@ class TestSpatial(TestCase):
             self.assertDictEqual(
                 get_spatial_index_ranges({'/latitude', '/longitude'},
                                          self.varinfo, test_file_name,
-                                         bounding_box),
+                                         harmony_message_ints),
                 {'/latitude': (5, 44), '/longitude': (160, 199)}
             )
 
@@ -231,18 +239,15 @@ class TestSpatial(TestCase):
                 assert_array_equal(actual_y_values, above_prefetch['/y'][:])
 
                 self.assertEqual(mock_get_dimension_index_range.call_count, 2)
-                mock_get_dimension_index_range.assert_any_call(
-                    ANY, x_y_extents['x_min'], x_y_extents['x_max'],
-                    bounds_values=None
-                )
+                mock_get_dimension_index_range.assert_has_calls([
+                    call(ANY, x_y_extents['x_min'], x_y_extents['x_max'],
+                         bounds_values=None),
+                    call(ANY, x_y_extents['y_min'], x_y_extents['y_max'],
+                         bounds_values=None)
+                ])
                 assert_array_equal(
                     mock_get_dimension_index_range.call_args_list[0][0][0],
                     above_prefetch['/x'][:]
-                )
-
-                mock_get_dimension_index_range.assert_any_call(
-                    ANY, x_y_extents['y_min'], x_y_extents['y_max'],
-                    bounds_values=None
                 )
                 assert_array_equal(
                     mock_get_dimension_index_range.call_args_list[1][0][0],

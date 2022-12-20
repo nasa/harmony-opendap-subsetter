@@ -1,6 +1,6 @@
 {
   "Identification": "var_subsetter_config",
-  "Version": 16,
+  "Version": 17,
   "Collection_ShortName_Path": [
     "/HDF5_GLOBAL/short_name",
     "/NC_GLOBAL/short_name",
@@ -94,7 +94,7 @@
               "Value": "/EASE2_global_projection"
             }
           ],
-          "Description": "Nested variables omit leading slash for grid_mapping"
+          "_Description": "Nested variables omit leading slash for grid_mapping"
         }
       ]
     },
@@ -114,7 +114,7 @@
               "Value": "/EASE2_global_projection"
             }
           ],
-          "Description": "Nested variables omit leading slash for grid_mapping"
+          "_Description": "Nested variables omit leading slash for grid_mapping"
         }
       ]
     },
@@ -134,7 +134,7 @@
               "Value": "/EASE2_global_projection"
             }
           ],
-          "Description": "Nested variables omit leading slash for grid_mapping"
+          "_Description": "Nested variables omit leading slash for grid_mapping"
         }
       ]
     },
@@ -154,7 +154,7 @@
               "Value": "/EASE2_global_projection"
             }
           ],
-          "Description": "Nested variables omit leading slash for grid_mapping"
+          "_Description": "Nested variables omit leading slash for grid_mapping"
         }
       ]
     },
@@ -174,7 +174,7 @@
               "Value": "EASE2_Global"
             }
           ],
-          "Description": "Some versions of these collections omit global grid mapping information"
+          "_Description": "Some versions of these collections omit global grid mapping information"
         },
         {
           "Applicability": {
@@ -186,7 +186,7 @@
               "Value": "EASE2_Polar"
             }
           ],
-          "Description": "Some versions of these collections omit polar grid mapping information"
+          "_Description": "Some versions of these collections omit polar grid mapping information"
         }
       ]
     },
@@ -201,7 +201,7 @@
           "Value": "EASE2_Polar"
         }
       ],
-      "Description": "Some versions of these collections omit polar grid mapping information"
+      "_Description": "Some versions of these collections omit polar grid mapping information"
     },
     {
       "Applicability": {
@@ -215,7 +215,7 @@
           "Value": "-9999"
         }
       ],
-      "Description": "Ensure metadata fill value matches what is present in arrays."
+      "_Description": "Ensure metadata fill value matches what is present in arrays."
     },
     {
       "Applicability": {
@@ -229,7 +229,7 @@
           "Value": "/Soil_Moisture_Retrieval_Data_PM/latitude_pm, /Soil_Moisture_Retrieval_Data_PM/longitude_pm"
         }
       ],
-      "Description": "Ensure variables in /Soil_Moisture_Retrieval_Data_PM group point to correct coordinate variables."
+      "_Description": "Ensure variables in /Soil_Moisture_Retrieval_Data_PM group point to correct coordinate variables."
     },
     {
       "Applicability": {
@@ -243,7 +243,7 @@
           "Value": "/Soil_Moisture_Retrieval_Data_Polar_PM/latitude_pm, /Soil_Moisture_Retrieval_Data_Polar_PM/longitude_pm"
         }
       ],
-      "Description": "Ensure variables in /Soil_Moisture_Retrieval_Data_Polar_PM group point to correct coordinate variables."
+      "_Description": "Ensure variables in /Soil_Moisture_Retrieval_Data_Polar_PM group point to correct coordinate variables."
     },
     {
       "Applicability": {
@@ -257,7 +257,7 @@
           "Value": "./delta_time_beg, ./delta_time_end"
         }
       ],
-      "Description": "Include /delta_time_beg and /delta_time_end as ancillary variables."
+      "_Description": "Include /delta_time_beg and /delta_time_end as ancillary variables."
     },
     {
       "Applicability": {
@@ -281,7 +281,7 @@
           "Value": 179.6875
         }
       ],
-      "Description": "Overwrite valid range, to ensure MERRA-2 grid can be identified as -180 \u2264 longitude (degrees east) \u2264 180."
+      "_Description": "Overwrite valid range, to ensure MERRA-2 grid can be identified as -180 \u2264 longitude (degrees east) \u2264 180."
     },
     {
       "Applicability": {
@@ -305,7 +305,7 @@
           "Value": 90.0
         }
       ],
-      "Description": "Overwrite latitude valid range from being of order 1e14."
+      "_Description": "Overwrite latitude valid range from being of order 1e14."
     },
     {
       "Applicability": {
@@ -342,7 +342,7 @@
           "Value": "/crs"
         }
       ],
-      "Description": "Ensure the latitude and longitude dimension variables know their associated grid_mapping variable."
+      "_Description": "Ensure the latitude and longitude dimension variables know their associated grid_mapping variable."
     },
     {
       "Applicability": {
@@ -356,7 +356,7 @@
           "Value": "/albers_conical_equal_area"
         }
       ],
-      "Description": "Ensure the latitude and longitude dimension variables know their associated grid_mapping variable."
+      "_Description": "Ensure the latitude and longitude dimension variables know their associated grid_mapping variable."
     }
   ],
   "CF_Supplements": [
@@ -382,7 +382,7 @@
               "Value": "podppd_flag"
             }
           ],
-          "Description": "Ensure the podppd_flag variable is considered an ancillary variable."
+          "_Description": "Ensure the podppd_flag variable is considered an ancillary variable."
         },
         {
           "Applicability": {
@@ -399,7 +399,7 @@
               "Value": "coordinates"
             }
           ],
-          "Description": "Provide subset_control_variables for affected variables (DAS-682)."
+          "_Description": "Provide subset_control_variables for affected variables (DAS-682)."
         },
         {
           "Applicability": {
@@ -416,7 +416,7 @@
               "Value": "fwd_segment_index"
             }
           ],
-          "Description": "Provide subset_control_variables for affected variables."
+          "_Description": "Provide subset_control_variables for affected variables."
         },
         {
           "Applicability": {
@@ -429,7 +429,7 @@
               "Value": "segment_index_beg"
             }
           ],
-          "Description": "Provide subset_control_variables for affected variables."
+          "_Description": "Provide subset_control_variables for affected variables."
         },
         {
           "Applicability": {
@@ -442,7 +442,7 @@
               "Value": "segment_index_cnt"
             }
           ],
-          "Description": "Provide subset_control_variables for affected variables."
+          "_Description": "Provide subset_control_variables for affected variables."
         },
         {
           "Applicability": {
@@ -459,7 +459,7 @@
               "Value": "fwd_segment_index"
             }
           ],
-          "Description": "Provide subset_control_variables for affected variables."
+          "_Description": "Provide subset_control_variables for affected variables."
         },
         {
           "Applicability": {
@@ -472,7 +472,7 @@
               "Value": "segment_index_beg"
             }
           ],
-          "Description": "Provide subset_control_variables for affected variables."
+          "_Description": "Provide subset_control_variables for affected variables."
         },
         {
           "Applicability": {
@@ -485,7 +485,7 @@
               "Value": "segment_index_cnt"
             }
           ],
-          "Description": "Provide subset_control_variables for affected variables."
+          "_Description": "Provide subset_control_variables for affected variables."
         }
       ]
     },
@@ -523,7 +523,7 @@
               "Value": "/crs"
             }
           ],
-          "Description": "Include CRS variable as a coordinate for all ATL20 variables."
+          "_Description": "Include CRS variable as a coordinate for all ATL20 variables."
         }
       ]
     },
@@ -566,7 +566,7 @@
               "Value": "coordinates"
             }
           ],
-          "Description": "Reset spatial coordinates for subsetting purposes."
+          "_Description": "Reset spatial coordinates for subsetting purposes."
         },
         {
           "Applicability": {
@@ -583,7 +583,7 @@
               "Value": "coordinates"
             }
           ],
-          "Description": "Reset spatial coordinates for subsetting purposes."
+          "_Description": "Reset spatial coordinates for subsetting purposes."
         },
         {
           "Applicability": {
@@ -600,7 +600,7 @@
               "Value": "coordinates"
             }
           ],
-          "Description": "Reset spatial coordinates for subsetting purposes."
+          "_Description": "Reset spatial coordinates for subsetting purposes."
         },
         {
           "Applicability": {
@@ -617,7 +617,7 @@
               "Value": "fwd_segment_index"
             }
           ],
-          "Description": "Provide index segment subset-control designation for variables."
+          "_Description": "Provide index segment subset-control designation for variables."
         },
         {
           "Applicability": {
@@ -630,7 +630,7 @@
               "Value": "segment_index_beg"
             }
           ],
-          "Description": "Provide segment beginning index information for variables."
+          "_Description": "Provide segment beginning index information for variables."
         },
         {
           "Applicability": {
@@ -643,7 +643,7 @@
               "Value": "segment_index_cnt"
             }
           ],
-          "Description": "Provide segment size information for variables."
+          "_Description": "Provide segment size information for variables."
         },
         {
           "Applicability": {
@@ -656,7 +656,7 @@
               "Value": "fwd_segment_index"
             }
           ],
-          "Description": "Provide index segment subset-control designation for variables."
+          "_Description": "Provide index segment subset-control designation for variables."
         },
         {
           "Applicability": {
@@ -669,7 +669,7 @@
               "Value": "segment_index_beg"
             }
           ],
-          "Description": "Provide segment beginning index information for variables."
+          "_Description": "Provide segment beginning index information for variables."
         },
         {
           "Applicability": {
@@ -682,7 +682,7 @@
               "Value": "segment_index_cnt"
             }
           ],
-          "Description": "Provide segment size information for variables."
+          "_Description": "Provide segment size information for variables."
         },
         {
           "Applicability": {
@@ -699,7 +699,7 @@
               "Value": "fwd_segment_index"
             }
           ],
-          "Description": "Provide index segment subset-control designation for variables."
+          "_Description": "Provide index segment subset-control designation for variables."
         },
         {
           "Applicability": {
@@ -712,7 +712,7 @@
               "Value": "segment_index_beg"
             }
           ],
-          "Description": "Provide segment beginning index information for variables."
+          "_Description": "Provide segment beginning index information for variables."
         },
         {
           "Applicability": {
@@ -725,7 +725,7 @@
               "Value": "segment_index_cnt"
             }
           ],
-          "Description": "Provide segment size information for variables."
+          "_Description": "Provide segment size information for variables."
         }
       ]
     }

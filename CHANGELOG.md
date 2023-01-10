@@ -1,3 +1,9 @@
+## v0.3.5
+### 2023-01-09
+
+This version of HOSS updates the `sds-varinfo` configuration file to ensure it
+adheres to the v0.0.1 JSON schema document.
+
 ## v0.3.4
 ### 2022-11-23
 

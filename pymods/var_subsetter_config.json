@@ -1,6 +1,6 @@
 {
   "Identification": "var_subsetter_config",
-  "Version": 17,
+  "Version": 18,
   "Collection_ShortName_Path": [
     "/HDF5_GLOBAL/short_name",
     "/NC_GLOBAL/short_name",
@@ -588,12 +588,12 @@
         {
           "Applicability": {
             "ShortNamePath": "GEDI_L2A|GEDI02_A",
-            "Variables": "/BEAM[\\d]+/geolocation/"
+            "Variable_Pattern": "/BEAM[\\d]+/geolocation/"
           },
           "Attributes": [
             {
               "Name": "subset_control_variables",
-              "Value'": "lat_lowestmode, lon_lowest_mode, delta_time"
+              "Value": "lat_lowestmode, lon_lowest_mode, delta_time"
             },
             {
               "Name": "subset_control_type",
@@ -605,7 +605,7 @@
         {
           "Applicability": {
             "ShortNamePath": "GEDI_L1[AB]|GEDI01_[AB]",
-            "Variables": "/BEAM[\\\\d]+/rxwaveform"
+            "Variable_Pattern": "/BEAM[\\\\d]+/rxwaveform"
           },
           "Attributes": [
             {
@@ -622,7 +622,7 @@
         {
           "Applicability": {
             "ShortNamePath": "GEDI_L1[AB]|GEDI01_[AB]",
-            "Variables": "/BEAM[\\\\d]+/rx_sample_start_index"
+            "Variable_Pattern": "/BEAM[\\\\d]+/rx_sample_start_index"
           },
           "Attributes": [
             {
@@ -648,7 +648,7 @@
         {
           "Applicability": {
             "ShortNamePath": "GEDI_L1[AB]|GEDI01_[AB]",
-            "Variables": "/BEAM[\\\\d]+/txwaveform"
+            "Variable_Pattern": "/BEAM[\\\\d]+/txwaveform"
           },
           "Attributes": [
             {
@@ -661,7 +661,7 @@
         {
           "Applicability": {
             "ShortNamePath": "GEDI_L1[AB]|GEDI01_[AB]",
-            "Variables": "/BEAM[\\\\d]+/tx_sample_start_index"
+            "Variable_Pattern": "/BEAM[\\\\d]+/tx_sample_start_index"
           },
           "Attributes": [
             {
@@ -687,7 +687,7 @@
         {
           "Applicability": {
             "ShortNamePath": "GEDI_L2B|GEDI02_B",
-            "Variables": "/BEAM[\\\\d]+/pgap_theta_z"
+            "Variable_Pattern": "/BEAM[\\\\d]+/pgap_theta_z"
           },
           "Attributes": [
             {
@@ -704,7 +704,7 @@
         {
           "Applicability": {
             "ShortNamePath": "GEDI_L2B|GEDI02_B",
-            "Variables": "/BEAM[\\\\d]+/rx_sample_start_index"
+            "Variable_Pattern": "/BEAM[\\\\d]+/rx_sample_start_index"
           },
           "Attributes": [
             {

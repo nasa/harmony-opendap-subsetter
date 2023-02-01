@@ -17,11 +17,8 @@ image="sds/variable-subsetter"
 tag=${1:-latest}
 
 
-# Look for old version of image and remove
-old=$(docker images | grep "$image" | grep "$tag" | awk '{print $3}')
-if [ ! -z "$old" ]; then
-    docker rmi "$old"
-fi
+# Remove old versions of sds/variable-subsetter and sds/variable-subsetter-test
+bin/clean-images
 
 # Build the image
 # This command tags the image with two tags:

@@ -4,13 +4,23 @@
 # Look for all versions of images containing the string "sds/variable-subsetter"
 # and remove them. This is primarily for clean-up after development.
 #
-# Adapted from SwotRepr: 2020-05-07
+# 2020-05-07: Adapted from SwotRepr.
+# 2023-01-27: Updated to fix image deletion for both test and service images.
 #
 ###############################################################################
+remove_image_by_name() {
+    echo "Removing images for: $1"
+    matching_images=$(docker images --filter reference="$1" --format="{{.ID}}")
+
+    if [ ! -z "${matching_images}" ]; then
+        docker rmi "${matching_images}"
+    fi
+}
 
 image_base_name="sds/variable-subsetter"
 
-old=$(docker images | grep "${image_base_name}" | awk '{print $3}')
-if [ ! -z "$old" ]; then
-    docker rmi "$old"
-fi
+# First remove test images:
+remove_image_by_name "${image_base_name}-test"
+
+# Next remove service images:
+remove_image_by_name "${image_base_name}"

@@ -1,3 +1,12 @@
+## v0.3.6
+### 2023-05-10
+
+This version of HOSS updates the services requirements to use
+`earthdata-varinfo~=1.0.0`, which is the open-source equivalent of
+`sds-varinfo~=4.1.1`. This version of the Python package includes better
+parsing of `grid_mapping` metadata attributes, which affects collections
+including ATL16.
+
 ## v0.3.5
 ### 2023-01-09
 

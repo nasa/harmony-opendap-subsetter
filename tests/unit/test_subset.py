@@ -36,8 +36,7 @@ class TestSubset(TestCase):
                            'name': '/rainfall_rate',
                            'fullPath': '/rainfall_rate'}]
         })
-        cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
-                                     logger=cls.logger)
+        cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr')
 
     def setUp(self):
         """ Define test assets that should not be shared between tests. """
@@ -344,8 +343,7 @@ class TestSubset(TestCase):
         harmony_message = Message({'accessToken': self.access_token,
                                    'subset': {'bbox': self.bounding_box}})
         url = 'https://harmony.earthdata.nasa.gov/bucket/GPM'
-        varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
-                                 logger=self.logger)
+        varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr')
         expected_variables = {
             '/Grid/HQobservationTime', '/Grid/HQprecipitation',
             '/Grid/HQprecipSource', '/Grid/IRkalmanFilterWeight',
@@ -449,8 +447,7 @@ class TestSubset(TestCase):
         harmony_message = Message({'accessToken': self.access_token,
                                    'subset': {'bbox': self.bounding_box}})
         url = 'https://harmony.earthdata.nasa.gov/bucket/GPM'
-        varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
-                                 logger=self.logger)
+        varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr')
 
         expected_variables = {'/Grid/lon', '/Grid/lon_bnds'}
 
@@ -530,7 +527,6 @@ class TestSubset(TestCase):
                          'end': '2021-01-10T03:00:00'}
         })
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
-                                 logger=self.logger,
                                  config_file='pymods/var_subsetter_config.json')
 
         expected_variables = {'/PS', '/lat', '/lon', '/time'}
@@ -612,7 +608,6 @@ class TestSubset(TestCase):
                          'end': '2021-01-10T03:00:00'}
         })
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
-                                 logger=self.logger,
                                  config_file='pymods/var_subsetter_config.json')
 
         expected_variables = {'/PS', '/lat', '/lon', '/time'}
@@ -941,12 +936,7 @@ class TestSubset(TestCase):
                               self.config)
 
         self.assertIsInstance(varinfo, VarInfoFromDmr)
-
-        all_variables = set(varinfo.metadata_variables.keys()).union(
-            varinfo.variables_with_coordinates.keys()
-        )
-
-        self.assertSetEqual(all_variables,
+        self.assertSetEqual(set(varinfo.variables.keys()),
                             {'/atmosphere_cloud_liquid_water_content',
                              '/atmosphere_water_vapor_content', '/latitude',
                              '/longitude', '/rainfall_rate', '/sst_dtime',
@@ -1031,9 +1021,10 @@ class TestSubset(TestCase):
             themselves be filled.
 
         """
-        varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
-                                 self.logger,
-                                 'tests/data/test_subsetter_config.json')
+        varinfo = VarInfoFromDmr(
+            'tests/data/rssmif16d_example.dmr',
+            config_file='tests/data/test_subsetter_config.json'
+        )
         input_file = 'tests/data/f16_ssmis_20200102v7.nc'
         test_file = shutil.copy(input_file, self.output_dir)
         index_ranges = {'/latitude': [0, 719], '/longitude': [1400, 10]}

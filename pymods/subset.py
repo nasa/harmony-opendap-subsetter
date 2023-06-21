@@ -143,7 +143,7 @@ def get_varinfo(opendap_url: str, output_dir: str, logger: Logger,
     """
     dmr_path = download_url(f'{opendap_url}.dmr.xml', output_dir, logger,
                             access_token=access_token, config=config)
-    return VarInfoFromDmr(dmr_path, logger, short_name=collection_short_name,
+    return VarInfoFromDmr(dmr_path, short_name=collection_short_name,
                           config_file='pymods/var_subsetter_config.json')
 
 

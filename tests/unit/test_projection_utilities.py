@@ -4,7 +4,6 @@
     collections that have projected grids.
 
 """
-from logging import getLogger
 from os.path import join as path_join
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -42,8 +41,6 @@ class TestProjectionUtilities(TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.logger = getLogger('tests')
-
         # Set up GeoJSON fixtures (both as raw GeoJSON and parsed shapely objects)
         cls.geometry_coll_geojson = cls.read_geojson('geometrycollection.geo.json')
         cls.geometry_coll = shape(cls.geometry_coll_geojson['features'][0]['geometry'])
@@ -144,7 +141,7 @@ class TestProjectionUtilities(TestCase):
         with open(dmr_path, 'w', encoding='utf-8') as file_handler:
             file_handler.write(sample_dmr)
 
-        varinfo = VarInfoFromDmr(dmr_path, self.logger)
+        varinfo = VarInfoFromDmr(dmr_path)
 
         expected_crs = CRS.from_cf({
             'false_easting': 0.0,
@@ -304,7 +301,7 @@ class TestProjectionUtilities(TestCase):
         with open(dmr_path, 'w', encoding='utf-8') as file_handler:
             file_handler.write(sample_dmr)
 
-        varinfo = VarInfoFromDmr(dmr_path, self.logger)
+        varinfo = VarInfoFromDmr(dmr_path)
         expected_x = '/x'
         expected_y = '/y'
 
@@ -367,7 +364,7 @@ class TestProjectionUtilities(TestCase):
         with open(dmr_path, 'w', encoding='utf-8') as file_handler:
             file_handler.write(sample_dmr)
 
-        varinfo = VarInfoFromDmr(dmr_path, self.logger)
+        varinfo = VarInfoFromDmr(dmr_path)
 
         with self.subTest('x-dimension returns True'):
             self.assertTrue(is_projection_x_dimension(varinfo, '/x'))
@@ -409,7 +406,7 @@ class TestProjectionUtilities(TestCase):
         with open(dmr_path, 'w', encoding='utf-8') as file_handler:
             file_handler.write(sample_dmr)
 
-        varinfo = VarInfoFromDmr(dmr_path, self.logger)
+        varinfo = VarInfoFromDmr(dmr_path)
 
         with self.subTest('y-dimension returns True'):
             self.assertTrue(is_projection_y_dimension(varinfo, '/y'))

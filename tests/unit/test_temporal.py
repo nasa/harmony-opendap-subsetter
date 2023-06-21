@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
@@ -21,10 +20,10 @@ class TestTemporal(TestCase):
     """ A class for testing functions in the pymods.spatial module. """
     @classmethod
     def setUpClass(cls):
-        cls.logger = getLogger('tests')
-        cls.varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
-                                     cls.logger,
-                                     'tests/data/test_subsetter_config.json')
+        cls.varinfo = VarInfoFromDmr(
+            'tests/data/M2T1NXSLV_example.dmr',
+            config_file='tests/data/test_subsetter_config.json'
+        )
         cls.test_dir = 'tests/output'
 
     def setUp(self):
@@ -68,8 +67,7 @@ class TestTemporal(TestCase):
 
         """
         mock_get_dimension_index_range.return_value = (1, 2)
-        gpm_varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
-                                     self.logger)
+        gpm_varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr')
         gpm_prefetch_path = 'tests/data/GPM_3IMERGHH_prefetch.nc4'
 
         harmony_message = Message({

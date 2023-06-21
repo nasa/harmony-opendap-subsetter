@@ -1,4 +1,3 @@
-from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
@@ -23,10 +22,10 @@ class TestSpatial(TestCase):
     """ A class for testing functions in the pymods.spatial module. """
     @classmethod
     def setUpClass(cls):
-        cls.logger = getLogger('tests')
-        cls.varinfo = VarInfoFromDmr('tests/data/rssmif16d_example.dmr',
-                                     cls.logger,
-                                     'tests/data/test_subsetter_config.json')
+        cls.varinfo = VarInfoFromDmr(
+            'tests/data/rssmif16d_example.dmr',
+            config_file='tests/data/test_subsetter_config.json'
+        )
         cls.test_dir = 'tests/output'
 
     def setUp(self):
@@ -42,8 +41,7 @@ class TestSpatial(TestCase):
 
         """
         harmony_message = Message({'subset': {'bbox': [-160, 68, -145, 70]}})
-        above_varinfo = VarInfoFromDmr('tests/data/ABoVE_TVPRM_example.dmr',
-                                       self.logger)
+        above_varinfo = VarInfoFromDmr('tests/data/ABoVE_TVPRM_example.dmr')
 
         self.assertDictEqual(
             get_spatial_index_ranges({'/NEE', '/x', '/y', '/time'},
@@ -189,9 +187,7 @@ class TestSpatial(TestCase):
             with data in Alaska.
 
         """
-        above_varinfo = VarInfoFromDmr(
-            'tests/data/ABoVE_TVPRM_example.dmr', self.logger
-        )
+        above_varinfo = VarInfoFromDmr('tests/data/ABoVE_TVPRM_example.dmr')
         above_file_path = 'tests/data/ABoVE_TVPRM_prefetch.nc4'
         expected_index_ranges = {'/x': (37, 56), '/y': (7, 26)}
         bbox = BBox(-160, 68, -145, 70)
@@ -341,7 +337,7 @@ class TestSpatial(TestCase):
 
         """
         gpm_varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr',
-                                     self.logger, short_name='GPM_3IMERGHH')
+                                     short_name='GPM_3IMERGHH')
         bounding_box = BBox(10, 20, 30, 40)
         mock_get_dimension_index_range.return_value = (1, 2)
 

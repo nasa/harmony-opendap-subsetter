@@ -11,7 +11,10 @@
 # into the Docker image, before environment variables are set to activate the
 # created conda environment.
 #
-# Updated: 2021-06-24
+# 2020-05-07: Initial version inspired by Swath Projector.
+# 2021-05-17: Copy Pip requirements file after conda environment creation.
+# 2022-02-07: Updated conda environment to Python 3.8.
+# 2023-10-02: Updated conda environment to Python 3.11.
 #
 FROM continuumio/miniconda3
 
@@ -21,7 +24,7 @@ WORKDIR "/home"
 COPY ./conda_requirements.txt conda_requirements.txt
 
 # Create Conda environment
-RUN conda create -y --name subsetter --file conda_requirements.txt python=3.8 -q \
+RUN conda create -y --name subsetter --file conda_requirements.txt python=3.11 -q \
 	--channel conda-forge \
 	--channel defaults
 

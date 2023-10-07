@@ -1,15 +1,16 @@
 #!/bin/bash
 ###############################################################################
 #
-# Build a Docker container to run the test suite for the variable subsetting
-# service.
+# Build a Docker container to run the test suite for the Harmony OPeNDAP
+# Subsetter (HOSS).
 #
 # 2020-05-07: Adapted from SwotRepr.
 # 2022-01-03: Updated Dockerfile path.
+# 2023-10-06: Updated image name to: ghcr.io/nasa/harmony-opendap-subsetter-test.
 #
 ###############################################################################
 
-image="sds/variable-subsetter-test"
+image="ghcr.io/nasa/harmony-opendap-subsetter-test"
 tag=${1:-latest}
 
 

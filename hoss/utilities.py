@@ -15,7 +15,7 @@ import mimetypes
 from harmony.exceptions import ForbiddenException, ServerException
 from harmony.util import Config, download as util_download
 
-from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
+from hoss.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
 
 
 HTTP_REQUEST_ATTEMPTS = 3

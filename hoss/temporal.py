@@ -1,10 +1,9 @@
 """ This module includes functions that support temporal subsets.
-    Currently, this includes only geographically gridded data.
 
     Using prefetched dimension variables, in full, from the OPeNDAP
     server, and the index ranges that correspond to the regions of these
     variables within the specified temporal range are identified. These index
-    ranges are then returned to the `pymods.subset.subset_granule` function to
+    ranges are then returned to the `hoss.subset.subset_granule` function to
     be combined with any other index ranges (e.g., spatial).
 
 """
@@ -16,9 +15,9 @@ from harmony.message import Message
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 
-from pymods.dimension_utilities import (get_dimension_bounds,
-                                        get_dimension_index_range, IndexRanges)
-from pymods.exceptions import UnsupportedTemporalUnits
+from hoss.dimension_utilities import (get_dimension_bounds,
+                                      get_dimension_index_range, IndexRanges)
+from hoss.exceptions import UnsupportedTemporalUnits
 
 
 units_day = {'day', 'days', 'd'}

@@ -4,7 +4,7 @@
     Using prefetched dimension variables, in full, from the OPeNDAP
     server, and the index ranges that correspond to the regions of these
     variables within the specified bounding box are identified. These index
-    ranges are then returned to the `pymods.subset.subset_granule` function to
+    ranges are then returned to the `hoss.subset.subset_granule` function to
     be combined with any other index ranges (e.g., temporal).
 
     If the bounding box crosses the longitudinal edge of the grid for a
@@ -28,15 +28,15 @@ from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 from varinfo import VarInfoFromDmr
 
-from pymods.bbox_utilities import (BBox, get_harmony_message_bbox,
-                                   get_shape_file_geojson, get_geographic_bbox)
-from pymods.dimension_utilities import (get_dimension_bounds,
-                                        get_dimension_extents,
-                                        get_dimension_index_range, IndexRange,
-                                        IndexRanges)
-from pymods.projection_utilities import (get_projected_x_y_extents,
-                                         get_projected_x_y_variables,
-                                         get_variable_crs)
+from hoss.bbox_utilities import (BBox, get_harmony_message_bbox,
+                                 get_shape_file_geojson, get_geographic_bbox)
+from hoss.dimension_utilities import (get_dimension_bounds,
+                                      get_dimension_extents,
+                                      get_dimension_index_range, IndexRange,
+                                      IndexRanges)
+from hoss.projection_utilities import (get_projected_x_y_extents,
+                                       get_projected_x_y_variables,
+                                       get_variable_crs)
 
 
 def get_spatial_index_ranges(required_variables: Set[str],

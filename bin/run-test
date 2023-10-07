@@ -1,11 +1,12 @@
 #!/bin/bash
 ###############################################################################
 #
-# Execute the sds/variable-subsetter-test Docker image as a container,  within
-# Bamboo.
+# Execute the ghcr.io/nasa/harmony-opendap-subsetter-test Docker image as a
+# container. This is designed for use within a GitHub workflow.
 #
-# Adapted from SwotRepr: 2020-05-07
-# Updated for JUnit output: 2021-01-25
+# 2020-05-07: Adapted from SwotRepr
+# 2021-01-25: Updated for JUnit output.
+# 2023-10-06: Updated to new open-source Docker image name.
 #
 ###############################################################################
 
@@ -25,4 +26,4 @@ mkdir -p coverage
 docker run --rm \
 	-v $(pwd)/test-reports:/home/tests/reports \
 	-v $(pwd)/coverage:/home/tests/coverage \
-	sds/variable-subsetter-test "$@"
+	ghcr.io/nasa/harmony-opendap-subsetter-test "$@"

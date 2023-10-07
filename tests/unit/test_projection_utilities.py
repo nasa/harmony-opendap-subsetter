@@ -1,5 +1,5 @@
 """ This module tests the functions included in the
-    `pymods/projection_utilities.py` module. Those functions focus on using the
+    `hoss/projection_utilities.py` module. Those functions focus on using the
     spatial constraint information from an input Harmony message with
     collections that have projected grids.
 
@@ -16,26 +16,26 @@ from shapely.geometry import Polygon, shape
 from varinfo import VarInfoFromDmr
 import numpy as np
 
-from pymods.bbox_utilities import BBox
-from pymods.exceptions import (InvalidInputGeoJSON, MissingGridMappingMetadata,
+from hoss.bbox_utilities import BBox
+from hoss.exceptions import (InvalidInputGeoJSON, MissingGridMappingMetadata,
                                MissingGridMappingVariable,
                                MissingSpatialSubsetInformation)
-from pymods.projection_utilities import (get_bbox_polygon, get_grid_lat_lons,
-                                         get_geographic_resolution,
-                                         get_projected_x_y_extents,
-                                         get_projected_x_y_variables,
-                                         get_resolved_feature,
-                                         get_resolved_features,
-                                         get_resolved_geojson,
-                                         get_resolved_geometry,
-                                         get_resolved_line, get_variable_crs,
-                                         get_x_y_extents_from_geographic_points,
-                                         is_projection_x_dimension,
-                                         is_projection_y_dimension)
+from hoss.projection_utilities import (get_bbox_polygon, get_grid_lat_lons,
+                                       get_geographic_resolution,
+                                       get_projected_x_y_extents,
+                                       get_projected_x_y_variables,
+                                       get_resolved_feature,
+                                       get_resolved_features,
+                                       get_resolved_geojson,
+                                       get_resolved_geometry,
+                                       get_resolved_line, get_variable_crs,
+                                       get_x_y_extents_from_geographic_points,
+                                       is_projection_x_dimension,
+                                       is_projection_y_dimension)
 
 
 class TestProjectionUtilities(TestCase):
-    """ A class for testing functions in the `pymods.projection_utilities`
+    """ A class for testing functions in the `hoss.projection_utilities`
         module.
 
     """
@@ -451,9 +451,9 @@ class TestProjectionUtilities(TestCase):
         self.assertAlmostEqual(get_geographic_resolution(longitudes, latitudes),
                                expected_resolution, places=3)
 
-    @patch('pymods.projection_utilities.get_bbox_polygon')
-    @patch('pymods.projection_utilities.get_resolved_feature')
-    @patch('pymods.projection_utilities.get_resolved_features')
+    @patch('hoss.projection_utilities.get_bbox_polygon')
+    @patch('hoss.projection_utilities.get_resolved_feature')
+    @patch('hoss.projection_utilities.get_resolved_features')
     def test_get_resolved_geojson(self, mock_get_resolved_features,
                                   mock_get_resolved_feature,
                                   mock_get_bbox_polygon):
@@ -535,7 +535,7 @@ class TestProjectionUtilities(TestCase):
         self.assertEqual(bounding_box_result, expected_bounding_box_polygon)
         self.assertListEqual(list(bounding_box_result.interiors), [])
 
-    @patch('pymods.projection_utilities.get_resolved_feature')
+    @patch('hoss.projection_utilities.get_resolved_feature')
     def test_get_resolved_features(self, mock_get_resolved_feature):
         """ Ensure that the parsed GeoJSON content can be correctly sent to
             `get_resolved_feature`, depending on if the content is a GeoJSON
@@ -602,7 +602,7 @@ class TestProjectionUtilities(TestCase):
             with self.assertRaises(InvalidInputGeoJSON):
                 get_resolved_features({'random': 'json'}, resolution)
 
-    @patch('pymods.projection_utilities.get_resolved_geometry')
+    @patch('hoss.projection_utilities.get_resolved_geometry')
     def test_get_resolved_feature(self, mock_get_resolved_geometry):
         """ Ensure that GeoJSON features with various geometry types are
             correctly handled to produce a list of points at the specified

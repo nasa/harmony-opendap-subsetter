@@ -1,58 +1,46 @@
-""" Data Services variable subsetter service for Harmony.
+""" Harmony OPeNDAP SubSetter (HOSS).
 
-This service will take an input file
+    This service uses the `HarmonyBaseAdapter.process_item` method to subset a
+    single image at a time. Requests for multiple granules will invoke the
+    service once per image, performing the subset on each granule in separate
+    calls to HOSS.
 
-Message schema:
+    An invocation of HOSS provides several sources of information:
 
-{
-    "sources": [
-        {
-            "variables": [
-                {
-                    "fullPath": "/path/to/science_variable",
-                    "id": "V0001-EXAMPLE",
-                    "name": "science_variable"
-                },
-            ],
-            "granules": [
-                {
-                    "url": "/home/tests/data/africa.nc"
-                }
-            ]
-        }
-    ],
-    "callback": "URL for callback",
-    "isSynchronous": true,
-    "user": "urs_username"
-}
-
-"isSynchronous" can be set to either true or false, or omitted, in which case
-the service will behave synchronously.
+    * `pystac.Item` - direct input to the `process_item` method. This contains
+      `pystac.Asset` objects for the specific granule being processed.
+    * `harmony.message.Source` - direct input to the `process_item` method.
+      This contains information on the collection to which the granule being
+      processed belongs.
+    * `harmony.message.Message` - input when instantiating the `HossAdapter`.
+      This contains the subset request information, such as bounding box,
+      GeoJSON shape file path, temporal range or variables list where needed.
+    * `harmony.util.Config` - input when instantiating the `HossAdapter`. This
+      `namedtuple` contains necessary configuration information, such as OAUTH
+      information for the Harmony EDL application being used, and AWS staging
+      location information.
+    * `pystac.Catalog` - input when instantiating the `HossAdapter`. This
+      contains all requested granules, and is iterated through with individual
+      calls to `process_item` for each granule.
 
 """
-from argparse import ArgumentParser
 import shutil
 from tempfile import mkdtemp
 from pystac import Asset, Item
 
-import harmony
+from harmony import BaseHarmonyAdapter
 from harmony.message import Source
-from harmony.util import generate_output_filename, HarmonyException
+from harmony.util import generate_output_filename, HarmonyException, stage
 
-from pymods.dimension_utilities import is_index_subset
-from pymods.subset import subset_granule
-from pymods.utilities import get_file_mimetype
+from hoss.dimension_utilities import is_index_subset
+from hoss.subset import subset_granule
+from hoss.utilities import get_file_mimetype
 
 
-class HarmonyAdapter(harmony.BaseHarmonyAdapter):
+class HossAdapter(BaseHarmonyAdapter):
     """ This class extends the BaseHarmonyAdapter class, to implement the
-        `invoke` method, which performs variable subsetting.
-
-        Note: Harmony currently only supports multiple files for asynchronous
-        requests. For synchronous requests this service will only handle the
-        first granule in the message. If the Harmony message doesn't specify
-        "isSynchronous", the default behaviour is to assume the request is
-        synchronous.
+        `invoke` method, which performs variable, spatial and temporal
+        subsetting via requests to OPeNDAP.
 
     """
     def invoke(self):
@@ -114,11 +102,11 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
                 is_subsetted=(is_index_subset(self.message)
                               or len(source.variables) > 0)
             )
-            url = harmony.util.stage(output_file_path,
-                                     staged_filename,
-                                     mime,
-                                     location=self.message.stagingLocation,
-                                     logger=self.logger)
+            url = stage(output_file_path,
+                        staged_filename,
+                        mime,
+                        location=self.message.stagingLocation,
+                        logger=self.logger)
 
             # Update the STAC record
             result.assets['data'] = Asset(url,
@@ -130,7 +118,9 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             return result
         except Exception as exception:
             self.logger.exception(exception)
-            raise HarmonyException('Subsetter failed with error: ' + str(exception)) from exception
+            raise HarmonyException(
+                'Subsetter failed with error: ' + str(exception)
+            ) from exception
         finally:
             # Clean up any intermediate resources
             shutil.rmtree(workdir)
@@ -141,7 +131,7 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
 
         """
         if not hasattr(self, 'message'):
-            raise Exception('No message request')
+            raise HarmonyException('No message request')
 
         if self.message.isSynchronous is None:
             # Set default behaviour to synchronous
@@ -160,21 +150,10 @@ class HarmonyAdapter(harmony.BaseHarmonyAdapter):
             has_items = False
 
         if not has_granules and not has_items:
-            raise Exception('No granules specified for variable subsetting')
+            raise HarmonyException(
+                'No granules specified for variable subsetting'
+            )
 
         for source in self.message.sources:
             if not hasattr(source, 'variables') or not source.variables:
                 self.logger.info('All variables will be retrieved.')
-
-
-if __name__ == '__main__':
-    # Enable this command to be run locally within a conda environment
-    # containing all the requisite packages specified in both the
-    # conda_requirements.txt and pip_requirements.txt files.
-    PARSER = ArgumentParser(
-        prog='Variable Subsetting',
-        description='Run the Data Services variable subsetting Tool'
-    )
-    harmony.setup_cli(PARSER)
-    ARGS, _ = PARSER.parse_known_args()
-    harmony.run_cli(PARSER, ARGS, HarmonyAdapter)

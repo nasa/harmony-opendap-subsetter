@@ -10,14 +10,14 @@ from numpy.testing import assert_array_equal
 import numpy as np
 from varinfo import VarInfoFromDmr
 
-from pymods.exceptions import UnsupportedTemporalUnits
-from pymods.temporal import (get_datetime_with_timezone,
-                             get_temporal_index_ranges,
-                             get_time_ref)
+from hoss.exceptions import UnsupportedTemporalUnits
+from hoss.temporal import (get_datetime_with_timezone,
+                           get_temporal_index_ranges,
+                           get_time_ref)
 
 
 class TestTemporal(TestCase):
-    """ A class for testing functions in the pymods.spatial module. """
+    """ A class for testing functions in the hoss.spatial module. """
     @classmethod
     def setUpClass(cls):
         cls.varinfo = VarInfoFromDmr(
@@ -55,7 +55,7 @@ class TestTemporal(TestCase):
                 {'/time': (1, 5)}
             )
 
-    @patch('pymods.temporal.get_dimension_index_range')
+    @patch('hoss.temporal.get_dimension_index_range')
     def test_get_temporal_index_ranges_bounds(self,
                                               mock_get_dimension_index_range):
         """ Ensure that bounds are correctly extracted and used as an argument

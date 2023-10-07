@@ -20,10 +20,10 @@ from harmony.message import Message
 from harmony.util import Config
 from varinfo import VarInfoFromDmr
 
-from pymods.bbox_utilities import flatten_list
-from pymods.exceptions import InvalidNamedDimension, InvalidRequestedRange
-from pymods.utilities import (format_variable_set_string, get_opendap_nc4,
-                              get_value_or_default, rgetattr)
+from hoss.bbox_utilities import flatten_list
+from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
+from hoss.utilities import (format_variable_set_string, get_opendap_nc4,
+                            get_value_or_default, rgetattr)
 
 
 IndexRange = Tuple[int]
@@ -236,7 +236,7 @@ def add_index_range(variable_name: str, varinfo: VarInfoFromDmr,
         If there are no dimensions with listed index ranges, then the full
         variable should be requested, and no index notation is required.
         A variable with a bounding box crossing the edge of the grid (e.g., at
-        the Antimeridian or Prime Meridian) will have a minimum index greater
+        the antimeridian or Prime Meridian) will have a minimum index greater
         than the maximum index. In this case the full dimension range should be
         requested, as the related values will be masked before returning the
         output to the user.

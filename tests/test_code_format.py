@@ -18,10 +18,10 @@ class TestCodeFormat(TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.python_files = Path('pymods').rglob('*.py')
+        cls.python_files = Path('hoss').rglob('*.py')
 
     def test_pycodestyle_adherence(self):
-        """ Ensure all code in the `pymods` directory adheres to PEP8
+        """ Ensure all code in the `hoss` directory adheres to PEP8
             defined standard.
 
         """

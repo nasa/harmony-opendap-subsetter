@@ -1,11 +1,13 @@
 #!/bin/bash
 ###############################################################################
 #
-# Look for all versions of images containing the string "sds/variable-subsetter"
-# and remove them. This is primarily for clean-up after development.
+# Look for all versions of images containing the string
+# "ghcr.io/nasa/harmony-opendap-subsetter" and remove them. This is primarily
+# for clean-up after development.
 #
 # 2020-05-07: Adapted from SwotRepr.
 # 2023-01-27: Updated to fix image deletion for both test and service images.
+# 2023-10-06: Update to new, GitHub-related image names.
 #
 ###############################################################################
 remove_image_by_name() {
@@ -17,7 +19,7 @@ remove_image_by_name() {
     fi
 }
 
-image_base_name="sds/variable-subsetter"
+image_base_name="ghcr.io/nasa/harmony-opendap-subsetter"
 
 # First remove test images:
 remove_image_by_name "${image_base_name}-test"

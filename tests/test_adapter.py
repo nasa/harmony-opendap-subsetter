@@ -1,5 +1,5 @@
 """ These end-to-end tests simulate a full invocation of the Harmony
-    service, instantiating a HarmonyAdapter using a message and STAC.
+    service, instantiating a HossAdapter using a message and STAC.
     Each test mocks calls to OPeNDAP, and has an extensive set of
     assertions to ensure the output is as expected, and the expected
     requests were made to OPeNDAP.
@@ -17,11 +17,11 @@ from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
 from pystac import Catalog
 
-from subsetter import HarmonyAdapter
+from hoss.adapter import HossAdapter
 from tests.utilities import create_stac, Granule, write_dmr
 
 
-class TestSubsetterEndToEnd(TestCase):
+class TestHossEndToEnd(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -90,15 +90,15 @@ class TestSubsetterEndToEnd(TestCase):
              'roles': ['data']}
         )
 
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_non_spatial_end_to_end(self, mock_stage, mock_util_download,
                                     mock_rmtree, mock_mkdtemp, mock_uuid):
-        """ Ensure the subsetter will run end-to-end, only mocking the
-            HTTP responses, and the output interactions with Harmony.
+        """ Ensure HOSS will run end-to-end, only mocking the HTTP responses,
+            and the output interactions with Harmony.
 
             This test should only perform a variable subset.
 
@@ -132,9 +132,10 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'fhaise',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -150,12 +151,10 @@ class TestSubsetterEndToEnd(TestCase):
         # `ANY`, and the constraint expression is tested separately.
         self.assertEqual(mock_util_download.call_count, 2)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression contains all the required variables.
@@ -175,15 +174,15 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_geo_bbox_end_to_end(self, mock_stage, mock_util_download,
                                  mock_rmtree, mock_mkdtemp, mock_uuid,
                                  mock_get_fill_slice):
@@ -225,9 +224,10 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'jlovell',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -245,15 +245,12 @@ class TestSubsetterEndToEnd(TestCase):
         # tested separately.
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -279,18 +276,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_bbox_geo_descending_latitude(self, mock_stage, mock_util_download,
                                           mock_rmtree, mock_mkdtemp, mock_uuid,
                                           mock_get_fill_slice):
@@ -335,9 +332,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'cduke',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -349,15 +346,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -382,17 +376,17 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled:
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_geo_bbox_crossing_grid_edge(self, mock_stage, mock_util_download,
                                          mock_rmtree, mock_mkdtemp, mock_uuid):
         """ Ensure a request with a bounding box that crosses a longitude edge
@@ -434,9 +428,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'jswiggert',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -448,15 +442,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -482,7 +473,7 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure the final output was correctly filled (the unfilled file is
@@ -498,12 +489,12 @@ class TestSubsetterEndToEnd(TestCase):
         expected_output.close()
         actual_output.close()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_geo_bbox(self, mock_stage, mock_util_download, mock_rmtree,
                       mock_mkdtemp, mock_uuid, mock_get_fill_slice):
         """ Ensure requests with particular bounding box edge-cases return the
@@ -591,9 +582,9 @@ class TestSubsetterEndToEnd(TestCase):
                     'user': 'jaaron',
                 })
 
-                subsetter = HarmonyAdapter(message, config=config(False),
-                                           catalog=self.input_stac)
-                _, output_catalog = subsetter.invoke()
+                hoss = HossAdapter(message, config=config(False),
+                                   catalog=self.input_stac)
+                _, output_catalog = hoss.invoke()
 
                 # Ensure that there is a single item in the output catalog with
                 # the expected asset:
@@ -606,14 +597,14 @@ class TestSubsetterEndToEnd(TestCase):
                 self.assertEqual(mock_util_download.call_count, 3)
                 mock_util_download.assert_has_calls([
                     call(f'{self.granule_url}.dmr.xml', self.tmp_dir,
-                         subsetter.logger, access_token=message.accessToken,
-                         data=None, cfg=subsetter.config),
+                         hoss.logger, access_token=message.accessToken,
+                         data=None, cfg=hoss.config),
                     call(f'{self.granule_url}.dap.nc4', self.tmp_dir,
-                         subsetter.logger, access_token=message.accessToken,
-                         data=ANY, cfg=subsetter.config),
+                         hoss.logger, access_token=message.accessToken,
+                         data=ANY, cfg=hoss.config),
                     call(f'{self.granule_url}.dap.nc4', self.tmp_dir,
-                         subsetter.logger, access_token=message.accessToken,
-                         data=ANY, cfg=subsetter.config),
+                         hoss.logger, access_token=message.accessToken,
+                         data=ANY, cfg=hoss.config),
                 ])
 
                 # Ensure the constraint expression for dimensions data included
@@ -633,7 +624,7 @@ class TestSubsetterEndToEnd(TestCase):
                     expected_output_basename,
                     'application/x-netcdf4',
                     location=self.staging_location,
-                    logger=subsetter.logger
+                    logger=hoss.logger
                 )
                 mock_rmtree.assert_called_once_with(self.tmp_dir)
 
@@ -647,12 +638,12 @@ class TestSubsetterEndToEnd(TestCase):
             mock_get_fill_slice.reset_mock()
             mock_rmtree.reset_mock()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_spatial_bbox_no_variables(self, mock_stage, mock_util_download,
                                        mock_rmtree, mock_mkdtemp, mock_uuid,
                                        mock_get_fill_slice):
@@ -689,9 +680,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'kerwinj',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -703,15 +694,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -744,18 +732,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled:
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_temporal_end_to_end(self, mock_stage, mock_util_download,
                                  mock_rmtree, mock_mkdtemp, mock_uuid,
                                  mock_get_fill_slice):
@@ -799,9 +787,10 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'jyoung',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -813,15 +802,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -845,18 +831,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_temporal_all_variables(self, mock_stage, mock_util_download,
                                     mock_rmtree, mock_mkdtemp, mock_uuid,
                                     mock_get_fill_slice):
@@ -901,9 +887,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'jyoung',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -915,15 +901,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -993,18 +976,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_bbox_temporal_end_to_end(self, mock_stage, mock_util_download,
                                       mock_rmtree, mock_mkdtemp, mock_uuid,
                                       mock_get_fill_slice):
@@ -1047,9 +1030,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'jyoung',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1061,15 +1044,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1093,19 +1073,19 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.bbox_utilities.download')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.bbox_utilities.download')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_geo_shapefile_end_to_end(self, mock_stage, mock_util_download,
                                       mock_geojson_download, mock_rmtree,
                                       mock_mkdtemp, mock_uuid,
@@ -1154,9 +1134,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'dscott',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1167,23 +1147,20 @@ class TestSubsetterEndToEnd(TestCase):
         # Ensure the shape file in the Harmony message was downloaded:
         mock_geojson_download.assert_called_once_with(shape_file_url,
                                                       self.tmp_dir,
-                                                      logger=subsetter.logger,
+                                                      logger=hoss.logger,
                                                       access_token=message.accessToken,
-                                                      cfg=subsetter.config)
+                                                      cfg=hoss.config)
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1211,19 +1188,19 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.bbox_utilities.download')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.bbox_utilities.download')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_geo_shapefile_all_variables(self, mock_stage, mock_util_download,
                                          mock_geojson_download, mock_rmtree,
                                          mock_mkdtemp, mock_uuid,
@@ -1273,9 +1250,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'dscott',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1286,23 +1263,20 @@ class TestSubsetterEndToEnd(TestCase):
         # Ensure the shape file in the Harmony message was downloaded:
         mock_geojson_download.assert_called_once_with(shape_file_url,
                                                       self.tmp_dir,
-                                                      logger=subsetter.logger,
+                                                      logger=hoss.logger,
                                                       access_token=message.accessToken,
-                                                      cfg=subsetter.config)
+                                                      cfg=hoss.config)
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1334,19 +1308,19 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.bbox_utilities.download')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.bbox_utilities.download')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_bbox_precedence_end_to_end(self, mock_stage, mock_util_download,
                                         mock_geojson_download, mock_rmtree,
                                         mock_mkdtemp, mock_uuid,
@@ -1395,9 +1369,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'aworden',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1407,27 +1381,24 @@ class TestSubsetterEndToEnd(TestCase):
 
         # Ensure the shape file in the Harmony message was downloaded (the
         # logic giving the bounding box precedence over the shape file occurs
-        # in `pymods/subset.py`, after the shape file has already been
+        # in `hoss/subset.py`, after the shape file has already been
         # downloaded - however, that file will not be used.
         mock_geojson_download.assert_called_once_with(shape_file_url,
                                                       self.tmp_dir,
-                                                      logger=subsetter.logger,
+                                                      logger=hoss.logger,
                                                       access_token=message.accessToken,
-                                                      cfg=subsetter.config)
+                                                      cfg=hoss.config)
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1455,18 +1426,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_geo_dimensions(self, mock_stage, mock_util_download, mock_rmtree,
                             mock_mkdtemp, mock_uuid, mock_get_fill_slice):
         """ Ensure a request with explicitly specified dimension extents will
@@ -1513,9 +1484,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'blightyear',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1527,15 +1498,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1561,18 +1529,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_projected_grid_bbox(self, mock_stage, mock_util_download,
                                  mock_rmtree, mock_mkdtemp, mock_uuid,
                                  mock_get_fill_slice):
@@ -1613,9 +1581,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'wfunk',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1627,15 +1595,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1662,19 +1627,19 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.bbox_utilities.download')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.bbox_utilities.download')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_projected_grid_shape(self, mock_stage, mock_util_download,
                                   mock_geojson_download, mock_rmtree,
                                   mock_mkdtemp, mock_uuid, mock_get_fill_slice):
@@ -1722,9 +1687,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'wfunk',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1736,15 +1701,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1771,18 +1733,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_bounds_end_to_end(self, mock_stage, mock_util_download,
                                mock_rmtree, mock_mkdtemp, mock_uuid,
                                mock_get_fill_slice):
@@ -1833,9 +1795,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'jlovell',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1847,15 +1809,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -1888,18 +1847,18 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('pymods.dimension_utilities.get_fill_slice')
-    @patch('pymods.utilities.uuid4')
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.utilities.util_download')
-    @patch('harmony.util.stage')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
     def test_requested_dimensions_bounds_end_to_end(self, mock_stage,
                                                     mock_util_download,
                                                     mock_rmtree, mock_mkdtemp,
@@ -1957,9 +1916,9 @@ class TestSubsetterEndToEnd(TestCase):
             'user': 'jlovell',
         })
 
-        subsetter = HarmonyAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
-        _, output_catalog = subsetter.invoke()
+        hoss = HossAdapter(message, config=config(False),
+                           catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
@@ -1971,15 +1930,12 @@ class TestSubsetterEndToEnd(TestCase):
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=None,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, subsetter.logger,
-                 access_token=message.accessToken, data=ANY,
-                 cfg=subsetter.config),
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -2012,16 +1968,16 @@ class TestSubsetterEndToEnd(TestCase):
                                            expected_output_basename,
                                            'application/x-netcdf4',
                                            location=self.staging_location,
-                                           logger=subsetter.logger)
+                                           logger=hoss.logger)
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
 
-    @patch('subsetter.mkdtemp')
+    @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('pymods.subset.download_url')
-    @patch('harmony.util.stage')
+    @patch('hoss.subset.download_url')
+    @patch('hoss.adapter.stage')
     def test_exception_handling(self, mock_stage, mock_download_subset,
                                 mock_rmtree, mock_mkdtemp):
         """ Ensure that if an exception is raised during processing, this
@@ -2046,9 +2002,9 @@ class TestSubsetterEndToEnd(TestCase):
         })
 
         with self.assertRaises(HarmonyException):
-            subsetter = HarmonyAdapter(message, config=config(False),
-                                       catalog=self.input_stac)
-            subsetter.invoke()
+            hoss = HossAdapter(message, config=config(False),
+                               catalog=self.input_stac)
+            hoss.invoke()
 
         mock_stage.assert_not_called()
         mock_rmtree.assert_called_once_with(self.tmp_dir)

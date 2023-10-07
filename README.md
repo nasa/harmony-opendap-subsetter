@@ -1,20 +1,18 @@
-## Data Services service for variable subsetting
+# The Harmony OPeNDAP SubSetter (HOSS)
 
-This repository contains two [Harmony](https://wiki.earthdata.nasa.gov/spaces/viewspace.action?key=HARMONY)
-services developed by the Data Services team: the Variable Subsetter and the
-Harmony OPeNDAP SubSetter (HOSS). These services currently both use the same
-Docker image, `sds/variable-subsetter`.
+This repository contains source code and CI/CD for a
+[Harmony](https://wiki.earthdata.nasa.gov/spaces/viewspace.action?key=HARMONY)
+backend service. The Harmony OPeNDAP SubSetter (HOSS) performs variable,
+spatial, temporal and named-dimension subsetting by making requests to
+[OPeNDAP](https://www.opendap.org/support/user-documentation).
 
-Both services perform subsetting by making requests to Hyrax, an OPeNDAP
-instance hosted in the Cloud. Both are currently accessed via the same
-`HarmonyAdapter` class in `subsetter.py`, with that class determining the type
-of request by the parameters included in the inbound Harmony message. The two
-services are distinguished within the main
-[services.yml](https://github.com/nasa/harmony/blob/main/config/services.yml)
+The service is published as a Docker image, from which Harmony creates
+Kubernetes pods upon deployment. To ensure this occurs, HOSS is defined in the
+main [services.yml](https://github.com/nasa/harmony/blob/main/config/services.yml)
 configuration file for Harmony, and with different UMM-S records.
 
-Both services require data to be ingested such that the granules can be
-accessed via Hyrax. This means:
+HOSS require data to be ingested such that the granules can be accessed via
+OPeNDAP in the Cloud (Hyrax). This means:
 
 * Generating a sidecar `.dmrpp` file. The file should then be placed in the
   same location (S3 bucket) as the granule itself, and have the same filename,
@@ -23,7 +21,7 @@ accessed via Hyrax. This means:
   of `USE SERVICE API` and `Subtype` of `OPENDAP DATA`. This can be generated
   via [a Cumulus task](https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates).
 
-#### HOSS:
+## HOSS Capabilities:
 
 The Harmony OPeNDAP SubSetter (HOSS) is designed for use with gridded data
 (levels 3 or 4). HOSS can perform spatial, temporal and variable subsetting.
@@ -64,7 +62,7 @@ hyperrectangle, but outside the GeoJSON shape.
 Note, if both a bounding box and a shape file are specified in the same Harmony
 message, HOSS will use the bounding box information from the message.
 
-#### Dimensions that can be subsetted:
+### Dimensions that can be subsetted:
 
 * Dimensions must be monotonic, e.g., the array must either always increase or
   always decrease as the values are scanned from start to finish.
@@ -75,12 +73,12 @@ message, HOSS will use the bounding box information from the message.
   index ranges. Such dimensions with `bounds` arrays can therefore have
   dimension pixel values anywhere within the pixel, not just the centre.
 
-#### Variable Subsetter:
+### Variable Subsetter:
 
-The Variable Subsetter uses the same functionality, and therefore a lot of the
-same code, as HOSS, but only offers the option of variable subsetting. This
-means that it is compatible with collections that have been processed to lower
-levels, including level 2.
+An additional service chain is specified within the Harmony `services.yml`,
+which utilises the HOSS Docker image, but only allows users to perform variable
+subsetting. This is designed for non-gridded collections with data available
+via OPeNDAP.
 
 As with HOSS, an end-user can specify the variables they want, and the Variable
 Subsetter will also retrieve any variables referred to in specific
@@ -89,30 +87,43 @@ output files from the Variable Subsetter remain viable as relevant information,
 such as spatial and temporal coordinates, cannot be omitted from the output due
 to being forgotten in the initial request to Harmony.
 
+## Contributing:
+
+Contributions are welcome! For more information, see `CONTRIBUTING.md`.
+
+## Developing:
+
+Development within this repository should occur on a feature branch. Pull
+Requests (PRs) are created with a target of the `main` branch before being
+reviewed and merged.
+
+Releases are created when a feature branch is merged to `main` and that branch
+also contains an update to the `docker/service_version.txt` file.
+
 ### Local usage:
 
 To download source code:
 
 ```bash
-git clone https://git.earthdata.nasa.gov/scm/sitc/var_subsetter.git var_subsetter
+git clone https://github.com/nasa/harmony-opendap-subsetter
 ```
 
 To build the Docker image:
 
 ```bash
-cd var_subsetter
+cd harmony-opendap-subsetter
 ./bin/build-image
 ```
 
-HOSS and the Variable Subsetter are best run locally using a local instance of
-Harmony, available from [here](https://github.com/nasa/harmony). After building
-the service Docker image locally via the `./bin/build-image` script, make sure
-your local Harmony instance lists "var-subsetter" in the comma-separated list
-of services under the `LOCALLY_DEPLOYED_SERVICES` environment variable
-contained in your local Harmony `.env` file.
+HOSS is best run locally using a local instance of Harmony, available from
+[here](https://github.com/nasa/harmony). After building the service Docker
+image locally via the `./bin/build-image` script, make sure
+your local Harmony instance lists "hoss" in the comma-separated list of
+services under the `LOCALLY_DEPLOYED_SERVICES` environment variable contained
+in your local Harmony `.env` file.
 
-Once a local Harmony instance is configured to run the Variable Subsetter and
-HOSS, the service can be invoked to run on UAT-hosted data via
+Once a local Harmony instance is configured to run HOSS, the service can be
+invoked to run on UAT-hosted data via
 [`harmony-py`](https://github.com/nasa/harmony-py):
 
 ```
@@ -137,24 +148,25 @@ that contains both the `harmony-py` and `harmony-service-lib-py` packages.
 
 ### Development notes:
 
-The Variable Subsetter runs within a Docker container (both the project itself,
-and the tests that are run for CI/CD. If you add a new Python package to be
-used within the project (or remove a third party package), the change in
-dependencies will need to be recorded in the relevant requirements file:
+HOSS runs within a Docker container (both the project itself, and the tests
+that are run for CI/CD. If you add a new Python package to be used within the
+project (or remove a third party package), the change in dependencies will need
+to be recorded in the relevant requirements file:
 
-* `var_subsetter/conda_requirements.txt`: Requirements needed for the subsetter
-	to run, obtained from the `conda-forge` channel.
-* `var_subsetter/pip_requirements.txt`: Additional requirements installed
-	within the container's conda environment via Pip. These are also required
-	for the source code of the variable subsetter to run.
-* `var_subsetter/tests/pip_test_requirements.txt`: Requirements only used while
-	running tests, such as `pylint` or `coverage`. These are kept separate to
-	reduce the dependencies in the delivered software.
+* `conda_requirements.txt`: Requirements needed for HOSS to run, obtained from
+  the `conda-forge` channel.
+* `pip_requirements.txt`: Additional requirements installed within the
+  container's conda environment via Pip. These are also required for the source
+  code of HOSS to run. It is preferable to obtain dependencies from Pip, so
+  that Pip can manage inter-package dependencies and version conflicts.
+* `tests/pip_test_requirements.txt`: Requirements only used while running
+  tests, such as `pylint` or `coverage`. These are kept separate to reduce the
+  dependencies in the delivered software.
 
 ### Running tests:
 
-The variable subsetter has Python tests that use the `unittest` package. These
-can be run within a Docker container using the following scripts:
+HOSS has Python tests that use the `unittest` package. These can be run within
+a Docker container using the following scripts:
 
 ```bash
 # Build the service image, which is a base for the test image
@@ -167,12 +179,13 @@ can be run within a Docker container using the following scripts:
 ./bin/run-test
 ```
 
-Coverage reports are being generate for each build in Bamboo, and saved as artifacts.
+Coverage reports are being generate for each build in Bamboo, and saved as
+artefacts.
 
 ### Versioning
 
-As a Harmony service, the Variable Subsetter and HOSS follow semantic version
-numbers (e.g., `major.minor.patch`). This version is included in the
+As a Harmony service, HOSS follows semantic version numbers (e.g.,
+`major.minor.patch`). This version is included in the
 `docker/service_version.txt` file. When updating the Python service code, the
 version number contained in the `service_version.txt` file should be
 incremented before creating a pull request.
@@ -188,5 +201,21 @@ The general rules for which version number to increment are:
 * Patch: Used for backwards compatible bug fixes or performance improvements,
   these changes should not affect how an end user calls the service.
 
-When the Docker image is built in Bamboo, it will be tagged with the semantic
-version number as stored in `docker/service_version.txt`.
+When the Docker image is built as part of the publication GitHub workflow, it
+will be tagged with the semantic version number as stored in
+`docker/service_version.txt`.
+
+The semantic version number of the service was set to 1.0.0 when migrating to
+GitHub.
+
+## CI/CD:
+
+This section will be edited when the CI/CD for HOSS is migrated from Bamboo to
+GitHub workflows.
+
+## Get in touch:
+
+You can reach out to the maintainers of this repository via email:
+
+* david.p.auty@nasa.gov
+* owen.m.littlejohns@nasa.gov

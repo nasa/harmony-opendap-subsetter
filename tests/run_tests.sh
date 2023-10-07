@@ -2,11 +2,12 @@
 ####################################
 #
 # A script invoked by the test Dockerfile to run the Python `unittest` suite
-# for the Harmonised variable subsetter. The script first runs the test suite,
-# then it checks for linting errors.
+# for the Harmony OPeNDAP SubSetter (HOSS). The script first runs the test
+# suite, then it checks for linting errors.
 #
 # 2020-05-07: Adapted from SwotRepr project.
 # 2022-01-03: Removed safety checks, as these are now run in Snyk.
+# 2023-10-06: Updated pylint directory scanned to "hoss".
 #
 ####################################
 
@@ -34,7 +35,7 @@ coverage html --omit="tests/*" -d /home/tests/coverage
 # W1203 - use of f-strings in log statements. This warning is leftover from
 #         using ''.format() vs % notation. For more information, see:
 #     	  https://github.com/PyCQA/pylint/issues/2354#issuecomment-414526879
-pylint pymods subsetter.py --disable=W1203 --extension-pkg-whitelist=netCDF4
+pylint hoss --disable=W1203 --extension-pkg-whitelist=netCDF4
 RESULT=$?
 RESULT=$((3 & $RESULT))
 

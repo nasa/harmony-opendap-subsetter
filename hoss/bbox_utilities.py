@@ -1,7 +1,6 @@
 """ This module contains utility functions relating to bounding box
     calculations. This includes deriving a bounding box from an input GeoJSON
-    shape file. In future work (TRT-163), it will likely also include similar
-    derivations for a bounding box given data with a non-geographic CRS.
+    shape file.
 
     Some of the functions in this module were written instead of using
     [the shapely Python package](https://shapely.readthedocs.io/en/latest/),
@@ -23,7 +22,7 @@ from harmony.message import Message
 from harmony.util import Config, download
 import numpy as np
 
-from pymods.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
+from hoss.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
 
 
 AggCoordinates = List[Tuple[float]]

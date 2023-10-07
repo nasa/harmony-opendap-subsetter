@@ -18,10 +18,10 @@ from shapely.geometry import (GeometryCollection, LineString, MultiLineString,
 from varinfo import VarInfoFromDmr
 import numpy as np
 
-from pymods.bbox_utilities import BBox, flatten_list
-from pymods.exceptions import (InvalidInputGeoJSON, MissingGridMappingMetadata,
-                               MissingGridMappingVariable,
-                               MissingSpatialSubsetInformation)
+from hoss.bbox_utilities import BBox, flatten_list
+from hoss.exceptions import (InvalidInputGeoJSON, MissingGridMappingMetadata,
+                             MissingGridMappingVariable,
+                             MissingSpatialSubsetInformation)
 
 
 Coordinates = Tuple[float]
@@ -48,8 +48,10 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     if grid_mapping is not None:
         try:
             crs = CRS.from_cf(varinfo.get_variable(grid_mapping).attributes)
-        except AttributeError:
-            raise MissingGridMappingVariable(grid_mapping, variable)
+        except AttributeError as exception:
+            raise MissingGridMappingVariable(
+                grid_mapping, variable
+            ) from exception
     else:
         raise MissingGridMappingMetadata(variable)
 

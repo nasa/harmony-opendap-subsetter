@@ -1,6 +1,7 @@
-""" The module contains the main functions to perform variable subsetting on a
-    single granule file. This should all be wrapped by the `subset_granule`
-    function, which is called from the `HarmonyAdapter` class.
+""" The module contains the main functions to perform variable, spatial,
+    temporal and named-dimension subsetting on a single granule file. This is
+    wrapped by the `subset_granule` function, which is called from the
+    `hoss.adapter.HossAdapter` class.
 
 """
 from logging import Logger
@@ -12,24 +13,24 @@ from netCDF4 import Dataset
 from numpy.ma import masked
 from varinfo import VarInfoFromDmr
 
-from pymods.bbox_utilities import get_request_shape_file
-from pymods.dimension_utilities import (add_index_range, get_fill_slice,
-                                        IndexRanges, is_index_subset,
-                                        get_requested_index_ranges,
-                                        prefetch_dimension_variables, rgetattr)
-from pymods.spatial import get_spatial_index_ranges
-from pymods.temporal import get_temporal_index_ranges
-from pymods.utilities import (download_url, format_variable_set_string,
-                              get_opendap_nc4)
+from hoss.bbox_utilities import get_request_shape_file
+from hoss.dimension_utilities import (add_index_range, get_fill_slice,
+                                      IndexRanges, is_index_subset,
+                                      get_requested_index_ranges,
+                                      prefetch_dimension_variables, rgetattr)
+from hoss.spatial import get_spatial_index_ranges
+from hoss.temporal import get_temporal_index_ranges
+from hoss.utilities import (download_url, format_variable_set_string,
+                            get_opendap_nc4)
 
 
 def subset_granule(opendap_url: str, harmony_source: Source, output_dir: str,
                    harmony_message: Message, logger: Logger,
                    config: Config) -> str:
-    """ This function is the main business logic for retrieving a variable
-        and/or spatial subset from OPeNDAP.
+    """ This function is the main business logic for retrieving a variable,
+        spatial, temporal and/or named-dimension subset from OPeNDAP.
 
-        Variable dependencies are extracted from an `varinfo.VarInfoFromDmr`
+        Variable dependencies are extracted from a `varinfo.VarInfoFromDmr`
         instance that is based on the `.dmr` file for the granule as obtained
         from OPeNDAP. The full set of returned variables will include those
         requested by the end-user, and additional variables required to support
@@ -40,7 +41,9 @@ def subset_granule(opendap_url: str, harmony_source: Source, output_dir: str,
         named dimensions that require index-range subsetting, dimension
         variables will first be retrieved in a "prefetch" request to OPeNDAP.
         Then the bounding-box or shape file extents are converted to
-        index-ranges.
+        index-ranges. Similar behaviour occurs when a temporal range is
+        requested by the end user, determining the indices of the temporal
+        dimension from the prefetch response.
 
         Once the required variables, and index-ranges if needed, are derived,
         a request is made to OPeNDAP to retrieve only the requested data.
@@ -49,7 +52,7 @@ def subset_granule(opendap_url: str, harmony_source: Source, output_dir: str,
     # Determine if index range subsetting will be required:
     request_is_index_subset = is_index_subset(harmony_message)
 
-    # Produce a map of variable dependencies with `sds-varinfo` and the `.dmr`.
+    # Produce map of variable dependencies with `earthdata-varinfo` and `.dmr`.
     varinfo = get_varinfo(opendap_url, output_dir, logger,
                           harmony_source.shortName,
                           harmony_message.accessToken, config)
@@ -137,14 +140,15 @@ def subset_granule(opendap_url: str, harmony_source: Source, output_dir: str,
 def get_varinfo(opendap_url: str, output_dir: str, logger: Logger,
                 collection_short_name: str, access_token: str,
                 config: Config) -> str:
-    """ Retrieve the `.dmr` from OPeNDAP and use `sds-varinfo` to populate a
-        representation of the granule that maps dependencies between variables.
+    """ Retrieve the `.dmr` from OPeNDAP and use `earthdata-varinfo` to
+        populate a representation of the granule that maps dependencies between
+        variables.
 
     """
     dmr_path = download_url(f'{opendap_url}.dmr.xml', output_dir, logger,
                             access_token=access_token, config=config)
     return VarInfoFromDmr(dmr_path, short_name=collection_short_name,
-                          config_file='pymods/var_subsetter_config.json')
+                          config_file='hoss/hoss_config.json')
 
 
 def get_required_variables(varinfo: VarInfoFromDmr,

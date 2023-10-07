@@ -1,15 +1,14 @@
-""" This module contains custom exceptions specific to the Harmonized Variable
-    Subsetter service. These exceptions are intended to allow for easier
+""" This module contains custom exceptions specific to the Harmony OPeNDAP
+    SubSetter (HOSS). These exceptions are intended to allow for easier
     debugging of the expected errors that may occur during an invocation of the
-    variable subsetter.
+    HOSS.
 
 """
 
 
 class CustomError(Exception):
-    """ Base class for exceptions in the variable subsetter. This base class
-        allows for future work, such as assigning exit codes for specific
-        failure modes.
+    """ Base class for exceptions in HOSS. This base class allows for future
+        work, such as assigning exit codes for specific failure modes.
 
     """
     def __init__(self, exception_type, message):
@@ -57,7 +56,7 @@ class MissingGridMappingMetadata(CustomError):
     """ This exception is raised when HOSS tries to obtain the `grid_mapping`
         metadata attribute for a projected variable and it is not present in
         either the input granule or the CF-Convention overrides defined in the
-        sds-varinfo configuration file.
+        earthdata-varinfo configuration file.
 
     """
     def __init__(self, variable_name):

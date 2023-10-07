@@ -1,4 +1,4 @@
-""" This module tests the functions included in the `pymods/bbox_utilities.py`
+""" This module tests the functions included in the `hoss/bbox_utilities.py`
     module. Those functions focus on retrieving bounding box information from
     a Harmony message, either from the `Message.subset.bbox` attribute or the
     `Message.subset.shape` attribute. In the case of a shape file, the module
@@ -15,26 +15,26 @@ import json
 from harmony.message import Message
 from harmony.util import config
 
-from pymods.bbox_utilities import (aggregate_all_geometries,
-                                   aggregate_geometry_coordinates, BBox,
-                                   bbox_in_longitude_range,
-                                   crosses_antimeridian,
-                                   flatten_list,
-                                   get_bounding_box_lon_lat,
-                                   get_antimeridian_bbox,
-                                   get_antimeridian_geometry_bbox,
-                                   get_contiguous_bbox,
-                                   get_geographic_bbox,
-                                   get_harmony_message_bbox,
-                                   get_latitude_range,
-                                   get_request_shape_file,
-                                   get_shape_file_geojson,
-                                   is_list_of_coordinates, is_single_point)
-from pymods.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
+from hoss.bbox_utilities import (aggregate_all_geometries,
+                                 aggregate_geometry_coordinates, BBox,
+                                 bbox_in_longitude_range,
+                                 crosses_antimeridian,
+                                 flatten_list,
+                                 get_bounding_box_lon_lat,
+                                 get_antimeridian_bbox,
+                                 get_antimeridian_geometry_bbox,
+                                 get_contiguous_bbox,
+                                 get_geographic_bbox,
+                                 get_harmony_message_bbox,
+                                 get_latitude_range,
+                                 get_request_shape_file,
+                                 get_shape_file_geojson,
+                                 is_list_of_coordinates, is_single_point)
+from hoss.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
 
 
 class TestBBoxUtilities(TestCase):
-    """ A class for testing functions in the `pymods.bbox_utilities`
+    """ A class for testing functions in the `hoss.bbox_utilities`
         module.
 
     """
@@ -92,7 +92,7 @@ class TestBBoxUtilities(TestCase):
         # Ensure that both files aren't just empty
         self.assertIn('features', read_geojson)
 
-    @patch('pymods.bbox_utilities.download')
+    @patch('hoss.bbox_utilities.download')
     def test_get_request_shape_file(self, mock_download):
         """ Ensure that a shape file is returned if present in an input Harmony
             message. If the shape file MIME type is incorrect, an exception
@@ -194,7 +194,7 @@ class TestBBoxUtilities(TestCase):
                 self.assertTupleEqual(get_geographic_bbox(geojson),
                                       expected_bounding_box)
 
-    @patch('pymods.bbox_utilities.aggregate_all_geometries')
+    @patch('hoss.bbox_utilities.aggregate_all_geometries')
     def test_get_geographic_bbox_geojson_has_bbox(self,
                                                   mock_aggregate_all_geometries):
         """ Ensure that, if present, the optional GeoJSON "bbox" attribute is

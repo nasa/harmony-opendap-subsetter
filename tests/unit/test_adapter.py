@@ -6,16 +6,16 @@ import json
 from harmony.message import Message
 from harmony.util import config
 
-from pymods.bbox_utilities import BBox
-from subsetter import HarmonyAdapter
+from hoss.adapter import HossAdapter
+from hoss.bbox_utilities import BBox
 from tests.utilities import create_stac, Granule, spy_on
 
 
-@patch('subsetter.get_file_mimetype')
-@patch('subsetter.subset_granule')
-@patch('harmony.util.stage')
-class TestSubsetter(TestCase):
-    """ Test the HarmonyAdapter class for basic functionality including:
+@patch('hoss.adapter.get_file_mimetype')
+@patch('hoss.adapter.subset_granule')
+@patch('hoss.adapter.stage')
+class TestAdapter(TestCase):
+    """ Test the HossAdapter class for basic functionality including:
 
         - Synchronous vs asynchronous behaviour.
         - Basic message validation.
@@ -33,7 +33,7 @@ class TestSubsetter(TestCase):
 
     def setUp(self):
         self.config = config(validate=False)
-        self.process_item_spy = spy_on(HarmonyAdapter.process_item)
+        self.process_item_spy = spy_on(HossAdapter.process_item)
 
     def create_message(self, collection_id: str, collection_short_name: str,
                        variable_list: List[str], user: str,
@@ -87,25 +87,25 @@ class TestSubsetter(TestCase):
                                       bounding_box=None,
                                       temporal_range=temporal_range)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=self.africa_stac)
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=self.africa_stac)
 
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(self.africa_granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with('/path/to/output.nc',
                                            'africa_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)
 
     def test_synchronous_request(self,
                                  mock_stage,
@@ -126,18 +126,18 @@ class TestSubsetter(TestCase):
                                       'narmstrong',
                                       True)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=self.africa_stac)
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=self.africa_stac)
 
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(self.africa_granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
 
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -145,7 +145,7 @@ class TestSubsetter(TestCase):
                                            'africa_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)
 
     def test_asynchronous_request(self,
                                   mock_stage,
@@ -166,25 +166,25 @@ class TestSubsetter(TestCase):
                                       'ealdrin',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=self.africa_stac)
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=self.africa_stac)
 
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(self.africa_granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with('/path/to/output.nc',
                                            'africa_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)
 
     def test_unspecified_synchronous_request(self,
                                              mock_stage,
@@ -204,25 +204,25 @@ class TestSubsetter(TestCase):
                                       ['alpha_var', 'blue_var'],
                                       'mcollins')
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
+        hoss = HossAdapter(message, config=self.config,
                                             catalog=self.africa_stac)
 
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(self.africa_granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with('/path/to/output.nc',
                                            'africa_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)
 
     def test_hoss_bbox_request(self, mock_stage, mock_subset_granule,
                                mock_get_mimetype):
@@ -241,25 +241,25 @@ class TestSubsetter(TestCase):
                                       'mcollins',
                                       bounding_box=bounding_box)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=self.africa_stac)
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=self.africa_stac)
 
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(self.africa_granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with('/path/to/output.nc',
                                            'africa_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)
 
     def test_hoss_shape_file_request(self, mock_stage, mock_subset_granule,
                                      mock_get_mimetype):
@@ -278,25 +278,25 @@ class TestSubsetter(TestCase):
                                       'mcollins',
                                       shape_file=shape_file_url)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=self.africa_stac)
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=self.africa_stac)
 
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(self.africa_granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with('/path/to/output.nc',
                                            'africa_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)
 
     def test_hoss_named_dimension(self, mock_stage, mock_subset_granule,
                                   mock_get_mimetype):
@@ -324,25 +324,25 @@ class TestSubsetter(TestCase):
         input_stac = create_stac([Granule(granule_url, None,
                                           ['opendap', 'data'])])
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=input_stac)
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=input_stac)
 
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with('/path/to/output.nc',
                                            'M2I3NPASM_H1000_subsetted.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)
 
     def test_missing_granules(self,
                               mock_stage,
@@ -362,12 +362,12 @@ class TestSubsetter(TestCase):
                                       'pconrad',
                                       False)
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=create_stac([]))
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=create_stac([]))
 
         with self.assertRaises(Exception) as context_manager:
-            with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-                variable_subsetter.invoke()
+            with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+                hoss.invoke()
 
         self.assertEqual(str(context_manager.exception),
                          'No granules specified for variable subsetting')
@@ -404,19 +404,20 @@ class TestSubsetter(TestCase):
                     ['opendap', 'data'])
         ])
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=input_stac)
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=input_stac)
 
-        granules = variable_subsetter.message.granules
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
+
+        granules = hoss.message.granules
 
         for index, granule in enumerate(granules):
             mock_subset_granule.assert_any_call(granule.url,
                                                 message.sources[0],
                                                 ANY,
-                                                variable_subsetter.message,
-                                                variable_subsetter.logger,
+                                                hoss.message,
+                                                hoss.logger,
                                                 self.config)
             mock_get_mimetype.assert_any_call(output_paths[index])
 
@@ -424,7 +425,7 @@ class TestSubsetter(TestCase):
                                        output_filenames[index],
                                        'application/x-netcdf4',
                                        location=message.stagingLocation,
-                                       logger=variable_subsetter.logger)
+                                       logger=hoss.logger)
 
     def test_missing_variables(self,
                                mock_stage,
@@ -445,21 +446,22 @@ class TestSubsetter(TestCase):
                                       [],
                                       'jlovell')
 
-        variable_subsetter = HarmonyAdapter(message, config=self.config,
-                                            catalog=self.africa_stac)
-        with patch.object(HarmonyAdapter, 'process_item', self.process_item_spy):
-            variable_subsetter.invoke()
+        hoss = HossAdapter(message, config=self.config,
+                           catalog=self.africa_stac)
+
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(self.africa_granule_url,
                                                     message.sources[0],
                                                     ANY,
-                                                    variable_subsetter.message,
-                                                    variable_subsetter.logger,
-                                                    variable_subsetter.config)
+                                                    hoss.message,
+                                                    hoss.logger,
+                                                    hoss.config)
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
         mock_stage.assert_called_once_with('/path/to/output.nc',
                                            'africa.nc4',
                                            'application/x-netcdf4',
                                            location='s3://example-bucket/',
-                                           logger=variable_subsetter.logger)
+                                           logger=hoss.logger)

@@ -13,21 +13,21 @@ from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
 import numpy as np
 
-from pymods.dimension_utilities import (add_index_range, get_dimension_bounds,
-                                        get_dimension_extents,
-                                        get_dimension_index_range,
-                                        get_dimension_indices_from_bounds,
-                                        get_dimension_indices_from_values,
-                                        get_fill_slice,
-                                        get_requested_index_ranges,
-                                        is_almost_in, is_dimension_ascending,
-                                        is_index_subset,
-                                        prefetch_dimension_variables)
-from pymods.exceptions import InvalidNamedDimension, InvalidRequestedRange
+from hoss.dimension_utilities import (add_index_range, get_dimension_bounds,
+                                      get_dimension_extents,
+                                      get_dimension_index_range,
+                                      get_dimension_indices_from_bounds,
+                                      get_dimension_indices_from_values,
+                                      get_fill_slice,
+                                      get_requested_index_ranges,
+                                      is_almost_in, is_dimension_ascending,
+                                      is_index_subset,
+                                      prefetch_dimension_variables)
+from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
 
 
 class TestDimensionUtilities(TestCase):
-    """ A class for testing functions in the `pymods.dimension_utilities`
+    """ A class for testing functions in the `hoss.dimension_utilities`
         module.
 
     """
@@ -85,7 +85,7 @@ class TestDimensionUtilities(TestCase):
                 self.assertEqual(is_dimension_ascending(dimension),
                                  expected_result)
 
-    @patch('pymods.dimension_utilities.get_dimension_indices_from_values')
+    @patch('hoss.dimension_utilities.get_dimension_indices_from_values')
     def test_get_dimension_index_range(self, mock_get_indices_from_values):
         """ Ensure that the dimension variable is correctly determined to be
             ascending or descending, such that `get_dimension_min_max_indices`
@@ -155,7 +155,7 @@ class TestDimensionUtilities(TestCase):
             )
             mock_get_indices_from_values.reset_mock()
 
-    @patch('pymods.dimension_utilities.get_dimension_indices_from_values')
+    @patch('hoss.dimension_utilities.get_dimension_indices_from_values')
     def test_get_dimension_index_range_requested_zero_values(self,
                                                              mock_get_indices_from_values):
         """ Ensure that a 0 is treated correctly, and not interpreted as a
@@ -272,7 +272,7 @@ class TestDimensionUtilities(TestCase):
                 slice(16, 200)
             )
 
-    @patch('pymods.dimension_utilities.get_opendap_nc4')
+    @patch('hoss.dimension_utilities.get_opendap_nc4')
     def test_prefetch_dimension_variables(self, mock_get_opendap_nc4):
         """ Ensure that when a list of required variables is specified, a
             request to OPeNDAP will be sent requesting only those that are
@@ -304,7 +304,7 @@ class TestDimensionUtilities(TestCase):
                                                      output_dir, self.logger,
                                                      access_token, self.config)
 
-    @patch('pymods.dimension_utilities.get_opendap_nc4')
+    @patch('hoss.dimension_utilities.get_opendap_nc4')
     def test_prefetch_dimensions_with_bounds(self, mock_get_opendap_nc4):
         """ Ensure that a variable which has dimensions with `bounds` metadata
             retrieves both the dimension variables and the bounds variables to
@@ -550,7 +550,7 @@ class TestDimensionUtilities(TestCase):
                 get_requested_index_ranges(required_variables, self.varinfo,
                                            descending_file, harmony_message),
 
-    @patch('pymods.dimension_utilities.get_dimension_index_range')
+    @patch('hoss.dimension_utilities.get_dimension_index_range')
     def test_get_requested_index_ranges_bounds(self,
                                                mock_get_dimension_index_range):
         """ Ensure that if bounds are present for a dimension, they are used
@@ -585,8 +585,8 @@ class TestDimensionUtilities(TestCase):
                 prefetch['/Grid/lon_bnds'][:]
             )
 
-    @patch('pymods.dimension_utilities.get_dimension_indices_from_bounds')
-    @patch('pymods.dimension_utilities.get_dimension_indices_from_values')
+    @patch('hoss.dimension_utilities.get_dimension_indices_from_bounds')
+    @patch('hoss.dimension_utilities.get_dimension_indices_from_values')
     def test_get_dimension_index_range_bounds(self,
                                               mock_get_indices_from_values,
                                               mock_get_indices_from_bounds):

@@ -1,5 +1,5 @@
 {
-  "Identification": "var_subsetter_config",
+  "Identification": "hoss_config",
   "Version": 18,
   "Collection_ShortName_Path": [
     "/HDF5_GLOBAL/short_name",

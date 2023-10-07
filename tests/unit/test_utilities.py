@@ -5,17 +5,17 @@ from unittest.mock import Mock, patch
 from harmony.exceptions import ForbiddenException, ServerException
 from harmony.util import config
 
-from pymods.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
-from pymods.utilities import (download_url, format_dictionary_string,
-                              format_variable_set_string,
-                              get_constraint_expression, get_file_mimetype,
-                              get_opendap_nc4, get_value_or_default,
-                              HTTP_REQUEST_ATTEMPTS, move_downloaded_nc4,
-                              rgetattr)
+from hoss.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
+from hoss.utilities import (download_url, format_dictionary_string,
+                            format_variable_set_string,
+                            get_constraint_expression, get_file_mimetype,
+                            get_opendap_nc4, get_value_or_default,
+                            HTTP_REQUEST_ATTEMPTS, move_downloaded_nc4,
+                            rgetattr)
 
 
 class TestUtilities(TestCase):
-    """ A class for testing functions in the pymods.utilities module. """
+    """ A class for testing functions in the hoss.utilities module. """
 
     @classmethod
     def setUpClass(cls):
@@ -40,7 +40,7 @@ class TestUtilities(TestCase):
                 mimetype = get_file_mimetype('f16_ssmis_20200102v7.nc')
                 self.assertEqual(mimetype, ('application/x-netcdf4', None))
 
-    @patch('pymods.utilities.util_download')
+    @patch('hoss.utilities.util_download')
     def test_download_url(self, mock_util_download):
         """ Ensure that the `harmony.util.download` function is called. Also
             ensure that if a 500 error is returned, the request is retried. If
@@ -50,7 +50,7 @@ class TestUtilities(TestCase):
 
         """
         output_directory = 'output/dir'
-        test_url = 'test.org'
+        test_url = 'fake_website.com'
         test_data = {'dap4.ce': '%2Flatitude%3B%2Flongitude'}
         access_token = 'xyzzy'
 
@@ -127,8 +127,8 @@ class TestUtilities(TestCase):
                              HTTP_REQUEST_ATTEMPTS)
             mock_util_download.reset_mock()
 
-    @patch('pymods.utilities.move_downloaded_nc4')
-    @patch('pymods.utilities.util_download')
+    @patch('hoss.utilities.move_downloaded_nc4')
+    @patch('hoss.utilities.util_download')
     def test_get_opendap_nc4(self, mock_download, mock_move_download):
         """ Ensure a request is sent to OPeNDAP that combines the URL of the
             granule with a constraint expression.
@@ -205,8 +205,8 @@ class TestUtilities(TestCase):
                  '%2Fblue_var%5B3%3A4%5D%3B%2Falpha_var%5B1%3A2%5D']
             )
 
-    @patch('pymods.utilities.move')
-    @patch('pymods.utilities.uuid4')
+    @patch('hoss.utilities.move')
+    @patch('hoss.utilities.uuid4')
     def test_move_downloaded_nc4(self, mock_uuid4, mock_move):
         """ Ensure a specified file is moved to the specified location. """
         mock_uuid4.return_value = Mock(hex='uuid4')
@@ -223,9 +223,9 @@ class TestUtilities(TestCase):
         """ Ensure a set of variable strings is printed out as expected, and
             does not contain any curly braces.
 
-            The test is a little convoluted, because sets are unordered, so the
-            exact ordering of the variables within the string may not be
-            identical.
+            The formatted string is broken up for verification because sets are
+            unordered, so the exact ordering of the variables within the
+            formatted string may not be consistent between runs.
 
         """
         variable_set = {'/var_one', '/var_two', '/var_three'}

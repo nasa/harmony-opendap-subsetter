@@ -10,8 +10,8 @@ from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 import numpy as np
 
-from pymods.subset import (fill_variables, fill_variable,
-                           get_required_variables, get_varinfo, subset_granule)
+from hoss.subset import (fill_variables, fill_variable,
+                         get_required_variables, get_varinfo, subset_granule)
 
 
 class TestSubset(TestCase):
@@ -46,13 +46,13 @@ class TestSubset(TestCase):
         """ Clean-up to perform between every test. """
         shutil.rmtree(self.output_dir)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_granule_not_geo(self, mock_get_varinfo,
                                     mock_prefetch_dimensions,
                                     mock_get_spatial_index_ranges,
@@ -62,8 +62,8 @@ class TestSubset(TestCase):
         """ Ensure a request to extract only a variable subset runs without
             error. Because no bounding box and no temporal range is specified
             in this request, the prefetch dimension utility functionality, the
-            HOSS functionality in `pymods.spatial.py`  and the functionality in
-            `pymods.temporal.py` should not be called.
+            HOSS functionality in `hoss.spatial.py`  and the functionality in
+            `hoss.temporal.py` should not be called.
 
         """
         harmony_message = Message({'accessToken': self.access_token})
@@ -97,13 +97,13 @@ class TestSubset(TestCase):
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_requested_index_ranges.assert_not_called()
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_granule_geo(self, mock_get_varinfo,
                                 mock_prefetch_dimensions,
                                 mock_get_spatial_index_ranges,
@@ -113,9 +113,9 @@ class TestSubset(TestCase):
         """ Ensure a request to extract both a variable and spatial subset runs
             without error. Because a bounding box is specified in this request,
             the prefetch dimension utility functionality and the HOSS
-            functionality in `pymods.spatial.py` should be called. However,
+            functionality in `hoss.spatial.py` should be called. However,
             because there is no specified `temporal_range`, the functionality
-            in `pymods.temporal.py` should not be called.
+            in `hoss.temporal.py` should not be called.
 
         """
         harmony_message = Message({'accessToken': self.access_token,
@@ -168,13 +168,13 @@ class TestSubset(TestCase):
                                                     self.required_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_non_geo_no_variables(self, mock_get_varinfo,
                                          mock_prefetch_dimensions,
                                          mock_get_spatial_index_ranges,
@@ -186,8 +186,8 @@ class TestSubset(TestCase):
             variables will produce a request to OPeNDAP that does not specify
             any variables. This will default to retrieving the full NetCDF-4
             file from OPeNDAP. The prefetch dimension functionality and the
-            HOSS functionality in both `pymods.spatial.py` and
-            `pymods.temporal.py` should not be called.
+            HOSS functionality in both `hoss.spatial.py` and
+            `hoss.temporal.py` should not be called.
 
         """
         harmony_source = Source({'collection': 'C1234567890-EEDTEST',
@@ -226,13 +226,13 @@ class TestSubset(TestCase):
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_requested_index_ranges.assert_not_called()
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_geo_no_variables(self, mock_get_varinfo,
                                      mock_prefetch_dimensions,
                                      mock_get_spatial_index_ranges,
@@ -244,12 +244,12 @@ class TestSubset(TestCase):
             variables will consider all science and metadata variables as the
             requested variables. This situation will arise if a user requests
             all variables. HOSS will need to explicitly list all the variables
-            it retrieves (unlike the variable subsetter) as the DAP4 constraint
-            expression will need to specify index ranges for all geographically
-            gridded variables. Both the prefetch dimension functionality and
-            the HOSS functionality in `pymods.spatial.py` should be called.
-            However, because there is no specified `temporal_range`, the
-            functionality in `pymods.temporal.py` should not be called.
+            it retrieves as the DAP4 constraint expression will need to specify
+            index ranges for all geographically gridded variables. Both the
+            prefetch dimension functionality and the HOSS functionality in
+            `hoss.spatial.py` should be called. However, because there is no
+            specified `temporal_range`, the functionality in `hoss.temporal.py`
+            should not be called.
 
         """
         harmony_source = Source({'collection': 'C1234567890-EEDTEST',
@@ -314,13 +314,13 @@ class TestSubset(TestCase):
                                                     expected_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_non_variable_dimensions(self, mock_get_varinfo,
                                             mock_prefetch_dimensions,
                                             mock_get_spatial_index_ranges,
@@ -415,13 +415,13 @@ class TestSubset(TestCase):
                                                     expected_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_bounds_reference(self, mock_get_varinfo,
                                      mock_prefetch_dimensions,
                                      mock_get_spatial_index_ranges,
@@ -498,13 +498,13 @@ class TestSubset(TestCase):
                                                     expected_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_temporal(self, mock_get_varinfo, mock_prefetch_dimensions,
                              mock_get_spatial_index_ranges,
                              mock_get_temporal_index_ranges,
@@ -527,7 +527,7 @@ class TestSubset(TestCase):
                          'end': '2021-01-10T03:00:00'}
         })
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
-                                 config_file='pymods/var_subsetter_config.json')
+                                 config_file='hoss/hoss_config.json')
 
         expected_variables = {'/PS', '/lat', '/lon', '/time'}
 
@@ -577,13 +577,13 @@ class TestSubset(TestCase):
                                                     expected_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_geo_temporal(self, mock_get_varinfo,
                                  mock_prefetch_dimensions,
                                  mock_get_spatial_index_ranges,
@@ -608,7 +608,7 @@ class TestSubset(TestCase):
                          'end': '2021-01-10T03:00:00'}
         })
         varinfo = VarInfoFromDmr('tests/data/M2T1NXSLV_example.dmr',
-                                 config_file='pymods/var_subsetter_config.json')
+                                 config_file='hoss/hoss_config.json')
 
         expected_variables = {'/PS', '/lat', '/lon', '/time'}
 
@@ -666,14 +666,14 @@ class TestSubset(TestCase):
                                                     expected_variables,
                                                     all_index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.get_request_shape_file')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.get_request_shape_file')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_granule_shape(self, mock_get_varinfo,
                                   mock_prefetch_dimensions,
                                   mock_get_request_shape_file,
@@ -685,9 +685,9 @@ class TestSubset(TestCase):
             without error. This request will have specified a shape file rather
             than a bounding box, which should be passed along to the
             `get_spatial_index_ranges` function. The prefetch dimension utility
-            functionality and the HOSS functionality in `pymods.spatial.py`
+            functionality and the HOSS functionality in `hoss.spatial.py`
             should be called. However, because there is no specified
-            `temporal_range`, the functionality in `pymods.temporal.py` should
+            `temporal_range`, the functionality in `hoss.temporal.py` should
             not be called.
 
         """
@@ -751,14 +751,14 @@ class TestSubset(TestCase):
                                                     self.required_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.get_request_shape_file')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.get_request_shape_file')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_granule_shape_and_bbox(self, mock_get_varinfo,
                                            mock_prefetch_dimensions,
                                            mock_get_request_shape_file,
@@ -772,9 +772,9 @@ class TestSubset(TestCase):
             and a shape file, both of which will be passed along to
             `get_spatial_index_ranges`, so that it can determine which to use.
             The prefetch dimension utility functionality and the HOSS
-            functionality in `pymods.spatial.py` should be called. However,
+            functionality in `hoss.spatial.py` should be called. However,
             because there is no specified `temporal_range`, the functionality
-            in `pymods.temporal.py` should not be called.
+            in `hoss.temporal.py` should not be called.
 
         """
         shape_file_path = 'tests/geojson_examples/polygon.geo.json'
@@ -840,13 +840,13 @@ class TestSubset(TestCase):
                                                     self.required_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.fill_variables')
-    @patch('pymods.subset.get_opendap_nc4')
-    @patch('pymods.subset.get_requested_index_ranges')
-    @patch('pymods.subset.get_temporal_index_ranges')
-    @patch('pymods.subset.get_spatial_index_ranges')
-    @patch('pymods.subset.prefetch_dimension_variables')
-    @patch('pymods.subset.get_varinfo')
+    @patch('hoss.subset.fill_variables')
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_requested_index_ranges')
+    @patch('hoss.subset.get_temporal_index_ranges')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_varinfo')
     def test_subset_granule_geo_named(self, mock_get_varinfo,
                                       mock_prefetch_dimensions,
                                       mock_get_spatial_index_ranges,
@@ -857,9 +857,9 @@ class TestSubset(TestCase):
         """ Ensure a request to extract both a variable and named dimension
             subset runs without error. Because a dimension is specified in this
             request, the prefetch dimension utility functionality and the HOSS
-            functionality in `pymods.spatial.py` should be called. However,
+            functionality in `hoss.spatial.py` should be called. However,
             because there is no specified `temporal_range`, the functionality
-            in `pymods.temporal.py` should not be called.
+            in `hoss.temporal.py` should not be called.
 
             This test will use spatial dimensions, but explicitly naming them
             instead of using a bounding box.
@@ -920,7 +920,7 @@ class TestSubset(TestCase):
                                                     self.required_variables,
                                                     index_ranges)
 
-    @patch('pymods.subset.download_url')
+    @patch('hoss.subset.download_url')
     def test_get_varinfo(self, mock_download_url):
         """ Ensure a request is made to OPeNDAP to retrieve the `.dmr` and
             that a `VarInfoFromDmr` instance can be created from that
@@ -1059,7 +1059,7 @@ class TestSubset(TestCase):
             rainfall_rate_out = test_output['/rainfall_rate'][:]
             np.testing.assert_array_equal(rainfall_rate_in, rainfall_rate_out)
 
-    @patch('pymods.subset.Dataset')
+    @patch('hoss.subset.Dataset')
     def test_fill_variables_no_fill(self, mock_dataset):
         """ Ensure that the output file is not opened if there is no need to
             fill any variables. This will arise if:
@@ -1080,7 +1080,7 @@ class TestSubset(TestCase):
                                self.required_variables, index_ranges)
                 mock_dataset.assert_not_called()
 
-    @patch('pymods.subset.get_fill_slice')
+    @patch('hoss.subset.get_fill_slice')
     def test_fill_variable(self, mock_get_fill_slice):
         """ Ensure that values are only filled when the correct criteria are
             met:

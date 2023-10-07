@@ -10,16 +10,16 @@ from pyproj import CRS
 from varinfo import VarInfoFromDmr
 import numpy as np
 
-from pymods.bbox_utilities import BBox
-from pymods.spatial import (get_bounding_box_longitudes,
-                            get_geographic_index_range,
-                            get_projected_x_y_index_ranges,
-                            get_longitude_in_grid,
-                            get_spatial_index_ranges)
+from hoss.bbox_utilities import BBox
+from hoss.spatial import (get_bounding_box_longitudes,
+                          get_geographic_index_range,
+                          get_projected_x_y_index_ranges,
+                          get_longitude_in_grid,
+                          get_spatial_index_ranges)
 
 
 class TestSpatial(TestCase):
-    """ A class for testing functions in the pymods.spatial module. """
+    """ A class for testing functions in the hoss.spatial module. """
     @classmethod
     def setUpClass(cls):
         cls.varinfo = VarInfoFromDmr(
@@ -174,8 +174,8 @@ class TestSpatial(TestCase):
                 {'/latitude': (5, 44), '/longitude': (160, 199)}
             )
 
-    @patch('pymods.spatial.get_dimension_index_range')
-    @patch('pymods.spatial.get_projected_x_y_extents')
+    @patch('hoss.spatial.get_dimension_index_range')
+    @patch('hoss.spatial.get_projected_x_y_extents')
     def test_get_projected_x_y_index_ranges(self, mock_get_x_y_extents,
                                             mock_get_dimension_index_range):
         """ Ensure that x and y index ranges are only requested when there are
@@ -278,7 +278,7 @@ class TestSpatial(TestCase):
             mock_get_x_y_extents.assert_not_called()
             mock_get_dimension_index_range.assert_not_called()
 
-    @patch('pymods.spatial.get_dimension_index_range')
+    @patch('hoss.spatial.get_dimension_index_range')
     def test_get_geographic_index_range(self, mock_get_dimension_index_range):
         """ Ensure both a latitude and longitude variable is correctly handled.
 
@@ -328,7 +328,7 @@ class TestSpatial(TestCase):
 
             mock_get_dimension_index_range.reset_mock()
 
-    @patch('pymods.spatial.get_dimension_index_range')
+    @patch('hoss.spatial.get_dimension_index_range')
     def test_get_geographic_index_range_bounds(self,
                                                mock_get_dimension_index_range):
         """ Ensure the expected bounds values can be extracted for a variable

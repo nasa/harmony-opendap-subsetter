@@ -1,0 +1,20 @@
+# 
+# These requirements are used by the documentation Jupyter notebooks in the
+# harmony-opendap-subsetter/docs directory.
+#
+# First create a conda or pyenv environment. To create a conda environment:
+#
+# conda create --name hoss-documentation python=3.11 --channel conda-forge -y
+# conda activate hoss-documentation
+#
+# Then to install the dependencies:
+#
+# pip install -r docs/requirements.txt
+#
+# You should then be able to start a Jupyter notebook server and run both of
+# the DAAC operator and end-user notebooks.
+#
+harmony-py~=0.4.10
+netCDF4~=1.6.4
+notebook~=7.0.4
+xarray~=2023.9.0

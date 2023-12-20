@@ -41,11 +41,9 @@ class TestUtilities(TestCase):
 
     @patch('hoss.utilities.util_download')
     def test_download_url(self, mock_util_download):
-        """ Ensure that the `harmony.util.download` function is called. Also
-            ensure that if a 500 error is returned, the request is retried. If
-            a different HTTPError occurs, the caught HTTPError should be
-            re-raised. Finally, check the maximum number of request attempts is
-            not exceeded.
+        """ Ensure that the `harmony.util.download` function is called. If an
+            error occurs, the caught exception should be re-raised with a
+            custom exception with a human-readable error message.
 
         """
         output_directory = 'output/dir'

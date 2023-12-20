@@ -10,7 +10,7 @@ from hoss.utilities import (download_url, format_dictionary_string,
                             format_variable_set_string,
                             get_constraint_expression, get_file_mimetype,
                             get_opendap_nc4, get_value_or_default,
-                            move_downloaded_nc4, rgetattr)
+                            move_downloaded_nc4)
 
 
 class TestUtilities(TestCase):
@@ -255,50 +255,3 @@ class TestUtilities(TestCase):
 
         with self.subTest('Value = None returns the supplied default'):
             self.assertEqual(get_value_or_default(None, 20), 20)
-
-    def test_rgetattr(self):
-        """ Ensure that the recursive function can retrieve nested attributes
-            and uses the default argument when required.
-
-        """
-        class Child:
-            def __init__(self, name):
-                self.name = name
-
-        class Parent:
-            def __init__(self, name, child_name):
-                self.name = name
-                self.child = Child(child_name)
-                self.none = None
-
-        test_parent = Parent('parent_name', 'child_name')
-
-        with self.subTest('Parent level attribute'):
-            self.assertEqual(rgetattr(test_parent, 'name'), 'parent_name')
-
-        with self.subTest('Nested attribute'):
-            self.assertEqual(rgetattr(test_parent, 'child.name'), 'child_name')
-        with self.subTest('Missing parent with default'):
-            self.assertEqual(rgetattr(test_parent, 'absent', 'default'),
-                             'default')
-
-        with self.subTest('Missing child attribute with default'):
-            self.assertEqual(rgetattr(test_parent, 'child.absent', 'default'),
-                             'default')
-        with self.subTest('Child requested, parent missing, default'):
-            self.assertEqual(
-                rgetattr(test_parent, 'none.something', 'default'),
-                'default'
-            )
-
-        with self.subTest('Missing parent, with no default'):
-            with self.assertRaises(AttributeError):
-                rgetattr(test_parent, 'absent')
-
-        with self.subTest('Missing child, with no default'):
-            with self.assertRaises(AttributeError):
-                rgetattr(test_parent, 'child.absent')
-
-        with self.subTest('Child requested, parent missing, no default'):
-            with self.assertRaises(AttributeError):
-                rgetattr(test_parent, 'none.something')

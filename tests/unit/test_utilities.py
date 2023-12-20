@@ -87,7 +87,7 @@ class TestUtilities(TestCase):
             )
             mock_util_download.reset_mock()
 
-        with self.subTest('500 error triggers a retry.'):
+        with self.subTest('500 error is caught and handled.'):
             mock_util_download.side_effect = [self.harmony_500_error,
                                               http_response]
 

@@ -58,6 +58,7 @@ def get_request_shape_file(message: Message, working_dir: str,
             raise UnsupportedShapeFileFormat(message.subset.shape.type)
 
         shape_file_url = message.subset.shape.process('href')
+        adapter_logger.info('Downloading request shape file')
         local_shape_file_path = download(shape_file_url, working_dir,
                                          logger=adapter_logger,
                                          access_token=message.accessToken,

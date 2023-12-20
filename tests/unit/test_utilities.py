@@ -5,13 +5,12 @@ from unittest.mock import Mock, patch
 from harmony.exceptions import ForbiddenException, ServerException
 from harmony.util import config
 
-from hoss.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
+from hoss.exceptions import UrlAccessFailed
 from hoss.utilities import (download_url, format_dictionary_string,
                             format_variable_set_string,
                             get_constraint_expression, get_file_mimetype,
                             get_opendap_nc4, get_value_or_default,
-                            HTTP_REQUEST_ATTEMPTS, move_downloaded_nc4,
-                            rgetattr)
+                            move_downloaded_nc4, rgetattr)
 
 
 class TestUtilities(TestCase):
@@ -92,10 +91,18 @@ class TestUtilities(TestCase):
             mock_util_download.side_effect = [self.harmony_500_error,
                                               http_response]
 
-            response = download_url(test_url, output_directory, self.logger)
+            with self.assertRaises(UrlAccessFailed):
+                download_url(test_url, output_directory, self.logger,
+                             access_token, self.config)
 
-            self.assertEqual(response, http_response)
-            self.assertEqual(mock_util_download.call_count, 2)
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config
+            )
             mock_util_download.reset_mock()
 
         with self.subTest('Non-500 error does not retry, and is re-raised.'):
@@ -114,17 +121,6 @@ class TestUtilities(TestCase):
                 data=None,
                 cfg=self.config
             )
-            mock_util_download.reset_mock()
-
-        with self.subTest('Maximum number of attempts not exceeded.'):
-            mock_util_download.side_effect = [
-                self.harmony_500_error
-            ] * (HTTP_REQUEST_ATTEMPTS + 1)
-            with self.assertRaises(UrlAccessFailedWithRetries):
-                download_url(test_url, output_directory, self.logger)
-
-            self.assertEqual(mock_util_download.call_count,
-                             HTTP_REQUEST_ATTEMPTS)
             mock_util_download.reset_mock()
 
     @patch('hoss.utilities.move_downloaded_nc4')

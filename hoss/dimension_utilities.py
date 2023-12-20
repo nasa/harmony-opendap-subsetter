@@ -17,13 +17,14 @@ from numpy.ma.core import MaskedArray
 import numpy as np
 
 from harmony.message import Message
+from harmony.message_utility import rgetattr
 from harmony.util import Config
 from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import flatten_list
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
 from hoss.utilities import (format_variable_set_string, get_opendap_nc4,
-                            get_value_or_default, rgetattr)
+                            get_value_or_default)
 
 
 IndexRange = Tuple[int]

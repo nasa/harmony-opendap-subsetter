@@ -5,13 +5,12 @@ from unittest.mock import Mock, patch
 from harmony.exceptions import ForbiddenException, ServerException
 from harmony.util import config
 
-from hoss.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
+from hoss.exceptions import UrlAccessFailed
 from hoss.utilities import (download_url, format_dictionary_string,
                             format_variable_set_string,
                             get_constraint_expression, get_file_mimetype,
                             get_opendap_nc4, get_value_or_default,
-                            HTTP_REQUEST_ATTEMPTS, move_downloaded_nc4,
-                            rgetattr)
+                            move_downloaded_nc4)
 
 
 class TestUtilities(TestCase):
@@ -42,11 +41,9 @@ class TestUtilities(TestCase):
 
     @patch('hoss.utilities.util_download')
     def test_download_url(self, mock_util_download):
-        """ Ensure that the `harmony.util.download` function is called. Also
-            ensure that if a 500 error is returned, the request is retried. If
-            a different HTTPError occurs, the caught HTTPError should be
-            re-raised. Finally, check the maximum number of request attempts is
-            not exceeded.
+        """ Ensure that the `harmony.util.download` function is called. If an
+            error occurs, the caught exception should be re-raised with a
+            custom exception with a human-readable error message.
 
         """
         output_directory = 'output/dir'
@@ -88,14 +85,22 @@ class TestUtilities(TestCase):
             )
             mock_util_download.reset_mock()
 
-        with self.subTest('500 error triggers a retry.'):
+        with self.subTest('500 error is caught and handled.'):
             mock_util_download.side_effect = [self.harmony_500_error,
                                               http_response]
 
-            response = download_url(test_url, output_directory, self.logger)
+            with self.assertRaises(UrlAccessFailed):
+                download_url(test_url, output_directory, self.logger,
+                             access_token, self.config)
 
-            self.assertEqual(response, http_response)
-            self.assertEqual(mock_util_download.call_count, 2)
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config
+            )
             mock_util_download.reset_mock()
 
         with self.subTest('Non-500 error does not retry, and is re-raised.'):
@@ -114,17 +119,6 @@ class TestUtilities(TestCase):
                 data=None,
                 cfg=self.config
             )
-            mock_util_download.reset_mock()
-
-        with self.subTest('Maximum number of attempts not exceeded.'):
-            mock_util_download.side_effect = [
-                self.harmony_500_error
-            ] * (HTTP_REQUEST_ATTEMPTS + 1)
-            with self.assertRaises(UrlAccessFailedWithRetries):
-                download_url(test_url, output_directory, self.logger)
-
-            self.assertEqual(mock_util_download.call_count,
-                             HTTP_REQUEST_ATTEMPTS)
             mock_util_download.reset_mock()
 
     @patch('hoss.utilities.move_downloaded_nc4')
@@ -259,50 +253,3 @@ class TestUtilities(TestCase):
 
         with self.subTest('Value = None returns the supplied default'):
             self.assertEqual(get_value_or_default(None, 20), 20)
-
-    def test_rgetattr(self):
-        """ Ensure that the recursive function can retrieve nested attributes
-            and uses the default argument when required.
-
-        """
-        class Child:
-            def __init__(self, name):
-                self.name = name
-
-        class Parent:
-            def __init__(self, name, child_name):
-                self.name = name
-                self.child = Child(child_name)
-                self.none = None
-
-        test_parent = Parent('parent_name', 'child_name')
-
-        with self.subTest('Parent level attribute'):
-            self.assertEqual(rgetattr(test_parent, 'name'), 'parent_name')
-
-        with self.subTest('Nested attribute'):
-            self.assertEqual(rgetattr(test_parent, 'child.name'), 'child_name')
-        with self.subTest('Missing parent with default'):
-            self.assertEqual(rgetattr(test_parent, 'absent', 'default'),
-                             'default')
-
-        with self.subTest('Missing child attribute with default'):
-            self.assertEqual(rgetattr(test_parent, 'child.absent', 'default'),
-                             'default')
-        with self.subTest('Child requested, parent missing, default'):
-            self.assertEqual(
-                rgetattr(test_parent, 'none.something', 'default'),
-                'default'
-            )
-
-        with self.subTest('Missing parent, with no default'):
-            with self.assertRaises(AttributeError):
-                rgetattr(test_parent, 'absent')
-
-        with self.subTest('Missing child, with no default'):
-            with self.assertRaises(AttributeError):
-                rgetattr(test_parent, 'child.absent')
-
-        with self.subTest('Child requested, parent missing, no default'):
-            with self.assertRaises(AttributeError):
-                rgetattr(test_parent, 'none.something')

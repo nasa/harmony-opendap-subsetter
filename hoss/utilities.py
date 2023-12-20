@@ -15,10 +15,7 @@ import mimetypes
 from harmony.exceptions import ForbiddenException, ServerException
 from harmony.util import Config, download as util_download
 
-from hoss.exceptions import UrlAccessFailed, UrlAccessFailedWithRetries
-
-
-HTTP_REQUEST_ATTEMPTS = 3
+from hoss.exceptions import UrlAccessFailed
 
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str], Optional[str]]:
@@ -90,12 +87,12 @@ def download_url(url: str, destination: str, logger: Logger,
                  access_token: str = None, config: Config = None,
                  data=None) -> str:
     """ Use built-in Harmony functionality to download from a URL. This is
-        expected to be used for obtaining the granule `.dmr` and the granule
-        itself (only the required variables).
+        expected to be used for obtaining the granule `.dmr`, a prefetch of
+        only dimensions and bounds variables, and the subsetted granule itself.
 
-        OPeNDAP can return intermittent 500 errors. This function will retry
-        the original request in the event of a 500 error, but not for other
-        error types. In those instances, the original HTTPError is re-raised.
+        OPeNDAP can return intermittent 500 errors. Retries will be performed
+        by inbuilt functionality in the `harmony-service-lib`. The OPeNDAP
+        errors are captured and re-raised as custom exceptions.
 
         The return value is the location in the file-store of the downloaded
         content from the URL.
@@ -106,32 +103,21 @@ def download_url(url: str, destination: str, logger: Logger,
     if data is not None:
         logger.info(f'POST request data: "{format_dictionary_string(data)}"')
 
-    request_completed = False
-    attempts = 0
-
-    while not request_completed and attempts < HTTP_REQUEST_ATTEMPTS:
-        attempts += 1
-
-        try:
-            response = util_download(
-                url,
-                destination,
-                logger,
-                access_token=access_token,
-                data=data,
-                cfg=config
-            )
-            request_completed = True
-        except ForbiddenException as harmony_exception:
-            raise UrlAccessFailed(url, 400) from harmony_exception
-        except ServerException as harmony_exception:
-            if attempts < HTTP_REQUEST_ATTEMPTS:
-                logger.info('500 error returned, retrying request.')
-            else:
-                raise UrlAccessFailedWithRetries(url) from harmony_exception
-        except Exception as harmony_exception:
-            # Not a 500 error, so raise immediately and exit the loop.
-            raise UrlAccessFailed(url, 'Unknown') from harmony_exception
+    try:
+        response = util_download(
+            url,
+            destination,
+            logger,
+            access_token=access_token,
+            data=data,
+            cfg=config
+        )
+    except ForbiddenException as harmony_exception:
+        raise UrlAccessFailed(url, 400) from harmony_exception
+    except ServerException as harmony_exception:
+        raise UrlAccessFailed(url, 500) from harmony_exception
+    except Exception as harmony_exception:
+        raise UrlAccessFailed(url, 'Unknown') from harmony_exception
 
     return response
 
@@ -159,22 +145,3 @@ def get_value_or_default(value: Optional[float], default: float) -> float:
 
     """
     return value if value is not None else default
-
-
-def rgetattr(input_object, requested_attribute, *args):
-    """ This is a recursive version of the inbuilt `getattr` method, such that
-        it can be called to retrieve nested attributes. For example:
-        the Message.subset.shape within the input Harmony message.
-
-        Note, if a default value is specified, this will be returned if any
-        attribute in the specified chain is absent from the supplied object.
-
-    """
-    if '.' not in requested_attribute:
-        result = getattr(input_object, requested_attribute, *args)
-    else:
-        attribute_pieces = requested_attribute.split('.')
-        result = rgetattr(getattr(input_object, attribute_pieces[0], *args),
-                          '.'.join(attribute_pieces[1:]), *args)
-
-    return result

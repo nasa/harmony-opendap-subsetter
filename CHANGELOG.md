@@ -1,3 +1,10 @@
+## v1.0.1
+### 2023-12-19
+
+This version of HOSS removes custom, redundant download retry logic. Instead
+retries are relied upon from `harmony-service-lib` and for each stage in a
+Harmony workflow.
+
 ## v1.0.0
 ### 2023-10-06
 

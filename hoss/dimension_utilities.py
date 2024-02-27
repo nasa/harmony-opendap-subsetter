@@ -75,16 +75,17 @@ def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
 
     logger.info('Variables being retrieved in prefetch request: '
                 f'{format_variable_set_string(required_dimensions)}')
-    
+
     required_dimensions_nc4 = get_opendap_nc4(opendap_url,
-                                              required_dimensions, output_dir,logger, access_token, config)
-    
-    # Create bounds variables if necessary. 
+                                              required_dimensions, output_dir,
+                                              logger, access_token, config)
+
+    # Create bounds variables if necessary.
     add_bounds_variables(required_dimensions_nc4, required_dimensions,
                          varinfo, logger)
-    
+
     return required_dimensions_nc4
-    
+
 
 def add_bounds_variables(dimensions_nc4: str,
                          required_dimensions: Set[str],
@@ -96,35 +97,36 @@ def add_bounds_variables(dimensions_nc4: str,
 
         For each dimension variable:
         (1) Check if the variable needs a bounds variable.
-        (2) If so, create a bounds array of minimum and maximum values.
+        (2) If so, create a bounds array from within the `write_bounds` function.
         (3) Then write the bounds variable to the NetCDF4 URL.
 
     """
-    with Dataset(dimensions_nc4, 'r+') as datasets:
+    with Dataset(dimensions_nc4, 'r+') as prefetch_dataset:
         for dimension_name in required_dimensions:
             dimension_variable = varinfo.get_variable(dimension_name)
             if needs_bounds(dimension_variable) is True:
-                min_and_max_bounds = create_bounds(datasets, dimension_name)
-                write_bounds(datasets, dimension_variable, min_and_max_bounds)
+                write_bounds(prefetch_dataset, dimension_variable)
 
                 logger.info('Artificial bounds added for dimension variable: '
                 f'{dimension_name}')
 
-        
+
 def needs_bounds(dimension: VariableFromDmr) -> bool:
     """ Check if a dimension variable needs a bounds variable.
         This will be the case when dimension cells are edge-aligned 
         and bounds for that dimension do not already exist.
     
     """
-    
-    return dimension.attributes['cell_alignment'] == 'edge' and dimension.references.get('bounds') == None
+    return (
+        dimension.attributes.get('cell_alignment') == 'edge'
+        and dimension.references.get('bounds') is None
+    )
 
 
-def create_bounds(dimension_dataset: Dataset,
-                  dimension_path: str) -> np.ndarray:
+def get_bounds_array(prefetch_dataset: Dataset,
+                     dimension_path: str) -> np.ndarray:
     """ Create an array containing the minimum and maximum bounds
-        for a given dimension. 
+        for each pixel in a given dimension. 
 
         The minimum and maximum values are determined under the assumption
         that the dimension data is monotonically increasing and contiguous.
@@ -147,29 +149,31 @@ def create_bounds(dimension_dataset: Dataset,
         
     """
     # Access the dimension variable's data using the variable's full path.
-    dimension_data = dimension_dataset[dimension_path][:]
+    dimension_array = prefetch_dataset[dimension_path][:]
 
-    # Determine the dimension's resolution by taking the median value 
-    # of the differences between each ascending data value.
-    dimension_array = np.array(dimension_data)
+    median_resolution = np.median(np.diff(dimension_array))
 
-    # Build array.
-    size = dimension_array.size
-    min_max_pairs = [[dimension_array[idx], 
-                      dimension_array[idx+1]] 
-                      for idx in range(0, size-1)]
+    # This array is the transpose of what is required, just for easier assignment
+    # of values (indices are [row, column]) during the bounds calculations:
+    cell_bounds = np.zeros(shape=(2, dimension_array.size), dtype=dimension_array.dtype)
 
-    # Calculate final values.
-    dim_resolution = np.median(np.diff(dimension_array))
-    min_max_pairs.append([dimension_array[size-1], 
-                          dimension_array[size-1] + dim_resolution])
+    # Minimum values are equal to the dimension pixel values (for lower left pixel alignment):
+    cell_bounds[0] = dimension_array[:]
 
-    return np.array(min_max_pairs)
+    # Maximum values are the next dimension pixel values (for lower left pixel alignment),
+    # so these values almost mirror the minimum values but start at the second pixel
+    # instead of the first. Here we calculate each bound except for the very last one.
+    cell_bounds[1][:-1] = dimension_array[1:]
+
+    # Last maximum value is the last pixel value (minimum) plus the median resolution:
+    cell_bounds[1][-1] = dimension_array[-1] + median_resolution
+
+    # Return transpose of array to get correct shape:
+    return cell_bounds.T
 
 
-def write_bounds(dimension_dataset: Dataset,
-                 dimension_variable: VariableFromDmr,
-                 min_and_max_bounds: np.ndarray) -> None:
+def write_bounds(prefetch_dataset: Dataset,
+                 dimension_variable: VariableFromDmr) -> None:
     """ Write the input bounds array to a given dimension dataset.
         
         First a new dimension is created for the new bounds variable
@@ -180,36 +184,39 @@ def write_bounds(dimension_dataset: Dataset,
         (2) the new bounds variable dimension.
     
     """
-    # Create the second bounds dimension.
-    dimension_full_name_path = dimension_variable.full_name_path
-    dimension_group = '/' + '/'.join(dimension_full_name_path.split('/')[1:-1])
-    dimension_name = dimension_full_name_path.split('/')[-1]
+    # Create the bounds array.
+    bounds_array = get_bounds_array(prefetch_dataset, 
+                                    dimension_variable.full_name_path)
 
-    # Consider the special case when the dimension group is the root directory. 
+    # Create the second bounds dimension.
+    dimension_group = '/' + '/'.join(dimension_variable.full_name_path.split('/')[1:-1])
+    dimension_name = dimension_variable.full_name_path.split('/')[-1]
+    bounds_dimension_name = dimension_name + 'v'
+    bounds_name = dimension_name + '_bnds'
+    bounds_full_path_name = dimension_variable.full_name_path + '_bnds'
+    
+    # Consider the special case when the dimension group is the root directory.
     # The dimension can't refer to the full path in the name itself, so we have
     # to create it with respect to the group we want to place it in.
     if dimension_group == '/':
-        bounds_dim = dimension_dataset.createDimension(dimension_name + '_bnds_dim', 2)
+        bounds_dim = prefetch_dataset.createDimension(bounds_dimension_name, 2)
     else:
-        bounds_dim = dimension_dataset[dimension_group].createDimension(dimension_name + '_bnds_dim', 2)
+        bounds_dim = prefetch_dataset[dimension_group].createDimension(bounds_dimension_name, 2)
 
     # Dimension variables only have one dimension - themselves.
-    variable_dimension = dimension_dataset[dimension_full_name_path].dimensions[0]
+    variable_dimension = prefetch_dataset[dimension_variable.full_name_path].dimensions[0]
 
     bounds_data_type = str(dimension_variable.data_type)
-    bounds = dimension_dataset.createVariable(dimension_full_name_path + '_bnds',
+    bounds = prefetch_dataset.createVariable(bounds_full_path_name,
                                               bounds_data_type,
                                               (variable_dimension,
                                                bounds_dim,))
-    # Write data to dataset file.
-    size = len(min_and_max_bounds)
-    for idx in range(0, size):
-        bounds[idx, 0] = (min_and_max_bounds[idx])[0]
-        bounds[idx, 1] = (min_and_max_bounds[idx])[1]
+    
+    # Write data to the new variable in the prefetch dataset.
+    bounds[:] = bounds_array[:]
 
     # Update varinfo attributes and references.
-    bounds_name = dimension_name + '_bnds'
-    dimension_dataset[dimension_full_name_path].setncatts({'bounds': bounds_name})
+    prefetch_dataset[dimension_variable.full_name_path].setncatts({'bounds': bounds_name})
     dimension_variable.references['bounds'] = {bounds_name,}
     dimension_variable.attributes['bounds'] = bounds_name
 

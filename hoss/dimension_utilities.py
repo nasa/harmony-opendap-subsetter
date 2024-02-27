@@ -19,7 +19,7 @@ import numpy as np
 from harmony.message import Message
 from harmony.message_utility import rgetattr
 from harmony.util import Config
-from varinfo import VarInfoFromDmr
+from varinfo import VarInfoFromDmr, VariableFromDmr
 
 from hoss.bbox_utilities import flatten_list
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
@@ -75,8 +75,143 @@ def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
 
     logger.info('Variables being retrieved in prefetch request: '
                 f'{format_variable_set_string(required_dimensions)}')
-    return get_opendap_nc4(opendap_url, required_dimensions, output_dir,
-                           logger, access_token, config)
+    
+    required_dimensions_nc4 = get_opendap_nc4(opendap_url,
+                                              required_dimensions, output_dir,logger, access_token, config)
+    
+    # Create bounds variables if necessary. 
+    add_bounds_variables(required_dimensions_nc4, required_dimensions,
+                         varinfo, logger)
+    
+    return required_dimensions_nc4
+    
+
+def add_bounds_variables(dimensions_nc4: str,
+                         required_dimensions: Set[str],
+                         varinfo: VarInfoFromDmr,
+                         logger: Logger) -> None:
+    """ Augment a NetCDF4 file with artificial bounds variables for each 
+        dimension variable that is edge-aligned and does not already 
+        have bounds variables. 
+
+        For each dimension variable:
+        (1) Check if the variable needs a bounds variable.
+        (2) If so, create a bounds array of minimum and maximum values.
+        (3) Then write the bounds variable to the NetCDF4 URL.
+
+    """
+    with Dataset(dimensions_nc4, 'r+') as datasets:
+        for dimension_name in required_dimensions:
+            dimension_variable = varinfo.get_variable(dimension_name)
+            if needs_bounds(dimension_variable) is True:
+                min_and_max_bounds = create_bounds(datasets, dimension_name)
+                write_bounds(datasets, dimension_variable, min_and_max_bounds)
+
+                logger.info('Artificial bounds added for dimension variable: '
+                f'{dimension_name}')
+
+        
+def needs_bounds(dimension: VariableFromDmr) -> bool:
+    """ Check if a dimension variable needs a bounds variable.
+        This will be the case when dimension cells are edge-aligned 
+        and bounds for that dimension do not already exist.
+    
+    """
+    
+    return dimension.attributes['cell_alignment'] == 'edge' and dimension.references.get('bounds') == None
+
+
+def create_bounds(dimension_dataset: Dataset,
+                  dimension_path: str) -> np.ndarray:
+    """ Create an array containing the minimum and maximum bounds
+        for a given dimension. 
+
+        The minimum and maximum values are determined under the assumption
+        that the dimension data is monotonically increasing and contiguous.
+        So for every bounds but the last, the bounds are simply extracted
+        from the dimension dataset.
+
+        The final bounds must be calculated with the assumption that 
+        the last data cell is edge-aligned and thus has a value the does
+        not account for the cell length. So, the final bound is determined
+        by taking the median of all the resolutions in the dataset to obtain
+        a resolution that can be added to the final data value. 
+
+        Ex: Input dataset with resolution of 3 degrees:  [ ... , 81, 84, 87]
+
+        Minimum | Maximum
+         <...>     <...>
+          81        84
+          84        87
+          87        ?  ->  87 + median resolution -> 87 + 3 -> 90
+        
+    """
+    # Access the dimension variable's data using the variable's full path.
+    dimension_data = dimension_dataset[dimension_path][:]
+
+    # Determine the dimension's resolution by taking the median value 
+    # of the differences between each ascending data value.
+    dimension_array = np.array(dimension_data)
+
+    # Build array.
+    size = dimension_array.size
+    min_max_pairs = [[dimension_array[idx], 
+                      dimension_array[idx+1]] 
+                      for idx in range(0, size-1)]
+
+    # Calculate final values.
+    dim_resolution = np.median(np.diff(dimension_array))
+    min_max_pairs.append([dimension_array[size-1], 
+                          dimension_array[size-1] + dim_resolution])
+
+    return np.array(min_max_pairs)
+
+
+def write_bounds(dimension_dataset: Dataset,
+                 dimension_variable: VariableFromDmr,
+                 min_and_max_bounds: np.ndarray) -> None:
+    """ Write the input bounds array to a given dimension dataset.
+        
+        First a new dimension is created for the new bounds variable
+        to allow the variable to be two-dimensional.
+        
+        Then the new bounds variable is created using two dimensions: 
+        (1) the existing dimension of the dimension dataset, and
+        (2) the new bounds variable dimension.
+    
+    """
+    # Create the second bounds dimension.
+    dimension_full_name_path = dimension_variable.full_name_path
+    dimension_group = '/' + '/'.join(dimension_full_name_path.split('/')[1:-1])
+    dimension_name = dimension_full_name_path.split('/')[-1]
+
+    # Consider the special case when the dimension group is the root directory. 
+    # The dimension can't refer to the full path in the name itself, so we have
+    # to create it with respect to the group we want to place it in.
+    if dimension_group == '/':
+        bounds_dim = dimension_dataset.createDimension(dimension_name + '_bnds_dim', 2)
+    else:
+        bounds_dim = dimension_dataset[dimension_group].createDimension(dimension_name + '_bnds_dim', 2)
+
+    # Dimension variables only have one dimension - themselves.
+    variable_dimension = dimension_dataset[dimension_full_name_path].dimensions[0]
+
+    bounds_data_type = str(dimension_variable.data_type)
+    bounds = dimension_dataset.createVariable(dimension_full_name_path + '_bnds',
+                                              bounds_data_type,
+                                              (variable_dimension,
+                                               bounds_dim,))
+    # Write data to dataset file.
+    size = len(min_and_max_bounds)
+    for idx in range(0, size):
+        bounds[idx, 0] = (min_and_max_bounds[idx])[0]
+        bounds[idx, 1] = (min_and_max_bounds[idx])[1]
+
+    # Update varinfo attributes and references.
+    bounds_name = dimension_name + '_bnds'
+    dimension_dataset[dimension_full_name_path].setncatts({'bounds': bounds_name})
+    dimension_variable.references['bounds'] = {bounds_name,}
+    dimension_variable.attributes['bounds'] = bounds_name
 
 
 def is_dimension_ascending(dimension: MaskedArray) -> bool:

@@ -248,6 +248,20 @@
     {
       "Applicability": {
         "Mission": "ICESat2",
+        "ShortNamePath": "ATL16",
+        "Variable_Pattern": ".*_grid_(lat|lon)"
+      },
+      "Attributes": [
+        {
+          "Name": "cell_alignment",
+          "Value": "edge"
+        }
+      ],
+      "_Description": "ATL16 has edge-aligned grid cells."
+    },
+    {
+      "Applicability": {
+        "Mission": "ICESat2",
         "ShortNamePath": "ATL20",
         "Variable_Pattern": "/daily/day\\d{2}/.+"
       },
@@ -357,6 +371,19 @@
         }
       ],
       "_Description": "Ensure the latitude and longitude dimension variables know their associated grid_mapping variable."
+    },
+    {
+      "Applicability": {
+        "Mission": "ICESat2",
+        "ShortNamePath": "ATL16",
+        "Variable_Pattern": "/spolar_(asr_obs_grid|lorate_blowing_snow_freq)"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "crs_latlon: spolar_grid_lat crs_latlon: spolar_grid_lon"
+        }
+      ]
     }
   ],
   "CF_Supplements": [

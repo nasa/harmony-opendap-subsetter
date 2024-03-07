@@ -370,16 +370,16 @@ class TestDimensionUtilities(TestCase):
         )
 
         with self.subTest('Variable has cell alignment and bounds'):
-            self.assertFalse(needs_bounds(varinfo_bounds.get_variable('/group1/group2/variable_edge_has_bnds')))
+            self.assertFalse(needs_bounds(varinfo_bounds.get_variable('/variable_edge_has_bnds')))
 
         with self.subTest('Variable has no cell alignment and has bounds'):
-            self.assertFalse(needs_bounds(varinfo_bounds.get_variable('/group1/group2/variable_no_edge_has_bnds')))
+            self.assertFalse(needs_bounds(varinfo_bounds.get_variable('/variable_no_edge_has_bnds')))
 
         with self.subTest('Variable has cell alignment and no bounds'):
-            self.assertTrue(needs_bounds(varinfo_bounds.get_variable('/group1/group2/variable_edge_no_bnds')))
+            self.assertTrue(needs_bounds(varinfo_bounds.get_variable('/variable_edge_no_bnds')))
 
         with self.subTest('Variable has no cell alignment and no bounds'):
-            self.assertFalse(needs_bounds(varinfo_bounds.get_variable('/group1/group2/variable_no_edge_no_bnds')))
+            self.assertFalse(needs_bounds(varinfo_bounds.get_variable('/variable_no_edge_no_bnds')))
 
 
     def test_get_bounds_array(self):

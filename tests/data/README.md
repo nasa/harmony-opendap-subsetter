@@ -113,6 +113,6 @@
     ATL16_prefetch_group.dmr file).<br><br>
 
 * ATL16_prefetch_bnds.dmr
-  - An example `.dmr` file that is identical to the `ATL16_prefetch.dmr` file
+  - An example `.dmr` file that is nearly identical to the `ATL16_prefetch.dmr` file
     except for four additional fabricated variables that represented the four
     possible cases of combining bounds variable existence and cell alignment.<br><br>

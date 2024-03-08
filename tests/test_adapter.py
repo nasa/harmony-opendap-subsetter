@@ -2072,7 +2072,6 @@ class TestHossEndToEnd(TestCase):
                                             expected_output_basename)
 
         # Ensure the expected requests were made against OPeNDAP.
-        # Q JSL - Why are there two of the same calls in a few of the test_adapter.py tests?
         self.assertEqual(mock_util_download.call_count,3)
         mock_util_download.assert_has_calls([
             call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,

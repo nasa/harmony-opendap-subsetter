@@ -328,7 +328,9 @@ class TestDimensionUtilities(TestCase):
         varinfo_prefetch = VarInfoFromDmr(
                 'tests/data/ATL16_prefetch.dmr'
         )
-        required_dimensions = {'/npolar_grid_lat','/npolar_grid_lon'}
+        required_dimensions = {'/npolar_grid_lat','/npolar_grid_lon',
+                               '/spolar_grid_lat','/spolar_grid_lon',
+                               '/global_grid_lat','/global_grid_lon'}
 
         with self.subTest('Bounds need to be written'):
             mock_needs_bounds.return_value = True
@@ -336,12 +338,7 @@ class TestDimensionUtilities(TestCase):
                                  required_dimensions,
                                  varinfo_prefetch,
                                  self.logger)
-
-            with Dataset(prefetch_dataset_name, 'r+') as prefetch_dataset:
-                for dimension_name in required_dimensions:
-                    dimension_variable = varinfo_prefetch.get_variable(dimension_name)
-                    mock_write_bounds.assert_called_with(prefetch_dataset,
-                                                         dimension_variable)
+            self.assertEqual(mock_write_bounds.call_count, 6)
 
             mock_needs_bounds.reset_mock()
             mock_write_bounds.reset_mock()

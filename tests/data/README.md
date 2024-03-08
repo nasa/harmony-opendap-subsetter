@@ -99,15 +99,16 @@
     down to only contain the six required dimension variables.<br><br>
 
 * ATL16_prefetch.nc4
-  - A sample output file that contains only the six required dimension variables for
-    the ATL16 collection.<br><br>
+  - A sample output file that contains the six required dimension variables and one
+    requested science variable in the ATL16 collection.<br><br>
 
 * ATL16_prefetch_group.dmr
   - An example `.dmr` file that is identical to the `ATL16_prefetch.dmr` file
-    except for an additional fabricated nested group variable, whereas all the variables in the  ATL16 collection are in the root directory.<br><br>
+    except for an additional fabricated nested group variable, whereas all the variables in the
+    ATL16 collection are in the root directory.<br><br>
 
 * ATL16_prefetch_group.nc4
-  - A sample output file that is identical to the `ATL16_prefetch.nc4` file except
+  - A sample output file that is nearly identical to the `ATL16_prefetch.nc4` file except
     for an additional fabricated nested group variable (the same one in the
     ATL16_prefetch_group.dmr file).<br><br>
 

@@ -186,6 +186,39 @@
             <Value>Y</Value>
         </Attribute>
     </Float64>
+    <Float32 name="global_asr_obs_grid">
+        <Dim name="/global_grid_lat"/>
+        <Dim name="/global_grid_lon"/>
+        <Attribute name="long_name" type="String">
+        <Value>
+        global apparent surface reflectance observation grid
+        </Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+        <Value>1</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+        <Value>
+        L3B ATM ATBD, Section 3.9, Table 4., Section 5.0, Table 5.
+        </Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+        <Value>modelResult</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+        <Value>
+        The global apparent surface reflectance (ASR) observation count two-dimensional gridded parameter. The number of observations used to compute the average global apparent surface reflectance (ASR). Only surface signal detected ASR 25 Hz (high-rate profile) observations (apparent_surf_reflec () > 0.0) in each grid cell are used to compute the cell global ASR (global_asr (i,j)). Grid array organization: global_asr_obs_grid (i,j), where i=longitude index, j=latitude index, as per ATBD Section 2.0. Given the weekly global_grid_lon_scale = 3.0 degrees and the global_grid_lat_scale = 3.0 degrees, the weekly global gridded array dimension is: global_asr_obs_grid (120,60), type: floating point . Reference: global_asr_obs_grid (1,1) = (-180.0 degrees longitude, -90.0 degrees latitude), representing the lower left corner of the gridded parameter cell in the global projection array. The global observation counts are applicable to the atmosphere gridded parameter: global_asr (i,j).
+        </Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+        <Value>global_grid_lat global_grid_lon</Value>
+        </Attribute>
+        <Attribute name="grid_mapping" type="String">
+        <Value>
+        crs_latlon: global_grid_lat crs_latlon: global_grid_lon
+        </Value>
+        </Attribute>
+    </Float32>
     <Attribute name="short_name" type="String">
         <Value>ATL16</Value>
     </Attribute>

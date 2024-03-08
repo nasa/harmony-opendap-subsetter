@@ -12,10 +12,10 @@
 from logging import Logger
 from typing import Dict, Set, Tuple
 
+from pathlib import PurePosixPath
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 import numpy as np
-from pathlib import PurePosixPath
 
 from harmony.message import Message
 from harmony.message_utility import rgetattr
@@ -109,7 +109,7 @@ def add_bounds_variables(dimensions_nc4: str,
                 write_bounds(prefetch_dataset, dimension_variable)
 
                 logger.info('Artificial bounds added for dimension variable: '
-                f'{dimension_name}')
+                            f'{dimension_name}')
 
 
 def needs_bounds(dimension: VariableFromDmr) -> bool:
@@ -208,16 +208,16 @@ def write_bounds(prefetch_dataset: Dataset,
 
     bounds_data_type = str(dimension_variable.data_type)
     bounds = prefetch_dataset.createVariable(bounds_full_path_name,
-                                              bounds_data_type,
-                                              (variable_dimension,
-                                               bounds_dim,))
+                                             bounds_data_type,
+                                             (variable_dimension,
+                                              bounds_dim,))
 
     # Write data to the new variable in the prefetch dataset.
     bounds[:] = bounds_array[:]
 
     # Update varinfo attributes and references.
     prefetch_dataset[dimension_variable.full_name_path].setncatts({'bounds': bounds_name})
-    dimension_variable.references['bounds'] = {bounds_name,}
+    dimension_variable.references['bounds'] = {bounds_name, }
     dimension_variable.attributes['bounds'] = bounds_name
 
 

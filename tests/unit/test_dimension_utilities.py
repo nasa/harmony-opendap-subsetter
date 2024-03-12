@@ -231,8 +231,7 @@ class TestDimensionUtilities(TestCase):
 
     def test_add_index_range(self):
         """ Ensure the correct combinations of index ranges are added as
-            suffixes to the input variable based upon that variable'scd
-            dimensions.
+            suffixes to the input variable based upon that variable's dimensions.
 
             If a dimension range has the lower index > upper index, that
             indicates the bounding box crosses the edge of the grid. In this
@@ -387,7 +386,7 @@ class TestDimensionUtilities(TestCase):
         prefetch_dataset = Dataset('tests/data/ATL16_prefetch.nc4', 'r')
         dimension_path = '/npolar_grid_lat'
 
-        bounds_array = np.array([[90.0, 89.0], [89.0, 88.0], [88.0, 87.0], [87.0, 86.0],
+        expected_bounds_array = np.array([[90.0, 89.0], [89.0, 88.0], [88.0, 87.0], [87.0, 86.0],
                                  [86.0, 85.0], [85.0, 84.0], [84.0, 83.0], [83.0, 82.0],
                                  [82.0, 81.0], [81.0, 80.0], [80.0, 79.0], [79.0, 78.0],
                                  [78.0, 77.0], [77.0, 76.0], [76.0, 75.0], [75.0, 74.0],
@@ -397,7 +396,7 @@ class TestDimensionUtilities(TestCase):
                                  [62.0, 61.0], [61.0, 60.0]])
 
         assert_array_equal(get_bounds_array(prefetch_dataset, dimension_path),
-                         bounds_array)
+                         expected_bounds_array)
 
 
     def test_write_bounds(self):

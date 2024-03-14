@@ -2094,12 +2094,14 @@ class TestHossEndToEnd(TestCase):
         # Ensure the constraint expression contains all the required variables.
         # The latitude and longitude index ranges here depend on whether
         # the cells have centre-alignment or edge-alignment.
-        #    - Expected index range for latitude: [53:54] for values (69,72).
-        #    - Expected index range for longitude: [85:89] for values (75,78,81,81,87)
-        #    - Expected index range for science variable: [53:54][85:89]
-        # If centre-alignment was incorrectly assumed:
-        #    - Incorrect ranges off by one: [54:55]
-        #    - Incorrect ranges off by one: [86:89]
+        # Previously, the incorrect index ranges assuming centre-alignment:
+        #   latitude [54:55] with values (72,75)
+        #   longitude [86:89] with values (78,81,84,87)
+        #
+        # Now, the correct index ranges with edge-alignment:
+        #   latitude: [53:54] for values (69,72).
+        #   longitude:[85:89] for values (75,78,81,84,87)
+        #
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,

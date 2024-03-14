@@ -427,12 +427,14 @@ class TestDimensionUtilities(TestCase):
 
             write_bounds(prefetch_dataset, root_varinfo_variable)
 
+            # Check that bounds variable was written to the root group.
+            self.assertTrue(prefetch_dataset.variables[root_bounds_name])
+
             resulting_bounds_root_data = prefetch_dataset.variables[
                 root_bounds_name][:]
+
             assert_array_equal(resulting_bounds_root_data,
                                expected_bounds_data)
-            # Check that bounds variable exists in the root group.
-            self.assertTrue(prefetch_dataset.variables[root_variable_name])
             # Check that bounds variable has expected attributes.
             # (This is only the 'bounds' attribute, since other attributes
             # are not required.)
@@ -440,9 +442,13 @@ class TestDimensionUtilities(TestCase):
                 root_variable_full_path)
             self.assertEqual(root_bounds_varinfo_variable.attributes['bounds'],
                              root_bounds_name)
-            # Check that dimension variable has 'bounds' attribute.
+            # Check that varinfo variable has 'bounds' attribute.
             self.assertEqual(root_varinfo_variable.attributes['bounds'],
                              root_bounds_name)
+            # Check that NetCDF4 dimension variable has 'bounds' attribute.
+            self.assertEqual(prefetch_dataset.variables[
+                root_variable_name].__dict__.get('bounds'),
+                root_bounds_name)
             # Check that VariableFromDmr has 'bounds' reference in
             # the references dictionary.
             self.assertEqual(root_varinfo_variable.references['bounds'],
@@ -453,17 +459,19 @@ class TestDimensionUtilities(TestCase):
             nested_varinfo_variable = varinfo_prefetch.get_variable(
                 nested_variable_full_path)
             nested_variable_name = 'zelda'
-            nested_variable_path = '/group1/group2'
-            nested_group = prefetch_dataset[nested_variable_path]
+            nested_group_path = '/group1/group2'
+            nested_group = prefetch_dataset[nested_group_path]
             nested_bounds_name = nested_variable_name + '_bnds'
 
             write_bounds(prefetch_dataset, nested_varinfo_variable)
+
+            # Check that bounds variable exists in the nested group.
+            self.assertTrue(nested_group.variables[nested_bounds_name])
+
             resulting_bounds_nested_data = nested_group.variables[
                 nested_bounds_name][:]
             assert_array_equal(resulting_bounds_nested_data,
                                expected_bounds_data)
-            # Check that bounds variable exists in the nested group.
-            self.assertTrue(nested_group.variables[nested_bounds_name])
             # Check that bounds variable has expected attributes.
             # (This is only the 'bounds' attribute, since other attributes
             # are not required.)
@@ -471,9 +479,13 @@ class TestDimensionUtilities(TestCase):
                 nested_variable_full_path)
             self.assertEqual(nested_bounds_varinfo_variable.attributes['bounds'],
                              nested_bounds_name)
-            # Check that dimension variable has 'bounds' attribute.
+            # Check that varinfo variable has 'bounds' attribute.
             self.assertEqual(nested_varinfo_variable.attributes['bounds'],
                              nested_bounds_name)
+            # Check that NetCDF4 dimension variable has 'bounds' attribute.
+            self.assertEqual(nested_group.variables[
+                nested_variable_name].__dict__.get('bounds'),
+                nested_bounds_name)
             # Check that VariableFromDmr 'has bounds' reference in
             # the references dictionary.
             self.assertEqual(nested_varinfo_variable.references['bounds'],

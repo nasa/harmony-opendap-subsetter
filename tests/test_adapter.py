@@ -32,6 +32,7 @@ class TestHossEndToEnd(TestCase):
         cls.atl03_variable = '/gt1r/geophys_corr/geoid'
         cls.gpm_variable = '/Grid/precipitationCal'
         cls.rssmif16d_variable = '/wind_speed'
+        cls.atl16_variable = '/global_asr_obs_grid'
         cls.staging_location = 's3://example-bucket/'
 
         with open('tests/data/ATL03_example.dmr', 'r') as file_handler:
@@ -45,6 +46,9 @@ class TestHossEndToEnd(TestCase):
 
         with open('tests/data/GPM_3IMERGHH_example.dmr', 'r') as file_handler:
             cls.gpm_imerghh_dmr = file_handler.read()
+
+        with open('tests/data/ATL16_prefetch.dmr', 'r') as file_handler:
+            cls.atl16_dmr = file_handler.read()
 
     def setUp(self):
         """ Have to mock mkdtemp, to know where to put mock .dmr content. """
@@ -84,7 +88,7 @@ class TestHossEndToEnd(TestCase):
         self.assertListEqual(list(items[0].assets.keys()), ['data'])
         self.assertDictEqual(
             items[0].assets['data'].to_dict(),
-            {'href':  expected_href,
+            {'href': expected_href,
              'title': expected_title,
              'type': 'application/x-netcdf4',
              'roles': ['data']}
@@ -2008,3 +2012,112 @@ class TestHossEndToEnd(TestCase):
 
         mock_stage.assert_not_called()
         mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+    @patch('hoss.dimension_utilities.get_fill_slice')
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
+    def test_edge_aligned_no_bounds_end_to_end(self, mock_stage,
+                                               mock_util_download,
+                                               mock_rmtree, mock_mkdtemp,
+                                               mock_uuid,
+                                               mock_get_fill_slice):
+        """ Ensure a request for a collection that contains dimension variables
+            with edge-aligned grid cells is correctly processed regardless of
+            whether or not a bounds variable associated with that dimension
+            variable exists.
+
+        """
+        expected_output_basename = 'opendap_url_global_asr_obs_grid_subsetted.nc4'
+        expected_staged_url = f'{self.staging_location}{expected_output_basename}'
+
+        mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
+        mock_mkdtemp.return_value = self.tmp_dir
+        mock_stage.return_value = expected_staged_url
+
+        dmr_path = write_dmr(self.tmp_dir, self.atl16_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/ATL16_prefetch.nc4', dimensions_path)
+
+        all_variables_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/ATL16_variables.nc4', all_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path,
+                                          all_variables_path]
+
+        message = Message({
+            'accessToken': 'fake-token',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'collection': 'C1238589498-EEDTEST',
+                'shortName': 'ATL16',
+                'variables': [{'id': '',
+                               'name': self.atl16_variable,
+                               'fullPath': self.atl16_variable}]}],
+            'stagingLocation': self.staging_location,
+            'subset': {'bbox': [77, 71.25, 88, 74.75]},
+            'user': 'sride',
+        })
+
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
+        _, output_catalog = hoss.invoke()
+
+        # Ensure that there is a single item in the output catalog with the
+        # expected asset:
+        self.assert_expected_output_catalog(output_catalog,
+                                            expected_staged_url,
+                                            expected_output_basename)
+
+        # Ensure the expected requests were made against OPeNDAP.
+        self.assertEqual(mock_util_download.call_count, 3)
+        mock_util_download.assert_has_calls([
+            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
+        ])
+
+        # Ensure the constraint expression for dimensions data included only
+        # dimension variables and their associated bounds variables.
+        dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+        self.assert_valid_request_data(
+            dimensions_data,
+            {'%2Fglobal_grid_lat',
+             '%2Fglobal_grid_lon'}
+        )
+
+        # Ensure the constraint expression contains all the required variables.
+        # The latitude and longitude index ranges here depend on whether
+        # the cells have centre-alignment or edge-alignment.
+        # Previously, the incorrect index ranges assuming centre-alignment:
+        #   latitude [54:55] with values (72,75)
+        #   longitude [86:89] with values (78,81,84,87)
+        #
+        # Now, the correct index ranges with edge-alignment:
+        #   latitude: [53:54] for values (69,72).
+        #   longitude:[85:89] for values (75,78,81,84,87)
+        #
+        index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
+        self.assert_valid_request_data(
+            index_range_data,
+            {'%2Fglobal_asr_obs_grid%5B53%3A54%5D%5B85%3A89%5D',
+             '%2Fglobal_grid_lat%5B53%3A54%5D',
+             '%2Fglobal_grid_lon%5B85%3A89%5D'}
+        )
+
+        # Ensure the output was staged with the expected file name
+        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
+                                           expected_output_basename,
+                                           'application/x-netcdf4',
+                                           location=self.staging_location,
+                                           logger=hoss.logger)
+
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()

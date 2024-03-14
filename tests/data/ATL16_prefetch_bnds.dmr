@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="https://opendap.uat.earthdata.nasa.gov/collections/C1238589498-EEDTEST/granules/SC:ATL16.004:239400340" dapVersion="4.0" dmrVersion="1.0" name="ATL16_20200322001831_13180601_004_01.h5">
+    <Dimension name="generic_dim" size="42"/>
+    <Dimension name="npolar_grid_lat" size="30"/>
+    <Dimension name="npolar_grid_lon" size="120"/>
+    <Dimension name="spolar_grid_lat" size="30"/>
+    <Dimension name="spolar_grid_lon" size="120"/>
+    <Dimension name="global_grid_lat" size="60"/>
+    <Dimension name="global_grid_lon" size="120"/>
+    <Float64 name="npolar_grid_lon">
+        <Dim name="/npolar_grid_lon"/>
+        <Attribute name="long_name" type="String">
+            <Value>north polar grid longitude</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>longitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_east</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float64">
+            <Value>-180.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float64">
+            <Value>180.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The north polar grid longitude one-dimensional array parameter, with the longitudes applicable to each north polar grid cell. ATL09 ATM histogram top longitude (longitude ()) derived from the ATM range window geolocation. Based on WGS84 Earth-centered, Earth-fixed terrestrial reference system and geodetic data. Direction: East=+ values. Range of longitude values: -180.0 to +180.0 degrees, with a step size of polar_grid_lon_scale. Grid array organization: npolar_grid_lon (i), where i=longitude index, as per ATBD Section 2.0. Given weekly polar_grid_lon_scale = 3.0 degrees, the weekly array dimension is: npolar_grid_lon (120), type: double precision. Comprises the x-grid axis for north polar gridded parameters. Reference: npolar_grid_lon (1) = -180.0 degrees, at the upper left corner of a north polar gridded parameter cell location (i,j) = (1,1).</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>X</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="spolar_grid_lat">
+        <Dim name="/spolar_grid_lat"/>
+        <Attribute name="long_name" type="String">
+            <Value>south polar grid latitude</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>latitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_north</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float64">
+            <Value>-90.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float64">
+            <Value>-60.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The south polar grid latitude one-dimensional array parameter, with the latitudes applicable to each south polar grid cell. ATL09 ATM histogram top latitude (latitude ()) derived from the ATM range window geolocation. Based on WGS84 Earth-centered, Earth-fixed terrestrial reference system and geodetic data. Direction: South=- values. Range of latitude values: -90.0 up to -60.0 degrees, with a step size of polar_grid_lat_scale. Grid array organization: spolar_grid_lat (j), where j=latitude index, as per ATBD Section 2.0. Given weekly polar_grid_lat_scale = 1.0 degrees, the weekly array dimension is: spolar_grid_lat (30), type: double precision. Comprises the y-grid axis for south polar gridded parameters. Reference: spolar_grid_lat (1) = -90.0 degrees, at the lower left corner of a south polar gridded parameter cell location (i,j) = (1,1).</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>Y</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="global_grid_lon">
+        <Dim name="/global_grid_lon"/>
+        <Attribute name="long_name" type="String">
+            <Value>global grid longitude</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>longitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_east</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float64">
+            <Value>-180.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float64">
+            <Value>180.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The global grid longitude one-dimensional array parameter, with the longitudes applicable to each global grid cell. The ATL09 ATM histogram top longitude (longitude()) derived from the ATM range window geolocation. Based on WGS84 Earth-centered, Earth-fixed terrestrial reference system and geodetic data. Direction: East=+ values. Range of longitude values: -180.0 to +180.0 degrees, with a step size of global_grid_lon_scale. Grid array organization: global_grid_lon (i), where i=longitude index, as per ATBD Section 2.0. Given weekly global_grid_lon_scale = 3.0 degrees, array dimension: global_grid_lon (120), type: double precision. Comprises the x-grid axis for global gridded parameters. Reference: global_grid_lon (1) = -180.0 degrees, at the lower left corner of a global gridded parameter cell location (i,j) = (1,1).</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>X</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="global_grid_lat">
+        <Dim name="/global_grid_lat"/>
+        <Attribute name="long_name" type="String">
+            <Value>global grid latitude</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>latitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_north</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float64">
+            <Value>-90.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float64">
+            <Value>90.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The global grid latitude one-dimensional array parameter, with the latitudes applicable to each global grid cell. ATL09 ATM histogram top latitude (latitude ()) derived from the ATM range window geolocation. Based on WGS84 Earth-centered, Earth-fixed terrestrial reference system and geodetic data. Direction: North=+ values. Range of latitude values: -90.0 to +90.0 degrees, with a step size of global_grid_lat_scale. Grid array organization: global_grid_lat (j), where j=latitude index, as per ATBD Section 2.0. Given weekly global_grid_lat_scale = 3.0 degrees, array dimension: global_grid_lat (60), type: double precision. Comprises the y-grid axis for global gridded parameters. Reference: global_grid_lat (1) = -90.0 degrees, at the lower left corner of a global gridded parameter cell location (i,j) = (1,1).</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>Y</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="spolar_grid_lon">
+        <Dim name="/spolar_grid_lon"/>
+        <Attribute name="long_name" type="String">
+            <Value>south polar grid longitude</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>longitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_east</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float64">
+            <Value>-180.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float64">
+            <Value>180.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The south polar grid longitude one-dimensional array parameter, with the longitudes applicable to each south polar grid cell. ATL09 ATM histogram top longitude (longitude ()) derived from the ATM range window geolocation. Based on WGS84 Earth-centered, Earth-fixed terrestrial reference system and geodetic data. Direction: East=+ values. Range of longitude values: -180.0 to +180.0 degrees, with a step size of polar_grid_lon_scale. Grid array organization: spolar_grid_lon (i), where i=longitude index, as per ATBD Section 2.0. Given weekly polar_grid_lon_scale = 3.0 degrees, the weekly array dimension is: spolar_grid_lon (120), type: double precision. Comprises the x-grid axis for south polar gridded parameters. Reference: spolar_grid_lon (1) = -180.0 degrees, at the lower left corner of a south polar gridded parameter cell location (i,j) = (1,1).</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>X</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="npolar_grid_lat">
+        <Dim name="/npolar_grid_lat"/>
+        <Attribute name="long_name" type="String">
+            <Value>north polar grid latitude</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>latitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_north</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float64">
+            <Value>60.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float64">
+            <Value>90.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The north polar grid latitude one-dimensional array parameter, with the latitudes applicable to each north polar grid cell. ATL09 ATM histogram top latitude (latitude ()) derived from the ATM range window geolocation. Based on WGS84 Earth-centered, Earth-fixed terrestrial reference system and geodetic data. Direction: North=+ values. Range of latitude values: +90.0 down to +60.0 degrees, with a step size of polar_grid_lat_scale. Grid array organization: npolar_grid_lat (j), where j=latitude index, as per ATBD Section 2.0. Given weekly polar_grid_lat_scale = 1.0 degrees, the weekly array dimension is: npolar_grid_lat (30), type: double precision. Comprises the y-grid axis for north polar gridded parameters. Reference: npolar_grid_lat (1) = +90.0 degrees, at the upper left corner of a north polar gridded parameter cell location (i,j) = (1,1).</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>Y</Value>
+        </Attribute>
+    </Float64>
+        <Float64 name="bnds_var">
+        <Dim name="/generic_dim"/>
+    </Float64>
+    <Float64 name="variable_edge_has_bnds">
+        <Dim name="/generic_dim"/>
+        <Attribute name="bounds" type="String">
+            <Value>bnds_variable</Value>
+        </Attribute>
+        <Attribute name="cell_alignment" type="String">
+            <Value>edge</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="variable_no_edge_has_bnds">
+        <Dim name="/generic_dim"/>
+        <Attribute name="bounds" type="String">
+            <Value>bnds_variable</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="variable_edge_no_bnds">
+        <Dim name="/generic_dim"/>
+        <Attribute name="cell_alignment" type="String">
+            <Value>edge</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="variable_no_edge_no_bnds">
+        <Dim name="/generic_dim"/>
+    </Float64>
+    <Attribute name="short_name" type="String">
+        <Value>ATL16</Value>
+    </Attribute>
+</Dataset>

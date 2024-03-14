@@ -7,6 +7,7 @@ from unittest.mock import ANY, patch
 
 from harmony.util import config
 from harmony.message import Message
+from pathlib import PurePosixPath
 from netCDF4 import Dataset
 from numpy.ma import masked_array
 from numpy.testing import assert_array_equal
@@ -22,7 +23,11 @@ from hoss.dimension_utilities import (add_index_range, get_dimension_bounds,
                                       get_requested_index_ranges,
                                       is_almost_in, is_dimension_ascending,
                                       is_index_subset,
-                                      prefetch_dimension_variables)
+                                      prefetch_dimension_variables,
+                                      add_bounds_variables,
+                                      needs_bounds,
+                                      get_bounds_array,
+                                      write_bounds)
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
 
 
@@ -45,6 +50,16 @@ class TestDimensionUtilities(TestCase):
         cls.varinfo_with_bounds = VarInfoFromDmr(
             'tests/data/GPM_3IMERGHH_example.dmr'
         )
+        cls.bounds_array = np.array([
+            [90.0, 89.0], [89.0, 88.0], [88.0, 87.0], [87.0, 86.0],
+            [86.0, 85.0], [85.0, 84.0], [84.0, 83.0], [83.0, 82.0],
+            [82.0, 81.0], [81.0, 80.0], [80.0, 79.0], [79.0, 78.0],
+            [78.0, 77.0], [77.0, 76.0], [76.0, 75.0], [75.0, 74.0],
+            [74.0, 73.0], [73.0, 72.0], [72.0, 71.0], [71.0, 70.0],
+            [70.0, 69.0], [69.0, 68.0], [68.0, 67.0], [67.0, 66.0],
+            [66.0, 65.0], [65.0, 64.0], [64.0, 63.0], [63.0, 62.0],
+            [62.0, 61.0], [61.0, 60.0]
+        ])
 
     def setUp(self):
         """ Create fixtures that should be unique per test. """
@@ -225,8 +240,7 @@ class TestDimensionUtilities(TestCase):
 
     def test_add_index_range(self):
         """ Ensure the correct combinations of index ranges are added as
-            suffixes to the input variable based upon that variable's
-            dimensions.
+            suffixes to the input variable based upon that variable's dimensions.
 
             If a dimension range has the lower index > upper index, that
             indicates the bounding box crosses the edge of the grid. In this
@@ -272,8 +286,10 @@ class TestDimensionUtilities(TestCase):
                 slice(16, 200)
             )
 
+    @patch('hoss.dimension_utilities.add_bounds_variables')
     @patch('hoss.dimension_utilities.get_opendap_nc4')
-    def test_prefetch_dimension_variables(self, mock_get_opendap_nc4):
+    def test_prefetch_dimension_variables(self, mock_get_opendap_nc4,
+                                          mock_add_bounds_variables):
         """ Ensure that when a list of required variables is specified, a
             request to OPeNDAP will be sent requesting only those that are
             grid-dimension variables (both spatial and temporal).
@@ -303,6 +319,163 @@ class TestDimensionUtilities(TestCase):
         mock_get_opendap_nc4.assert_called_once_with(url, required_dimensions,
                                                      output_dir, self.logger,
                                                      access_token, self.config)
+
+        mock_add_bounds_variables.assert_called_once_with(prefetch_path,
+                                                          required_dimensions,
+                                                          self.varinfo, self.logger)
+
+    @patch('hoss.dimension_utilities.needs_bounds')
+    @patch('hoss.dimension_utilities.write_bounds')
+    def test_add_bounds_variables(self, mock_write_bounds, mock_needs_bounds):
+        """ Ensure that `write_bounds` is called when it's needed,
+            and that it's not called when it's not needed.
+
+        """
+        prefetch_dataset_name = 'tests/data/ATL16_prefetch.nc4'
+        varinfo_prefetch = VarInfoFromDmr(
+            'tests/data/ATL16_prefetch.dmr'
+        )
+        required_dimensions = {'/npolar_grid_lat', '/npolar_grid_lon',
+                               '/spolar_grid_lat', '/spolar_grid_lon',
+                               '/global_grid_lat', '/global_grid_lon'}
+
+        with self.subTest('Bounds need to be written'):
+            mock_needs_bounds.return_value = True
+            add_bounds_variables(prefetch_dataset_name,
+                                 required_dimensions,
+                                 varinfo_prefetch,
+                                 self.logger)
+            self.assertEqual(mock_write_bounds.call_count, 6)
+
+            mock_needs_bounds.reset_mock()
+            mock_write_bounds.reset_mock()
+
+        with self.subTest('Bounds should not be written'):
+            mock_needs_bounds.return_value = False
+            add_bounds_variables(prefetch_dataset_name,
+                                 required_dimensions,
+                                 varinfo_prefetch,
+                                 self.logger)
+            mock_write_bounds.assert_not_called()
+
+    def test_needs_bounds(self):
+        """ Ensure that the correct boolean value is returned for four
+            different cases:
+
+            1) False - cell_alignment[edge] attribute exists and
+                       bounds variable already exists.
+            2) False - cell_alignment[edge] attribute does not exist and
+                       bounds variable already exists.
+            3) True  - cell_alignment[edge] attribute exists and
+                       bounds variable does not exist.
+            4) False - cell_alignment[edge] attribute does not exist and
+                       bounds variable does not exist.
+
+        """
+        varinfo_bounds = VarInfoFromDmr(
+            'tests/data/ATL16_prefetch_bnds.dmr'
+        )
+
+        with self.subTest('Variable has cell alignment and bounds'):
+            self.assertFalse(needs_bounds(varinfo_bounds.get_variable(
+                '/variable_edge_has_bnds')))
+
+        with self.subTest('Variable has no cell alignment and has bounds'):
+            self.assertFalse(needs_bounds(varinfo_bounds.get_variable(
+                '/variable_no_edge_has_bnds')))
+
+        with self.subTest('Variable has cell alignment and no bounds'):
+            self.assertTrue(needs_bounds(varinfo_bounds.get_variable(
+                '/variable_edge_no_bnds')))
+
+        with self.subTest('Variable has no cell alignment and no bounds'):
+            self.assertFalse(needs_bounds(varinfo_bounds.get_variable(
+                '/variable_no_edge_no_bnds')))
+
+    def test_get_bounds_array(self):
+        """ Ensure that the expected bounds array is created given
+            the input dimension variable values.
+
+        """
+        prefetch_dataset = Dataset('tests/data/ATL16_prefetch.nc4', 'r')
+        dimension_path = '/npolar_grid_lat'
+
+        expected_bounds_array = self.bounds_array
+
+        assert_array_equal(get_bounds_array(prefetch_dataset,
+                                            dimension_path),
+                           expected_bounds_array)
+
+    def test_write_bounds(self):
+        """ Ensure that bounds data array is written to the dimension
+            dataset, both when the dimension variable is in the root group
+            and in a nested group.
+
+        """
+        varinfo_prefetch = VarInfoFromDmr('tests/data/ATL16_prefetch_group.dmr')
+        prefetch_dataset = Dataset('tests/data/ATL16_prefetch_group.nc4', 'r+')
+
+        # Expected variable contents in file.
+        expected_bounds_data = self.bounds_array
+
+        with self.subTest('Dimension variable is in the root group'):
+            root_variable_full_path = '/npolar_grid_lat'
+            root_varinfo_variable = varinfo_prefetch.get_variable(
+                root_variable_full_path)
+            root_variable_name = 'npolar_grid_lat'
+            root_bounds_name = root_variable_name + '_bnds'
+
+            write_bounds(prefetch_dataset, root_varinfo_variable)
+
+            # Check that bounds variable was written to the root group.
+            self.assertTrue(prefetch_dataset.variables[root_bounds_name])
+
+            resulting_bounds_root_data = prefetch_dataset.variables[
+                root_bounds_name][:]
+
+            assert_array_equal(resulting_bounds_root_data,
+                               expected_bounds_data)
+            # Check that varinfo variable has 'bounds' attribute.
+            self.assertEqual(root_varinfo_variable.attributes['bounds'],
+                             root_bounds_name)
+            # Check that NetCDF4 dimension variable has 'bounds' attribute.
+            self.assertEqual(prefetch_dataset.variables[
+                root_variable_name].__dict__.get('bounds'),
+                root_bounds_name)
+            # Check that VariableFromDmr has 'bounds' reference in
+            # the references dictionary.
+            self.assertEqual(root_varinfo_variable.references['bounds'],
+                             {root_bounds_name, })
+
+        with self.subTest('Dimension variable is in a nested group'):
+            nested_variable_full_path = '/group1/group2/zelda'
+            nested_varinfo_variable = varinfo_prefetch.get_variable(
+                nested_variable_full_path)
+            nested_variable_name = 'zelda'
+            nested_group_path = '/group1/group2'
+            nested_group = prefetch_dataset[nested_group_path]
+            nested_bounds_name = nested_variable_name + '_bnds'
+
+            write_bounds(prefetch_dataset, nested_varinfo_variable)
+
+            # Check that bounds variable exists in the nested group.
+            self.assertTrue(nested_group.variables[nested_bounds_name])
+
+            resulting_bounds_nested_data = nested_group.variables[
+                nested_bounds_name][:]
+            assert_array_equal(resulting_bounds_nested_data,
+                               expected_bounds_data)
+            # Check that varinfo variable has 'bounds' attribute.
+            self.assertEqual(nested_varinfo_variable.attributes['bounds'],
+                             nested_bounds_name)
+            # Check that NetCDF4 dimension variable has 'bounds' attribute.
+            self.assertEqual(nested_group.variables[
+                nested_variable_name].__dict__.get('bounds'),
+                nested_bounds_name)
+            # Check that VariableFromDmr 'has bounds' reference in
+            # the references dictionary.
+            self.assertEqual(nested_varinfo_variable.references['bounds'],
+                             {nested_bounds_name, })
 
     @patch('hoss.dimension_utilities.get_opendap_nc4')
     def test_prefetch_dimensions_with_bounds(self, mock_get_opendap_nc4):

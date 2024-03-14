@@ -435,13 +435,6 @@ class TestDimensionUtilities(TestCase):
 
             assert_array_equal(resulting_bounds_root_data,
                                expected_bounds_data)
-            # Check that bounds variable has expected attributes.
-            # (This is only the 'bounds' attribute, since other attributes
-            # are not required.)
-            root_bounds_varinfo_variable = varinfo_prefetch.get_variable(
-                root_variable_full_path)
-            self.assertEqual(root_bounds_varinfo_variable.attributes['bounds'],
-                             root_bounds_name)
             # Check that varinfo variable has 'bounds' attribute.
             self.assertEqual(root_varinfo_variable.attributes['bounds'],
                              root_bounds_name)
@@ -472,13 +465,6 @@ class TestDimensionUtilities(TestCase):
                 nested_bounds_name][:]
             assert_array_equal(resulting_bounds_nested_data,
                                expected_bounds_data)
-            # Check that bounds variable has expected attributes.
-            # (This is only the 'bounds' attribute, since other attributes
-            # are not required.)
-            nested_bounds_varinfo_variable = varinfo_prefetch.get_variable(
-                nested_variable_full_path)
-            self.assertEqual(nested_bounds_varinfo_variable.attributes['bounds'],
-                             nested_bounds_name)
             # Check that varinfo variable has 'bounds' attribute.
             self.assertEqual(nested_varinfo_variable.attributes['bounds'],
                              nested_bounds_name)

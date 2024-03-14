@@ -93,12 +93,13 @@ def add_bounds_variables(dimensions_nc4: str,
                          varinfo: VarInfoFromDmr,
                          logger: Logger) -> None:
     """ Augment a NetCDF4 file with artificial bounds variables for each
-        dimension variable that is edge-aligned and does not already
-        have bounds variables.
+        dimension variable that has been identified by the earthdata-varinfo
+        configuration file to have an edge-aligned attribute"
 
         For each dimension variable:
         (1) Check if the variable needs a bounds variable.
-        (2) If so, create a bounds array from within the `write_bounds` function.
+        (2) If so, create a bounds array from within the `write_bounds`
+            function.
         (3) Then write the bounds variable to the NetCDF4 URL.
 
     """
@@ -185,7 +186,6 @@ def write_bounds(prefetch_dataset: Dataset,
         (2) the new bounds variable dimension.
 
     """
-    # Create the bounds array.
     bounds_array = get_bounds_array(prefetch_dataset,
                                     dimension_variable.full_name_path)
 
@@ -195,10 +195,9 @@ def write_bounds(prefetch_dataset: Dataset,
     bounds_name = dimension_name + '_bnds'
     bounds_full_path_name = dimension_variable.full_name_path + '_bnds'
     bounds_dimension_name = dimension_name + 'v'
-    # Consider the special case when the dimension group is the root directory.
-    # The dimension can't refer to the full path in the name itself, so we have
-    # to create it with respect to the group we want to place it in.
+
     if dimension_group == '/':
+        # The root group must be explicitly referenced here.
         bounds_dim = prefetch_dataset.createDimension(bounds_dimension_name, 2)
     else:
         bounds_dim = prefetch_dataset[dimension_group].createDimension(bounds_dimension_name, 2)

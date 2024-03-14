@@ -88,7 +88,7 @@ class TestHossEndToEnd(TestCase):
         self.assertListEqual(list(items[0].assets.keys()), ['data'])
         self.assertDictEqual(
             items[0].assets['data'].to_dict(),
-            {'href':  expected_href,
+            {'href': expected_href,
              'title': expected_title,
              'type': 'application/x-netcdf4',
              'roles': ['data']}
@@ -2017,13 +2017,13 @@ class TestHossEndToEnd(TestCase):
     @patch('hoss.utilities.uuid4')
     @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('hoss.bbox_utilities.download')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_edge_aligned_no_bounds_end_to_end(self, mock_stage, mock_util_download,
-                         mock_geojson_download, mock_rmtree,
-                         mock_mkdtemp, mock_uuid,
-                         mock_get_fill_slice):
+    def test_edge_aligned_no_bounds_end_to_end(self, mock_stage,
+                                               mock_util_download,
+                                               mock_rmtree, mock_mkdtemp,
+                                               mock_uuid,
+                                               mock_get_fill_slice):
         """ Ensure a request for a collection that contains dimension variables
             with edge-aligned grid cells is correctly processed regardless of
             whether or not a bounds variable associated with that dimension
@@ -2050,16 +2050,16 @@ class TestHossEndToEnd(TestCase):
 
         message = Message({
             'accessToken': 'fake-token',
-                'callback': 'https://example.com/',
-                'sources': [{
-                    'collection': 'C1238589498-EEDTEST',
-                    'shortName': 'ATL16',
-                    'variables': [{'id': '',
-                                'name': self.atl16_variable,
-                                'fullPath': self.atl16_variable}]}],
-                'stagingLocation': self.staging_location,
-                'subset': {'bbox': [77, 71.5, 88, 74.75]},
-                'user': 'jlovell',
+            'callback': 'https://example.com/',
+            'sources': [{
+                'collection': 'C1238589498-EEDTEST',
+                'shortName': 'ATL16',
+                'variables': [{'id': '',
+                               'name': self.atl16_variable,
+                               'fullPath': self.atl16_variable}]}],
+            'stagingLocation': self.staging_location,
+            'subset': {'bbox': [77, 71.25, 88, 74.75]},
+            'user': 'sride',
         })
 
         hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
@@ -2072,14 +2072,14 @@ class TestHossEndToEnd(TestCase):
                                             expected_output_basename)
 
         # Ensure the expected requests were made against OPeNDAP.
-        self.assertEqual(mock_util_download.call_count,3)
+        self.assertEqual(mock_util_download.call_count, 3)
         mock_util_download.assert_has_calls([
             call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                    access_token=message.accessToken, data=None, cfg=hoss.config),
+                 access_token=message.accessToken, data=None, cfg=hoss.config),
             call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                    access_token=message.accessToken, data=ANY, cfg=hoss.config),
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
             call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                    access_token=message.accessToken, data=ANY, cfg=hoss.config),
+                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
         ])
 
         # Ensure the constraint expression for dimensions data included only
@@ -2092,6 +2092,14 @@ class TestHossEndToEnd(TestCase):
         )
 
         # Ensure the constraint expression contains all the required variables.
+        # The latitude and longitude index ranges here depend on whether
+        # the cells have centre-alignment or edge-alignment.
+        #    - Expected index range for latitude: [53:54] for values (69,72).
+        #    - Expected index range for longitude: [85:89] for values (75,78,81,81,87)
+        #    - Expected index range for science variable: [53:54][85:89]
+        # If centre-alignment was incorrectly assumed:
+        #    - Incorrect ranges off by one: [54:55]
+        #    - Incorrect ranges off by one: [86:89]
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
@@ -2102,8 +2110,12 @@ class TestHossEndToEnd(TestCase):
 
         # Ensure the output was staged with the expected file name
         mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                            expected_output_basename,
-                                            'application/x-netcdf4',
-                                            location=self.staging_location,
-                                            logger=hoss.logger)
+                                           expected_output_basename,
+                                           'application/x-netcdf4',
+                                           location=self.staging_location,
+                                           logger=hoss.logger)
+
         mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+        # Ensure no variables were filled
+        mock_get_fill_slice.assert_not_called()

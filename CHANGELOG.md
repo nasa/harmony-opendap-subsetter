@@ -1,3 +1,11 @@
+
+## v1.0.3
+### 2024-3-29
+
+This version of HOSS handles the error in the crs_wkt attribute in ATL19 where the 
+north polar crs variable has a leading slash in the crs_wkt attribute. This causes 
+the errors when the projection is being interpreted from the crs variable attributes 
+
 ## v1.0.2
 ### 2024-2-26
 

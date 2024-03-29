@@ -16,7 +16,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 COPY tests/pip_test_requirements.txt .
 RUN conda run --name hoss pip install --no-input -r pip_test_requirements.txt
 
-# Copy test directory containing Python unittest suite, test data and utilities 
+# Copy test directory containing Python unittest suite, test data and utilities
 COPY ./tests tests
 
 # Set conda environment to hoss, as conda run will not stream logging.

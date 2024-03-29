@@ -7,7 +7,6 @@ from unittest.mock import ANY, patch
 
 from harmony.util import config
 from harmony.message import Message
-from pathlib import PurePosixPath
 from netCDF4 import Dataset
 from numpy.ma import masked_array
 from numpy.testing import assert_array_equal

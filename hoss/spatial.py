@@ -21,6 +21,7 @@
     For example: [W, S, E, N] = [-20, -90, 20, 90]
 
 """
+
 from typing import List, Set
 
 from harmony.message import Message
@@ -28,42 +29,54 @@ from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 from varinfo import VarInfoFromDmr
 
-from hoss.bbox_utilities import (BBox, get_harmony_message_bbox,
-                                 get_shape_file_geojson, get_geographic_bbox)
-from hoss.dimension_utilities import (get_dimension_bounds,
-                                      get_dimension_extents,
-                                      get_dimension_index_range, IndexRange,
-                                      IndexRanges)
-from hoss.projection_utilities import (get_projected_x_y_extents,
-                                       get_projected_x_y_variables,
-                                       get_variable_crs)
+from hoss.bbox_utilities import (
+    BBox,
+    get_harmony_message_bbox,
+    get_shape_file_geojson,
+    get_geographic_bbox,
+)
+from hoss.dimension_utilities import (
+    get_dimension_bounds,
+    get_dimension_extents,
+    get_dimension_index_range,
+    IndexRange,
+    IndexRanges,
+)
+from hoss.projection_utilities import (
+    get_projected_x_y_extents,
+    get_projected_x_y_variables,
+    get_variable_crs,
+)
 
 
-def get_spatial_index_ranges(required_variables: Set[str],
-                             varinfo: VarInfoFromDmr, dimensions_path: str,
-                             harmony_message: Message,
-                             shape_file_path: str = None) -> IndexRanges:
-    """ Return a dictionary containing indices that correspond to the minimum
-        and maximum extents for all horizontal spatial coordinate variables
-        that support all end-user requested variables. This includes both
-        geographic and projected horizontal coordinates:
+def get_spatial_index_ranges(
+    required_variables: Set[str],
+    varinfo: VarInfoFromDmr,
+    dimensions_path: str,
+    harmony_message: Message,
+    shape_file_path: str = None,
+) -> IndexRanges:
+    """Return a dictionary containing indices that correspond to the minimum
+    and maximum extents for all horizontal spatial coordinate variables
+    that support all end-user requested variables. This includes both
+    geographic and projected horizontal coordinates:
 
-        index_ranges = {'/latitude': (12, 34), '/longitude': (56, 78),
-                        '/x': (20, 42), '/y': (31, 53)}
+    index_ranges = {'/latitude': (12, 34), '/longitude': (56, 78),
+                    '/x': (20, 42), '/y': (31, 53)}
 
-        If geographic dimensions are present and only a shape file has been
-        specified, a minimally encompassing bounding box will be found in order
-        to determine the longitude and latitude extents.
+    If geographic dimensions are present and only a shape file has been
+    specified, a minimally encompassing bounding box will be found in order
+    to determine the longitude and latitude extents.
 
-        For projected grids, coordinate dimensions must be considered in x, y
-        pairs. The minimum and/or maximum values of geographically defined
-        shapes in the target projected grid may be midway along an exterior
-        edge of the shape, rather than a known coordinate vertex. For this
-        reason, a minimum grid resolution in geographic coordinates will be
-        determined for each projected coordinate variable pairs. The input
-        bounding box or shape file will be populated with additional points
-        around the exterior of the user-defined GeoJSON shape, to ensure the
-        correct extents are derived.
+    For projected grids, coordinate dimensions must be considered in x, y
+    pairs. The minimum and/or maximum values of geographically defined
+    shapes in the target projected grid may be midway along an exterior
+    edge of the shape, rather than a known coordinate vertex. For this
+    reason, a minimum grid resolution in geographic coordinates will be
+    determined for each projected coordinate variable pairs. The input
+    bounding box or shape file will be populated with additional points
+    around the exterior of the user-defined GeoJSON shape, to ensure the
+    correct extents are derived.
 
     """
     bounding_box = get_harmony_message_bbox(harmony_message)
@@ -72,9 +85,7 @@ def get_spatial_index_ranges(required_variables: Set[str],
     geographic_dimensions = varinfo.get_geographic_spatial_dimensions(
         required_variables
     )
-    projected_dimensions = varinfo.get_projected_spatial_dimensions(
-        required_variables
-    )
+    projected_dimensions = varinfo.get_projected_spatial_dimensions(required_variables)
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
@@ -94,36 +105,43 @@ def get_spatial_index_ranges(required_variables: Set[str],
 
         if len(projected_dimensions) > 0:
             for non_spatial_variable in non_spatial_variables:
-                index_ranges.update(get_projected_x_y_index_ranges(
-                    non_spatial_variable, varinfo, dimensions_file,
-                    index_ranges, bounding_box=bounding_box,
-                    shape_file_path=shape_file_path
-                ))
+                index_ranges.update(
+                    get_projected_x_y_index_ranges(
+                        non_spatial_variable,
+                        varinfo,
+                        dimensions_file,
+                        index_ranges,
+                        bounding_box=bounding_box,
+                        shape_file_path=shape_file_path,
+                    )
+                )
 
     return index_ranges
 
 
-def get_projected_x_y_index_ranges(non_spatial_variable: str,
-                                   varinfo: VarInfoFromDmr,
-                                   dimensions_file: Dataset,
-                                   index_ranges: IndexRanges,
-                                   bounding_box: BBox = None,
-                                   shape_file_path: str = None) -> IndexRanges:
-    """ This function returns a dictionary containing the minimum and maximum
-        index ranges for a pair of projection x and y coordinates, e.g.:
+def get_projected_x_y_index_ranges(
+    non_spatial_variable: str,
+    varinfo: VarInfoFromDmr,
+    dimensions_file: Dataset,
+    index_ranges: IndexRanges,
+    bounding_box: BBox = None,
+    shape_file_path: str = None,
+) -> IndexRanges:
+    """This function returns a dictionary containing the minimum and maximum
+    index ranges for a pair of projection x and y coordinates, e.g.:
 
-        index_ranges = {'/x': (20, 42), '/y': (31, 53)}
+    index_ranges = {'/x': (20, 42), '/y': (31, 53)}
 
-        First, the dimensions of the input, non-spatial variable are checked
-        for associated projection x and y coordinates. If these are present,
-        and they have not already been added to the `index_ranges` cache, the
-        extents of the input spatial subset are determined in these projected
-        coordinates. This requires the derivation of a minimum resolution of
-        the target grid in geographic coordinates. Points must be placed along
-        the exterior of the spatial subset shape. All points are then projected
-        from a geographic Coordinate Reference System (CRS) to the target grid
-        CRS. The minimum and maximum values are then derived from these
-        projected coordinate points.
+    First, the dimensions of the input, non-spatial variable are checked
+    for associated projection x and y coordinates. If these are present,
+    and they have not already been added to the `index_ranges` cache, the
+    extents of the input spatial subset are determined in these projected
+    coordinates. This requires the derivation of a minimum resolution of
+    the target grid in geographic coordinates. Points must be placed along
+    the exterior of the spatial subset shape. All points are then projected
+    from a geographic Coordinate Reference System (CRS) to the target grid
+    CRS. The minimum and maximum values are then derived from these
+    projected coordinate points.
 
     """
     projected_x, projected_y = get_projected_x_y_variables(
@@ -131,52 +149,59 @@ def get_projected_x_y_index_ranges(non_spatial_variable: str,
     )
 
     if (
-            projected_x is not None and projected_y is not None
-            and not set((projected_x, projected_y)).issubset(
-                set(index_ranges.keys())
-            )
+        projected_x is not None
+        and projected_y is not None
+        and not set((projected_x, projected_y)).issubset(set(index_ranges.keys()))
     ):
         crs = get_variable_crs(non_spatial_variable, varinfo)
 
         x_y_extents = get_projected_x_y_extents(
             dimensions_file[projected_x][:],
-            dimensions_file[projected_y][:], crs,
-            shape_file=shape_file_path, bounding_box=bounding_box
+            dimensions_file[projected_y][:],
+            crs,
+            shape_file=shape_file_path,
+            bounding_box=bounding_box,
         )
 
         x_bounds = get_dimension_bounds(projected_x, varinfo, dimensions_file)
         y_bounds = get_dimension_bounds(projected_y, varinfo, dimensions_file)
 
         x_index_ranges = get_dimension_index_range(
-            dimensions_file[projected_x][:], x_y_extents['x_min'],
-            x_y_extents['x_max'], bounds_values=x_bounds
+            dimensions_file[projected_x][:],
+            x_y_extents['x_min'],
+            x_y_extents['x_max'],
+            bounds_values=x_bounds,
         )
 
         y_index_ranges = get_dimension_index_range(
-            dimensions_file[projected_y][:], x_y_extents['y_min'],
-            x_y_extents['y_max'], bounds_values=y_bounds
+            dimensions_file[projected_y][:],
+            x_y_extents['y_min'],
+            x_y_extents['y_max'],
+            bounds_values=y_bounds,
         )
 
-        x_y_index_ranges = {projected_x: x_index_ranges,
-                            projected_y: y_index_ranges}
+        x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
     else:
         x_y_index_ranges = {}
 
     return x_y_index_ranges
 
 
-def get_geographic_index_range(dimension: str, varinfo: VarInfoFromDmr,
-                               dimensions_file: Dataset,
-                               bounding_box: BBox) -> IndexRange:
-    """ Extract the indices that correspond to the minimum and maximum extents
-        for a specific geographic dimension (longitude or latitude). For
-        longitudes, it is assumed that the western extent should be considered
-        the minimum extent. If the bounding box crosses a longitude
-        discontinuity this will be later identified by the minimum extent index
-        being larger than the maximum extent index.
+def get_geographic_index_range(
+    dimension: str,
+    varinfo: VarInfoFromDmr,
+    dimensions_file: Dataset,
+    bounding_box: BBox,
+) -> IndexRange:
+    """Extract the indices that correspond to the minimum and maximum extents
+    for a specific geographic dimension (longitude or latitude). For
+    longitudes, it is assumed that the western extent should be considered
+    the minimum extent. If the bounding box crosses a longitude
+    discontinuity this will be later identified by the minimum extent index
+    being larger than the maximum extent index.
 
-        The return value from this function is an `IndexRange` tuple of format:
-        (minimum_index, maximum_index).
+    The return value from this function is an `IndexRange` tuple of format:
+    (minimum_index, maximum_index).
 
     """
     variable = varinfo.get_variable(dimension)
@@ -202,44 +227,49 @@ def get_geographic_index_range(dimension: str, varinfo: VarInfoFromDmr,
             bounding_box, dimensions_file[dimension][:]
         )
 
-    return get_dimension_index_range(dimensions_file[dimension][:],
-                                     minimum_extent, maximum_extent,
-                                     bounds_values=bounds)
+    return get_dimension_index_range(
+        dimensions_file[dimension][:],
+        minimum_extent,
+        maximum_extent,
+        bounds_values=bounds,
+    )
 
 
-def get_bounding_box_longitudes(bounding_box: BBox,
-                                longitude_array: MaskedArray) -> List[float]:
-    """ Ensure the bounding box extents are compatible with the range of the
-        longitude variable. The Harmony bounding box values are expressed in
-        the range from -180 ≤ longitude (degrees east) ≤ 180, whereas some
-        collections have grids with discontinuities at the Prime Meridian and
-        others have sub-pixel wrap-around at the Antimeridian.
+def get_bounding_box_longitudes(
+    bounding_box: BBox, longitude_array: MaskedArray
+) -> List[float]:
+    """Ensure the bounding box extents are compatible with the range of the
+    longitude variable. The Harmony bounding box values are expressed in
+    the range from -180 ≤ longitude (degrees east) ≤ 180, whereas some
+    collections have grids with discontinuities at the Prime Meridian and
+    others have sub-pixel wrap-around at the Antimeridian.
 
     """
     min_longitude, max_longitude = get_dimension_extents(longitude_array)
 
-    western_box_extent = get_longitude_in_grid(min_longitude, max_longitude,
-                                               bounding_box.west)
-    eastern_box_extent = get_longitude_in_grid(min_longitude, max_longitude,
-                                               bounding_box.east)
+    western_box_extent = get_longitude_in_grid(
+        min_longitude, max_longitude, bounding_box.west
+    )
+    eastern_box_extent = get_longitude_in_grid(
+        min_longitude, max_longitude, bounding_box.east
+    )
 
     return [western_box_extent, eastern_box_extent]
 
 
-def get_longitude_in_grid(grid_min: float, grid_max: float,
-                          longitude: float) -> float:
-    """ Ensure that a longitude value from the bounding box extents is within
-        the full longitude range of the grid. If it is not, check the same
-        value +/- 360 degrees, to see if either of those are present in the
-        grid. This function returns the value of the three options that lies
-        within the grid. If none of these values are within the grid, then the
-        original longitude value is returned.
+def get_longitude_in_grid(grid_min: float, grid_max: float, longitude: float) -> float:
+    """Ensure that a longitude value from the bounding box extents is within
+    the full longitude range of the grid. If it is not, check the same
+    value +/- 360 degrees, to see if either of those are present in the
+    grid. This function returns the value of the three options that lies
+    within the grid. If none of these values are within the grid, then the
+    original longitude value is returned.
 
-        This functionality is used for grids where the longitude values are not
-        -180 ≤ longitude (degrees east) ≤ 180. This includes:
+    This functionality is used for grids where the longitude values are not
+    -180 ≤ longitude (degrees east) ≤ 180. This includes:
 
-        * RSSMIF16D: 0 ≤ longitude (degrees east) ≤ 360.
-        * MERRA-2 products:  -180.3125 ≤ longitude (degrees east) ≤ 179.6875.
+    * RSSMIF16D: 0 ≤ longitude (degrees east) ≤ 360.
+    * MERRA-2 products:  -180.3125 ≤ longitude (degrees east) ≤ 179.6875.
 
     """
     decremented_longitude = longitude - 360

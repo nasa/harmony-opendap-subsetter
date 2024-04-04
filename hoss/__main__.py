@@ -1,4 +1,5 @@
 """ Run the Harmony OPeNDAP SubSetter Adapter via the Harmony CLI. """
+
 from argparse import ArgumentParser
 from sys import argv
 
@@ -8,12 +9,13 @@ from hoss.adapter import HossAdapter
 
 
 def main(arguments: list[str]):
-    """ Parse command line arguments and invoke the appropriate method to
-        respond to them
+    """Parse command line arguments and invoke the appropriate method to
+    respond to them
 
     """
-    parser = ArgumentParser(prog='harmony-opendap-subsetter',
-                            description='Run Harmony OPeNDAP SubSetter.')
+    parser = ArgumentParser(
+        prog='harmony-opendap-subsetter', description='Run Harmony OPeNDAP SubSetter.'
+    )
 
     setup_cli(parser)
     harmony_arguments, _ = parser.parse_known_args(arguments[1:])

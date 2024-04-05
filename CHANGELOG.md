@@ -1,13 +1,19 @@
-## v1.0.3
-### 2024-3-29
+## v1.0.4
+### 2024-04-05
 
-This version of HOSS handles the error in the crs_wkt attribute in ATL19 where the 
-north polar crs variable has a leading iquotation mark escaped by back slash in the 
-crs_wkt attribute. This causes errors when the projection is being interpreted from 
-the crs variable attributes. 
+This version of HOSS implements `black` code formatting across the repository.
+There should be no functional changes in the service.
+
+## v1.0.3
+### 2024-03-29
+
+This version of HOSS handles the error in the crs_wkt attribute in ATL19 where the
+north polar crs variable has a leading iquotation mark escaped by back slash in the
+crs_wkt attribute. This causes errors when the projection is being interpreted from
+the crs variable attributes.
 
 ## v1.0.2
-### 2024-2-26
+### 2024-02-26
 
 This version of HOSS correctly handles edge-aligned geographic collections by
 adding the attribute `cell_alignment` with the value `edge` to `hoss_config.json`

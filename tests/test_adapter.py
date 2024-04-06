@@ -5,6 +5,7 @@
     requests were made to OPeNDAP.
 
 """
+
 from shutil import copy, rmtree
 from tempfile import mkdtemp
 from typing import Dict, Set
@@ -25,10 +26,11 @@ class TestHossEndToEnd(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """ Test fixture that can be set once for all tests in the class. """
+        """Test fixture that can be set once for all tests in the class."""
         cls.granule_url = 'https://harmony.uat.earthdata.nasa.gov/opendap_url'
-        cls.input_stac = create_stac([Granule(cls.granule_url, None,
-                                              ['opendap', 'data'])])
+        cls.input_stac = create_stac(
+            [Granule(cls.granule_url, None, ['opendap', 'data'])]
+        )
         cls.atl03_variable = '/gt1r/geophys_corr/geoid'
         cls.gpm_variable = '/Grid/precipitationCal'
         cls.rssmif16d_variable = '/wind_speed'
@@ -51,23 +53,24 @@ class TestHossEndToEnd(TestCase):
             cls.atl16_dmr = file_handler.read()
 
     def setUp(self):
-        """ Have to mock mkdtemp, to know where to put mock .dmr content. """
+        """Have to mock mkdtemp, to know where to put mock .dmr content."""
         self.tmp_dir = mkdtemp()
         self.config = config(validate=False)
 
     def tearDown(self):
         rmtree(self.tmp_dir)
 
-    def assert_valid_request_data(self, request_data: Dict,
-                                  expected_variables: Set[str]):
-        """ Check the contents of the request data sent to the OPeNDAP server
-            when retrieving a NetCDF-4 file. This should ensure that a URL
-            encoded constraint expression was sent, and that all the expected
-            variables (potentially with index ranges) were included.
+    def assert_valid_request_data(
+        self, request_data: Dict, expected_variables: Set[str]
+    ):
+        """Check the contents of the request data sent to the OPeNDAP server
+        when retrieving a NetCDF-4 file. This should ensure that a URL
+        encoded constraint expression was sent, and that all the expected
+        variables (potentially with index ranges) were included.
 
-            This custom class method is used because the constraint expressions
-            are constructed from sets. The order of variables in the set, and
-            therefore the constraint expression string, cannot be guaranteed.
+        This custom class method is used because the constraint expressions
+        are constructed from sets. The order of variables in the set, and
+        therefore the constraint expression string, cannot be guaranteed.
 
         """
         opendap_separator = '%3B'
@@ -75,12 +78,12 @@ class TestHossEndToEnd(TestCase):
         requested_variables = set(request_data['dap4.ce'].split(opendap_separator))
         self.assertSetEqual(requested_variables, expected_variables)
 
-    def assert_expected_output_catalog(self, catalog: Catalog,
-                                       expected_href: str,
-                                       expected_title: str):
-        """ Check the contents of the Harmony output STAC. It should have a
-            single data item, containing an asset with the supplied URL and
-            title.
+    def assert_expected_output_catalog(
+        self, catalog: Catalog, expected_href: str, expected_title: str
+    ):
+        """Check the contents of the Harmony output STAC. It should have a
+        single data item, containing an asset with the supplied URL and
+        title.
 
         """
         items = list(catalog.get_items())
@@ -88,10 +91,12 @@ class TestHossEndToEnd(TestCase):
         self.assertListEqual(list(items[0].assets.keys()), ['data'])
         self.assertDictEqual(
             items[0].assets['data'].to_dict(),
-            {'href': expected_href,
-             'title': expected_title,
-             'type': 'application/x-netcdf4',
-             'roles': ['data']}
+            {
+                'href': expected_href,
+                'title': expected_title,
+                'type': 'application/x-netcdf4',
+                'roles': ['data'],
+            },
         )
 
     @patch('hoss.utilities.uuid4')
@@ -99,12 +104,13 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_non_spatial_end_to_end(self, mock_stage, mock_util_download,
-                                    mock_rmtree, mock_mkdtemp, mock_uuid):
-        """ Ensure HOSS will run end-to-end, only mocking the HTTP responses,
-            and the output interactions with Harmony.
+    def test_non_spatial_end_to_end(
+        self, mock_stage, mock_util_download, mock_rmtree, mock_mkdtemp, mock_uuid
+    ):
+        """Ensure HOSS will run end-to-end, only mocking the HTTP responses,
+        and the output interactions with Harmony.
 
-            This test should only perform a variable subset.
+        This test should only perform a variable subset.
 
         """
         expected_output_basename = 'opendap_url_gt1r_geophys_corr_geoid_subsetted.nc4'
@@ -123,29 +129,37 @@ class TestHossEndToEnd(TestCase):
 
         mock_util_download.side_effect = [dmr_path, downloaded_nc4_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'ATL03',
-                'variables': [{'id': '',
-                               'name': self.atl03_variable,
-                               'fullPath': self.atl03_variable}]}],
-            'stagingLocation': self.staging_location,
-            'user': 'fhaise',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'ATL03',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.atl03_variable,
+                                'fullPath': self.atl03_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'user': 'fhaise',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
 
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the correct number of downloads were requested from OPeNDAP:
         # the first should be the `.dmr`. The second should be the required
@@ -154,31 +168,49 @@ class TestHossEndToEnd(TestCase):
         # their order cannot be guaranteed. Instead, `data` is matched to
         # `ANY`, and the constraint expression is tested separately.
         self.assertEqual(mock_util_download.call_count, 2)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression contains all the required variables.
         post_data = mock_util_download.call_args_list[1][1].get('data', {})
         self.assert_valid_request_data(
             post_data,
-            {'%2Fgt1r%2Fgeolocation%2Fdelta_time',
-             '%2Fgt1r%2Fgeolocation%2Freference_photon_lon',
-             '%2Fgt1r%2Fgeolocation%2Fpodppd_flag',
-             '%2Fgt1r%2Fgeophys_corr%2Fdelta_time',
-             '%2Fgt1r%2Fgeolocation%2Freference_photon_lat',
-             '%2Fgt1r%2Fgeophys_corr%2Fgeoid'}
+            {
+                '%2Fgt1r%2Fgeolocation%2Fdelta_time',
+                '%2Fgt1r%2Fgeolocation%2Freference_photon_lon',
+                '%2Fgt1r%2Fgeolocation%2Fpodppd_flag',
+                '%2Fgt1r%2Fgeophys_corr%2Fdelta_time',
+                '%2Fgt1r%2Fgeolocation%2Freference_photon_lat',
+                '%2Fgt1r%2Fgeophys_corr%2Fgeoid',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
     @patch('hoss.dimension_utilities.get_fill_slice')
@@ -187,13 +219,19 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_geo_bbox_end_to_end(self, mock_stage, mock_util_download,
-                                 mock_rmtree, mock_mkdtemp, mock_uuid,
-                                 mock_get_fill_slice):
-        """ Ensure a request with a bounding box will be correctly processed
-            for a geographically gridded collection, requesting only the
-            expected variables, with index ranges corresponding to the bounding
-            box specified.
+    def test_geo_bbox_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a bounding box will be correctly processed
+        for a geographically gridded collection, requesting only the
+        expected variables, with index ranges corresponding to the bounding
+        box specified.
 
         """
         expected_output_basename = 'opendap_url_wind_speed_subsetted.nc4'
@@ -211,33 +249,40 @@ class TestHossEndToEnd(TestCase):
         all_variables_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/f16_ssmis_geo.nc', all_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'RSSMIF16D',
-                'variables': [{'id': '',
-                               'name': self.rssmif16d_variable,
-                               'fullPath': self.rssmif16d_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [-30, 45, -15, 60]},
-            'user': 'jlovell',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'RSSMIF16D',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.rssmif16d_variable,
+                                'fullPath': self.rssmif16d_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [-30, 45, -15, 60]},
+                'user': 'jlovell',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
 
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # The first should be the `.dmr`. The second should fetch a NetCDF-4
@@ -248,14 +293,34 @@ class TestHossEndToEnd(TestCase):
         # Instead, `data` is matched to `ANY`, and the constraint expression is
         # tested separately.
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -269,18 +334,22 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B540%3A599%5D',
-             '%2Flongitude%5B1320%3A1379%5D',
-             '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B540%3A599%5D',
+                '%2Flongitude%5B1320%3A1379%5D',
+                '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -292,16 +361,22 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_bbox_geo_descending_latitude(self, mock_stage, mock_util_download,
-                                          mock_rmtree, mock_mkdtemp, mock_uuid,
-                                          mock_get_fill_slice):
-        """ Ensure a request with a bounding box will be correctly processed,
-            for a geographically gridded collection, requesting only the
-            expected variables, with index ranges corresponding to the bounding
-            box specified. The latitude dimension returned from the geographic
-            dimensions request to OPeNDAP will be descending. This test is to
-            ensure the correct dimension indices are identified and the correct
-            DAP4 constraint expression is built.
+    def test_bbox_geo_descending_latitude(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a bounding box will be correctly processed,
+        for a geographically gridded collection, requesting only the
+        expected variables, with index ranges corresponding to the bounding
+        box specified. The latitude dimension returned from the geographic
+        dimensions request to OPeNDAP will be descending. This test is to
+        ensure the correct dimension indices are identified and the correct
+        DAP4 constraint expression is built.
 
         """
         expected_output_basename = 'opendap_url_wind_speed_subsetted.nc4'
@@ -319,68 +394,100 @@ class TestHossEndToEnd(TestCase):
         all_variables_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/f16_ssmis_geo_desc.nc', all_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'RSSMIF16D',
-                'variables': [{'id': '',
-                               'name': self.rssmif16d_variable,
-                               'fullPath': self.rssmif16d_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [-30, 45, -15, 60]},
-            'user': 'cduke',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'RSSMIF16D',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.rssmif16d_variable,
+                                'fullPath': self.rssmif16d_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [-30, 45, -15, 60]},
+                'user': 'cduke',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
         self.assert_valid_request_data(
-            dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'})
+            dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'}
+        )
         # Ensure the constraint expression contains all the required variables.
         # /wind_speed[][120:179][1320:1379], /time, /longitude[1320:1379]
         # /latitude[120:179]
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B120%3A179%5D',
-             '%2Flongitude%5B1320%3A1379%5D',
-             '%2Fwind_speed%5B%5D%5B120%3A179%5D%5B1320%3A1379%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B120%3A179%5D',
+                '%2Flongitude%5B1320%3A1379%5D',
+                '%2Fwind_speed%5B%5D%5B120%3A179%5D%5B1320%3A1379%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled:
@@ -391,13 +498,14 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_geo_bbox_crossing_grid_edge(self, mock_stage, mock_util_download,
-                                         mock_rmtree, mock_mkdtemp, mock_uuid):
-        """ Ensure a request with a bounding box that crosses a longitude edge
-            (360 degrees east) requests the expected variables from OPeNDAP and
-            does so only in the expected latitude range. The full longitude
-            range should be requested for all variables, with filling applied
-            outside of the bounding box region.
+    def test_geo_bbox_crossing_grid_edge(
+        self, mock_stage, mock_util_download, mock_rmtree, mock_mkdtemp, mock_uuid
+    ):
+        """Ensure a request with a bounding box that crosses a longitude edge
+        (360 degrees east) requests the expected variables from OPeNDAP and
+        does so only in the expected latitude range. The full longitude
+        range should be requested for all variables, with filling applied
+        outside of the bounding box region.
 
         """
         expected_output_basename = 'opendap_url_wind_speed_subsetted.nc4'
@@ -415,44 +523,71 @@ class TestHossEndToEnd(TestCase):
         unfilled_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/f16_ssmis_unfilled.nc', unfilled_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          unfilled_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, unfilled_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'RSSMIF16D',
-                'variables': [{'id': '',
-                               'name': self.rssmif16d_variable,
-                               'fullPath': self.rssmif16d_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [-7.5, -60, 7.5, -45]},
-            'user': 'jswiggert',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'RSSMIF16D',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.rssmif16d_variable,
+                                'fullPath': self.rssmif16d_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [-7.5, -60, 7.5, -45]},
+                'user': 'jswiggert',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -466,18 +601,22 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B120%3A179%5D',
-             '%2Flongitude',
-             '%2Fwind_speed%5B%5D%5B120%3A179%5D%5B%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B120%3A179%5D',
+                '%2Flongitude',
+                '%2Fwind_speed%5B%5D%5B120%3A179%5D%5B%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure the final output was correctly filled (the unfilled file is
@@ -487,8 +626,7 @@ class TestHossEndToEnd(TestCase):
 
         for variable_name, expected_variable in expected_output.variables.items():
             self.assertIn(variable_name, actual_output.variables)
-            assert_array_equal(actual_output[variable_name][:],
-                               expected_variable[:])
+            assert_array_equal(actual_output[variable_name][:], expected_variable[:])
 
         expected_output.close()
         actual_output.close()
@@ -499,20 +637,27 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_geo_bbox(self, mock_stage, mock_util_download, mock_rmtree,
-                      mock_mkdtemp, mock_uuid, mock_get_fill_slice):
-        """ Ensure requests with particular bounding box edge-cases return the
-            correct pixel ranges:
+    def test_geo_bbox(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure requests with particular bounding box edge-cases return the
+        correct pixel ranges:
 
-            * Single point, N=S, W=E, inside a pixel, retrieves that single
-              pixel.
-            * Single point, N=S, W=E, in corner of 4 pixels retrieves all 4
-              surrounding pixels.
-            * Line, N=S, W < E, where the latitude is inside a pixel, retrieves
-              a single row of pixels.
-            * Line, N > S, W=E, where longitude is between pixels, retrieves
-              two columns of pixels, corresponding to those which touch the
-              line.
+        * Single point, N=S, W=E, inside a pixel, retrieves that single
+          pixel.
+        * Single point, N=S, W=E, in corner of 4 pixels retrieves all 4
+          surrounding pixels.
+        * Line, N=S, W < E, where the latitude is inside a pixel, retrieves
+          a single row of pixels.
+        * Line, N > S, W=E, where longitude is between pixels, retrieves
+          two columns of pixels, corresponding to those which touch the
+          line.
 
         """
         point_in_pixel = [-29.99, 45.01, -29.99, 45.01]
@@ -521,42 +666,54 @@ class TestHossEndToEnd(TestCase):
         line_between_pixels = [-30, 45, -30, 60]
 
         range_point_in_pixel = {
-            '%2Ftime', '%2Flatitude%5B540%3A540%5D',
+            '%2Ftime',
+            '%2Flatitude%5B540%3A540%5D',
             '%2Flongitude%5B1320%3A1320%5D',
-            '%2Fwind_speed%5B%5D%5B540%3A540%5D%5B1320%3A1320%5D'
+            '%2Fwind_speed%5B%5D%5B540%3A540%5D%5B1320%3A1320%5D',
         }
 
         range_point_between_pixels = {
-            '%2Ftime', '%2Flatitude%5B539%3A540%5D',
+            '%2Ftime',
+            '%2Flatitude%5B539%3A540%5D',
             '%2Flongitude%5B1319%3A1320%5D',
-            '%2Fwind_speed%5B%5D%5B539%3A540%5D%5B1319%3A1320%5D'
+            '%2Fwind_speed%5B%5D%5B539%3A540%5D%5B1319%3A1320%5D',
         }
 
         range_line_in_pixels = {
-            '%2Ftime', '%2Flatitude%5B300%3A300%5D',
+            '%2Ftime',
+            '%2Flatitude%5B300%3A300%5D',
             '%2Flongitude%5B1320%3A1379%5D',
-            '%2Fwind_speed%5B%5D%5B300%3A300%5D%5B1320%3A1379%5D'
+            '%2Fwind_speed%5B%5D%5B300%3A300%5D%5B1320%3A1379%5D',
         }
 
         range_line_between_pixels = {
-            '%2Ftime', '%2Flatitude%5B540%3A599%5D',
+            '%2Ftime',
+            '%2Flatitude%5B540%3A599%5D',
             '%2Flongitude%5B1319%3A1320%5D',
-            '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1319%3A1320%5D'
+            '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1319%3A1320%5D',
         }
 
-        test_args = [['Point is inside single pixel', point_in_pixel,
-                      range_point_in_pixel],
-                     ['Point in corner of 4 pixels', point_between_pixels,
-                      range_point_between_pixels],
-                     ['Line through single row', line_in_pixels,
-                      range_line_in_pixels],
-                     ['Line between two columns', line_between_pixels,
-                      range_line_between_pixels]]
+        test_args = [
+            ['Point is inside single pixel', point_in_pixel, range_point_in_pixel],
+            [
+                'Point in corner of 4 pixels',
+                point_between_pixels,
+                range_point_between_pixels,
+            ],
+            ['Line through single row', line_in_pixels, range_line_in_pixels],
+            [
+                'Line between two columns',
+                line_between_pixels,
+                range_line_between_pixels,
+            ],
+        ]
 
         for description, bounding_box, expected_index_ranges in test_args:
             with self.subTest(description):
                 expected_output_basename = 'opendap_url_wind_speed_subsetted.nc4'
-                expected_staged_url = f'{self.staging_location}{expected_output_basename}'
+                expected_staged_url = (
+                    f'{self.staging_location}{expected_output_basename}'
+                )
                 mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
                 mock_mkdtemp.return_value = self.tmp_dir
                 mock_stage.return_value = expected_staged_url
@@ -569,58 +726,91 @@ class TestHossEndToEnd(TestCase):
                 all_variables_path = f'{self.tmp_dir}/variables.nc4'
                 copy('tests/data/f16_ssmis_geo.nc', all_variables_path)
 
-                mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                                  all_variables_path]
+                mock_util_download.side_effect = [
+                    dmr_path,
+                    dimensions_path,
+                    all_variables_path,
+                ]
 
-                message = Message({
-                    'accessToken': 'fake-token',
-                    'callback': 'https://example.com/',
-                    'sources': [{
-                        'collection': 'C1234567890-EEDTEST',
-                        'shortName': 'RSSMIF16D',
-                        'variables': [{'id': '',
-                                       'name': self.rssmif16d_variable,
-                                       'fullPath': self.rssmif16d_variable}]}],
-                    'stagingLocation': self.staging_location,
-                    'subset': {'bbox': bounding_box},
-                    'user': 'jaaron',
-                })
+                message = Message(
+                    {
+                        'accessToken': 'fake-token',
+                        'callback': 'https://example.com/',
+                        'sources': [
+                            {
+                                'collection': 'C1234567890-EEDTEST',
+                                'shortName': 'RSSMIF16D',
+                                'variables': [
+                                    {
+                                        'id': '',
+                                        'name': self.rssmif16d_variable,
+                                        'fullPath': self.rssmif16d_variable,
+                                    }
+                                ],
+                            }
+                        ],
+                        'stagingLocation': self.staging_location,
+                        'subset': {'bbox': bounding_box},
+                        'user': 'jaaron',
+                    }
+                )
 
-                hoss = HossAdapter(message, config=config(False),
-                                   catalog=self.input_stac)
+                hoss = HossAdapter(
+                    message, config=config(False), catalog=self.input_stac
+                )
                 _, output_catalog = hoss.invoke()
 
                 # Ensure that there is a single item in the output catalog with
                 # the expected asset:
-                self.assert_expected_output_catalog(output_catalog,
-                                                    expected_staged_url,
-                                                    expected_output_basename)
+                self.assert_expected_output_catalog(
+                    output_catalog, expected_staged_url, expected_output_basename
+                )
 
                 # Ensure the expected requests were made against OPeNDAP.
                 # See related comment in self.test_geo_bbox_end_to_end
                 self.assertEqual(mock_util_download.call_count, 3)
-                mock_util_download.assert_has_calls([
-                    call(f'{self.granule_url}.dmr.xml', self.tmp_dir,
-                         hoss.logger, access_token=message.accessToken,
-                         data=None, cfg=hoss.config),
-                    call(f'{self.granule_url}.dap.nc4', self.tmp_dir,
-                         hoss.logger, access_token=message.accessToken,
-                         data=ANY, cfg=hoss.config),
-                    call(f'{self.granule_url}.dap.nc4', self.tmp_dir,
-                         hoss.logger, access_token=message.accessToken,
-                         data=ANY, cfg=hoss.config),
-                ])
+                mock_util_download.assert_has_calls(
+                    [
+                        call(
+                            f'{self.granule_url}.dmr.xml',
+                            self.tmp_dir,
+                            hoss.logger,
+                            access_token=message.accessToken,
+                            data=None,
+                            cfg=hoss.config,
+                        ),
+                        call(
+                            f'{self.granule_url}.dap.nc4',
+                            self.tmp_dir,
+                            hoss.logger,
+                            access_token=message.accessToken,
+                            data=ANY,
+                            cfg=hoss.config,
+                        ),
+                        call(
+                            f'{self.granule_url}.dap.nc4',
+                            self.tmp_dir,
+                            hoss.logger,
+                            access_token=message.accessToken,
+                            data=ANY,
+                            cfg=hoss.config,
+                        ),
+                    ]
+                )
 
                 # Ensure the constraint expression for dimensions data included
                 # only geographic or temporal variables with no index ranges
-                dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
+                dimensions_data = mock_util_download.call_args_list[1][1].get(
+                    'data', {}
+                )
                 self.assert_valid_request_data(
                     dimensions_data, {'%2Flatitude', '%2Flongitude', '%2Ftime'}
                 )
                 # Ensure the constraint expression contains all the required variables.
-                index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
-                self.assert_valid_request_data(index_range_data,
-                                               expected_index_ranges)
+                index_range_data = mock_util_download.call_args_list[2][1].get(
+                    'data', {}
+                )
+                self.assert_valid_request_data(index_range_data, expected_index_ranges)
 
                 # Ensure the output was staged with the expected file name
                 mock_stage.assert_called_once_with(
@@ -628,7 +818,7 @@ class TestHossEndToEnd(TestCase):
                     expected_output_basename,
                     'application/x-netcdf4',
                     location=self.staging_location,
-                    logger=hoss.logger
+                    logger=hoss.logger,
                 )
                 mock_rmtree.assert_called_once_with(self.tmp_dir)
 
@@ -648,12 +838,18 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_spatial_bbox_no_variables(self, mock_stage, mock_util_download,
-                                       mock_rmtree, mock_mkdtemp, mock_uuid,
-                                       mock_get_fill_slice):
-        """ Ensure a request with a bounding box that does not specify any
-            variables will retrieve all variables, but limited to the range
-            specified by the bounding box.
+    def test_spatial_bbox_no_variables(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a bounding box that does not specify any
+        variables will retrieve all variables, but limited to the range
+        specified by the bounding box.
 
         """
         expected_output_basename = 'opendap_url_subsetted.nc4'
@@ -671,40 +867,61 @@ class TestHossEndToEnd(TestCase):
         all_variables_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/f16_ssmis_geo_no_vars.nc', all_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{'collection': 'C1234567890-EEDTEST',
-                         'shortName': 'RSSMIF16D'}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [-30, 45, -15, 60]},
-            'user': 'kerwinj',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {'collection': 'C1234567890-EEDTEST', 'shortName': 'RSSMIF16D'}
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [-30, 45, -15, 60]},
+                'user': 'kerwinj',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -721,22 +938,26 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B540%3A599%5D',
-             '%2Flongitude%5B1320%3A1379%5D',
-             '%2Fatmosphere_cloud_liquid_water_content%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
-             '%2Fatmosphere_water_vapor_content%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
-             '%2Frainfall_rate%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
-             '%2Fsst_dtime%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
-             '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B540%3A599%5D',
+                '%2Flongitude%5B1320%3A1379%5D',
+                '%2Fatmosphere_cloud_liquid_water_content%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+                '%2Fatmosphere_water_vapor_content%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+                '%2Frainfall_rate%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+                '%2Fsst_dtime%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+                '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled:
@@ -748,14 +969,20 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_temporal_end_to_end(self, mock_stage, mock_util_download,
-                                 mock_rmtree, mock_mkdtemp, mock_uuid,
-                                 mock_get_fill_slice):
-        """ Ensure a request with a temporal range will retrieve variables,
-            but limited to the range specified by the temporal range.
+    def test_temporal_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a temporal range will retrieve variables,
+        but limited to the range specified by the temporal range.
 
-            The example granule has 24 hourly time slices, starting with
-            2021-01-10T00:30:00.
+        The example granule has 24 hourly time slices, starting with
+        2021-01-10T00:30:00.
 
         """
         expected_output_basename = 'opendap_url_PS_subsetted.nc4'
@@ -773,69 +1000,94 @@ class TestHossEndToEnd(TestCase):
         temporal_variables_path = f'{self.tmp_dir}/temporal_variables.nc4'
         copy('tests/data/M2T1NXSLV_temporal.nc4', temporal_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          temporal_variables_path]
+        mock_util_download.side_effect = [
+            dmr_path,
+            dimensions_path,
+            temporal_variables_path,
+        ]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'M2T1NXSLV',
-                'variables': [{'id': '',
-                               'name': '/PS',
-                               'fullPath': '/PS'}]}],
-            'stagingLocation': self.staging_location,
-            'temporal': {'start': '2021-01-10T01:00:00',
-                         'end': '2021-01-10T03:00:00'},
-            'user': 'jyoung',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'M2T1NXSLV',
+                        'variables': [{'id': '', 'name': '/PS', 'fullPath': '/PS'}],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'temporal': {
+                    'start': '2021-01-10T01:00:00',
+                    'end': '2021-01-10T03:00:00',
+                },
+                'user': 'jyoung',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
 
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-        self.assert_valid_request_data(dimensions_data,
-                                       {'%2Flat', '%2Flon', '%2Ftime'})
+        self.assert_valid_request_data(dimensions_data, {'%2Flat', '%2Flon', '%2Ftime'})
         # Ensure the constraint expression contains all the required variables.
         # /PS[1:2][][], /time[1:2], /lon, /lat
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime%5B1%3A2%5D',
-             '%2Flat',
-             '%2Flon',
-             '%2FPS%5B1%3A2%5D%5B%5D%5B%5D'}
+            {'%2Ftime%5B1%3A2%5D', '%2Flat', '%2Flon', '%2FPS%5B1%3A2%5D%5B%5D%5B%5D'},
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -847,18 +1099,24 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_temporal_all_variables(self, mock_stage, mock_util_download,
-                                    mock_rmtree, mock_mkdtemp, mock_uuid,
-                                    mock_get_fill_slice):
-        """ Ensure a request with a temporal range and no specified variables
-            will retrieve the expected output. Note - because a temporal range
-            is specified, HOSS will need to perform an index range subset. This
-            means that the prefetch will still have to occur, and all variables
-            with the temporal grid dimension will need to include their index
-            ranges in the final DAP4 constraint expression.
+    def test_temporal_all_variables(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a temporal range and no specified variables
+        will retrieve the expected output. Note - because a temporal range
+        is specified, HOSS will need to perform an index range subset. This
+        means that the prefetch will still have to occur, and all variables
+        with the temporal grid dimension will need to include their index
+        ranges in the final DAP4 constraint expression.
 
-            The example granule has 24 hourly time slices, starting with
-            2021-01-10T00:30:00.
+        The example granule has 24 hourly time slices, starting with
+        2021-01-10T00:30:00.
 
         """
         expected_output_basename = 'opendap_url_subsetted.nc4'
@@ -876,111 +1134,141 @@ class TestHossEndToEnd(TestCase):
         temporal_variables_path = f'{self.tmp_dir}/temporal_variables.nc4'
         copy('tests/data/M2T1NXSLV_temporal.nc4', temporal_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          temporal_variables_path]
+        mock_util_download.side_effect = [
+            dmr_path,
+            dimensions_path,
+            temporal_variables_path,
+        ]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{'collection': 'C1234567890-EEDTEST',
-                         'shortName': 'M2T1NXSLV'}],
-            'stagingLocation': self.staging_location,
-            'subset': None,
-            'temporal': {'start': '2021-01-10T01:00:00',
-                         'end': '2021-01-10T03:00:00'},
-            'user': 'jyoung',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {'collection': 'C1234567890-EEDTEST', 'shortName': 'M2T1NXSLV'}
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': None,
+                'temporal': {
+                    'start': '2021-01-10T01:00:00',
+                    'end': '2021-01-10T03:00:00',
+                },
+                'user': 'jyoung',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-        self.assert_valid_request_data(dimensions_data,
-                                       {'%2Flat', '%2Flon', '%2Ftime'})
+        self.assert_valid_request_data(dimensions_data, {'%2Flat', '%2Flon', '%2Ftime'})
         # Ensure the constraint expression contains all the required variables.
         # /<science_variable>[1:2][][], /time[1:2], /lon, /lat
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime%5B1%3A2%5D',
-             '%2Flat',
-             '%2Flon',
-             '%2FCLDPRS%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FCLDTMP%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FDISPH%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FH1000%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FH250%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FH500%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FH850%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FPBLTOP%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FPS%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FOMEGA500%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FQ250%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FQ500%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FQ850%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FQV10M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FQV2M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FSLP%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FT10M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FT250%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FT2M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FT2MDEW%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FT2MWET%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FT500%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FT850%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTO3%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTOX%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTQL%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTQI%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTQV%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTROPPB%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTROPPV%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTROPQ%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTROPT%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTROPPT%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FTS%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FU10M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FU250%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FU2M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FU500%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FU50M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FU850%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FV10M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FV250%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FV2M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FV500%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FV50M%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FV850%5B1%3A2%5D%5B%5D%5B%5D',
-             '%2FZLCL%5B1%3A2%5D%5B%5D%5B%5D'}
+            {
+                '%2Ftime%5B1%3A2%5D',
+                '%2Flat',
+                '%2Flon',
+                '%2FCLDPRS%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FCLDTMP%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FDISPH%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FH1000%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FH250%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FH500%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FH850%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FPBLTOP%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FPS%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FOMEGA500%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FQ250%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FQ500%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FQ850%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FQV10M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FQV2M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FSLP%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FT10M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FT250%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FT2M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FT2MDEW%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FT2MWET%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FT500%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FT850%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTO3%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTOX%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTQL%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTQI%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTQV%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTROPPB%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTROPPV%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTROPQ%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTROPT%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTROPPT%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FTS%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FU10M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FU250%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FU2M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FU500%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FU50M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FU850%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FV10M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FV250%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FV2M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FV500%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FV50M%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FV850%5B1%3A2%5D%5B%5D%5B%5D',
+                '%2FZLCL%5B1%3A2%5D%5B%5D%5B%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -992,12 +1280,18 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_bbox_temporal_end_to_end(self, mock_stage, mock_util_download,
-                                      mock_rmtree, mock_mkdtemp, mock_uuid,
-                                      mock_get_fill_slice):
-        """ Ensure a request with both a bounding box and a temporal range will
-            retrieve variables, but limited to the ranges specified by the
-            bounding box and the temporal range.
+    def test_bbox_temporal_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with both a bounding box and a temporal range will
+        retrieve variables, but limited to the ranges specified by the
+        bounding box and the temporal range.
 
         """
         expected_output_basename = 'opendap_url_PS_subsetted.nc4'
@@ -1015,69 +1309,95 @@ class TestHossEndToEnd(TestCase):
         geo_temporal_path = f'{self.tmp_dir}/geo_temporal.nc4'
         copy('tests/data/M2T1NXSLV_temporal.nc4', geo_temporal_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          geo_temporal_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, geo_temporal_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'M2T1NXSLV',
-                'variables': [{'id': '',
-                               'name': '/PS',
-                               'fullPath': '/PS'}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [40, -30, 50, -20]},
-            'temporal': {'start': '2021-01-10T01:00:00',
-                         'end': '2021-01-10T03:00:00'},
-            'user': 'jyoung',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'M2T1NXSLV',
+                        'variables': [{'id': '', 'name': '/PS', 'fullPath': '/PS'}],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [40, -30, 50, -20]},
+                'temporal': {
+                    'start': '2021-01-10T01:00:00',
+                    'end': '2021-01-10T03:00:00',
+                },
+                'user': 'jyoung',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
-        self.assert_valid_request_data(dimensions_data,
-                                       {'%2Flat', '%2Flon', '%2Ftime'})
+        self.assert_valid_request_data(dimensions_data, {'%2Flat', '%2Flon', '%2Ftime'})
         # Ensure the constraint expression contains all the required variables.
         # /PS[1:2][120:140][352:368], /time[1:2], /lon[352:368], /lat[120:140]
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime%5B1%3A2%5D',
-             '%2Flat%5B120%3A140%5D',
-             '%2Flon%5B352%3A368%5D',
-             '%2FPS%5B1%3A2%5D%5B120%3A140%5D%5B352%3A368%5D'}
+            {
+                '%2Ftime%5B1%3A2%5D',
+                '%2Flat%5B120%3A140%5D',
+                '%2Flon%5B352%3A368%5D',
+                '%2FPS%5B1%3A2%5D%5B120%3A140%5D%5B352%3A368%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1090,14 +1410,20 @@ class TestHossEndToEnd(TestCase):
     @patch('hoss.bbox_utilities.download')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_geo_shapefile_end_to_end(self, mock_stage, mock_util_download,
-                                      mock_geojson_download, mock_rmtree,
-                                      mock_mkdtemp, mock_uuid,
-                                      mock_get_fill_slice):
-        """ Ensure a request with a shape file specified against a
-            geographically gridded collection will retrieve variables, but
-            limited to the ranges of a bounding box that encloses the specified
-            GeoJSON shape.
+    def test_geo_shapefile_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_geojson_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a shape file specified against a
+        geographically gridded collection will retrieve variables, but
+        limited to the ranges of a bounding box that encloses the specified
+        GeoJSON shape.
 
         """
         expected_output_basename = 'opendap_url_wind_speed_subsetted.nc4'
@@ -1120,52 +1446,82 @@ class TestHossEndToEnd(TestCase):
 
         shape_file_url = 'www.example.com/polygon.geo.json'
         mock_geojson_download.return_value = geojson_path
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'RSSMIF16D',
-                'variables': [{'id': '',
-                               'name': self.rssmif16d_variable,
-                               'fullPath': self.rssmif16d_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'shape': {'href': shape_file_url,
-                                 'type': 'application/geo+json'}},
-            'user': 'dscott',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'RSSMIF16D',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.rssmif16d_variable,
+                                'fullPath': self.rssmif16d_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {
+                    'shape': {'href': shape_file_url, 'type': 'application/geo+json'}
+                },
+                'user': 'dscott',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the shape file in the Harmony message was downloaded:
-        mock_geojson_download.assert_called_once_with(shape_file_url,
-                                                      self.tmp_dir,
-                                                      logger=hoss.logger,
-                                                      access_token=message.accessToken,
-                                                      cfg=hoss.config)
+        mock_geojson_download.assert_called_once_with(
+            shape_file_url,
+            self.tmp_dir,
+            logger=hoss.logger,
+            access_token=message.accessToken,
+            cfg=hoss.config,
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -1181,18 +1537,22 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B508%3A527%5D',
-             '%2Flongitude%5B983%3A1003%5D',
-             '%2Fwind_speed%5B%5D%5B508%3A527%5D%5B983%3A1003%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B508%3A527%5D',
+                '%2Flongitude%5B983%3A1003%5D',
+                '%2Fwind_speed%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1205,19 +1565,25 @@ class TestHossEndToEnd(TestCase):
     @patch('hoss.bbox_utilities.download')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_geo_shapefile_all_variables(self, mock_stage, mock_util_download,
-                                         mock_geojson_download, mock_rmtree,
-                                         mock_mkdtemp, mock_uuid,
-                                         mock_get_fill_slice):
-        """ Ensure an all variable request with a shape file specified will
-            retrieve all variables, but limited to the ranges of a bounding box
-            that encloses the specified GeoJSON shape. This request uses a
-            collection that is geographically gridded.
+    def test_geo_shapefile_all_variables(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_geojson_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure an all variable request with a shape file specified will
+        retrieve all variables, but limited to the ranges of a bounding box
+        that encloses the specified GeoJSON shape. This request uses a
+        collection that is geographically gridded.
 
-            Because a shape file is specified, index range subsetting will be
-            performed, so a prefetch request will be performed, and the final
-            DAP4 constraint expression will include all variables with index
-            ranges.
+        Because a shape file is specified, index range subsetting will be
+        performed, so a prefetch request will be performed, and the final
+        DAP4 constraint expression will include all variables with index
+        ranges.
 
         """
         expected_output_basename = 'opendap_url_subsetted.nc4'
@@ -1240,48 +1606,72 @@ class TestHossEndToEnd(TestCase):
 
         shape_file_url = 'www.example.com/polygon.geo.json'
         mock_geojson_download.return_value = geojson_path
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{'collection': 'C1234567890-EEDTEST',
-                         'shortName': 'RSSMIF16D'}],
-            'stagingLocation': self.staging_location,
-            'subset': {'shape': {'href': shape_file_url,
-                                 'type': 'application/geo+json'}},
-            'user': 'dscott',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {'collection': 'C1234567890-EEDTEST', 'shortName': 'RSSMIF16D'}
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {
+                    'shape': {'href': shape_file_url, 'type': 'application/geo+json'}
+                },
+                'user': 'dscott',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the shape file in the Harmony message was downloaded:
-        mock_geojson_download.assert_called_once_with(shape_file_url,
-                                                      self.tmp_dir,
-                                                      logger=hoss.logger,
-                                                      access_token=message.accessToken,
-                                                      cfg=hoss.config)
+        mock_geojson_download.assert_called_once_with(
+            shape_file_url,
+            self.tmp_dir,
+            logger=hoss.logger,
+            access_token=message.accessToken,
+            cfg=hoss.config,
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -1297,22 +1687,26 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B508%3A527%5D',
-             '%2Flongitude%5B983%3A1003%5D',
-             '%2Fatmosphere_cloud_liquid_water_content%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
-             '%2Fatmosphere_water_vapor_content%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
-             '%2Frainfall_rate%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
-             '%2Fsst_dtime%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
-             '%2Fwind_speed%5B%5D%5B508%3A527%5D%5B983%3A1003%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B508%3A527%5D',
+                '%2Flongitude%5B983%3A1003%5D',
+                '%2Fatmosphere_cloud_liquid_water_content%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+                '%2Fatmosphere_water_vapor_content%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+                '%2Frainfall_rate%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+                '%2Fsst_dtime%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+                '%2Fwind_speed%5B%5D%5B508%3A527%5D%5B983%3A1003%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1325,13 +1719,19 @@ class TestHossEndToEnd(TestCase):
     @patch('hoss.bbox_utilities.download')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_bbox_precedence_end_to_end(self, mock_stage, mock_util_download,
-                                        mock_geojson_download, mock_rmtree,
-                                        mock_mkdtemp, mock_uuid,
-                                        mock_get_fill_slice):
-        """ Ensure a request with a bounding box will be correctly processed,
-            requesting only the expected variables, with index ranges
-            corresponding to the bounding box specified.
+    def test_bbox_precedence_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_geojson_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a bounding box will be correctly processed,
+        requesting only the expected variables, with index ranges
+        corresponding to the bounding box specified.
 
         """
         expected_output_basename = 'opendap_url_wind_speed_subsetted.nc4'
@@ -1354,56 +1754,86 @@ class TestHossEndToEnd(TestCase):
 
         shape_file_url = 'www.example.com/polygon.geo.json'
         mock_geojson_download.return_value = geojson_path
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'RSSMIF16D',
-                'variables': [{'id': '',
-                               'name': self.rssmif16d_variable,
-                               'fullPath': self.rssmif16d_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [-30, 45, -15, 60],
-                       'shape': {'href': shape_file_url,
-                                 'type': 'application/geo+json'}},
-            'user': 'aworden',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'RSSMIF16D',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.rssmif16d_variable,
+                                'fullPath': self.rssmif16d_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {
+                    'bbox': [-30, 45, -15, 60],
+                    'shape': {'href': shape_file_url, 'type': 'application/geo+json'},
+                },
+                'user': 'aworden',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the shape file in the Harmony message was downloaded (the
         # logic giving the bounding box precedence over the shape file occurs
         # in `hoss/subset.py`, after the shape file has already been
         # downloaded - however, that file will not be used.
-        mock_geojson_download.assert_called_once_with(shape_file_url,
-                                                      self.tmp_dir,
-                                                      logger=hoss.logger,
-                                                      access_token=message.accessToken,
-                                                      cfg=hoss.config)
+        mock_geojson_download.assert_called_once_with(
+            shape_file_url,
+            self.tmp_dir,
+            logger=hoss.logger,
+            access_token=message.accessToken,
+            cfg=hoss.config,
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -1419,18 +1849,22 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B540%3A599%5D',
-             '%2Flongitude%5B1320%3A1379%5D',
-             '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B540%3A599%5D',
+                '%2Flongitude%5B1320%3A1379%5D',
+                '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B1320%3A1379%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1442,15 +1876,22 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_geo_dimensions(self, mock_stage, mock_util_download, mock_rmtree,
-                            mock_mkdtemp, mock_uuid, mock_get_fill_slice):
-        """ Ensure a request with explicitly specified dimension extents will
-            be correctly processed, requesting only the expected variables,
-            with index ranges corresponding to the extents specified.
+    def test_geo_dimensions(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with explicitly specified dimension extents will
+        be correctly processed, requesting only the expected variables,
+        with index ranges corresponding to the extents specified.
 
-            To minimise test data in the repository, this test uses geographic
-            dimension of latitude and longitude, but within the
-            `subset.dimensions` region of the inbound Harmony message.
+        To minimise test data in the repository, this test uses geographic
+        dimension of latitude and longitude, but within the
+        `subset.dimensions` region of the inbound Harmony message.
 
         """
         expected_output_basename = 'opendap_url_wind_speed_subsetted.nc4'
@@ -1468,47 +1909,76 @@ class TestHossEndToEnd(TestCase):
         all_variables_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/f16_ssmis_geo.nc', all_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'RSSMIF16D',
-                'variables': [{'id': '',
-                               'name': self.rssmif16d_variable,
-                               'fullPath': self.rssmif16d_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'dimensions': [
-                {'name': 'latitude', 'min': 45, 'max': 60},
-                {'name': 'longitude', 'min': 15, 'max': 30}
-            ]},
-            'user': 'blightyear',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'RSSMIF16D',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.rssmif16d_variable,
+                                'fullPath': self.rssmif16d_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {
+                    'dimensions': [
+                        {'name': 'latitude', 'min': 45, 'max': 60},
+                        {'name': 'longitude', 'min': 15, 'max': 30},
+                    ]
+                },
+                'user': 'blightyear',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -1522,18 +1992,22 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Flatitude%5B540%3A599%5D',
-             '%2Flongitude%5B60%3A119%5D',
-             '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B60%3A119%5D'}
+            {
+                '%2Ftime',
+                '%2Flatitude%5B540%3A599%5D',
+                '%2Flongitude%5B60%3A119%5D',
+                '%2Fwind_speed%5B%5D%5B540%3A599%5D%5B60%3A119%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1545,13 +2019,19 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_projected_grid_bbox(self, mock_stage, mock_util_download,
-                                 mock_rmtree, mock_mkdtemp, mock_uuid,
-                                 mock_get_fill_slice):
-        """ Make a request specifying a bounding box for a collection that is
-            gridded to a non-geographic projection. This example will use
-            ABoVE TVPRM, which uses an Albers Conical Equal Area projection
-            with data covering Alaska.
+    def test_projected_grid_bbox(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Make a request specifying a bounding box for a collection that is
+        gridded to a non-geographic projection. This example will use
+        ABoVE TVPRM, which uses an Albers Conical Equal Area projection
+        with data covering Alaska.
 
         """
         expected_output_basename = 'opendap_url_NEE_subsetted.nc4'
@@ -1568,44 +2048,65 @@ class TestHossEndToEnd(TestCase):
 
         output_path = f'{self.tmp_dir}/ABoVE_TVPRM_bbox.nc4'
         copy('tests/data/ABoVE_TVPRM_prefetch.nc4', output_path)
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          output_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, output_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'NorthSlope_NEE_TVPRM_1920',
-                'variables': [{'id': '',
-                               'name': '/NEE',
-                               'fullPath': '/NEE'}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [-160, 68, -145, 70]},
-            'user': 'wfunk',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'NorthSlope_NEE_TVPRM_1920',
+                        'variables': [{'id': '', 'name': '/NEE', 'fullPath': '/NEE'}],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [-160, 68, -145, 70]},
+                'user': 'wfunk',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # spatial or temporal variables with no index ranges
@@ -1618,20 +2119,24 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Ftime_bnds',
-             '%2Fcrs',
-             '%2Fx%5B37%3A56%5D',
-             '%2Fy%5B7%3A26%5D',
-             '%2FNEE%5B%5D%5B7%3A26%5D%5B37%3A56%5D'}
+            {
+                '%2Ftime',
+                '%2Ftime_bnds',
+                '%2Fcrs',
+                '%2Fx%5B37%3A56%5D',
+                '%2Fy%5B7%3A26%5D',
+                '%2FNEE%5B%5D%5B7%3A26%5D%5B37%3A56%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1644,13 +2149,20 @@ class TestHossEndToEnd(TestCase):
     @patch('hoss.bbox_utilities.download')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_projected_grid_shape(self, mock_stage, mock_util_download,
-                                  mock_geojson_download, mock_rmtree,
-                                  mock_mkdtemp, mock_uuid, mock_get_fill_slice):
-        """ Make a request specifying a shape file for a collection that is
-            gridded to a non-geographic projection. This example will use
-            ABoVE TVPRM, which uses an Albers Conical Equal Area projection
-            with data covering Alaska.
+    def test_projected_grid_shape(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_geojson_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Make a request specifying a shape file for a collection that is
+        gridded to a non-geographic projection. This example will use
+        ABoVE TVPRM, which uses an Albers Conical Equal Area projection
+        with data covering Alaska.
 
         """
         expected_output_basename = 'opendap_url_NEE_subsetted.nc4'
@@ -1673,45 +2185,67 @@ class TestHossEndToEnd(TestCase):
 
         output_path = f'{self.tmp_dir}/ABoVE_TVPRM_bbox.nc4'
         copy('tests/data/ABoVE_TVPRM_prefetch.nc4', output_path)
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          output_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, output_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'NorthSlope_NEE_TVPRM_1920',
-                'variables': [{'id': '',
-                               'name': '/NEE',
-                               'fullPath': '/NEE'}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'shape': {'href': shape_file_url,
-                                 'type': 'application/geo+json'}},
-            'user': 'wfunk',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'NorthSlope_NEE_TVPRM_1920',
+                        'variables': [{'id': '', 'name': '/NEE', 'fullPath': '/NEE'}],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {
+                    'shape': {'href': shape_file_url, 'type': 'application/geo+json'}
+                },
+                'user': 'wfunk',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # geographic or temporal variables with no index ranges
@@ -1724,20 +2258,24 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Ftime',
-             '%2Ftime_bnds',
-             '%2Fcrs',
-             '%2Fx%5B37%3A56%5D',
-             '%2Fy%5B11%3A26%5D',
-             '%2FNEE%5B%5D%5B11%3A26%5D%5B37%3A56%5D'}
+            {
+                '%2Ftime',
+                '%2Ftime_bnds',
+                '%2Fcrs',
+                '%2Fx%5B37%3A56%5D',
+                '%2Fy%5B11%3A26%5D',
+                '%2FNEE%5B%5D%5B11%3A26%5D%5B37%3A56%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location='s3://example-bucket/',
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location='s3://example-bucket/',
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1749,20 +2287,26 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_bounds_end_to_end(self, mock_stage, mock_util_download,
-                               mock_rmtree, mock_mkdtemp, mock_uuid,
-                               mock_get_fill_slice):
-        """ Ensure a request with a bounding box and temporal range will be
-            correctly processed for a geographically gridded collection that
-            has bounds variables for each dimension.
+    def test_bounds_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a bounding box and temporal range will be
+        correctly processed for a geographically gridded collection that
+        has bounds variables for each dimension.
 
-            Note: Each GPM IMERGHH granule has a single time slice, so the full
-            range will be retrieved (e.g., /Grid/time[0:0]
+        Note: Each GPM IMERGHH granule has a single time slice, so the full
+        range will be retrieved (e.g., /Grid/time[0:0]
 
-            * -30.0 ≤ /Grid/lon[1500] ≤ -29.9
-            * 45.0 ≤ /Grid/lat[1350] ≤ 45.1
-            * -14.9 ≤ /Grid/lon[1649] ≤ -15.0
-            * 59.9 ≤ /Grid/lat[1499] ≤ 60.0
+        * -30.0 ≤ /Grid/lon[1500] ≤ -29.9
+        * 45.0 ≤ /Grid/lat[1350] ≤ 45.1
+        * -14.9 ≤ /Grid/lon[1649] ≤ -15.0
+        * 59.9 ≤ /Grid/lat[1499] ≤ 60.0
 
         """
         expected_output_basename = 'opendap_url_Grid_precipitationCal_subsetted.nc4'
@@ -1780,54 +2324,89 @@ class TestHossEndToEnd(TestCase):
         all_variables_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/GPM_3IMERGHH_bounds.nc4', all_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'GPM_3IMERGHH',
-                'variables': [{'id': '',
-                               'name': self.gpm_variable,
-                               'fullPath': self.gpm_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [-30, 45, -15, 60]},
-            'temporal': {'start': '2020-01-01T12:15:00',
-                         'end': '2020-01-01T12:45:00'},
-            'user': 'jlovell',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'GPM_3IMERGHH',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.gpm_variable,
+                                'fullPath': self.gpm_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [-30, 45, -15, 60]},
+                'temporal': {
+                    'start': '2020-01-01T12:15:00',
+                    'end': '2020-01-01T12:45:00',
+                },
+                'user': 'jlovell',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # dimension variables and their associated bounds variables.
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
         self.assert_valid_request_data(
-            dimensions_data, {'%2FGrid%2Flat', '%2FGrid%2Flat_bnds',
-                              '%2FGrid%2Flon', '%2FGrid%2Flon_bnds',
-                              '%2FGrid%2Ftime', '%2FGrid%2Ftime_bnds'}
+            dimensions_data,
+            {
+                '%2FGrid%2Flat',
+                '%2FGrid%2Flat_bnds',
+                '%2FGrid%2Flon',
+                '%2FGrid%2Flon_bnds',
+                '%2FGrid%2Ftime',
+                '%2FGrid%2Ftime_bnds',
+            },
         )
         # Ensure the constraint expression contains all the required variables.
         # /Grid/precipitationCal[0:0][1500:1649][1350:1499],
@@ -1837,21 +2416,25 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2FGrid%2Flat%5B1350%3A1499%5D',
-             '%2FGrid%2Flat_bnds%5B1350%3A1499%5D%5B%5D',
-             '%2FGrid%2Flon%5B1500%3A1649%5D',
-             '%2FGrid%2Flon_bnds%5B1500%3A1649%5D%5B%5D',
-             '%2FGrid%2Ftime%5B0%3A0%5D',
-             '%2FGrid%2Ftime_bnds%5B0%3A0%5D%5B%5D',
-             '%2FGrid%2FprecipitationCal%5B0%3A0%5D%5B1500%3A1649%5D%5B1350%3A1499%5D'}
+            {
+                '%2FGrid%2Flat%5B1350%3A1499%5D',
+                '%2FGrid%2Flat_bnds%5B1350%3A1499%5D%5B%5D',
+                '%2FGrid%2Flon%5B1500%3A1649%5D',
+                '%2FGrid%2Flon_bnds%5B1500%3A1649%5D%5B%5D',
+                '%2FGrid%2Ftime%5B0%3A0%5D',
+                '%2FGrid%2Ftime_bnds%5B0%3A0%5D%5B%5D',
+                '%2FGrid%2FprecipitationCal%5B0%3A0%5D%5B1500%3A1649%5D%5B1350%3A1499%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1863,28 +2446,31 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_requested_dimensions_bounds_end_to_end(self, mock_stage,
-                                                    mock_util_download,
-                                                    mock_rmtree, mock_mkdtemp,
-                                                    mock_uuid,
-                                                    mock_get_fill_slice):
-        """ Ensure a request with a spatial range specified by variable names,
-            not just subset=lat(), subset=lon(), will be correctly processed
-            for a geographically gridded collection that has bounds variables
-            for each dimension.
+    def test_requested_dimensions_bounds_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request with a spatial range specified by variable names,
+        not just subset=lat(), subset=lon(), will be correctly processed
+        for a geographically gridded collection that has bounds variables
+        for each dimension.
 
-            Note: Each GPM IMERGHH granule has a single time slice, so the full
-            range will be retrieved (e.g., /Grid/time[0:0]
+        Note: Each GPM IMERGHH granule has a single time slice, so the full
+        range will be retrieved (e.g., /Grid/time[0:0]
 
-            * -30.0 ≤ /Grid/lon[1500] ≤ -29.9
-            * 45.0 ≤ /Grid/lat[1350] ≤ 45.1
-            * -14.9 ≤ /Grid/lon[1649] ≤ -15.0
-            * 59.9 ≤ /Grid/lat[1499] ≤ 60.0
+        * -30.0 ≤ /Grid/lon[1500] ≤ -29.9
+        * 45.0 ≤ /Grid/lat[1350] ≤ 45.1
+        * -14.9 ≤ /Grid/lon[1649] ≤ -15.0
+        * 59.9 ≤ /Grid/lat[1499] ≤ 60.0
 
         """
         expected_output_basename = 'opendap_url_Grid_precipitationCal_subsetted.nc4'
-        expected_staged_url = ''.join([self.staging_location,
-                                       expected_output_basename])
+        expected_staged_url = ''.join([self.staging_location, expected_output_basename])
 
         mock_uuid.side_effect = [Mock(hex='uuid'), Mock(hex='uuid2')]
         mock_mkdtemp.return_value = self.tmp_dir
@@ -1898,57 +2484,94 @@ class TestHossEndToEnd(TestCase):
         all_variables_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/GPM_3IMERGHH_bounds.nc4', all_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'GPM_3IMERGHH',
-                'variables': [{'id': '',
-                               'name': self.gpm_variable,
-                               'fullPath': self.gpm_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'dimensions': [
-                {'name': '/Grid/lat', 'min': 45, 'max': 60},
-                {'name': '/Grid/lon', 'min': -30, 'max': -15},
-            ]},
-            'temporal': {'start': '2020-01-01T12:15:00',
-                         'end': '2020-01-01T12:45:00'},
-            'user': 'jlovell',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'GPM_3IMERGHH',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.gpm_variable,
+                                'fullPath': self.gpm_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {
+                    'dimensions': [
+                        {'name': '/Grid/lat', 'min': 45, 'max': 60},
+                        {'name': '/Grid/lon', 'min': -30, 'max': -15},
+                    ]
+                },
+                'temporal': {
+                    'start': '2020-01-01T12:15:00',
+                    'end': '2020-01-01T12:45:00',
+                },
+                'user': 'jlovell',
+            }
+        )
 
-        hoss = HossAdapter(message, config=config(False),
-                           catalog=self.input_stac)
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         # See related comment in self.test_geo_bbox_end_to_end
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # dimension variables and their associated bounds variables.
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
         self.assert_valid_request_data(
-            dimensions_data, {'%2FGrid%2Flat', '%2FGrid%2Flat_bnds',
-                              '%2FGrid%2Flon', '%2FGrid%2Flon_bnds',
-                              '%2FGrid%2Ftime', '%2FGrid%2Ftime_bnds'}
+            dimensions_data,
+            {
+                '%2FGrid%2Flat',
+                '%2FGrid%2Flat_bnds',
+                '%2FGrid%2Flon',
+                '%2FGrid%2Flon_bnds',
+                '%2FGrid%2Ftime',
+                '%2FGrid%2Ftime_bnds',
+            },
         )
         # Ensure the constraint expression contains all the required variables.
         # /Grid/precipitationCal[0:0][1500:1649][1350:1499],
@@ -1958,21 +2581,25 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2FGrid%2Flat%5B1350%3A1499%5D',
-             '%2FGrid%2Flat_bnds%5B1350%3A1499%5D%5B%5D',
-             '%2FGrid%2Flon%5B1500%3A1649%5D',
-             '%2FGrid%2Flon_bnds%5B1500%3A1649%5D%5B%5D',
-             '%2FGrid%2Ftime%5B0%3A0%5D',
-             '%2FGrid%2Ftime_bnds%5B0%3A0%5D%5B%5D',
-             '%2FGrid%2FprecipitationCal%5B0%3A0%5D%5B1500%3A1649%5D%5B1350%3A1499%5D'}
+            {
+                '%2FGrid%2Flat%5B1350%3A1499%5D',
+                '%2FGrid%2Flat_bnds%5B1350%3A1499%5D%5B%5D',
+                '%2FGrid%2Flon%5B1500%3A1649%5D',
+                '%2FGrid%2Flon_bnds%5B1500%3A1649%5D%5B%5D',
+                '%2FGrid%2Ftime%5B0%3A0%5D',
+                '%2FGrid%2Ftime_bnds%5B0%3A0%5D%5B%5D',
+                '%2FGrid%2FprecipitationCal%5B0%3A0%5D%5B1500%3A1649%5D%5B1350%3A1499%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 
         # Ensure no variables were filled
@@ -1982,32 +2609,41 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.subset.download_url')
     @patch('hoss.adapter.stage')
-    def test_exception_handling(self, mock_stage, mock_download_subset,
-                                mock_rmtree, mock_mkdtemp):
-        """ Ensure that if an exception is raised during processing, this
-            causes a HarmonyException to be raised, to allow for informative
-            logging.
+    def test_exception_handling(
+        self, mock_stage, mock_download_subset, mock_rmtree, mock_mkdtemp
+    ):
+        """Ensure that if an exception is raised during processing, this
+        causes a HarmonyException to be raised, to allow for informative
+        logging.
 
         """
         mock_mkdtemp.return_value = self.tmp_dir
         mock_download_subset.side_effect = Exception('Random error')
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1234567890-EEDTEST',
-                'shortName': 'ATL03',
-                'variables': [{'id': '',
-                               'name': self.atl03_variable,
-                               'fullPath': self.atl03_variable}]}],
-            'stagingLocation': self.staging_location,
-            'user': 'kmattingly',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'ATL03',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.atl03_variable,
+                                'fullPath': self.atl03_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'user': 'kmattingly',
+            }
+        )
 
         with self.assertRaises(HarmonyException):
-            hoss = HossAdapter(message, config=config(False),
-                               catalog=self.input_stac)
+            hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
             hoss.invoke()
 
         mock_stage.assert_not_called()
@@ -2019,15 +2655,19 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
-    def test_edge_aligned_no_bounds_end_to_end(self, mock_stage,
-                                               mock_util_download,
-                                               mock_rmtree, mock_mkdtemp,
-                                               mock_uuid,
-                                               mock_get_fill_slice):
-        """ Ensure a request for a collection that contains dimension variables
-            with edge-aligned grid cells is correctly processed regardless of
-            whether or not a bounds variable associated with that dimension
-            variable exists.
+    def test_edge_aligned_no_bounds_end_to_end(
+        self,
+        mock_stage,
+        mock_util_download,
+        mock_rmtree,
+        mock_mkdtemp,
+        mock_uuid,
+        mock_get_fill_slice,
+    ):
+        """Ensure a request for a collection that contains dimension variables
+        with edge-aligned grid cells is correctly processed regardless of
+        whether or not a bounds variable associated with that dimension
+        variable exists.
 
         """
         expected_output_basename = 'opendap_url_global_asr_obs_grid_subsetted.nc4'
@@ -2045,50 +2685,76 @@ class TestHossEndToEnd(TestCase):
         all_variables_path = f'{self.tmp_dir}/variables.nc4'
         copy('tests/data/ATL16_variables.nc4', all_variables_path)
 
-        mock_util_download.side_effect = [dmr_path, dimensions_path,
-                                          all_variables_path]
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
 
-        message = Message({
-            'accessToken': 'fake-token',
-            'callback': 'https://example.com/',
-            'sources': [{
-                'collection': 'C1238589498-EEDTEST',
-                'shortName': 'ATL16',
-                'variables': [{'id': '',
-                               'name': self.atl16_variable,
-                               'fullPath': self.atl16_variable}]}],
-            'stagingLocation': self.staging_location,
-            'subset': {'bbox': [77, 71.25, 88, 74.75]},
-            'user': 'sride',
-        })
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1238589498-EEDTEST',
+                        'shortName': 'ATL16',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.atl16_variable,
+                                'fullPath': self.atl16_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [77, 71.25, 88, 74.75]},
+                'user': 'sride',
+            }
+        )
 
         hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
         _, output_catalog = hoss.invoke()
 
         # Ensure that there is a single item in the output catalog with the
         # expected asset:
-        self.assert_expected_output_catalog(output_catalog,
-                                            expected_staged_url,
-                                            expected_output_basename)
+        self.assert_expected_output_catalog(
+            output_catalog, expected_staged_url, expected_output_basename
+        )
 
         # Ensure the expected requests were made against OPeNDAP.
         self.assertEqual(mock_util_download.call_count, 3)
-        mock_util_download.assert_has_calls([
-            call(f'{self.granule_url}.dmr.xml', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=None, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-            call(f'{self.granule_url}.dap.nc4', self.tmp_dir, hoss.logger,
-                 access_token=message.accessToken, data=ANY, cfg=hoss.config),
-        ])
+        mock_util_download.assert_has_calls(
+            [
+                call(
+                    f'{self.granule_url}.dmr.xml',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=None,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+                call(
+                    f'{self.granule_url}.dap.nc4',
+                    self.tmp_dir,
+                    hoss.logger,
+                    access_token=message.accessToken,
+                    data=ANY,
+                    cfg=hoss.config,
+                ),
+            ]
+        )
 
         # Ensure the constraint expression for dimensions data included only
         # dimension variables and their associated bounds variables.
         dimensions_data = mock_util_download.call_args_list[1][1].get('data', {})
         self.assert_valid_request_data(
-            dimensions_data,
-            {'%2Fglobal_grid_lat',
-             '%2Fglobal_grid_lon'}
+            dimensions_data, {'%2Fglobal_grid_lat', '%2Fglobal_grid_lon'}
         )
 
         # Ensure the constraint expression contains all the required variables.
@@ -2105,17 +2771,21 @@ class TestHossEndToEnd(TestCase):
         index_range_data = mock_util_download.call_args_list[2][1].get('data', {})
         self.assert_valid_request_data(
             index_range_data,
-            {'%2Fglobal_asr_obs_grid%5B53%3A54%5D%5B85%3A89%5D',
-             '%2Fglobal_grid_lat%5B53%3A54%5D',
-             '%2Fglobal_grid_lon%5B85%3A89%5D'}
+            {
+                '%2Fglobal_asr_obs_grid%5B53%3A54%5D%5B85%3A89%5D',
+                '%2Fglobal_grid_lat%5B53%3A54%5D',
+                '%2Fglobal_grid_lon%5B85%3A89%5D',
+            },
         )
 
         # Ensure the output was staged with the expected file name
-        mock_stage.assert_called_once_with(f'{self.tmp_dir}/uuid2.nc4',
-                                           expected_output_basename,
-                                           'application/x-netcdf4',
-                                           location=self.staging_location,
-                                           logger=hoss.logger)
+        mock_stage.assert_called_once_with(
+            f'{self.tmp_dir}/uuid2.nc4',
+            expected_output_basename,
+            'application/x-netcdf4',
+            location=self.staging_location,
+            logger=hoss.logger,
+        )
 
         mock_rmtree.assert_called_once_with(self.tmp_dir)
 

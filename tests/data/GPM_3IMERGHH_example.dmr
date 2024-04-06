@@ -109,7 +109,7 @@ EndianType=LITTLE_ENDIAN;
             </Attribute>
             <Attribute name="LongName" type="String">
                 <Value>Longitude at the center of
-			0.10 degree grid intervals of longitude 
+			0.10 degree grid intervals of longitude
 			from -180 to 180.</Value>
             </Attribute>
             <Attribute name="bounds" type="String">
@@ -157,7 +157,7 @@ EndianType=LITTLE_ENDIAN;
                 <Value>time</Value>
             </Attribute>
             <Attribute name="LongName" type="String">
-                <Value>Representative time of data in 
+                <Value>Representative time of data in
 			seconds since 1970-01-01 00:00:00 UTC.</Value>
             </Attribute>
             <Attribute name="bounds" type="String">

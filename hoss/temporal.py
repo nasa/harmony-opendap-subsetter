@@ -7,6 +7,7 @@
     be combined with any other index ranges (e.g., spatial).
 
 """
+
 from datetime import datetime, timedelta, timezone
 from typing import List, Set
 
@@ -15,8 +16,11 @@ from harmony.message import Message
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 
-from hoss.dimension_utilities import (get_dimension_bounds,
-                                      get_dimension_index_range, IndexRanges)
+from hoss.dimension_utilities import (
+    get_dimension_bounds,
+    get_dimension_index_range,
+    IndexRanges,
+)
 from hoss.exceptions import UnsupportedTemporalUnits
 
 
@@ -26,16 +30,19 @@ units_min = {'minutes', 'minute', 'min', 'mins'}
 units_second = {'second', 'seconds', 'sec', 'secs', 's'}
 
 
-def get_temporal_index_ranges(required_variables: Set[str],
-                              varinfo: VarInfoFromDmr, dimensions_path: str,
-                              harmony_message: Message) -> IndexRanges:
-    """ Iterate through the temporal dimension and extract the indices that
-        correspond to the minimum and maximum extents in that dimension.
+def get_temporal_index_ranges(
+    required_variables: Set[str],
+    varinfo: VarInfoFromDmr,
+    dimensions_path: str,
+    harmony_message: Message,
+) -> IndexRanges:
+    """Iterate through the temporal dimension and extract the indices that
+    correspond to the minimum and maximum extents in that dimension.
 
-        The return value from this function is a dictionary that contains the
-        index ranges for the time dimension, such as:
+    The return value from this function is a dictionary that contains the
+    index ranges for the time dimension, such as:
 
-        index_range = {'/time': [1, 5]}
+    index_range = {'/time': [1, 5]}
 
     """
     index_ranges = {}
@@ -58,17 +65,18 @@ def get_temporal_index_ranges(required_variables: Set[str],
             maximum_extent = (time_end - time_ref) / time_delta
 
             index_ranges[dimension] = get_dimension_index_range(
-                dimensions_file[dimension][:], minimum_extent, maximum_extent,
-                bounds_values=get_dimension_bounds(dimension, varinfo,
-                                                   dimensions_file)
+                dimensions_file[dimension][:],
+                minimum_extent,
+                maximum_extent,
+                bounds_values=get_dimension_bounds(dimension, varinfo, dimensions_file),
             )
 
     return index_ranges
 
 
 def get_datetime_with_timezone(timestring: str) -> datetime:
-    """ function to parse string to datetime, and ensure datetime is timezone
-        "aware". If a timezone is not supplied, it is assumed to be UTC.
+    """function to parse string to datetime, and ensure datetime is timezone
+    "aware". If a timezone is not supplied, it is assumed to be UTC.
 
     """
 
@@ -81,7 +89,7 @@ def get_datetime_with_timezone(timestring: str) -> datetime:
 
 
 def get_time_ref(units_time: str) -> List[datetime]:
-    """ Retrieve the reference time (epoch) and time step size. """
+    """Retrieve the reference time (epoch) and time step size."""
     unit, epoch_str = units_time.split(' since ')
     ref_time = get_datetime_with_timezone(epoch_str)
 

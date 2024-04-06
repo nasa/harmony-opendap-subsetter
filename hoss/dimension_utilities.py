@@ -9,6 +9,7 @@
     unwrapped in accordance with the longitude dimension values.
 
 """
+
 from logging import Logger
 from typing import Dict, Set, Tuple
 
@@ -24,8 +25,11 @@ from varinfo import VarInfoFromDmr, VariableFromDmr
 
 from hoss.bbox_utilities import flatten_list
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
-from hoss.utilities import (format_variable_set_string, get_opendap_nc4,
-                            get_value_or_default)
+from hoss.utilities import (
+    format_variable_set_string,
+    get_opendap_nc4,
+    get_value_or_default,
+)
 
 
 IndexRange = Tuple[int]
@@ -33,31 +37,41 @@ IndexRanges = Dict[str, IndexRange]
 
 
 def is_index_subset(message: Message) -> bool:
-    """ Determine if the inbound Harmony request specified any parameters that
-        will require an index range subset. These will be:
+    """Determine if the inbound Harmony request specified any parameters that
+    will require an index range subset. These will be:
 
-        * Bounding box spatial requests (Message.subset.bbox)
-        * Shape file spatial requests (Message.subset.shape)
-        * Temporal requests (Message.temporal)
-        * Named dimension range subsetting requests (Message.subset.dimensions)
+    * Bounding box spatial requests (Message.subset.bbox)
+    * Shape file spatial requests (Message.subset.shape)
+    * Temporal requests (Message.temporal)
+    * Named dimension range subsetting requests (Message.subset.dimensions)
 
     """
-    return any(rgetattr(message, subset_parameter, None) is not None
-               for subset_parameter
-               in ['subset.bbox', 'subset.shape', 'subset.dimensions',
-                   'temporal'])
+    return any(
+        rgetattr(message, subset_parameter, None) is not None
+        for subset_parameter in [
+            'subset.bbox',
+            'subset.shape',
+            'subset.dimensions',
+            'temporal',
+        ]
+    )
 
 
-def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
-                                 required_variables: Set[str], output_dir: str,
-                                 logger: Logger, access_token: str,
-                                 config: Config) -> str:
-    """ Determine the dimensions that need to be "pre-fetched" from OPeNDAP in
-        order to derive index ranges upon them. Initially, this was just
-        spatial and temporal dimensions, but to support generic dimension
-        subsets, all required dimensions must be prefetched, along with any
-        associated bounds variables referred to via the "bounds" metadata
-        attribute.
+def prefetch_dimension_variables(
+    opendap_url: str,
+    varinfo: VarInfoFromDmr,
+    required_variables: Set[str],
+    output_dir: str,
+    logger: Logger,
+    access_token: str,
+    config: Config,
+) -> str:
+    """Determine the dimensions that need to be "pre-fetched" from OPeNDAP in
+    order to derive index ranges upon them. Initially, this was just
+    spatial and temporal dimensions, but to support generic dimension
+    subsets, all required dimensions must be prefetched, along with any
+    associated bounds variables referred to via the "bounds" metadata
+    attribute.
 
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
@@ -66,41 +80,48 @@ def prefetch_dimension_variables(opendap_url: str, varinfo: VarInfoFromDmr,
     # references for each that has any. This will produce a list of lists,
     # which should be flattened into a single list and then combined into a set
     # to remove duplicates.
-    bounds = set(flatten_list([
-        list(varinfo.get_variable(dimension).references.get('bounds'))
-        for dimension in required_dimensions
-        if varinfo.get_variable(dimension).references.get('bounds') is not None
-    ]))
+    bounds = set(
+        flatten_list(
+            [
+                list(varinfo.get_variable(dimension).references.get('bounds'))
+                for dimension in required_dimensions
+                if varinfo.get_variable(dimension).references.get('bounds') is not None
+            ]
+        )
+    )
 
     required_dimensions.update(bounds)
 
-    logger.info('Variables being retrieved in prefetch request: '
-                f'{format_variable_set_string(required_dimensions)}')
+    logger.info(
+        'Variables being retrieved in prefetch request: '
+        f'{format_variable_set_string(required_dimensions)}'
+    )
 
-    required_dimensions_nc4 = get_opendap_nc4(opendap_url,
-                                              required_dimensions, output_dir,
-                                              logger, access_token, config)
+    required_dimensions_nc4 = get_opendap_nc4(
+        opendap_url, required_dimensions, output_dir, logger, access_token, config
+    )
 
     # Create bounds variables if necessary.
-    add_bounds_variables(required_dimensions_nc4, required_dimensions,
-                         varinfo, logger)
+    add_bounds_variables(required_dimensions_nc4, required_dimensions, varinfo, logger)
 
     return required_dimensions_nc4
 
 
-def add_bounds_variables(dimensions_nc4: str,
-                         required_dimensions: Set[str],
-                         varinfo: VarInfoFromDmr,
-                         logger: Logger) -> None:
-    """ Augment a NetCDF4 file with artificial bounds variables for each
-        dimension variable that has been identified by the earthdata-varinfo
-        configuration file to have an edge-aligned attribute"
+def add_bounds_variables(
+    dimensions_nc4: str,
+    required_dimensions: Set[str],
+    varinfo: VarInfoFromDmr,
+    logger: Logger,
+) -> None:
+    """Augment a NetCDF4 file with artificial bounds variables for each
+    dimension variable that has been identified by the earthdata-varinfo
+    configuration file to have an edge-aligned attribute"
 
-        For each dimension variable:
-        (1) Check if the variable needs a bounds variable.
-        (2) If so, create a bounds array from within the `write_bounds`
-            function.
-        (3) Then write the bounds variable to the NetCDF4 URL.
+    For each dimension variable:
+    (1) Check if the variable needs a bounds variable.
+    (2) If so, create a bounds array from within the `write_bounds`
+        function.
+    (3) Then write the bounds variable to the NetCDF4 URL.
 
     """
     with Dataset(dimensions_nc4, 'r+') as prefetch_dataset:
@@ -109,14 +130,16 @@ def add_bounds_variables(dimensions_nc4: str,
             if needs_bounds(dimension_variable):
                 write_bounds(prefetch_dataset, dimension_variable)
 
-                logger.info('Artificial bounds added for dimension variable: '
-                            f'{dimension_name}')
+                logger.info(
+                    'Artificial bounds added for dimension variable: '
+                    f'{dimension_name}'
+                )
 
 
 def needs_bounds(dimension: VariableFromDmr) -> bool:
-    """ Check if a dimension variable needs a bounds variable.
-        This will be the case when dimension cells are edge-aligned
-        and bounds for that dimension do not already exist.
+    """Check if a dimension variable needs a bounds variable.
+    This will be the case when dimension cells are edge-aligned
+    and bounds for that dimension do not already exist.
 
     """
     return (
@@ -125,29 +148,28 @@ def needs_bounds(dimension: VariableFromDmr) -> bool:
     )
 
 
-def get_bounds_array(prefetch_dataset: Dataset,
-                     dimension_path: str) -> np.ndarray:
-    """ Create an array containing the minimum and maximum bounds
-        for each pixel in a given dimension.
+def get_bounds_array(prefetch_dataset: Dataset, dimension_path: str) -> np.ndarray:
+    """Create an array containing the minimum and maximum bounds
+    for each pixel in a given dimension.
 
-        The minimum and maximum values are determined under the assumption
-        that the dimension data is monotonically increasing and contiguous.
-        So for every bounds but the last, the bounds are simply extracted
-        from the dimension dataset.
+    The minimum and maximum values are determined under the assumption
+    that the dimension data is monotonically increasing and contiguous.
+    So for every bounds but the last, the bounds are simply extracted
+    from the dimension dataset.
 
-        The final bounds must be calculated with the assumption that
-        the last data cell is edge-aligned and thus has a value the does
-        not account for the cell length. So, the final bound is determined
-        by taking the median of all the resolutions in the dataset to obtain
-        a resolution that can be added to the final data value.
+    The final bounds must be calculated with the assumption that
+    the last data cell is edge-aligned and thus has a value the does
+    not account for the cell length. So, the final bound is determined
+    by taking the median of all the resolutions in the dataset to obtain
+    a resolution that can be added to the final data value.
 
-        Ex: Input dataset with resolution of 3 degrees:  [ ... , 81, 84, 87]
+    Ex: Input dataset with resolution of 3 degrees:  [ ... , 81, 84, 87]
 
-        Minimum | Maximum
-         <...>     <...>
-          81        84
-          84        87
-          87        ?  ->  87 + median resolution -> 87 + 3 -> 90
+    Minimum | Maximum
+     <...>     <...>
+      81        84
+      84        87
+      87        ?  ->  87 + median resolution -> 87 + 3 -> 90
 
     """
     # Access the dimension variable's data using the variable's full path.
@@ -174,20 +196,20 @@ def get_bounds_array(prefetch_dataset: Dataset,
     return cell_bounds.T
 
 
-def write_bounds(prefetch_dataset: Dataset,
-                 dimension_variable: VariableFromDmr) -> None:
-    """ Write the input bounds array to a given dimension dataset.
+def write_bounds(
+    prefetch_dataset: Dataset, dimension_variable: VariableFromDmr
+) -> None:
+    """Write the input bounds array to a given dimension dataset.
 
-        First a new dimension is created for the new bounds variable
-        to allow the variable to be two-dimensional.
+    First a new dimension is created for the new bounds variable
+    to allow the variable to be two-dimensional.
 
-        Then the new bounds variable is created using two dimensions:
-        (1) the existing dimension of the dimension dataset, and
-        (2) the new bounds variable dimension.
+    Then the new bounds variable is created using two dimensions:
+    (1) the existing dimension of the dimension dataset, and
+    (2) the new bounds variable dimension.
 
     """
-    bounds_array = get_bounds_array(prefetch_dataset,
-                                    dimension_variable.full_name_path)
+    bounds_array = get_bounds_array(prefetch_dataset, dimension_variable.full_name_path)
 
     # Create the second bounds dimension.
     dimension_name = str(PurePosixPath(dimension_variable.full_name_path).name)
@@ -200,50 +222,65 @@ def write_bounds(prefetch_dataset: Dataset,
         # The root group must be explicitly referenced here.
         bounds_dim = prefetch_dataset.createDimension(bounds_dimension_name, 2)
     else:
-        bounds_dim = prefetch_dataset[dimension_group].createDimension(bounds_dimension_name, 2)
+        bounds_dim = prefetch_dataset[dimension_group].createDimension(
+            bounds_dimension_name, 2
+        )
 
     # Dimension variables only have one dimension - themselves.
-    variable_dimension = prefetch_dataset[dimension_variable.full_name_path].dimensions[0]
+    variable_dimension = prefetch_dataset[dimension_variable.full_name_path].dimensions[
+        0
+    ]
 
     bounds_data_type = str(dimension_variable.data_type)
-    bounds = prefetch_dataset.createVariable(bounds_full_path_name,
-                                             bounds_data_type,
-                                             (variable_dimension,
-                                              bounds_dim,))
+    bounds = prefetch_dataset.createVariable(
+        bounds_full_path_name,
+        bounds_data_type,
+        (
+            variable_dimension,
+            bounds_dim,
+        ),
+    )
 
     # Write data to the new variable in the prefetch dataset.
     bounds[:] = bounds_array[:]
 
     # Update varinfo attributes and references.
-    prefetch_dataset[dimension_variable.full_name_path].setncatts({'bounds': bounds_name})
-    dimension_variable.references['bounds'] = {bounds_name, }
+    prefetch_dataset[dimension_variable.full_name_path].setncatts(
+        {'bounds': bounds_name}
+    )
+    dimension_variable.references['bounds'] = {
+        bounds_name,
+    }
     dimension_variable.attributes['bounds'] = bounds_name
 
 
 def is_dimension_ascending(dimension: MaskedArray) -> bool:
-    """ Read the array associated with a dimension variable and check if the
-        variables ascend starting from the zeroth element or not.
+    """Read the array associated with a dimension variable and check if the
+    variables ascend starting from the zeroth element or not.
 
     """
     first_index, last_index = np.ma.flatnotmasked_edges(dimension)
     return dimension.size == 1 or dimension[first_index] < dimension[last_index]
 
 
-def get_dimension_index_range(dimension_values: MaskedArray,
-                              request_min: float, request_max: float,
-                              bounds_values: MaskedArray = None) -> IndexRange:
-    """ Ensure that both a minimum and maximum value are defined from the
-        message, if not, use the first or last value in the dimension array,
-        accordingly. For granules that only contain dimension variables (not
-        additional bounds variables) the minimum and maximum values must be
-        ordered to be ascending or descending in a way that matches the
-        dimension index values.
+def get_dimension_index_range(
+    dimension_values: MaskedArray,
+    request_min: float,
+    request_max: float,
+    bounds_values: MaskedArray = None,
+) -> IndexRange:
+    """Ensure that both a minimum and maximum value are defined from the
+    message, if not, use the first or last value in the dimension array,
+    accordingly. For granules that only contain dimension variables (not
+    additional bounds variables) the minimum and maximum values must be
+    ordered to be ascending or descending in a way that matches the
+    dimension index values.
 
-        Once the minimum and maximum values are determined, and sorted in the
-        same order as the dimension array values, retrieve the index values
-        that correspond to the requested dimension values. Alternatively, if a
-        dimension has an associated bounds variable, use this to determine the
-        dimension index range.
+    Once the minimum and maximum values are determined, and sorted in the
+    same order as the dimension array values, retrieve the index values
+    that correspond to the requested dimension values. Alternatively, if a
+    dimension has an associated bounds variable, use this to determine the
+    dimension index range.
 
     """
     if is_dimension_ascending(dimension_values):
@@ -254,43 +291,44 @@ def get_dimension_index_range(dimension_values: MaskedArray,
         dimension_max = get_value_or_default(request_min, dimension_values[-1])
 
     if bounds_values is None:
-        index_range = get_dimension_indices_from_values(dimension_values,
-                                                        dimension_min,
-                                                        dimension_max)
+        index_range = get_dimension_indices_from_values(
+            dimension_values, dimension_min, dimension_max
+        )
     else:
         index_range = get_dimension_indices_from_bounds(
-            bounds_values, min(dimension_min, dimension_max),
-            max(dimension_min, dimension_max)
+            bounds_values,
+            min(dimension_min, dimension_max),
+            max(dimension_min, dimension_max),
         )
 
     return index_range
 
 
-def get_dimension_indices_from_values(dimension: MaskedArray,
-                                      minimum_extent: float,
-                                      maximum_extent: float) -> IndexRange:
-    """ Find the indices closest to the interpolated values of the minimum and
-        maximum extents in that dimension.
+def get_dimension_indices_from_values(
+    dimension: MaskedArray, minimum_extent: float, maximum_extent: float
+) -> IndexRange:
+    """Find the indices closest to the interpolated values of the minimum and
+    maximum extents in that dimension.
 
-        Use of `numpy.interp` maps the dimension scale values to their index
-        values and then computes an interpolated index value that best matches
-        the bounding value (minimum_extent, maximum_extent) to a "fractional"
-        index value. Rounding that value gives the starting index value for the
-        cell that contains that bound.
+    Use of `numpy.interp` maps the dimension scale values to their index
+    values and then computes an interpolated index value that best matches
+    the bounding value (minimum_extent, maximum_extent) to a "fractional"
+    index value. Rounding that value gives the starting index value for the
+    cell that contains that bound.
 
-        If an extent is requested that is a single point in this dimension, the
-        range should be the two surrounding pixels that border the point.
+    If an extent is requested that is a single point in this dimension, the
+    range should be the two surrounding pixels that border the point.
 
-        For an ascending dimension:
+    For an ascending dimension:
 
-        * `minimum_extent` ≤ `maximum_extent`.
+    * `minimum_extent` ≤ `maximum_extent`.
 
-        For a descending dimension:
+    For a descending dimension:
 
-        * `minimum_extent` ≥ `maximum_extent`
+    * `minimum_extent` ≥ `maximum_extent`
 
-        Input longitude extent values must conform to the valid range of the
-        native dimension data.
+    Input longitude extent values must conform to the valid range of the
+    native dimension data.
 
     """
     dimension_range = [minimum_extent, maximum_extent]
@@ -304,8 +342,7 @@ def get_dimension_indices_from_values(dimension: MaskedArray,
         dimension_values = np.flip(dimension)
         dimension_indices = np.flip(dimension_indices)
 
-    raw_indices = np.interp(dimension_range, dimension_values,
-                            dimension_indices)
+    raw_indices = np.interp(dimension_range, dimension_values, dimension_indices)
 
     if (raw_indices[0] == raw_indices[1]) and (raw_indices[0] % 1 == 0.5):
         # Minimum extent is exactly halfway between two pixels, and the
@@ -335,20 +372,21 @@ def get_dimension_indices_from_values(dimension: MaskedArray,
     return (minimum_index, maximum_index)
 
 
-def get_dimension_indices_from_bounds(bounds: np.ndarray, min_value: float,
-                                      max_value: float) -> Tuple[int]:
-    """ Derive the dimension array indices that correspond to the requested
-        dimension range in the input Harmony message.
+def get_dimension_indices_from_bounds(
+    bounds: np.ndarray, min_value: float, max_value: float
+) -> Tuple[int]:
+    """Derive the dimension array indices that correspond to the requested
+    dimension range in the input Harmony message.
 
-        This function assumes:
+    This function assumes:
 
-        - The pixels bounds represent a contiguous range, e.g., the upper
-          bound of one pixel is always equal to the lower bound of the next
-          pixel.
-        - The bounds arrays are monotonic in the 0th dimension (e.g., lower and
-          upper bounds values either all ascend or all descend along with the
-          array indices).
-        - min_value ≤ max_value.
+    - The pixels bounds represent a contiguous range, e.g., the upper
+      bound of one pixel is always equal to the lower bound of the next
+      pixel.
+    - The bounds arrays are monotonic in the 0th dimension (e.g., lower and
+      upper bounds values either all ascend or all descend along with the
+      array indices).
+    - min_value ≤ max_value.
 
     """
     if min_value > np.nanmax(bounds) or max_value < np.nanmin(bounds):
@@ -372,16 +410,17 @@ def get_dimension_indices_from_bounds(bounds: np.ndarray, min_value: float,
     return (minimum_index, maximum_index)
 
 
-def add_index_range(variable_name: str, varinfo: VarInfoFromDmr,
-                    index_ranges: IndexRanges) -> str:
-    """ Append the index ranges of each dimension for the specified variable.
-        If there are no dimensions with listed index ranges, then the full
-        variable should be requested, and no index notation is required.
-        A variable with a bounding box crossing the edge of the grid (e.g., at
-        the antimeridian or Prime Meridian) will have a minimum index greater
-        than the maximum index. In this case the full dimension range should be
-        requested, as the related values will be masked before returning the
-        output to the user.
+def add_index_range(
+    variable_name: str, varinfo: VarInfoFromDmr, index_ranges: IndexRanges
+) -> str:
+    """Append the index ranges of each dimension for the specified variable.
+    If there are no dimensions with listed index ranges, then the full
+    variable should be requested, and no index notation is required.
+    A variable with a bounding box crossing the edge of the grid (e.g., at
+    the antimeridian or Prime Meridian) will have a minimum index greater
+    than the maximum index. In this case the full dimension range should be
+    requested, as the related values will be masked before returning the
+    output to the user.
 
     """
     variable = varinfo.get_variable(variable_name)
@@ -405,31 +444,30 @@ def add_index_range(variable_name: str, varinfo: VarInfoFromDmr,
 
 
 def get_fill_slice(dimension: str, fill_ranges: IndexRanges) -> slice:
-    """ Check the dictionary of dimensions that need to be filled for the
-        given dimension. If present, the minimum index will be greater than the
-        maximum index (the eastern edge of the bounding box will seem to be to
-        the west of the western edge due to crossing the grid edge). The region
-        to be filled is between these indices:
+    """Check the dictionary of dimensions that need to be filled for the
+    given dimension. If present, the minimum index will be greater than the
+    maximum index (the eastern edge of the bounding box will seem to be to
+    the west of the western edge due to crossing the grid edge). The region
+    to be filled is between these indices:
 
-        * Start index = maximum index + 1.
-        * Stop index = minimum index. (As Python index slices go up to, but not
-          including, the stop index).
+    * Start index = maximum index + 1.
+    * Stop index = minimum index. (As Python index slices go up to, but not
+      including, the stop index).
 
-        If the dimension is not to be filled, return a `slice` with unspecified
-        start and stop. This is the equivalent of the full range in this
-        dimension. Slices for all variable dimensions will be combined to
-        identify the region of the variable to be filled, e.g.:
+    If the dimension is not to be filled, return a `slice` with unspecified
+    start and stop. This is the equivalent of the full range in this
+    dimension. Slices for all variable dimensions will be combined to
+    identify the region of the variable to be filled, e.g.:
 
-        * variable[(slice(None), slice(None), slice(start_lon, stop_lon))] = fill
+    * variable[(slice(None), slice(None), slice(start_lon, stop_lon))] = fill
 
-        This is equivalent to:
+    This is equivalent to:
 
-        * science_variable[:][:][start_lon:stop_lon] = fill
+    * science_variable[:][:][start_lon:stop_lon] = fill
 
     """
     if dimension in fill_ranges:
-        fill_slice = slice(fill_ranges[dimension][1] + 1,
-                           fill_ranges[dimension][0])
+        fill_slice = slice(fill_ranges[dimension][1] + 1, fill_ranges[dimension][0])
     else:
         fill_slice = slice(None)
 
@@ -437,9 +475,9 @@ def get_fill_slice(dimension: str, fill_ranges: IndexRanges) -> slice:
 
 
 def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
-    """ Fit the dimension with a straight line, and find the outer edge of the
-        first and last pixel, assuming the supplied values lie at the centre of
-        each pixel.
+    """Fit the dimension with a straight line, and find the outer edge of the
+    first and last pixel, assuming the supplied values lie at the centre of
+    each pixel.
 
     """
     dimension_indices = np.arange(dimension_array.size)
@@ -451,20 +489,23 @@ def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
     return (min_extent, max_extent)
 
 
-def get_requested_index_ranges(required_variables: Set[str],
-                               varinfo: VarInfoFromDmr, dimensions_path: str,
-                               harmony_message: Message) -> IndexRanges:
-    """ Examines the requested dimension names and ranges and extracts the
-        indices that correspond to the specified range of values for each
-        dimension that is requested specifically by name.
+def get_requested_index_ranges(
+    required_variables: Set[str],
+    varinfo: VarInfoFromDmr,
+    dimensions_path: str,
+    harmony_message: Message,
+) -> IndexRanges:
+    """Examines the requested dimension names and ranges and extracts the
+    indices that correspond to the specified range of values for each
+    dimension that is requested specifically by name.
 
-        When dimensions, such as atmospheric pressure or ocean depth, have
-        values that are descending (getting smaller from start to finish), then
-        the min/max values of the requested range are flipped. If the dimension
-        is descending, the specified range must also be descending.
+    When dimensions, such as atmospheric pressure or ocean depth, have
+    values that are descending (getting smaller from start to finish), then
+    the min/max values of the requested range are flipped. If the dimension
+    is descending, the specified range must also be descending.
 
-        The return value from this function is a dictionary that contains the
-        index ranges for the named dimension, such as: {'/lev': [1, 5]}
+    The return value from this function is a dictionary that contains the
+    index ranges for the named dimension, such as: {'/lev': [1, 5]}
 
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
@@ -483,12 +524,13 @@ def get_requested_index_ranges(required_variables: Set[str],
 
             if dim_is_valid:
                 # Try to extract bounds metadata:
-                bounds_array = get_dimension_bounds(dim.name, varinfo,
-                                                    dimensions_file)
+                bounds_array = get_dimension_bounds(dim.name, varinfo, dimensions_file)
                 # Retrieve index ranges for the specifically named dimension:
                 dim_index_ranges[dim.name] = get_dimension_index_range(
-                    dimensions_file[dim.name][:], dim.min, dim.max,
-                    bounds_values=bounds_array
+                    dimensions_file[dim.name][:],
+                    dim.min,
+                    dim.max,
+                    bounds_values=bounds_array,
                 )
             else:
                 # This requested dimension is not in the required dimension set
@@ -497,15 +539,16 @@ def get_requested_index_ranges(required_variables: Set[str],
     return dim_index_ranges
 
 
-def get_dimension_bounds(dimension_name: str, varinfo: VarInfoFromDmr,
-                         prefetch_dataset: Dataset) -> MaskedArray:
-    """ Check if a named dimension has a `bounds` metadata attribute, if so
-        retrieve the array of values for the named variable from the NetCDF-4
-        variables retrieved from OPeNDAP in the prefetch request.
+def get_dimension_bounds(
+    dimension_name: str, varinfo: VarInfoFromDmr, prefetch_dataset: Dataset
+) -> MaskedArray:
+    """Check if a named dimension has a `bounds` metadata attribute, if so
+    retrieve the array of values for the named variable from the NetCDF-4
+    variables retrieved from OPeNDAP in the prefetch request.
 
-        If there is no `bounds` reference, or if the variable contained in the
-        `bounds` reference is not present in the prefetch output, `None` will
-        be returned.
+    If there is no `bounds` reference, or if the variable contained in the
+    `bounds` reference is not present in the prefetch output, `None` will
+    be returned.
 
     """
     bounds = varinfo.get_variable(dimension_name).references.get('bounds')
@@ -523,23 +566,24 @@ def get_dimension_bounds(dimension_name: str, varinfo: VarInfoFromDmr,
 
 
 def is_almost_in(value: float, array: np.ndarray) -> bool:
-    """ Check if a specific value is within the supplied array. The comparison
-        will first derive a precision from the smallest difference in elements
-        in the supplied array. The comparison will use the minimum value of
-        either 10**-5 or (10**-3 * minimum_difference).
+    """Check if a specific value is within the supplied array. The comparison
+    will first derive a precision from the smallest difference in elements
+    in the supplied array. The comparison will use the minimum value of
+    either 10**-5 or (10**-3 * minimum_difference).
 
-        `np.isclose` calculates tolerance = (atol + (rtol * abs(b)), where
-        b is the element in the second array being compared. To ensure large
-        values don't lose precision, rtol is set to zero below.
+    `np.isclose` calculates tolerance = (atol + (rtol * abs(b)), where
+    b is the element in the second array being compared. To ensure large
+    values don't lose precision, rtol is set to zero below.
 
-        This function was specifically written to help support the ECCO Ocean
-        Velocity collection, which has a depth dimension, Z. Most of these
-        dimension values are likely set at depths that correspond to specific
-        pressure values. The relationship between these (P = rho.g.h) means
-        that well rounded pressure values lead to depths without nicely rounded
-        values.
+    This function was specifically written to help support the ECCO Ocean
+    Velocity collection, which has a depth dimension, Z. Most of these
+    dimension values are likely set at depths that correspond to specific
+    pressure values. The relationship between these (P = rho.g.h) means
+    that well rounded pressure values lead to depths without nicely rounded
+    values.
 
     """
     array_precision = min(np.nanmin(np.abs(np.diff(array) / 1000.0)), 0.00001)
-    return np.any(np.isclose(array, np.full_like(array, value),
-                             rtol=0, atol=array_precision))
+    return np.any(
+        np.isclose(array, np.full_like(array, value), rtol=0, atol=array_precision)
+    )

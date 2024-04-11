@@ -1,6 +1,6 @@
 # The Harmony OPeNDAP SubSetter (HOSS)   
 
-This repository contains source code and CI/CD for a
+This repository contains source code and CI/CD for a 
 [Harmony](https://wiki.earthdata.nasa.gov/spaces/viewspace.action?key=HARMONY)
 backend service. The Harmony OPeNDAP SubSetter (HOSS) performs variable,
 spatial, temporal and named-dimension subsetting by making requests to

@@ -1,4 +1,4 @@
-# The Harmony OPeNDAP SubSetter (HOSS)
+# The Harmony OPeNDAP SubSetter (HOSS)   
 
 This repository contains source code and CI/CD for a
 [Harmony](https://wiki.earthdata.nasa.gov/spaces/viewspace.action?key=HARMONY)

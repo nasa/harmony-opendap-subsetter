@@ -1,6 +1,6 @@
-# The Harmony OPeNDAP SubSetter (HOSS)   
+# The Harmony OPeNDAP SubSetter (HOSS)
 
-This repository contains source code and CI/CD for a 
+This repository contains source code and CI/CD for a
 [Harmony](https://wiki.earthdata.nasa.gov/spaces/viewspace.action?key=HARMONY)
 backend service. The Harmony OPeNDAP SubSetter (HOSS) performs variable,
 spatial, temporal and named-dimension subsetting by making requests to
@@ -272,6 +272,9 @@ review and `git add` the changes before you can make a commit.
 
 It is planned to implement additional hooks, possibly including tools such as
 `mypy`.
+
+[pre-commit.ci](pre-commit-ci) is configured such that these same hooks will be
+automatically run for every pull request.
 
 ## Get in touch:
 

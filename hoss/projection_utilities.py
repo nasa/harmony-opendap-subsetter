@@ -10,9 +10,10 @@
 
 """
 
-from typing import Dict, get_args, List, Optional, Tuple, Union
 import json
+from typing import Dict, List, Optional, Tuple, Union, get_args
 
+import numpy as np
 from pyproj import CRS, Transformer
 from shapely.geometry import (
     GeometryCollection,
@@ -25,7 +26,6 @@ from shapely.geometry import (
     shape,
 )
 from varinfo import VarInfoFromDmr
-import numpy as np
 
 from hoss.bbox_utilities import BBox, flatten_list
 from hoss.exceptions import (
@@ -34,7 +34,6 @@ from hoss.exceptions import (
     MissingGridMappingVariable,
     MissingSpatialSubsetInformation,
 )
-
 
 Coordinates = Tuple[float]
 MultiShape = Union[GeometryCollection, MultiLineString, MultiPoint, MultiPolygon]

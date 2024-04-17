@@ -8,7 +8,8 @@
 from logging import Logger
 from typing import List, Set
 
-from harmony.message import Message, Source, Variable as HarmonyVariable
+from harmony.message import Message, Source
+from harmony.message import Variable as HarmonyVariable
 from harmony.message_utility import rgetattr
 from harmony.util import Config
 from netCDF4 import Dataset
@@ -17,11 +18,11 @@ from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import get_request_shape_file
 from hoss.dimension_utilities import (
+    IndexRanges,
     add_index_range,
     get_fill_slice,
-    IndexRanges,
-    is_index_subset,
     get_requested_index_ranges,
+    is_index_subset,
     prefetch_dimension_variables,
 )
 from hoss.spatial import get_spatial_index_ranges

@@ -4,6 +4,7 @@
 
 """
 
+import mimetypes
 from logging import Logger
 from os import sep
 from os.path import splitext
@@ -11,10 +12,10 @@ from shutil import move
 from typing import Dict, Optional, Set, Tuple
 from urllib.parse import quote
 from uuid import uuid4
-import mimetypes
 
 from harmony.exceptions import ForbiddenException, ServerException
-from harmony.util import Config, download as util_download
+from harmony.util import Config
+from harmony.util import download as util_download
 
 from hoss.exceptions import UrlAccessFailed
 

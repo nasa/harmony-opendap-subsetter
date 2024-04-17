@@ -31,16 +31,16 @@ from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import (
     BBox,
+    get_geographic_bbox,
     get_harmony_message_bbox,
     get_shape_file_geojson,
-    get_geographic_bbox,
 )
 from hoss.dimension_utilities import (
+    IndexRange,
+    IndexRanges,
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
-    IndexRange,
-    IndexRanges,
 )
 from hoss.projection_utilities import (
     get_projected_x_y_extents,

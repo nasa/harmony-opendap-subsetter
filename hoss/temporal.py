@@ -17,12 +17,11 @@ from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 
 from hoss.dimension_utilities import (
+    IndexRanges,
     get_dimension_bounds,
     get_dimension_index_range,
-    IndexRanges,
 )
 from hoss.exceptions import UnsupportedTemporalUnits
-
 
 units_day = {'day', 'days', 'd'}
 units_hour = {'hour', 'hours', 'hr', 'h'}

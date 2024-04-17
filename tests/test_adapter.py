@@ -10,16 +10,16 @@ from shutil import copy, rmtree
 from tempfile import mkdtemp
 from typing import Dict, Set
 from unittest import TestCase
-from unittest.mock import ANY, call, Mock, patch
+from unittest.mock import ANY, Mock, call, patch
 
 from harmony.message import Message
-from harmony.util import config, HarmonyException
+from harmony.util import HarmonyException, config
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
 from pystac import Catalog
 
 from hoss.adapter import HossAdapter
-from tests.utilities import create_stac, Granule, write_dmr
+from tests.utilities import Granule, create_stac, write_dmr
 
 
 class TestHossEndToEnd(TestCase):

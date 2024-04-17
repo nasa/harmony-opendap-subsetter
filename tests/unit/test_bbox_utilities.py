@@ -7,25 +7,25 @@
 
 """
 
+import json
 from logging import getLogger
 from os.path import join as path_join
 from unittest import TestCase
 from unittest.mock import patch
-import json
 
 from harmony.message import Message
 from harmony.util import config
 
 from hoss.bbox_utilities import (
+    BBox,
     aggregate_all_geometries,
     aggregate_geometry_coordinates,
-    BBox,
     bbox_in_longitude_range,
     crosses_antimeridian,
     flatten_list,
-    get_bounding_box_lon_lat,
     get_antimeridian_bbox,
     get_antimeridian_geometry_bbox,
+    get_bounding_box_lon_lat,
     get_contiguous_bbox,
     get_geographic_bbox,
     get_harmony_message_bbox,

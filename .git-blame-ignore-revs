@@ -3,3 +3,6 @@
 
 # Black code formatting of entire repository
 56dd43f69d901abbba6cfb765a98dee26ff71cfc
+
+# Ruff ordering of imports for entire repository
+f05fe3884f7fccfe98369c33866ee601cff29430

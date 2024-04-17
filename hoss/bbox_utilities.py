@@ -14,17 +14,16 @@
 
 """
 
+import json
 from collections import namedtuple
 from logging import Logger
 from typing import Dict, List, Optional, Tuple, Union
-import json
 
+import numpy as np
 from harmony.message import Message
 from harmony.util import Config, download
-import numpy as np
 
 from hoss.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
-
 
 AggCoordinates = List[Tuple[float]]
 BBox = namedtuple('BBox', ['west', 'south', 'east', 'north'])

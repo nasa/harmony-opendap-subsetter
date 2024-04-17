@@ -1,18 +1,19 @@
+import shutil
 from logging import Logger
+from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import call, patch
-import shutil
-from tempfile import mkdtemp
 
-from harmony.message import Message, Source, Variable as HarmonyVariable
+import numpy as np
+from harmony.message import Message, Source
+from harmony.message import Variable as HarmonyVariable
 from harmony.util import config
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
-import numpy as np
 
 from hoss.subset import (
-    fill_variables,
     fill_variable,
+    fill_variables,
     get_required_variables,
     get_varinfo,
     subset_granule,

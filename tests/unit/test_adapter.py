@@ -1,14 +1,14 @@
-from typing import List, Dict, Optional
-from unittest import TestCase
-from unittest.mock import patch, ANY
 import json
+from typing import Dict, List, Optional
+from unittest import TestCase
+from unittest.mock import ANY, patch
 
 from harmony.message import Message
 from harmony.util import config
 
 from hoss.adapter import HossAdapter
 from hoss.bbox_utilities import BBox
-from tests.utilities import create_stac, Granule, spy_on
+from tests.utilities import Granule, create_stac, spy_on
 
 
 @patch('hoss.adapter.get_file_mimetype')

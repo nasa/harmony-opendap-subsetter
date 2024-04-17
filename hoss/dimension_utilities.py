@@ -11,17 +11,16 @@
 """
 
 from logging import Logger
+from pathlib import PurePosixPath
 from typing import Dict, Set, Tuple
 
-from pathlib import PurePosixPath
-from netCDF4 import Dataset
-from numpy.ma.core import MaskedArray
 import numpy as np
-
 from harmony.message import Message
 from harmony.message_utility import rgetattr
 from harmony.util import Config
-from varinfo import VarInfoFromDmr, VariableFromDmr
+from netCDF4 import Dataset
+from numpy.ma.core import MaskedArray
+from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.bbox_utilities import flatten_list
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
@@ -30,7 +29,6 @@ from hoss.utilities import (
     get_opendap_nc4,
     get_value_or_default,
 )
-
 
 IndexRange = Tuple[int]
 IndexRanges = Dict[str, IndexRange]

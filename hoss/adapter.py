@@ -27,11 +27,11 @@
 
 import shutil
 from tempfile import mkdtemp
-from pystac import Asset, Item
 
 from harmony import BaseHarmonyAdapter
 from harmony.message import Source
-from harmony.util import generate_output_filename, HarmonyException, stage
+from harmony.util import HarmonyException, generate_output_filename, stage
+from pystac import Asset, Item
 
 from hoss.dimension_utilities import is_index_subset
 from hoss.subset import subset_granule

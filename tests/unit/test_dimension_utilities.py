@@ -5,16 +5,18 @@ from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import ANY, patch
 
-from harmony.util import config
+import numpy as np
 from harmony.message import Message
+from harmony.util import config
 from netCDF4 import Dataset
 from numpy.ma import masked_array
 from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
-import numpy as np
 
 from hoss.dimension_utilities import (
+    add_bounds_variables,
     add_index_range,
+    get_bounds_array,
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
@@ -25,10 +27,8 @@ from hoss.dimension_utilities import (
     is_almost_in,
     is_dimension_ascending,
     is_index_subset,
-    prefetch_dimension_variables,
-    add_bounds_variables,
     needs_bounds,
-    get_bounds_array,
+    prefetch_dimension_variables,
     write_bounds,
 )
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange

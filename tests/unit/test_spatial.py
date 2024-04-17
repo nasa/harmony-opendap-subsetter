@@ -3,19 +3,19 @@ from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import ANY, call, patch
 
+import numpy as np
 from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
 from pyproj import CRS
 from varinfo import VarInfoFromDmr
-import numpy as np
 
 from hoss.bbox_utilities import BBox
 from hoss.spatial import (
     get_bounding_box_longitudes,
     get_geographic_index_range,
-    get_projected_x_y_index_ranges,
     get_longitude_in_grid,
+    get_projected_x_y_index_ranges,
     get_spatial_index_ranges,
 )
 

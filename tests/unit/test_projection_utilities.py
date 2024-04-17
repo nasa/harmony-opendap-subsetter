@@ -5,17 +5,17 @@
 
 """
 
+import json
 from os.path import join as path_join
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import call, patch
-import json
 
+import numpy as np
 from pyproj import CRS
 from shapely.geometry import Polygon, shape
 from varinfo import VarInfoFromDmr
-import numpy as np
 
 from hoss.bbox_utilities import BBox
 from hoss.exceptions import (
@@ -26,8 +26,8 @@ from hoss.exceptions import (
 )
 from hoss.projection_utilities import (
     get_bbox_polygon,
-    get_grid_lat_lons,
     get_geographic_resolution,
+    get_grid_lat_lons,
     get_projected_x_y_extents,
     get_projected_x_y_variables,
     get_resolved_feature,

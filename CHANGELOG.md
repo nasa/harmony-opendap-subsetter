@@ -1,3 +1,11 @@
+
+## v1.0.5
+### 2024-08-19
+
+This version of HOSS updates the 'is_index_subset' method to check for empty list (in case of dimensions subset) 
+as well as None (for the spatial, bbox and temporal subsets. This prevents prefetch from being called for 
+variable subsetting which was occuring for SMAP L3/L4 collections. 
+
 ## v1.0.4
 ### 2024-04-05
 

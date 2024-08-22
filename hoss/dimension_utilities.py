@@ -45,7 +45,7 @@ def is_index_subset(message: Message) -> bool:
 
     """
     return any(
-        rgetattr(message, subset_parameter, None) is not None
+        rgetattr(message, subset_parameter, None) not in (None, [])
         for subset_parameter in [
             'subset.bbox',
             'subset.shape',

@@ -679,6 +679,38 @@ class TestDimensionUtilities(TestCase):
                 )
             )
 
+        with self.subTest('Empty dimensions List'):
+            self.assertFalse(
+                is_index_subset(
+                    Message(
+                        {
+                            'subset': {
+                                'bbox': None,
+                                'shape_file': None,
+                                'dimensions': [],
+                            },
+                            'temporal': None,
+                        }
+                    )
+                )
+            )
+
+        with self.subTest('Dimensions Subset is not empty'):
+            self.assertTrue(
+                is_index_subset(
+                    Message(
+                        {
+                            'subset': {
+                                'bbox': None,
+                                'shape_file': None,
+                                'dimensions': dimensions,
+                            },
+                            'temporal': None,
+                        }
+                    )
+                )
+            )
+
         with self.subTest('Not an index range subset'):
             self.assertFalse(is_index_subset(Message({})))
 

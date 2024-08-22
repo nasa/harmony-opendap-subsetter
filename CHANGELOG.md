@@ -4,7 +4,9 @@
 
 This version of HOSS updates the `is_index_subset` method to check for empty list (in case of dimensions subset)
 as well as None (for the spatial, bbox and temporal subsets). This prevents 1-D dimension variables from being
-unnecessarily requested from OPeNDAP for some variable subsets, in particular SMAP L3 and L4 collections..
+unnecessarily requested from OPeNDAP for variable subsets which needs to be done only for spatial and temporal
+subsetting requests. This also prevents a whole granule request when 1-D dimension variables were not present
+in the granule.
 
 ## v1.0.4
 ### 2024-04-05

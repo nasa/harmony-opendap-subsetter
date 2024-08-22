@@ -679,7 +679,7 @@ class TestDimensionUtilities(TestCase):
                 )
             )
 
-        with self.subTest('No index Subset'):
+        with self.subTest('Empty dimensions List'):
             self.assertFalse(
                 is_index_subset(
                     Message(

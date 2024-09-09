@@ -59,24 +59,6 @@
       "Epoch": "2018-01-01T00:00:00.000000"
     }
   ],
-  "Grid_Mapping_Data": [
-    {
-      "Grid_Mapping_Dataset_Name": "EASE2_Global",
-      "grid_mapping_name": "lambert_cylindrical_equal_area",
-      "standard_parallel": 30.0,
-      "longitude_of_central_meridian": 0.0,
-      "false_easting": 0.0,
-      "false_northing": 0.0
-    },
-    {
-      "Grid_Mapping_Dataset_Name": "EASE2_Polar",
-      "grid_mapping_name": "lambert_azimuthal_equal_area",
-      "longitude_of_projection_origin": 0.0,
-      "latitude_of_projection_origin": 90.0,
-      "false_easting": 0.0,
-      "false_northing": 0.0
-    }
-  ],
   "CF_Overrides": [
     {
       "Applicability": {
@@ -170,8 +152,8 @@
           },
           "Attributes": [
             {
-              "Name": "Grid_Mapping",
-              "Value": "EASE2_Global"
+              "Name": "grid_mapping",
+              "Value": "/EASE2_global_projection"
             }
           ],
           "_Description": "Some versions of these collections omit global grid mapping information"
@@ -182,13 +164,45 @@
           },
           "Attributes": [
             {
-              "Name": "Grid_Mapping",
-              "Value": "EASE2_Polar"
+              "Name": "grid_mapping",
+              "Value": "/EASE2_polar_projection"
             }
           ],
           "_Description": "Some versions of these collections omit polar grid mapping information"
         }
       ]
+    },
+    {
+        "Applicability": {
+          "Mission": "SMAP",
+          "ShortNamePath": "SPL3SMP_E"
+        },
+        "Applicability_Group": [
+          {
+            "Applicability": {
+              "Variable_Pattern": "Soil_Moisture_Retrieval_Data_(A|P)M/.*"
+            },
+            "Attributes": [
+              {
+                "Name": "grid_mapping",
+                "Value": "/EASE2_global_projection"
+              }
+            ],
+            "_Description": "Some versions of these collections omit global grid mapping information"
+          },
+          {
+            "Applicability": {
+              "Variable_Pattern": "Soil_Moisture_Retrieval_Data_Polar_(A|P)M/.*"
+            },
+            "Attributes": [
+              {
+                "Name": "grid_mapping",
+                "Value": "/EASE2_polar_projection"
+              }
+            ],
+            "_Description": "Some versions of these collections omit polar grid mapping information"
+          }
+        ]
     },
     {
       "Applicability": {
@@ -197,12 +211,88 @@
       },
       "Attributes": [
         {
-          "Name": "Grid_Mapping",
-          "Value": "EASE2_Polar"
+          "Name": "grid_mapping",
+          "Value": "/EASE2_polar_projection"
         }
       ],
       "_Description": "Some versions of these collections omit polar grid mapping information"
     },
+    {
+        "Applicability": {
+          "Mission": "SMAP",
+          "ShortNamePath": "SPL3SM(P|A|AP)|SPL2SMAP_S"
+        },
+        "Attributes": [
+          {
+            "Name": "grid_mapping",
+            "Value": "/EASE2_global_projection"
+          }
+        ],
+        "_Description": "Some versions of these collections omit global grid mapping information"
+    },
+    {
+        "Applicability": {
+          "Mission": "SMAP",
+          "ShortNamePath": "SPL3FT(P|P_E)|SPL3SM(P|P_E|A|AP)|SPL2SMAP_S"
+        },
+        "Applicability_Group": [
+          {
+            "Applicability": {
+              "Variable_Pattern": "/EASE2_global_projection"
+            },
+            "Attributes": [
+              {
+                 "Name": "grid_mapping_name",
+                 "Value": "lambert_cylindrical_equal_area"
+              },
+              {
+                  "Name":"standard_parallel",
+                  "Value": 30.0
+              },
+              {
+                  "Name": "longitude_of_central_meridian",
+                  "Value": 0.0
+              },
+              {
+                  "Name": "false_easting",
+                  "Value": 0.0
+              },
+              {
+                  "Name": "false_northing",
+                  "Value": 0.0
+              }
+            ],
+            "_Description": "Some versions of these collections omit global grid mapping information"
+          },
+          {
+            "Applicability": {
+              "Variable_Pattern": "/EASE2_polar_projection"
+            },
+            "Attributes": [
+              {
+                "Name": "grid_mapping_name",
+                "Value": "lambert_azimuthal_equal_area"
+              },
+              { "Name": "longitude_of_projection_origin",
+                "Value" : 0.0
+              },
+              {
+                "Name": "latitude_of_projection_origin",
+                "Value": 90.0
+              },
+              {
+                "Name": "false_easting",
+                "Value": 0.0
+              },
+              {
+                 "Name": "false_northing",
+                 "Value": 0.0
+              }
+            ],
+            "_Description": "Some versions of these collections omit polar grid mapping information"
+          }
+        ]
+      },
     {
       "Applicability": {
         "Mission": "SMAP",

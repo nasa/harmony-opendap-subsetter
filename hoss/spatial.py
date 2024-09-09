@@ -23,7 +23,7 @@
 """
 
 from typing import List, Set
-
+from logging import Logger
 from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
@@ -41,6 +41,7 @@ from hoss.dimension_utilities import (
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
+    update_dimension_variables
 )
 from hoss.projection_utilities import (
     get_projected_x_y_extents,
@@ -48,12 +49,15 @@ from hoss.projection_utilities import (
     get_variable_crs,
 )
 
+from hoss.utilities import format_dictionary_string
 
 def get_spatial_index_ranges(
     required_variables: Set[str],
+    required_dimensions: Set[str],
     varinfo: VarInfoFromDmr,
     dimensions_path: str,
     harmony_message: Message,
+    logger: Logger,
     shape_file_path: str = None,
 ) -> IndexRanges:
     """Return a dictionary containing indices that correspond to the minimum
@@ -89,7 +93,11 @@ def get_spatial_index_ranges(
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
-
+    logger.info('bounding_box: ' f'{bounding_box}'
+                '\r\n geo dims:' f'{geographic_dimensions}'
+                '\r\n proj dims:' f'{projected_dimensions}'
+                '\r\n non dims:' f'{non_spatial_variables}')
+    
     with Dataset(dimensions_path, 'r') as dimensions_file:
         if len(geographic_dimensions) > 0:
             # If there is no bounding box, but there is a shape file, calculate
@@ -102,8 +110,9 @@ def get_spatial_index_ranges(
                 index_ranges[dimension] = get_geographic_index_range(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
-
-        if len(projected_dimensions) > 0:
+            return index_ranges
+        
+        elif len(projected_dimensions) > 0:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
                     get_projected_x_y_index_ranges(
@@ -111,12 +120,29 @@ def get_spatial_index_ranges(
                         varinfo,
                         dimensions_file,
                         index_ranges,
+                        logger,
                         bounding_box=bounding_box,
                         shape_file_path=shape_file_path,
                     )
                 )
-
-    return index_ranges
+            return index_ranges
+                     
+        elif len(required_dimensions) > 0:
+            for non_spatial_variable in non_spatial_variables:
+                index_ranges.update(
+                    get_required_x_y_index_ranges(
+                        non_spatial_variable,
+                        varinfo,
+                        dimensions_file,
+                        required_dimensions,
+                        index_ranges,
+                        logger,
+                        bounding_box=bounding_box,
+                        shape_file_path=shape_file_path,
+                    )
+                )
+            logger.info('non_spatial_variable:' f'{non_spatial_variable}' ',index_ranges:' f'{format_dictionary_string(index_ranges)}')            
+            return index_ranges
 
 
 def get_projected_x_y_index_ranges(
@@ -124,6 +150,7 @@ def get_projected_x_y_index_ranges(
     varinfo: VarInfoFromDmr,
     dimensions_file: Dataset,
     index_ranges: IndexRanges,
+    logger: Logger,
     bounding_box: BBox = None,
     shape_file_path: str = None,
 ) -> IndexRanges:
@@ -153,8 +180,9 @@ def get_projected_x_y_index_ranges(
         and projected_y is not None
         and not set((projected_x, projected_y)).issubset(set(index_ranges.keys()))
     ):
-        crs = get_variable_crs(non_spatial_variable, varinfo)
-
+        crs = get_variable_crs(non_spatial_variable, varinfo,logger)
+        logger.info('crs=' f'{crs}')
+        
         x_y_extents = get_projected_x_y_extents(
             dimensions_file[projected_x][:],
             dimensions_file[projected_y][:],
@@ -181,11 +209,84 @@ def get_projected_x_y_index_ranges(
         )
 
         x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
+    
     else:
         x_y_index_ranges = {}
 
     return x_y_index_ranges
 
+def get_required_x_y_index_ranges(
+    non_spatial_variable: str,
+    varinfo: VarInfoFromDmr,
+    coordinates_file: Dataset,
+    required_dimensions: Set[str],
+    index_ranges: IndexRanges,
+    logger: Logger,
+    bounding_box: BBox = None,
+    shape_file_path: str = None,
+) -> IndexRanges:
+    """This function returns a dictionary containing the minimum and maximum
+    index ranges for a pair of projection x and y coordinates, e.g.:
+
+    index_ranges = {'/x': (20, 42), '/y': (31, 53)}
+
+    First, the dimensions of the input, non-spatial variable are checked
+    for associated projection x and y coordinates. If these are present,
+    and they have not already been added to the `index_ranges` cache, the
+    extents of the input spatial subset are determined in these projected
+    coordinates. This requires the derivation of a minimum resolution of
+    the target grid in geographic coordinates. Points must be placed along
+    the exterior of the spatial subset shape. All points are then projected
+    from a geographic Coordinate Reference System (CRS) to the target grid
+    CRS. The minimum and maximum values are then derived from these
+    projected coordinate points.
+
+    """
+    projected_x = 'projected_x'
+    projected_y = 'projected_y'
+    dimensions_file = update_dimension_variables(
+        coordinates_file,
+        required_dimensions,
+        varinfo,
+        logger,
+    )
+    crs = get_variable_crs(non_spatial_variable, varinfo,logger)
+        
+    x_y_extents = get_projected_x_y_extents(
+            dimensions_file[projected_x][:],
+            dimensions_file[projected_y][:],
+            #xdims,
+            #ydims,
+            crs,
+            shape_file=shape_file_path,
+            bounding_box=bounding_box,
+        )
+    logger.info('x_y_extents:' f'{format_dictionary_string(x_y_extents)}')
+
+    x_index_ranges = get_dimension_index_range(
+            dimensions_file[projected_x][:],
+            #xdims,
+            x_y_extents['x_min'],
+            x_y_extents['x_max'],
+            #bounds_values=x_bounds,
+        )
+    logger.info('x_index_ranges: ' f'{x_index_ranges}')
+        
+    y_index_ranges = get_dimension_index_range(
+            dimensions_file[projected_y][:],
+            #ydims,
+            x_y_extents['y_min'],
+            x_y_extents['y_max'],
+            #bounds_values=y_bounds,
+        )
+    logger.info('y_index_ranges: ' f'{y_index_ranges}')
+
+    x_y_index_ranges = {projected_y: y_index_ranges, projected_x: x_index_ranges}
+
+    logger.info('x_y_index_ranges-str:' f'{format_dictionary_string(x_y_index_ranges)}')
+    logger.info('x_y_index_ranges: ' f'{x_y_index_ranges}')
+   
+    return x_y_index_ranges
 
 def get_geographic_index_range(
     dimension: str,

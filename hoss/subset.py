@@ -27,9 +27,11 @@ from hoss.dimension_utilities import (
 )
 from hoss.spatial import get_spatial_index_ranges
 from hoss.temporal import get_temporal_index_ranges
-from hoss.utilities import download_url, format_variable_set_string, get_opendap_nc4
-
-
+from hoss.utilities import (download_url, 
+                            format_variable_set_string, 
+                            get_opendap_nc4, 
+                            format_dictionary_string
+)
 def subset_granule(
     opendap_url: str,
     harmony_source: Source,
@@ -87,7 +89,7 @@ def subset_granule(
 
     if request_is_index_subset:
         # Prefetch all dimension variables in full:
-        dimensions_path = prefetch_dimension_variables(
+        dimensions_path, required_dimensions = prefetch_dimension_variables(
             opendap_url,
             varinfo,
             required_variables,
@@ -122,16 +124,26 @@ def subset_granule(
             shape_file_path = get_request_shape_file(
                 harmony_message, output_dir, logger, config
             )
+            logger.info(
+            'All required variables: ' 
+            f'{format_variable_set_string(required_variables)}' 
+            ', dimensions_path: ' f'{dimensions_path}' 
+            ', shapefilepath:' f'{shape_file_path}'
+            )
+            
             index_ranges.update(
                 get_spatial_index_ranges(
                     required_variables,
+                    required_dimensions,
                     varinfo,
                     dimensions_path,
                     harmony_message,
+                    logger,
                     shape_file_path,
                 )
             )
-
+        logger.info('subset_granule - index_ranges:' f'{format_dictionary_string(index_ranges)}')            
+           
         if harmony_message.temporal is not None:
             # Update `index_ranges` cache with ranges for temporal
             # variables. This will convert information from the temporal range
@@ -144,7 +156,7 @@ def subset_granule(
 
     # Add any range indices to variable names for DAP4 constraint expression.
     variables_with_ranges = set(
-        add_index_range(variable, varinfo, index_ranges)
+        add_index_range(variable, varinfo, index_ranges, logger)
         for variable in required_variables
     )
     logger.info(

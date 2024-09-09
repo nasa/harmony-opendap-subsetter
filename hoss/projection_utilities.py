@@ -12,7 +12,7 @@
 
 import json
 from typing import Dict, List, Optional, Tuple, Union, get_args
-
+from logging import Logger
 import numpy as np
 from pyproj import CRS, Transformer
 from shapely.geometry import (
@@ -40,7 +40,7 @@ MultiShape = Union[GeometryCollection, MultiLineString, MultiPoint, MultiPolygon
 Shape = Union[LineString, Point, Polygon, MultiShape]
 
 
-def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
+def get_variable_crs(variable: str, varinfo: VarInfoFromDmr, logger: Logger) -> CRS:
     """Check the metadata attributes for the variable to find the associated
     grid mapping variable. Create a `pyproj.CRS` object from the grid
     mapping variable metadata attributes.
@@ -57,12 +57,33 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
 
     if grid_mapping is not None:
         try:
-            crs = CRS.from_cf(varinfo.get_variable(grid_mapping).attributes)
+            logger.info('grid_mapping first try: ' f'{grid_mapping}')
+            grid_mapping_variable = varinfo.get_variable(grid_mapping)
+            if grid_mapping_variable is not None:
+                crs = CRS.from_cf(varinfo.get_variable(grid_mapping).attributes)
+            else:
+                #logger.info('grid_mapping missing variable for: ' f'{grid_mapping}')
+                cf = varinfo.get_missing_variable_attributes(grid_mapping)
+                #logger.info('cf attr for missing variable for: ' f'{grid_mapping}' f'{cf}')
+                crs = CRS.from_cf(cf)
+                logger.info('crs missing variable for: ' f'{grid_mapping}' f'{crs}')
         except AttributeError as exception:
-            raise MissingGridMappingVariable(grid_mapping, variable) from exception
+            #check if there is a CF override
+                crs = CRS.from_cf(varinfo.get_missing_variable_attributes(grid_mapping))
+                if crs is None:            
+                    raise MissingGridMappingVariable(grid_mapping, variable) from exception
+            
+    #check if there is a CF override
     else:
-        raise MissingGridMappingMetadata(variable)
-
+        variable1 = varinfo.get_variable(variable)
+        logger.info('variable-name:' f'{variable} ', 'variable:' f'{variable1.name}')
+        grid_mapping = variable1.attributes.get('grid_mapping')
+        logger.info('grid_mapping second try: ' f'{grid_mapping}')
+        cf = varinfo.get_missing_variable_attributes(grid_mapping)
+        logger.info('cf: ' f'{cf}')
+        crs = CRS.from_cf(cf)
+        if crs is None:
+            raise MissingGridMappingMetadata(variable)
     return crs
 
 

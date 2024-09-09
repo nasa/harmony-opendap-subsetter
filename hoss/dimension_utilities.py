@@ -118,7 +118,6 @@ def update_dimension_variables(
     prefetch_dataset: Dataset,
     required_dimensions: Set[str],
     varinfo: VarInfoFromDmr,
-    logger: Logger,
 ) -> Dict[str, ndarray]:
     """Augment a NetCDF4 file with artificial 1D dimensions variable for each
     2D dimension variable"
@@ -133,19 +132,13 @@ def update_dimension_variables(
     """
     for dimension_name in required_dimensions:
         dimension_variable = varinfo.get_variable(dimension_name)
-        logger.info('dimension name: ' f'{dimension_name}')
-        logger.info('dimension path:' f'{dimension_variable.full_name_path}')
-
-        if is_variable_one_dimensional(prefetch_dataset, dimension_variable):
-            logger.info('No changes needed: ' f'{dimension_name}')
-        else:
+        if not is_variable_one_dimensional(prefetch_dataset, dimension_variable):
             col_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[0]
             row_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[1]
-            crs = get_variable_crs(dimension_name, varinfo, logger)
-            logger.info('row_size=' f'{row_size}' ',col_size=' f'{col_size}')
+            crs = get_variable_crs(dimension_name, varinfo)
 
     geo_grid_corners = get_geo_grid_corners(
-        prefetch_dataset, required_dimensions, varinfo, logger
+        prefetch_dataset, required_dimensions, varinfo
     )
 
     x_y_extents = get_x_y_extents_from_geographic_points(geo_grid_corners, crs)
@@ -157,21 +150,6 @@ def update_dimension_variables(
     y_max = x_y_extents['y_max']
     x_resolution = (x_max - x_min) / row_size
     y_resolution = (y_max - y_min) / col_size
-
-    logger.info(
-        'x_min:'
-        f'{x_min}'
-        ',x_max='
-        f'{x_max}'
-        ',y_min:'
-        f'{y_min}'
-        ',y_max='
-        f'{y_max}'
-        ',x_res='
-        f'{x_resolution}'
-        'y_res='
-        f'{y_resolution}'
-    )
 
     # create the xy dim scales
     x_dim = np.arange(x_min, x_max, x_resolution)
@@ -185,7 +163,6 @@ def get_geo_grid_corners(
     prefetch_dataset: Dataset,
     required_dimensions: Set[str],
     varinfo: VarInfoFromDmr,
-    logger: Logger,
 ) -> list[Tuple[float]]:
     """
     This method is used to return the lat lon corners from a 2D
@@ -233,17 +210,6 @@ def get_geo_grid_corners(
         bottomright_corner,
         bottomleft_corner,
     ]
-    logger.info(
-        'topleft:'
-        f'{topleft_corner}'
-        'topright:'
-        f'{topright_corner}'
-        ',bottomright:'
-        f'{bottomright_corner}'
-        ',bottomleft:'
-        f'{bottomleft_corner}'
-    )
-
     return geo_grid_corners
 
 
@@ -554,7 +520,6 @@ def add_index_range(
     variable_name: str,
     varinfo: VarInfoFromDmr,
     index_ranges: IndexRanges,
-    logger: Logger,
 ) -> str:
     """Append the index ranges of each dimension for the specified variable.
     If there are no dimensions with listed index ranges, then the full
@@ -567,14 +532,10 @@ def add_index_range(
 
     """
     variable = varinfo.get_variable(variable_name)
-    logger.info('variable name:' f'{variable_name}')
     range_strings = []
     if variable.dimensions == []:
         for dimension in index_ranges.keys():
             dimension_range = index_ranges.get(dimension)
-            logger.info(
-                'dimension=' f'{dimension}' ', dimension_range=' f'{dimension_range}'
-            )
             if dimension_range is not None and dimension_range[0] <= dimension_range[1]:
                 range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
             else:

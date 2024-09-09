@@ -139,12 +139,11 @@ def subset_granule(
             index_ranges.update(
                 get_spatial_index_ranges(
                     required_variables,
-                    required_dimensions,
                     varinfo,
                     dimensions_path,
                     harmony_message,
-                    logger,
                     shape_file_path,
+                    required_dimensions,
                 )
             )
         logger.info(
@@ -163,7 +162,7 @@ def subset_granule(
 
     # Add any range indices to variable names for DAP4 constraint expression.
     variables_with_ranges = set(
-        add_index_range(variable, varinfo, index_ranges, logger)
+        add_index_range(variable, varinfo, index_ranges)
         for variable in required_variables
     )
     logger.info(

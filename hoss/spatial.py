@@ -22,8 +22,9 @@
 
 """
 
-from typing import List, Set
 from logging import Logger
+from typing import List, Set
+
 from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
@@ -41,15 +42,15 @@ from hoss.dimension_utilities import (
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
-    update_dimension_variables
+    update_dimension_variables,
 )
 from hoss.projection_utilities import (
     get_projected_x_y_extents,
     get_projected_x_y_variables,
     get_variable_crs,
 )
-
 from hoss.utilities import format_dictionary_string
+
 
 def get_spatial_index_ranges(
     required_variables: Set[str],
@@ -93,11 +94,17 @@ def get_spatial_index_ranges(
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
-    logger.info('bounding_box: ' f'{bounding_box}'
-                '\r\n geo dims:' f'{geographic_dimensions}'
-                '\r\n proj dims:' f'{projected_dimensions}'
-                '\r\n non dims:' f'{non_spatial_variables}')
-    
+    logger.info(
+        'bounding_box: '
+        f'{bounding_box}'
+        '\r\n geo dims:'
+        f'{geographic_dimensions}'
+        '\r\n proj dims:'
+        f'{projected_dimensions}'
+        '\r\n non dims:'
+        f'{non_spatial_variables}'
+    )
+
     with Dataset(dimensions_path, 'r') as dimensions_file:
         if len(geographic_dimensions) > 0:
             # If there is no bounding box, but there is a shape file, calculate
@@ -111,7 +118,6 @@ def get_spatial_index_ranges(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
             return index_ranges
-        
         elif len(projected_dimensions) > 0:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
@@ -126,7 +132,7 @@ def get_spatial_index_ranges(
                     )
                 )
             return index_ranges
-                     
+
         elif len(required_dimensions) > 0:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
@@ -141,7 +147,12 @@ def get_spatial_index_ranges(
                         shape_file_path=shape_file_path,
                     )
                 )
-            logger.info('non_spatial_variable:' f'{non_spatial_variable}' ',index_ranges:' f'{format_dictionary_string(index_ranges)}')            
+            logger.info(
+                'non_spatial_variable:'
+                f'{non_spatial_variable}'
+                ',index_ranges:'
+                f'{format_dictionary_string(index_ranges)}'
+            )
             return index_ranges
 
 
@@ -180,9 +191,9 @@ def get_projected_x_y_index_ranges(
         and projected_y is not None
         and not set((projected_x, projected_y)).issubset(set(index_ranges.keys()))
     ):
-        crs = get_variable_crs(non_spatial_variable, varinfo,logger)
+        crs = get_variable_crs(non_spatial_variable, varinfo, logger)
         logger.info('crs=' f'{crs}')
-        
+
         x_y_extents = get_projected_x_y_extents(
             dimensions_file[projected_x][:],
             dimensions_file[projected_y][:],
@@ -209,11 +220,12 @@ def get_projected_x_y_index_ranges(
         )
 
         x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
-    
+
     else:
         x_y_index_ranges = {}
 
     return x_y_index_ranges
+
 
 def get_required_x_y_index_ranges(
     non_spatial_variable: str,
@@ -250,43 +262,44 @@ def get_required_x_y_index_ranges(
         varinfo,
         logger,
     )
-    crs = get_variable_crs(non_spatial_variable, varinfo,logger)
-        
+    crs = get_variable_crs(non_spatial_variable, varinfo, logger)
+
     x_y_extents = get_projected_x_y_extents(
-            dimensions_file[projected_x][:],
-            dimensions_file[projected_y][:],
-            #xdims,
-            #ydims,
-            crs,
-            shape_file=shape_file_path,
-            bounding_box=bounding_box,
-        )
+        dimensions_file[projected_x][:],
+        dimensions_file[projected_y][:],
+        # xdims,
+        # ydims,
+        crs,
+        shape_file=shape_file_path,
+        bounding_box=bounding_box,
+    )
     logger.info('x_y_extents:' f'{format_dictionary_string(x_y_extents)}')
 
     x_index_ranges = get_dimension_index_range(
-            dimensions_file[projected_x][:],
-            #xdims,
-            x_y_extents['x_min'],
-            x_y_extents['x_max'],
-            #bounds_values=x_bounds,
-        )
+        dimensions_file[projected_x][:],
+        # xdims,
+        x_y_extents['x_min'],
+        x_y_extents['x_max'],
+        # bounds_values=x_bounds,
+    )
     logger.info('x_index_ranges: ' f'{x_index_ranges}')
-        
+
     y_index_ranges = get_dimension_index_range(
-            dimensions_file[projected_y][:],
-            #ydims,
-            x_y_extents['y_min'],
-            x_y_extents['y_max'],
-            #bounds_values=y_bounds,
-        )
+        dimensions_file[projected_y][:],
+        # ydims,
+        x_y_extents['y_min'],
+        x_y_extents['y_max'],
+        # bounds_values=y_bounds,
+    )
     logger.info('y_index_ranges: ' f'{y_index_ranges}')
 
     x_y_index_ranges = {projected_y: y_index_ranges, projected_x: x_index_ranges}
 
     logger.info('x_y_index_ranges-str:' f'{format_dictionary_string(x_y_index_ranges)}')
     logger.info('x_y_index_ranges: ' f'{x_y_index_ranges}')
-   
+
     return x_y_index_ranges
+
 
 def get_geographic_index_range(
     dimension: str,

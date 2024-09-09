@@ -19,23 +19,23 @@ from harmony.message import Message
 from harmony.message_utility import rgetattr
 from harmony.util import Config
 from netCDF4 import Dataset
-from numpy.ma.core import MaskedArray
 from numpy import ndarray
+from numpy.ma.core import MaskedArray
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.bbox_utilities import flatten_list
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
-from hoss.utilities import (
-    format_variable_set_string,
-    format_dictionary_string,
-    get_opendap_nc4,
-    get_value_or_default,
-)
 from hoss.projection_utilities import (
     get_projected_x_y_extents,
     get_projected_x_y_variables,
     get_variable_crs,
-    get_x_y_extents_from_geographic_points
+    get_x_y_extents_from_geographic_points,
+)
+from hoss.utilities import (
+    format_dictionary_string,
+    format_variable_set_string,
+    get_opendap_nc4,
+    get_value_or_default,
 )
 
 IndexRange = Tuple[int]
@@ -81,11 +81,13 @@ def prefetch_dimension_variables(
 
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
-    if(len(required_dimensions) == 0):
-        #check if coordinate variables are provided
-        required_dimensions = varinfo.get_references_for_attribute(required_variables, 'coordinates')
+    if len(required_dimensions) == 0:
+        # check if coordinate variables are provided
+        required_dimensions = varinfo.get_references_for_attribute(
+            required_variables, 'coordinates'
+        )
         logger.info('coordinates: ' f'{required_dimensions}')
-    
+
     bounds = varinfo.get_references_for_attribute(required_dimensions, 'bounds')
     logger.info('bounds: ' f'{bounds}')
     required_dimensions.update(bounds)
@@ -105,11 +107,9 @@ def prefetch_dimension_variables(
 
 
 def is_variable_one_dimensional(
-     prefetch_dataset: Dataset, dimension_variable: VariableFromDmr
+    prefetch_dataset: Dataset, dimension_variable: VariableFromDmr
 ) -> bool:
-    """Check if a dimension variable is 1D
-    
-    """
+    """Check if a dimension variable is 1D"""
     dimensions_array = prefetch_dataset[dimension_variable.full_name_path][:]
     return dimensions_array.ndim == 1
 
@@ -125,7 +125,7 @@ def update_dimension_variables(
 
     For each dimension variable:
     (1) Check if the dimension variable is 1D.
-    (2) If it is not 1D and is 2D create a dimensions array from 
+    (2) If it is not 1D and is 2D create a dimensions array from
         within the `write_1D_dimensions`
         function.
     (3) Then write the 1D dimensions variable to the NetCDF4 URL.
@@ -135,59 +135,63 @@ def update_dimension_variables(
         dimension_variable = varinfo.get_variable(dimension_name)
         logger.info('dimension name: ' f'{dimension_name}')
         logger.info('dimension path:' f'{dimension_variable.full_name_path}')
-        
+
         if is_variable_one_dimensional(prefetch_dataset, dimension_variable):
-            logger.info(
-                      'No changes needed: 'f'{dimension_name}'
-            )
-        else:                 
+            logger.info('No changes needed: ' f'{dimension_name}')
+        else:
             col_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[0]
             row_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[1]
-            crs = get_variable_crs(dimension_name, varinfo,logger)
+            crs = get_variable_crs(dimension_name, varinfo, logger)
             logger.info('row_size=' f'{row_size}' ',col_size=' f'{col_size}')
-            
-    geo_grid_corners =  get_geo_grid_corners( 
-            prefetch_dataset,
-            required_dimensions,
-            varinfo,
-            logger
-        )
 
-    x_y_extents = get_x_y_extents_from_geographic_points(
-                geo_grid_corners, crs
+    geo_grid_corners = get_geo_grid_corners(
+        prefetch_dataset, required_dimensions, varinfo, logger
     )
-   
-    #get grid size and resolution
+
+    x_y_extents = get_x_y_extents_from_geographic_points(geo_grid_corners, crs)
+
+    # get grid size and resolution
     x_min = x_y_extents['x_min']
     x_max = x_y_extents['x_max']
     y_min = x_y_extents['y_min']
     y_max = x_y_extents['y_max']
-    x_resolution = (x_max-x_min)/row_size
-    y_resolution = (y_max-y_min)/col_size
-     
-    logger.info('x_min:' f'{x_min}' ',x_max=' f'{x_max}' 
-                ',y_min:' f'{y_min}' ',y_max=' f'{y_max}'
-                ',x_res=' f'{x_resolution}' 'y_res=' f'{y_resolution}')         
-    
-    #create the xy dim scales
+    x_resolution = (x_max - x_min) / row_size
+    y_resolution = (y_max - y_min) / col_size
+
+    logger.info(
+        'x_min:'
+        f'{x_min}'
+        ',x_max='
+        f'{x_max}'
+        ',y_min:'
+        f'{y_min}'
+        ',y_max='
+        f'{y_max}'
+        ',x_res='
+        f'{x_resolution}'
+        'y_res='
+        f'{y_resolution}'
+    )
+
+    # create the xy dim scales
     x_dim = np.arange(x_min, x_max, x_resolution)
-    
-    #ascending versus descending..should be based on the coordinate grid
-    y_dim = np.arange(y_max,y_min, -y_resolution) 
-    logger.info('x_dim:' f'{x_dim}')
-    logger.info('y_dim:' f'{y_dim}')
+
+    # ascending versus descending..should be based on the coordinate grid
+    y_dim = np.arange(y_max, y_min, -y_resolution)
     return {'projected_y': y_dim, 'projected_x': x_dim}
-  
-# to calculate grid corners when there are fill values    
-def get_geo_grid_corners( 
+
+
+def get_geo_grid_corners(
     prefetch_dataset: Dataset,
     required_dimensions: Set[str],
     varinfo: VarInfoFromDmr,
     logger: Logger,
 ) -> list[Tuple[float]]:
     """
-    This method is used to return the lat lon corners from a 2D 
-    coordinate dataset 
+    This method is used to return the lat lon corners from a 2D
+    coordinate dataset. This does a check for values below -180
+    which could be fill values. Does not check if there are fill
+    values in the corner points to go down to the next row and col
 
     """
     for dimension_name in required_dimensions:
@@ -196,44 +200,53 @@ def get_geo_grid_corners(
             lat_arr = prefetch_dataset[dimension_variable.full_name_path][:]
         elif dimension_variable.is_longitude():
             lon_arr = prefetch_dataset[dimension_variable.full_name_path][:]
-            
-    #skip fill values when calculating min values
-    #topleft =  minlon, maxlat
-    #bottomright = maxlon, minlat
-    top_left_row_idx = 0 
+
+    # skip fill values when calculating min values
+    # topleft =  minlon, maxlat
+    # bottomright = maxlon, minlat
+    top_left_row_idx = 0
     top_left_col_idx = 0
-    lon_row = lon_arr[top_left_row_idx,:]
+    lon_row = lon_arr[top_left_row_idx, :]
     lon_row_valid_indices = np.where(lon_row >= -180.0)[0]
     top_left_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmin()]
-    minlon = lon_row[top_left_col_idx] 
+    minlon = lon_row[top_left_col_idx]
     top_right_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmax()]
     maxlon = lon_row[top_right_col_idx]
-    
-    lat_col = lat_arr[:,top_right_col_idx]
+
+    lat_col = lat_arr[:, top_right_col_idx]
     lat_col_valid_indices = np.where(lat_col >= -180.0)[0]
-    bottom_right_row_idx = lat_col_valid_indices[lat_col[lat_col_valid_indices].argmin()]
+    bottom_right_row_idx = lat_col_valid_indices[
+        lat_col[lat_col_valid_indices].argmin()
+    ]
     minlat = lat_col[bottom_right_row_idx]
     top_right_row_idx = lat_col_valid_indices[lat_col[lat_col_valid_indices].argmax()]
     maxlat = lat_col[top_right_row_idx]
-    
+
     topleft_corner = [minlon, maxlat]
     topright_corner = [maxlon, maxlat]
     bottomright_corner = [maxlon, minlat]
     bottomleft_corner = [minlon, minlat]
-    
-    geo_grid_corners = [  
-                        topleft_corner, 
-                        topright_corner,
-                        bottomright_corner,
-                        bottomleft_corner
-    ]   
-    logger.info('topleft:' f'{topleft_corner}'
-                'topright:' f'{topright_corner}'
-                ',bottomright:' f'{bottomright_corner}'
-                ',bottomleft:' f'{bottomleft_corner}')
+
+    geo_grid_corners = [
+        topleft_corner,
+        topright_corner,
+        bottomright_corner,
+        bottomleft_corner,
+    ]
+    logger.info(
+        'topleft:'
+        f'{topleft_corner}'
+        'topright:'
+        f'{topright_corner}'
+        ',bottomright:'
+        f'{bottomright_corner}'
+        ',bottomleft:'
+        f'{bottomleft_corner}'
+    )
 
     return geo_grid_corners
-                           
+
+
 def add_bounds_variables(
     dimensions_nc4: str,
     required_dimensions: Set[str],
@@ -538,8 +551,10 @@ def get_dimension_indices_from_bounds(
 
 
 def add_index_range(
-    variable_name: str, varinfo: VarInfoFromDmr, index_ranges: IndexRanges,
-    logger:Logger
+    variable_name: str,
+    varinfo: VarInfoFromDmr,
+    index_ranges: IndexRanges,
+    logger: Logger,
 ) -> str:
     """Append the index ranges of each dimension for the specified variable.
     If there are no dimensions with listed index ranges, then the full
@@ -554,16 +569,18 @@ def add_index_range(
     variable = varinfo.get_variable(variable_name)
     logger.info('variable name:' f'{variable_name}')
     range_strings = []
-    if(variable.dimensions == []):
+    if variable.dimensions == []:
         for dimension in index_ranges.keys():
             dimension_range = index_ranges.get(dimension)
-            logger.info('dimension=' f'{dimension}' ', dimension_range=' f'{dimension_range}')
+            logger.info(
+                'dimension=' f'{dimension}' ', dimension_range=' f'{dimension_range}'
+            )
             if dimension_range is not None and dimension_range[0] <= dimension_range[1]:
                 range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
             else:
                 range_strings.append('[]')
-        
-    else :    
+
+    else:
         for dimension in variable.dimensions:
             dimension_range = index_ranges.get(dimension)
 

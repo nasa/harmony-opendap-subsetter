@@ -27,11 +27,14 @@ from hoss.dimension_utilities import (
 )
 from hoss.spatial import get_spatial_index_ranges
 from hoss.temporal import get_temporal_index_ranges
-from hoss.utilities import (download_url, 
-                            format_variable_set_string, 
-                            get_opendap_nc4, 
-                            format_dictionary_string
+from hoss.utilities import (
+    download_url,
+    format_dictionary_string,
+    format_variable_set_string,
+    get_opendap_nc4,
 )
+
+
 def subset_granule(
     opendap_url: str,
     harmony_source: Source,
@@ -125,12 +128,14 @@ def subset_granule(
                 harmony_message, output_dir, logger, config
             )
             logger.info(
-            'All required variables: ' 
-            f'{format_variable_set_string(required_variables)}' 
-            ', dimensions_path: ' f'{dimensions_path}' 
-            ', shapefilepath:' f'{shape_file_path}'
+                'All required variables: '
+                f'{format_variable_set_string(required_variables)}'
+                ', dimensions_path: '
+                f'{dimensions_path}'
+                ', shapefilepath:'
+                f'{shape_file_path}'
             )
-            
+
             index_ranges.update(
                 get_spatial_index_ranges(
                     required_variables,
@@ -142,8 +147,10 @@ def subset_granule(
                     shape_file_path,
                 )
             )
-        logger.info('subset_granule - index_ranges:' f'{format_dictionary_string(index_ranges)}')            
-           
+        logger.info(
+            'subset_granule - index_ranges:' f'{format_dictionary_string(index_ranges)}'
+        )
+
         if harmony_message.temporal is not None:
             # Update `index_ranges` cache with ranges for temporal
             # variables. This will convert information from the temporal range

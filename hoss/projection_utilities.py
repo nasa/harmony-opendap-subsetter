@@ -11,8 +11,9 @@
 """
 
 import json
-from typing import Dict, List, Optional, Tuple, Union, get_args
 from logging import Logger
+from typing import Dict, List, Optional, Tuple, Union, get_args
+
 import numpy as np
 from pyproj import CRS, Transformer
 from shapely.geometry import (
@@ -62,18 +63,18 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr, logger: Logger) -> 
             if grid_mapping_variable is not None:
                 crs = CRS.from_cf(varinfo.get_variable(grid_mapping).attributes)
             else:
-                #logger.info('grid_mapping missing variable for: ' f'{grid_mapping}')
+                # logger.info('grid_mapping missing variable for: ' f'{grid_mapping}')
                 cf = varinfo.get_missing_variable_attributes(grid_mapping)
-                #logger.info('cf attr for missing variable for: ' f'{grid_mapping}' f'{cf}')
+                # logger.info('cf attr for missing variable for: ' f'{grid_mapping}' f'{cf}')
                 crs = CRS.from_cf(cf)
                 logger.info('crs missing variable for: ' f'{grid_mapping}' f'{crs}')
         except AttributeError as exception:
-            #check if there is a CF override
-                crs = CRS.from_cf(varinfo.get_missing_variable_attributes(grid_mapping))
-                if crs is None:            
-                    raise MissingGridMappingVariable(grid_mapping, variable) from exception
-            
-    #check if there is a CF override
+            # check if there is a CF override
+            crs = CRS.from_cf(varinfo.get_missing_variable_attributes(grid_mapping))
+            if crs is None:
+                raise MissingGridMappingVariable(grid_mapping, variable) from exception
+
+    # check if there is a CF override
     else:
         variable1 = varinfo.get_variable(variable)
         logger.info('variable-name:' f'{variable} ', 'variable:' f'{variable1.name}')

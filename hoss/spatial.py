@@ -121,14 +121,14 @@ def get_spatial_index_ranges(
             if len(override_dimensions) > 0:
                 for non_spatial_variable in non_spatial_variables:
                     index_ranges.update(
-                        get_required_x_y_index_ranges(
+                        get_projected_x_y_index_ranges(
                             non_spatial_variable,
                             varinfo,
                             dimensions_file,
-                            override_dimensions,
                             index_ranges,
                             bounding_box=bounding_box,
                             shape_file_path=shape_file_path,
+                            override_dimensions=override_dimensions,
                         )
                     )
         return index_ranges
@@ -141,6 +141,7 @@ def get_projected_x_y_index_ranges(
     index_ranges: IndexRanges,
     bounding_box: BBox = None,
     shape_file_path: str = None,
+    override_dimensions: Set[str] = set(),
 ) -> IndexRanges:
     """This function returns a dictionary containing the minimum and maximum
     index ranges for a pair of projection x and y coordinates, e.g.:
@@ -159,10 +160,19 @@ def get_projected_x_y_index_ranges(
     projected coordinate points.
 
     """
-    projected_x, projected_y = get_projected_x_y_variables(
-        varinfo, non_spatial_variable
-    )
-
+    if len(override_dimensions) == 0:
+        projected_x, projected_y = get_projected_x_y_variables(
+            varinfo, non_spatial_variable
+        )
+    else:
+        projected_x = 'projected_x'
+        projected_y = 'projected_y'
+        override_dimensions_file = update_dimension_variables(
+            dimensions_file,
+            override_dimensions,
+            varinfo,
+        )
+        dimensions_file = override_dimensions_file
     if (
         projected_x is not None
         and projected_y is not None
@@ -195,63 +205,6 @@ def get_projected_x_y_index_ranges(
     else:
         x_y_index_ranges = {}
 
-    return x_y_index_ranges
-
-
-def get_required_x_y_index_ranges(
-    non_spatial_variable: str,
-    varinfo: VarInfoFromDmr,
-    coordinates_file: Dataset,
-    override_dimensions: Set[str],
-    index_ranges: IndexRanges,
-    bounding_box: BBox = None,
-    shape_file_path: str = None,
-) -> IndexRanges:
-    """This function returns a dictionary containing the minimum and maximum
-    index ranges for a pair of projection x and y coordinates, e.g.:
-
-    index_ranges = {'/x': (20, 42), '/y': (31, 53)}
-
-    First, the dimensions of the input, non-spatial variable are checked
-    for associated projection x and y coordinates. If these are present,
-    and they have not already been added to the `index_ranges` cache, the
-    extents of the input spatial subset are determined in these projected
-    coordinates. This requires the derivation of a minimum resolution of
-    the target grid in geographic coordinates. Points must be placed along
-    the exterior of the spatial subset shape. All points are then projected
-    from a geographic Coordinate Reference System (CRS) to the target grid
-    CRS. The minimum and maximum values are then derived from these
-    projected coordinate points.
-
-    """
-    projected_x = 'projected_x'
-    projected_y = 'projected_y'
-    dimensions_file = update_dimension_variables(
-        coordinates_file,
-        override_dimensions,
-        varinfo,
-    )
-    crs = get_variable_crs(non_spatial_variable, varinfo)
-
-    x_y_extents = get_projected_x_y_extents(
-        dimensions_file[projected_x][:],
-        dimensions_file[projected_y][:],
-        crs,
-        shape_file=shape_file_path,
-        bounding_box=bounding_box,
-    )
-    x_index_ranges = get_dimension_index_range(
-        dimensions_file[projected_x][:],
-        x_y_extents['x_min'],
-        x_y_extents['x_max'],
-    )
-    y_index_ranges = get_dimension_index_range(
-        dimensions_file[projected_y][:],
-        x_y_extents['y_min'],
-        x_y_extents['y_max'],
-    )
-
-    x_y_index_ranges = {projected_y: y_index_ranges, projected_x: x_index_ranges}
     return x_y_index_ranges
 
 

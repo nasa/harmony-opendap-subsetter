@@ -74,7 +74,7 @@ def get_override_dimensions(
             required_variables, 'coordinates'
         )
         return override_dimensions
-    except AttributeError as exception:
+    except AttributeError:
         return set()
 
 
@@ -682,7 +682,10 @@ def get_dimension_bounds(
     be returned.
 
     """
-    bounds = varinfo.get_variable(dimension_name).references.get('bounds')
+    try:
+        bounds = varinfo.get_variable(dimension_name).references.get('bounds')
+    except AttributeError:
+        bounds = None
 
     if bounds is not None:
         try:

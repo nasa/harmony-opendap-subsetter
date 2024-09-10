@@ -69,10 +69,13 @@ def get_override_dimensions(
     """
     # check if coordinate variables are provided
     # this should be be a configurable in hoss_config.json
-    override_dimensions = varinfo.get_references_for_attribute(
-        required_variables, 'coordinates'
-    )
-    return override_dimensions
+    try:
+        override_dimensions = varinfo.get_references_for_attribute(
+            required_variables, 'coordinates'
+        )
+        return override_dimensions
+    except AttributeError as exception:
+        return set()
 
 
 def prefetch_dimension_variables(
@@ -540,14 +543,20 @@ def add_index_range(
     """
     variable = varinfo.get_variable(variable_name)
     range_strings = []
-    if variable.dimensions == []:
-        for dimension in index_ranges.keys():
-            dimension_range = index_ranges.get(dimension)
-            if dimension_range is not None and dimension_range[0] <= dimension_range[1]:
-                range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
-            else:
-                range_strings.append('[]')
 
+    if variable.dimensions == []:
+        override_dimensions = get_override_dimensions(varinfo, variable_name)
+        if len(override_dimensions) > 0:
+            for dimension in override_dimensions:
+                dimension_range = index_ranges.get(dimension)
+
+                if (
+                    dimension_range is not None
+                    and dimension_range[0] <= dimension_range[1]
+                ):
+                    range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
+                else:
+                    range_strings.append('[]')
     else:
         for dimension in variable.dimensions:
             dimension_range = index_ranges.get(dimension)

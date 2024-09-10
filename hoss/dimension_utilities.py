@@ -23,16 +23,12 @@ from numpy import ndarray
 from numpy.ma.core import MaskedArray
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
-from hoss.bbox_utilities import flatten_list
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
 from hoss.projection_utilities import (
-    get_projected_x_y_extents,
-    get_projected_x_y_variables,
     get_variable_crs,
     get_x_y_extents_from_geographic_points,
 )
 from hoss.utilities import (
-    format_dictionary_string,
     format_variable_set_string,
     get_opendap_nc4,
     get_value_or_default,
@@ -63,6 +59,22 @@ def is_index_subset(message: Message) -> bool:
     )
 
 
+def get_override_dimensions(
+    varinfo: VarInfoFromDmr,
+    required_variables: Set[str],
+) -> set[str]:
+    """Determine the dimensions that need to be "pre-fetched" from OPeNDAP
+    If dimensions are not available, get variables that can be
+    used to generate dimensions
+    """
+    # check if coordinate variables are provided
+    # this should be be a configurable in hoss_config.json
+    override_dimensions = varinfo.get_references_for_attribute(
+        required_variables, 'coordinates'
+    )
+    return override_dimensions
+
+
 def prefetch_dimension_variables(
     opendap_url: str,
     varinfo: VarInfoFromDmr,
@@ -71,7 +83,7 @@ def prefetch_dimension_variables(
     logger: Logger,
     access_token: str,
     config: Config,
-) -> tuple[str, set[str]]:
+) -> tuple[str, set[str]] | str:
     """Determine the dimensions that need to be "pre-fetched" from OPeNDAP in
     order to derive index ranges upon them. Initially, this was just
     spatial and temporal dimensions, but to support generic dimension
@@ -82,10 +94,7 @@ def prefetch_dimension_variables(
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
     if len(required_dimensions) == 0:
-        # check if coordinate variables are provided
-        required_dimensions = varinfo.get_references_for_attribute(
-            required_variables, 'coordinates'
-        )
+        required_dimensions = get_override_dimensions(varinfo, required_variables)
         logger.info('coordinates: ' f'{required_dimensions}')
 
     bounds = varinfo.get_references_for_attribute(required_dimensions, 'bounds')
@@ -96,14 +105,12 @@ def prefetch_dimension_variables(
         'Variables being retrieved in prefetch request: '
         f'{format_variable_set_string(required_dimensions)}'
     )
-
     required_dimensions_nc4 = get_opendap_nc4(
         opendap_url, required_dimensions, output_dir, logger, access_token, config
     )
-
     # Create bounds variables if necessary.
     add_bounds_variables(required_dimensions_nc4, required_dimensions, varinfo, logger)
-    return required_dimensions_nc4, required_dimensions
+    return required_dimensions_nc4
 
 
 def is_variable_one_dimensional(

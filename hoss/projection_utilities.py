@@ -11,7 +11,6 @@
 """
 
 import json
-from logging import Logger
 from typing import Dict, List, Optional, Tuple, Union, get_args
 
 import numpy as np

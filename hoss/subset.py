@@ -92,7 +92,7 @@ def subset_granule(
 
     if request_is_index_subset:
         # Prefetch all dimension variables in full:
-        dimensions_path, required_dimensions = prefetch_dimension_variables(
+        dimensions_path = prefetch_dimension_variables(
             opendap_url,
             varinfo,
             required_variables,
@@ -143,7 +143,6 @@ def subset_granule(
                     dimensions_path,
                     harmony_message,
                     shape_file_path,
-                    required_dimensions,
                 )
             )
         logger.info(

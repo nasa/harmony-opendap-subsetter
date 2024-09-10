@@ -22,7 +22,6 @@
 
 """
 
-from logging import Logger
 from typing import List, Set
 
 from harmony.message import Message
@@ -42,6 +41,7 @@ from hoss.dimension_utilities import (
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
+    get_override_dimensions,
     update_dimension_variables,
 )
 from hoss.projection_utilities import (
@@ -49,7 +49,6 @@ from hoss.projection_utilities import (
     get_projected_x_y_variables,
     get_variable_crs,
 )
-from hoss.utilities import format_dictionary_string
 
 
 def get_spatial_index_ranges(
@@ -58,7 +57,6 @@ def get_spatial_index_ranges(
     dimensions_path: str,
     harmony_message: Message,
     shape_file_path: str = None,
-    required_dimensions: Set[str] = set(),
 ) -> IndexRanges:
     """Return a dictionary containing indices that correspond to the minimum
     and maximum extents for all horizontal spatial coordinate variables
@@ -106,7 +104,6 @@ def get_spatial_index_ranges(
                 index_ranges[dimension] = get_geographic_index_range(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
-            return index_ranges
         elif len(projected_dimensions) > 0:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
@@ -119,22 +116,22 @@ def get_spatial_index_ranges(
                         shape_file_path=shape_file_path,
                     )
                 )
-            return index_ranges
-
-        elif len(required_dimensions) > 0:
-            for non_spatial_variable in non_spatial_variables:
-                index_ranges.update(
-                    get_required_x_y_index_ranges(
-                        non_spatial_variable,
-                        varinfo,
-                        dimensions_file,
-                        required_dimensions,
-                        index_ranges,
-                        bounding_box=bounding_box,
-                        shape_file_path=shape_file_path,
+        else:
+            override_dimensions = get_override_dimensions(varinfo, required_variables)
+            if len(override_dimensions) > 0:
+                for non_spatial_variable in non_spatial_variables:
+                    index_ranges.update(
+                        get_required_x_y_index_ranges(
+                            non_spatial_variable,
+                            varinfo,
+                            dimensions_file,
+                            override_dimensions,
+                            index_ranges,
+                            bounding_box=bounding_box,
+                            shape_file_path=shape_file_path,
+                        )
                     )
-                )
-            return index_ranges
+        return index_ranges
 
 
 def get_projected_x_y_index_ranges(
@@ -205,7 +202,7 @@ def get_required_x_y_index_ranges(
     non_spatial_variable: str,
     varinfo: VarInfoFromDmr,
     coordinates_file: Dataset,
-    required_dimensions: Set[str],
+    override_dimensions: Set[str],
     index_ranges: IndexRanges,
     bounding_box: BBox = None,
     shape_file_path: str = None,
@@ -231,7 +228,7 @@ def get_required_x_y_index_ranges(
     projected_y = 'projected_y'
     dimensions_file = update_dimension_variables(
         coordinates_file,
-        required_dimensions,
+        override_dimensions,
         varinfo,
     )
     crs = get_variable_crs(non_spatial_variable, varinfo)

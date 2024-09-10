@@ -1,3 +1,9 @@
+## v1.1.0
+### 2024-09-10
+
+This version of HOSS provides support for products without CF compliance like SMAP L3
+Methods added to get dimension scales from coordinate attributes and grid mapping with overrides
+in the json file
 
 ## v1.0.5
 ### 2024-08-19

@@ -59,6 +59,23 @@ def is_index_subset(message: Message) -> bool:
     )
 
 
+def get_override_projected_dimensions(
+    varinfo: VarInfoFromDmr,
+    override_variable_name: str,
+) -> str:
+    """returns the x-y projection variable names that would
+    match the geo coordinate names
+
+    """
+    projection_variable_name = None
+    override_variable = varinfo.get_variable(override_variable_name)
+    if override_variable.is_latitude():
+        projection_variable_name = 'projected_y'
+    elif override_variable.is_longitude():
+        projection_variable_name = 'projected_x'
+    return projection_variable_name
+
+
 def get_override_dimensions(
     varinfo: VarInfoFromDmr,
     required_variables: Set[str],
@@ -543,13 +560,12 @@ def add_index_range(
     """
     variable = varinfo.get_variable(variable_name)
     range_strings = []
-
     if variable.dimensions == []:
-        override_dimensions = get_override_dimensions(varinfo, variable_name)
+        override_dimensions = get_override_dimensions(varinfo, [variable_name])
         if len(override_dimensions) > 0:
-            for dimension in override_dimensions:
+            for override in reversed(list(override_dimensions)):
+                dimension = get_override_projected_dimensions(varinfo, override)
                 dimension_range = index_ranges.get(dimension)
-
                 if (
                     dimension_range is not None
                     and dimension_range[0] <= dimension_range[1]
@@ -557,6 +573,21 @@ def add_index_range(
                     range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
                 else:
                     range_strings.append('[]')
+        else:
+            # if the override is the variable
+            override = get_override_projected_dimensions(varinfo, variable_name)
+            if override is not None and override in index_ranges.keys():
+                for dimension in reversed(index_ranges.keys()):
+                    dimension_range = index_ranges.get(dimension)
+                    if (
+                        dimension_range is not None
+                        and dimension_range[0] <= dimension_range[1]
+                    ):
+                        range_strings.append(
+                            f'[{dimension_range[0]}:{dimension_range[1]}]'
+                        )
+            else:
+                range_strings.append('[]')
     else:
         for dimension in variable.dimensions:
             dimension_range = index_ranges.get(dimension)
@@ -570,7 +601,6 @@ def add_index_range(
         indices_string = ''
     else:
         indices_string = ''.join(range_strings)
-
     return f'{variable_name}{indices_string}'
 
 

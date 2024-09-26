@@ -90,11 +90,15 @@ def get_spatial_index_ranges(
     """
     bounding_box = get_harmony_message_bbox(harmony_message)
     index_ranges = {}
+    coordinate_variables = []
 
     geographic_dimensions = varinfo.get_geographic_spatial_dimensions(
         required_variables
     )
     projected_dimensions = varinfo.get_projected_spatial_dimensions(required_variables)
+    if (not geographic_dimensions) and (not projected_dimensions):
+        coordinate_variables = get_coordinate_variables(varinfo, required_variables)
+
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
@@ -111,7 +115,7 @@ def get_spatial_index_ranges(
                 index_ranges[dimension] = get_geographic_index_range(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
-        if projected_dimensions:
+        if projected_dimensions or coordinate_variables:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
                     get_projected_x_y_index_ranges(
@@ -121,23 +125,9 @@ def get_spatial_index_ranges(
                         index_ranges,
                         bounding_box=bounding_box,
                         shape_file_path=shape_file_path,
+                        override_dimensions=coordinate_variables,
                     )
                 )
-        if (not geographic_dimensions) and (not projected_dimensions):
-            coordinate_variables = get_coordinate_variables(varinfo, required_variables)
-            if coordinate_variables:
-                for non_spatial_variable in non_spatial_variables:
-                    index_ranges.update(
-                        get_projected_x_y_index_ranges(
-                            non_spatial_variable,
-                            varinfo,
-                            dimensions_file,
-                            index_ranges,
-                            bounding_box=bounding_box,
-                            shape_file_path=shape_file_path,
-                            override_dimensions=coordinate_variables,
-                        )
-                    )
         return index_ranges
 
 

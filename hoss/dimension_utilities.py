@@ -85,9 +85,8 @@ def get_prefetch_variables(
     required_dimensions = varinfo.get_required_dimensions(required_variables)
     if not required_dimensions:
         coordinate_variables = get_coordinate_variables(varinfo, required_variables)
-        logger.info('coordinates: ' f'{coordinate_variables}')
         required_dimensions = set(coordinate_variables)
-        logger.info('required_dimensions: ' f'{required_dimensions}')
+
     bounds = varinfo.get_references_for_attribute(required_dimensions, 'bounds')
     required_dimensions.update(bounds)
 

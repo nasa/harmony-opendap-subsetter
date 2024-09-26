@@ -93,7 +93,7 @@ def get_spatial_index_ranges(
     )
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
-        if len(geographic_dimensions) > 0:
+        if geographic_dimensions:
             # If there is no bounding box, but there is a shape file, calculate
             # a bounding box to encapsulate the GeoJSON shape:
             if bounding_box is None and shape_file_path is not None:
@@ -104,7 +104,7 @@ def get_spatial_index_ranges(
                 index_ranges[dimension] = get_geographic_index_range(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
-        if len(projected_dimensions) > 0:
+        if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
                     get_projected_x_y_index_ranges(
@@ -116,7 +116,7 @@ def get_spatial_index_ranges(
                         shape_file_path=shape_file_path,
                     )
                 )
-        if len(geographic_dimensions) == 0 and len(projected_dimensions) == 0:
+        if (not geographic_dimensions) and (not projected_dimensions):
             coordinate_variables = get_coordinate_variables(varinfo, required_variables)
             if coordinate_variables:
                 for non_spatial_variable in non_spatial_variables:

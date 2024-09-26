@@ -58,14 +58,16 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     if grid_mapping is not None:
         try:
             grid_mapping_variable = varinfo.get_variable(grid_mapping)
-            if grid_mapping_variable is None:
+            if grid_mapping_variable is not None:
+                cf_attributes = grid_mapping_variable.attributes
+            else:
                 # check for any overrides
                 cf_attributes = varinfo.get_missing_variable_attributes(grid_mapping)
-                if cf_attributes:
-                    crs = CRS.from_cf(cf_attributes)
-                    return crs
 
-            crs = CRS.from_cf(varinfo.get_variable(grid_mapping).attributes)
+            if cf_attributes:
+                crs = CRS.from_cf(cf_attributes)
+            else:
+                raise MissingGridMappingVariable(grid_mapping, variable)
 
         except AttributeError as exception:
             raise MissingGridMappingVariable(grid_mapping, variable) from exception

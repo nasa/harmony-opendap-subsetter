@@ -23,7 +23,12 @@ from numpy import ndarray
 from numpy.ma.core import MaskedArray
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
-from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
+from hoss.exceptions import (
+    InvalidNamedDimension,
+    InvalidRequestedRange,
+    MissingCoordinateDataset,
+    MissingValidCoordinateDataset,
+)
 from hoss.projection_utilities import (
     get_variable_crs,
     get_x_y_extents_from_geographic_points,
@@ -59,43 +64,7 @@ def is_index_subset(message: Message) -> bool:
     )
 
 
-def get_override_projected_dimensions(
-    varinfo: VarInfoFromDmr,
-    override_variable_name: str,
-) -> str:
-    """returns the x-y projection variable names that would
-    match the geo coordinate names
-
-    """
-    projection_variable_name = None
-    override_variable = varinfo.get_variable(override_variable_name)
-    if override_variable.is_latitude():
-        projection_variable_name = 'projected_y'
-    elif override_variable.is_longitude():
-        projection_variable_name = 'projected_x'
-    return projection_variable_name
-
-
-def get_override_dimensions(
-    varinfo: VarInfoFromDmr,
-    required_variables: Set[str],
-) -> set[str]:
-    """Determine the dimensions that need to be "pre-fetched" from OPeNDAP
-    If dimensions are not available, get variables that can be
-    used to generate dimensions
-    """
-    # check if coordinate variables are provided
-    # this should be be a configurable in hoss_config.json
-    try:
-        override_dimensions = varinfo.get_references_for_attribute(
-            required_variables, 'coordinates'
-        )
-        return override_dimensions
-    except AttributeError:
-        return set()
-
-
-def prefetch_dimension_variables(
+def get_prefetch_variables(
     opendap_url: str,
     varinfo: VarInfoFromDmr,
     required_variables: Set[str],
@@ -109,36 +78,77 @@ def prefetch_dimension_variables(
     spatial and temporal dimensions, but to support generic dimension
     subsets, all required dimensions must be prefetched, along with any
     associated bounds variables referred to via the "bounds" metadata
-    attribute.
+    attribute. In cases where dimension variables do not exist, coordinate
+    variables will be prefetched and used to calculate dimension-scale values
 
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
-    if len(required_dimensions) == 0:
-        required_dimensions = get_override_dimensions(varinfo, required_variables)
-        logger.info('coordinates: ' f'{required_dimensions}')
-
+    if not required_dimensions:
+        coordinate_variables = get_coordinate_variables(varinfo, required_variables)
+        logger.info('coordinates: ' f'{coordinate_variables}')
+        required_dimensions = set(coordinate_variables)
+        logger.info('required_dimensions: ' f'{required_dimensions}')
     bounds = varinfo.get_references_for_attribute(required_dimensions, 'bounds')
-    logger.info('bounds: ' f'{bounds}')
     required_dimensions.update(bounds)
 
     logger.info(
         'Variables being retrieved in prefetch request: '
         f'{format_variable_set_string(required_dimensions)}'
     )
+
     required_dimensions_nc4 = get_opendap_nc4(
         opendap_url, required_dimensions, output_dir, logger, access_token, config
     )
+
     # Create bounds variables if necessary.
     add_bounds_variables(required_dimensions_nc4, required_dimensions, varinfo, logger)
     return required_dimensions_nc4
 
 
-def is_variable_one_dimensional(
-    prefetch_dataset: Dataset, dimension_variable: VariableFromDmr
-) -> bool:
-    """Check if a dimension variable is 1D"""
-    dimensions_array = prefetch_dataset[dimension_variable.full_name_path][:]
-    return dimensions_array.ndim == 1
+def get_override_projected_dimensions(
+    varinfo: VarInfoFromDmr,
+    override_variable_name: str,
+) -> str | None:
+    """returns the x-y projection variable names that would
+    match the geo coordinate names. The `latitude` coordinate
+    variable name gets converted to 'projected_y' dimension scale
+    and the `longitude` coordinate variable name gets converted to
+    'projected_x'
+
+    """
+    override_variable = varinfo.get_variable(override_variable_name)
+    if override_variable is not None:
+        if override_variable.is_latitude():
+            projected_dimension_name = 'projected_y'
+        elif override_variable.is_longitude():
+            projected_dimension_name = 'projected_x'
+        else:
+            projected_dimension_name = None
+    return projected_dimension_name
+
+
+def get_coordinate_variables(
+    varinfo: VarInfoFromDmr,
+    requested_variables: Set[str],
+) -> list[str]:
+    """This method returns coordinate variables that are referenced
+    in the variables requested.
+    """
+
+    try:
+        coordinate_variables_set = varinfo.get_references_for_attribute(
+            requested_variables, 'coordinates'
+        )
+        coordinate_variables = []
+        for coordinate in coordinate_variables_set:
+            if varinfo.get_variable(coordinate).is_latitude():
+                coordinate_variables.insert(0, coordinate)
+            elif varinfo.get_variable(coordinate).is_longitude():
+                coordinate_variables.insert(1, coordinate)
+
+        return coordinate_variables
+    except AttributeError:
+        return set()
 
 
 def update_dimension_variables(
@@ -146,27 +156,27 @@ def update_dimension_variables(
     required_dimensions: Set[str],
     varinfo: VarInfoFromDmr,
 ) -> Dict[str, ndarray]:
-    """Augment a NetCDF4 file with artificial 1D dimensions variable for each
-    2D dimension variable"
+    """Generate artificial 1D dimensions variable for each
+    2D dimension or coordinate variable
 
     For each dimension variable:
     (1) Check if the dimension variable is 1D.
-    (2) If it is not 1D and is 2D create a dimensions array from
-        within the `write_1D_dimensions`
-        function.
-    (3) Then write the 1D dimensions variable to the NetCDF4 URL.
+    (2) If it is not 1D and is 2D get the dimension sizes
+    (3) Get the corner points from the coordinate variables
+    (4) Get the x-y max-min values
+    (5) Generate the x-y dimscale array and return to the calling method
 
     """
     for dimension_name in required_dimensions:
         dimension_variable = varinfo.get_variable(dimension_name)
-        if not is_variable_one_dimensional(prefetch_dataset, dimension_variable):
+        if prefetch_dataset[dimension_variable.full_name_path][:].ndim > 1:
             col_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[0]
             row_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[1]
-            crs = get_variable_crs(dimension_name, varinfo)
+        crs = get_variable_crs(dimension_name, varinfo)
 
-    geo_grid_corners = get_geo_grid_corners(
-        prefetch_dataset, required_dimensions, varinfo
-    )
+        geo_grid_corners = get_geo_grid_corners(
+            prefetch_dataset, required_dimensions, varinfo
+        )
 
     x_y_extents = get_x_y_extents_from_geographic_points(geo_grid_corners, crs)
 
@@ -181,7 +191,7 @@ def update_dimension_variables(
     # create the xy dim scales
     x_dim = np.arange(x_min, x_max, x_resolution)
 
-    # ascending versus descending..should be based on the coordinate grid
+    # The origin is the top left. Y values are in decreasing order.
     y_dim = np.arange(y_max, y_min, -y_resolution)
     return {'projected_y': y_dim, 'projected_x': x_dim}
 
@@ -193,10 +203,11 @@ def get_geo_grid_corners(
 ) -> list[Tuple[float]]:
     """
     This method is used to return the lat lon corners from a 2D
-    coordinate dataset. This does a check for values below -180
-    which could be fill values. Does not check if there are fill
-    values in the corner points to go down to the next row and col
-
+    coordinate dataset. It gets the row and column of the latitude and longitude
+    arrays to get the corner points. This does a check for values below -180
+    which could be fill values. This method does not check if there
+    are fill values in the corner points to go down to the next row and col
+    The fill values in the corner points still needs to be addressed.
     """
     for dimension_name in required_dimensions:
         dimension_variable = varinfo.get_variable(dimension_name)
@@ -205,6 +216,11 @@ def get_geo_grid_corners(
         elif dimension_variable.is_longitude():
             lon_arr = prefetch_dataset[dimension_variable.full_name_path][:]
 
+    if not lat_arr.size:
+        raise MissingCoordinateDataset('latitude')
+    if not lon_arr.size:
+        raise MissingCoordinateDataset('longitude')
+
     # skip fill values when calculating min values
     # topleft =  minlon, maxlat
     # bottomright = maxlon, minlat
@@ -212,6 +228,8 @@ def get_geo_grid_corners(
     top_left_col_idx = 0
     lon_row = lon_arr[top_left_row_idx, :]
     lon_row_valid_indices = np.where(lon_row >= -180.0)[0]
+    if not lon_row_valid_indices.size:
+        raise MissingValidCoordinateDataset('longitude')
     top_left_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmin()]
     minlon = lon_row[top_left_col_idx]
     top_right_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmax()]
@@ -219,6 +237,8 @@ def get_geo_grid_corners(
 
     lat_col = lat_arr[:, top_right_col_idx]
     lat_col_valid_indices = np.where(lat_col >= -180.0)[0]
+    if not lat_col_valid_indices.size:
+        raise MissingValidCoordinateDataset('latitude')
     bottom_right_row_idx = lat_col_valid_indices[
         lat_col[lat_col_valid_indices].argmin()
     ]
@@ -560,40 +580,23 @@ def add_index_range(
     """
     variable = varinfo.get_variable(variable_name)
     range_strings = []
-    if variable.dimensions == []:
-        override_dimensions = get_override_dimensions(varinfo, [variable_name])
-        if len(override_dimensions) > 0:
-            for override in reversed(list(override_dimensions)):
-                dimension = get_override_projected_dimensions(varinfo, override)
-                dimension_range = index_ranges.get(dimension)
-                if (
-                    dimension_range is not None
-                    and dimension_range[0] <= dimension_range[1]
-                ):
-                    range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
-                else:
-                    range_strings.append('[]')
+    if variable.dimensions:
+        range_strings = get_range_strings(variable.dimensions, index_ranges)
+    else:
+        coordinate_variables = get_coordinate_variables(varinfo, [variable_name])
+        if coordinate_variables:
+            dimensions = []
+            for coordinate in coordinate_variables:
+                dimensions.append(
+                    get_override_projected_dimensions(varinfo, coordinate)
+                )
+            range_strings = get_range_strings(dimensions, index_ranges)
         else:
             # if the override is the variable
             override = get_override_projected_dimensions(varinfo, variable_name)
-            if override is not None and override in index_ranges.keys():
-                for dimension in reversed(index_ranges.keys()):
-                    dimension_range = index_ranges.get(dimension)
-                    if (
-                        dimension_range is not None
-                        and dimension_range[0] <= dimension_range[1]
-                    ):
-                        range_strings.append(
-                            f'[{dimension_range[0]}:{dimension_range[1]}]'
-                        )
-            else:
-                range_strings.append('[]')
-    else:
-        for dimension in variable.dimensions:
-            dimension_range = index_ranges.get(dimension)
-
-            if dimension_range is not None and dimension_range[0] <= dimension_range[1]:
-                range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
+            dimensions = ['projected_y', 'projected_x']
+            if override is not None and override in dimensions:
+                range_strings = get_range_strings(dimensions, index_ranges)
             else:
                 range_strings.append('[]')
 
@@ -602,6 +605,24 @@ def add_index_range(
     else:
         indices_string = ''.join(range_strings)
     return f'{variable_name}{indices_string}'
+
+
+def get_range_strings(
+    variable_dimensions: list,
+    index_ranges: IndexRanges,
+) -> list:
+    """Calculates the index ranges for each dimension of the variable
+    and returns the list of index ranges
+    """
+    range_strings = []
+    for dimension in variable_dimensions:
+        dimension_range = index_ranges.get(dimension)
+        if dimension_range is not None and dimension_range[0] <= dimension_range[1]:
+            range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
+        else:
+            range_strings.append('[]')
+
+    return range_strings
 
 
 def get_fill_slice(dimension: str, fill_ranges: IndexRanges) -> slice:
@@ -713,6 +734,8 @@ def get_dimension_bounds(
 
     """
     try:
+        # For pseudo-variables, `varinfo.get_variable` returns `None` and
+        # therefore has no `references` attribute.
         bounds = varinfo.get_variable(dimension_name).references.get('bounds')
     except AttributeError:
         bounds = None

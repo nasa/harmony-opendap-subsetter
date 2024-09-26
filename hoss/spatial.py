@@ -38,10 +38,10 @@ from hoss.bbox_utilities import (
 from hoss.dimension_utilities import (
     IndexRange,
     IndexRanges,
+    get_coordinate_variables,
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
-    get_override_dimensions,
     update_dimension_variables,
 )
 from hoss.projection_utilities import (
@@ -104,7 +104,7 @@ def get_spatial_index_ranges(
                 index_ranges[dimension] = get_geographic_index_range(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
-        elif len(projected_dimensions) > 0:
+        if len(projected_dimensions) > 0:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
                     get_projected_x_y_index_ranges(
@@ -116,9 +116,9 @@ def get_spatial_index_ranges(
                         shape_file_path=shape_file_path,
                     )
                 )
-        else:
-            override_dimensions = get_override_dimensions(varinfo, required_variables)
-            if len(override_dimensions) > 0:
+        if len(geographic_dimensions) == 0 and len(projected_dimensions) == 0:
+            coordinate_variables = get_coordinate_variables(varinfo, required_variables)
+            if coordinate_variables:
                 for non_spatial_variable in non_spatial_variables:
                     index_ranges.update(
                         get_projected_x_y_index_ranges(
@@ -128,7 +128,7 @@ def get_spatial_index_ranges(
                             index_ranges,
                             bounding_box=bounding_box,
                             shape_file_path=shape_file_path,
-                            override_dimensions=override_dimensions,
+                            override_dimensions=coordinate_variables,
                         )
                     )
         return index_ranges
@@ -160,7 +160,7 @@ def get_projected_x_y_index_ranges(
     projected coordinate points.
 
     """
-    if len(override_dimensions) == 0:
+    if not override_dimensions:
         projected_x, projected_y = get_projected_x_y_variables(
             varinfo, non_spatial_variable
         )
@@ -187,6 +187,7 @@ def get_projected_x_y_index_ranges(
             shape_file=shape_file_path,
             bounding_box=bounding_box,
         )
+
         x_bounds = get_dimension_bounds(projected_x, varinfo, dimensions_file)
         y_bounds = get_dimension_bounds(projected_y, varinfo, dimensions_file)
         x_index_ranges = get_dimension_index_range(

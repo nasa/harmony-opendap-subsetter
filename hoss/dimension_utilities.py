@@ -131,7 +131,8 @@ def get_coordinate_variables(
     requested_variables: Set[str],
 ) -> list[str]:
     """This method returns coordinate variables that are referenced
-    in the variables requested.
+    in the variables requested. It returns it in a specific order
+    [latitude, longitude]
     """
 
     try:
@@ -152,7 +153,7 @@ def get_coordinate_variables(
 
 def update_dimension_variables(
     prefetch_dataset: Dataset,
-    required_dimensions: Set[str],
+    coordinates: Set[str],
     varinfo: VarInfoFromDmr,
 ) -> Dict[str, ndarray]:
     """Generate artificial 1D dimensions variable for each
@@ -166,16 +167,14 @@ def update_dimension_variables(
     (5) Generate the x-y dimscale array and return to the calling method
 
     """
-    for dimension_name in required_dimensions:
-        dimension_variable = varinfo.get_variable(dimension_name)
-        if prefetch_dataset[dimension_variable.full_name_path][:].ndim > 1:
-            col_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[0]
-            row_size = prefetch_dataset[dimension_variable.full_name_path][:].shape[1]
-        crs = get_variable_crs(dimension_name, varinfo)
+    for coordinate_name in coordinates:
+        coordinate_variable = varinfo.get_variable(coordinate_name)
+        if prefetch_dataset[coordinate_variable.full_name_path][:].ndim > 1:
+            col_size = prefetch_dataset[coordinate_variable.full_name_path][:].shape[0]
+            row_size = prefetch_dataset[coordinate_variable.full_name_path][:].shape[1]
+        crs = get_variable_crs(coordinate_name, varinfo)
 
-        geo_grid_corners = get_geo_grid_corners(
-            prefetch_dataset, required_dimensions, varinfo
-        )
+        geo_grid_corners = get_geo_grid_corners(prefetch_dataset, coordinates, varinfo)
 
     x_y_extents = get_x_y_extents_from_geographic_points(geo_grid_corners, crs)
 

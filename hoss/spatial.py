@@ -125,7 +125,7 @@ def get_spatial_index_ranges(
                         index_ranges,
                         bounding_box=bounding_box,
                         shape_file_path=shape_file_path,
-                        override_dimensions=coordinate_variables,
+                        coordinates=coordinate_variables,
                     )
                 )
         return index_ranges
@@ -134,11 +134,11 @@ def get_spatial_index_ranges(
 def get_projected_x_y_index_ranges(
     non_spatial_variable: str,
     varinfo: VarInfoFromDmr,
-    dimensions_file: Dataset,
+    dimension_datasets: Dataset,
     index_ranges: IndexRanges,
     bounding_box: BBox = None,
     shape_file_path: str = None,
-    override_dimensions: Set[str] = set(),
+    coordinates: Set[str] = set(),
 ) -> IndexRanges:
     """This function returns a dictionary containing the minimum and maximum
     index ranges for a pair of projection x and y coordinates, e.g.:
@@ -157,19 +157,21 @@ def get_projected_x_y_index_ranges(
     projected coordinate points.
 
     """
-    if not override_dimensions:
+    if not coordinates:
         projected_x, projected_y = get_projected_x_y_variables(
             varinfo, non_spatial_variable
         )
+
     else:
         projected_x = 'projected_x'
         projected_y = 'projected_y'
-        override_dimensions_file = update_dimension_variables(
-            dimensions_file,
-            override_dimensions,
+        override_dimension_datasets = update_dimension_variables(
+            dimension_datasets,
+            coordinates,
             varinfo,
         )
-        dimensions_file = override_dimensions_file
+        dimension_datasets = override_dimension_datasets
+
     if (
         projected_x is not None
         and projected_y is not None
@@ -178,23 +180,24 @@ def get_projected_x_y_index_ranges(
         crs = get_variable_crs(non_spatial_variable, varinfo)
 
         x_y_extents = get_projected_x_y_extents(
-            dimensions_file[projected_x][:],
-            dimensions_file[projected_y][:],
+            dimension_datasets[projected_x][:],
+            dimension_datasets[projected_y][:],
             crs,
             shape_file=shape_file_path,
             bounding_box=bounding_box,
         )
 
-        x_bounds = get_dimension_bounds(projected_x, varinfo, dimensions_file)
-        y_bounds = get_dimension_bounds(projected_y, varinfo, dimensions_file)
+        x_bounds = get_dimension_bounds(projected_x, varinfo, dimension_datasets)
+        y_bounds = get_dimension_bounds(projected_y, varinfo, dimension_datasets)
+
         x_index_ranges = get_dimension_index_range(
-            dimensions_file[projected_x][:],
+            dimension_datasets[projected_x][:],
             x_y_extents['x_min'],
             x_y_extents['x_max'],
             bounds_values=x_bounds,
         )
         y_index_ranges = get_dimension_index_range(
-            dimensions_file[projected_y][:],
+            dimension_datasets[projected_y][:],
             x_y_extents['y_min'],
             x_y_extents['y_max'],
             bounds_values=y_bounds,

@@ -80,6 +80,13 @@ def get_spatial_index_ranges(
     around the exterior of the user-defined GeoJSON shape, to ensure the
     correct extents are derived.
 
+    For projected grids which do not follow CF standards, the projected
+    dimension scales are computed based on the values in the coordinate
+    datasets if they are available. The geocorners are obtained from the
+    coordinate datasets and converted to projected meters based on the crs
+    of the product. The dimension scales are then computed based on the
+    grid size and grid resolution
+
     """
     bounding_box = get_harmony_message_bbox(harmony_message)
     index_ranges = {}

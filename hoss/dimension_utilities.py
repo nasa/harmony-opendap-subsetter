@@ -135,20 +135,20 @@ def get_coordinate_variables(
     [latitude, longitude]
     """
 
-    try:
-        coordinate_variables_set = varinfo.get_references_for_attribute(
-            requested_variables, 'coordinates'
-        )
-        coordinate_variables = []
-        for coordinate in coordinate_variables_set:
-            if varinfo.get_variable(coordinate).is_latitude():
-                coordinate_variables.insert(0, coordinate)
-            elif varinfo.get_variable(coordinate).is_longitude():
-                coordinate_variables.insert(1, coordinate)
+    # try:
+    coordinate_variables_set = varinfo.get_references_for_attribute(
+        requested_variables, 'coordinates'
+    )
+    coordinate_variables = []
+    for coordinate in coordinate_variables_set:
+        if varinfo.get_variable(coordinate).is_latitude():
+            coordinate_variables.insert(0, coordinate)
+        elif varinfo.get_variable(coordinate).is_longitude():
+            coordinate_variables.insert(1, coordinate)
 
-        return coordinate_variables
-    except AttributeError:
-        return set()
+    return coordinate_variables
+    # except AttributeError:
+    #    return set()
 
 
 def update_dimension_variables(
@@ -174,7 +174,7 @@ def update_dimension_variables(
             row_size = prefetch_dataset[coordinate_variable.full_name_path][:].shape[1]
         crs = get_variable_crs(coordinate_name, varinfo)
 
-        geo_grid_corners = get_geo_grid_corners(prefetch_dataset, coordinates, varinfo)
+    geo_grid_corners = get_geo_grid_corners(prefetch_dataset, coordinates, varinfo)
 
     x_y_extents = get_x_y_extents_from_geographic_points(geo_grid_corners, crs)
 
@@ -189,14 +189,53 @@ def update_dimension_variables(
     # create the xy dim scales
     x_dim = np.arange(x_min, x_max, x_resolution)
 
-    # The origin is the top left. Y values are in decreasing order.
-    y_dim = np.arange(y_max, y_min, -y_resolution)
+    # The origin is usually the top left and Y values are in decreasing order.
+    if is_latitude_ascending(prefetch_dataset, coordinates, varinfo):
+        y_dim = np.arange(y_max, y_min, y_resolution)
+    else:
+        y_dim = np.arange(y_max, y_min, -y_resolution)
+
     return {'projected_y': y_dim, 'projected_x': x_dim}
+
+
+def is_latitude_ascending(
+    prefetch_dataset: Dataset,
+    coordinates: Set[str],
+    varinfo: VarInfoFromDmr,
+) -> bool:
+    """
+    Checks if the latitude cooordinate datasets have values
+    that are ascending
+    """
+    lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
+    lat_col = lat_arr[:, 0]
+    return is_dimension_ascending(lat_col)
+
+
+def get_lat_lon_arrays(
+    prefetch_dataset: Dataset,
+    coordinates: Set[str],
+    varinfo: VarInfoFromDmr,
+) -> Tuple[ndarray, ndarray]:
+    """
+    This method is used to return the lat lon arrays from a 2D
+    coordinate dataset.
+    """
+    lat_arr = []
+    lon_arr = []
+    for coordinate in coordinates:
+        coordinate_variable = varinfo.get_variable(coordinate)
+        if coordinate_variable.is_latitude():
+            lat_arr = prefetch_dataset[coordinate_variable.full_name_path][:]
+        elif coordinate_variable.is_longitude():
+            lon_arr = prefetch_dataset[coordinate_variable.full_name_path][:]
+
+    return lat_arr, lon_arr
 
 
 def get_geo_grid_corners(
     prefetch_dataset: Dataset,
-    required_dimensions: Set[str],
+    coordinates: Set[str],
     varinfo: VarInfoFromDmr,
 ) -> list[Tuple[float]]:
     """
@@ -207,13 +246,7 @@ def get_geo_grid_corners(
     are fill values in the corner points to go down to the next row and col
     The fill values in the corner points still needs to be addressed.
     """
-    for dimension_name in required_dimensions:
-        dimension_variable = varinfo.get_variable(dimension_name)
-        if dimension_variable.is_latitude():
-            lat_arr = prefetch_dataset[dimension_variable.full_name_path][:]
-        elif dimension_variable.is_longitude():
-            lon_arr = prefetch_dataset[dimension_variable.full_name_path][:]
-
+    lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
     if not lat_arr.size:
         raise MissingCoordinateDataset('latitude')
     if not lon_arr.size:
@@ -224,23 +257,41 @@ def get_geo_grid_corners(
     # bottomright = maxlon, minlat
     top_left_row_idx = 0
     top_left_col_idx = 0
+
+    # get the first row from the longitude dataset
     lon_row = lon_arr[top_left_row_idx, :]
-    lon_row_valid_indices = np.where(lon_row >= -180.0)[0]
+    lon_row_valid_indices = np.where((lon_row >= -180.0) & (lon_row <= 180.0))[0]
+
+    # if the first row does not have valid indices,
+    # should go down to the next row. We throw an exception
+    # for now till that gets addressed
     if not lon_row_valid_indices.size:
         raise MissingValidCoordinateDataset('longitude')
+
+    # get the index of the minimum longitude after checking for invalid entries
     top_left_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmin()]
     minlon = lon_row[top_left_col_idx]
+
+    # get the index of the maximum longitude after checking for invalid entries
     top_right_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmax()]
     maxlon = lon_row[top_right_col_idx]
 
+    # get the last valid longitude column to get the latitude array
     lat_col = lat_arr[:, top_right_col_idx]
-    lat_col_valid_indices = np.where(lat_col >= -180.0)[0]
+    lat_col_valid_indices = np.where((lat_col >= -90.0) & (lat_col <= 90.0))[0]
+
+    # if the longitude values are invalid, should check the other columns
+    # We throw an exception for now till that gets addressed
     if not lat_col_valid_indices.size:
         raise MissingValidCoordinateDataset('latitude')
+
+    # get the index of minimum latitude after checking for valid values
     bottom_right_row_idx = lat_col_valid_indices[
         lat_col[lat_col_valid_indices].argmin()
     ]
     minlat = lat_col[bottom_right_row_idx]
+
+    # get the index of maximum latitude after checking for valid values
     top_right_row_idx = lat_col_valid_indices[lat_col[lat_col_valid_indices].argmax()]
     maxlat = lat_col[top_right_row_idx]
 

@@ -80,6 +80,10 @@ def get_spatial_index_ranges(
     around the exterior of the user-defined GeoJSON shape, to ensure the
     correct extents are derived.
 
+    if geographic and projected dimensions are not specified in the granule,
+    the coordinate datasets are used to calculate the x-y dimensions and the index ranges
+    are calculated similar to a projected grid.
+
     """
     bounding_box = get_harmony_message_bbox(harmony_message)
     index_ranges = {}

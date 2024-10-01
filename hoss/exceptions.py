@@ -125,8 +125,8 @@ class MissingCoordinateDataset(CustomError):
 
 class MissingValidCoordinateDataset(CustomError):
     """This exception is raised when HOSS tries to get latitude and longitude
-    datasets and they are missing or empty. These datasets are referred to
-    in the science variables with coordinate attributes.
+    datasets and they have fill values to the extent that it cannot be used.
+    These datasets are referred in the science variables with coordinate attributes.
 
     """
 

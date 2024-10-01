@@ -106,9 +106,9 @@ def get_prefetch_variables(
     return required_dimensions_nc4
 
 
-def get_override_projected_dimensions(
+def get_override_projected_dimension_name(
     varinfo: VarInfoFromDmr,
-    override_variable_name: str,
+    variable_name: str,
 ) -> str | None:
     """returns the x-y projection variable names that would
     match the geo coordinate names. The `latitude` coordinate
@@ -117,7 +117,7 @@ def get_override_projected_dimensions(
     'projected_x'
 
     """
-    override_variable = varinfo.get_variable(override_variable_name)
+    override_variable = varinfo.get_variable(variable_name)
     if override_variable is not None:
         if override_variable.is_latitude():
             projected_dimension_name = 'projected_y'
@@ -126,6 +126,29 @@ def get_override_projected_dimensions(
         else:
             projected_dimension_name = None
     return projected_dimension_name
+
+
+def get_override_projected_dimensions(
+    varinfo: VarInfoFromDmr,
+    variable_name: str,
+) -> list[str]:
+    """
+    Returns the projected dimensions names from coordinate variables
+    """
+    coordinate_variables = get_coordinate_variables(varinfo, [variable_name])
+    if coordinate_variables:
+        override_dimensions = []
+        for coordinate in coordinate_variables:
+            override_dimensions.append(
+                get_override_projected_dimension_name(varinfo, coordinate)
+            )
+    else:
+        # if the override is the variable
+        override = get_override_projected_dimension_name(varinfo, variable_name)
+        override_dimensions = ['projected_y', 'projected_x']
+        if override is not None and override not in override_dimensions:
+            override_dimensions = []
+    return override_dimensions
 
 
 def get_coordinate_variables(
@@ -137,7 +160,6 @@ def get_coordinate_variables(
     [latitude, longitude]
     """
 
-    # try:
     coordinate_variables_set = varinfo.get_references_for_attribute(
         requested_variables, 'coordinates'
     )
@@ -149,8 +171,6 @@ def get_coordinate_variables(
             coordinate_variables.insert(1, coordinate)
 
     return coordinate_variables
-    # except AttributeError:
-    #    return set()
 
 
 def update_dimension_variables(
@@ -647,7 +667,8 @@ def add_index_range(
     the antimeridian or Prime Meridian) will have a minimum index greater
     than the maximum index. In this case the full dimension range should be
     requested, as the related values will be masked before returning the
-    output to the user.
+    output to the user. When the dimensions are not available, the coordinate
+    variables are used to calculate the projected dimensions.
 
     """
     variable = varinfo.get_variable(variable_name)
@@ -655,22 +676,8 @@ def add_index_range(
     if variable.dimensions:
         range_strings = get_range_strings(variable.dimensions, index_ranges)
     else:
-        coordinate_variables = get_coordinate_variables(varinfo, [variable_name])
-        if coordinate_variables:
-            dimensions = []
-            for coordinate in coordinate_variables:
-                dimensions.append(
-                    get_override_projected_dimensions(varinfo, coordinate)
-                )
-            range_strings = get_range_strings(dimensions, index_ranges)
-        else:
-            # if the override is the variable
-            override = get_override_projected_dimensions(varinfo, variable_name)
-            dimensions = ['projected_y', 'projected_x']
-            if override is not None and override in dimensions:
-                range_strings = get_range_strings(dimensions, index_ranges)
-            else:
-                range_strings.append('[]')
+        override_dimensions = get_override_projected_dimensions(varinfo, variable_name)
+        range_strings = get_range_strings(override_dimensions, index_ranges)
 
     if all(range_string == '[]' for range_string in range_strings):
         indices_string = ''

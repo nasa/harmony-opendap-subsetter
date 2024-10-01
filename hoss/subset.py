@@ -29,7 +29,6 @@ from hoss.spatial import get_spatial_index_ranges
 from hoss.temporal import get_temporal_index_ranges
 from hoss.utilities import (
     download_url,
-    format_dictionary_string,
     format_variable_set_string,
     get_opendap_nc4,
 )

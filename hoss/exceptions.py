@@ -138,6 +138,21 @@ class MissingValidCoordinateDataset(CustomError):
         )
 
 
+class IrregularCoordinateDatasets(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    datasets and they are missing or empty. These datasets are referred to
+    in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, longitude_shape, latitude_shape):
+        super().__init__(
+            'IrregularCoordinateDatasets',
+            f'Longitude dataset shape: "{longitude_shape}"'
+            f'does not match the latitude dataset shape: "{latitude_shape}"',
+        )
+
+
 class UnsupportedShapeFileFormat(CustomError):
     """This exception is raised when the shape file included in the input
     Harmony message is not GeoJSON.

@@ -21,16 +21,17 @@ from harmony.util import Config
 from netCDF4 import Dataset
 from numpy import ndarray
 from numpy.ma.core import MaskedArray
+from pyproj import CRS
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.exceptions import (
     InvalidNamedDimension,
     InvalidRequestedRange,
+    IrregularCoordinateDatasets,
     MissingCoordinateDataset,
     MissingValidCoordinateDataset,
 )
 from hoss.projection_utilities import (
-    get_variable_crs,
     get_x_y_extents_from_geographic_points,
 )
 from hoss.utilities import (
@@ -83,12 +84,13 @@ def get_prefetch_variables(
 
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
-    if not required_dimensions:
+    if required_dimensions:
+        bounds = varinfo.get_references_for_attribute(required_dimensions, 'bounds')
+        required_dimensions.update(bounds)
+    else:
         coordinate_variables = get_coordinate_variables(varinfo, required_variables)
-        required_dimensions = set(coordinate_variables)
-
-    bounds = varinfo.get_references_for_attribute(required_dimensions, 'bounds')
-    required_dimensions.update(bounds)
+        if coordinate_variables:
+            required_dimensions = set(coordinate_variables)
 
     logger.info(
         'Variables being retrieved in prefetch request: '
@@ -152,9 +154,7 @@ def get_coordinate_variables(
 
 
 def update_dimension_variables(
-    prefetch_dataset: Dataset,
-    coordinates: Set[str],
-    varinfo: VarInfoFromDmr,
+    prefetch_dataset: Dataset, coordinates: Set[str], varinfo: VarInfoFromDmr, crs: CRS
 ) -> Dict[str, ndarray]:
     """Generate artificial 1D dimensions variable for each
     2D dimension or coordinate variable
@@ -167,12 +167,9 @@ def update_dimension_variables(
     (5) Generate the x-y dimscale array and return to the calling method
 
     """
-    for coordinate_name in coordinates:
-        coordinate_variable = varinfo.get_variable(coordinate_name)
-        if prefetch_dataset[coordinate_variable.full_name_path][:].ndim > 1:
-            col_size = prefetch_dataset[coordinate_variable.full_name_path][:].shape[0]
-            row_size = prefetch_dataset[coordinate_variable.full_name_path][:].shape[1]
-        crs = get_variable_crs(coordinate_name, varinfo)
+    row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
+        prefetch_dataset, coordinates, varinfo
+    )
 
     geo_grid_corners = get_geo_grid_corners(prefetch_dataset, coordinates, varinfo)
 
@@ -196,6 +193,27 @@ def update_dimension_variables(
         y_dim = np.arange(y_max, y_min, -y_resolution)
 
     return {'projected_y': y_dim, 'projected_x': x_dim}
+
+
+def get_row_col_sizes_from_coordinate_datasets(
+    prefetch_dataset: Dataset,
+    coordinates: Set[str],
+    varinfo: VarInfoFromDmr,
+) -> Tuple[int, int]:
+    """
+    This method returns the row and column sizes of the coordinate datasets
+
+    """
+    lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
+    if lat_arr.ndim > 1:
+        col_size = lat_arr.shape[0]
+        row_size = lat_arr.shape[1]
+    if (lon_arr.shape[0] != lat_arr.shape[0]) or (lon_arr.shape[1] != lat_arr.shape[1]):
+        raise IrregularCoordinateDatasets(lon_arr.shape, lat_arr.shape)
+    if lat_arr.ndim and lon_arr.ndim == 1:
+        col_size = lat_arr.size
+        row_size = lon_arr.size
+    return row_size, col_size
 
 
 def is_latitude_ascending(

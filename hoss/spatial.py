@@ -80,25 +80,14 @@ def get_spatial_index_ranges(
     around the exterior of the user-defined GeoJSON shape, to ensure the
     correct extents are derived.
 
-    For projected grids which do not follow CF standards, the projected
-    dimension scales are computed based on the values in the coordinate
-    datasets if they are available. The geocorners are obtained from the
-    coordinate datasets and converted to projected meters based on the crs
-    of the product. The dimension scales are then computed based on the
-    grid size and grid resolution
-
     """
     bounding_box = get_harmony_message_bbox(harmony_message)
     index_ranges = {}
-    coordinate_variables = []
 
     geographic_dimensions = varinfo.get_geographic_spatial_dimensions(
         required_variables
     )
     projected_dimensions = varinfo.get_projected_spatial_dimensions(required_variables)
-    if (not geographic_dimensions) and (not projected_dimensions):
-        coordinate_variables = get_coordinate_variables(varinfo, required_variables)
-
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
@@ -115,7 +104,8 @@ def get_spatial_index_ranges(
                 index_ranges[dimension] = get_geographic_index_range(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
-        if projected_dimensions or coordinate_variables:
+
+        if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
                     get_projected_x_y_index_ranges(
@@ -125,20 +115,35 @@ def get_spatial_index_ranges(
                         index_ranges,
                         bounding_box=bounding_box,
                         shape_file_path=shape_file_path,
-                        coordinates=coordinate_variables,
                     )
                 )
-        return index_ranges
+
+        if (not geographic_dimensions) and (not projected_dimensions):
+            coordinate_variables = get_coordinate_variables(varinfo, required_variables)
+            if coordinate_variables:
+                for non_spatial_variable in non_spatial_variables:
+                    index_ranges.update(
+                        get_x_y_index_ranges_from_coordinates(
+                            non_spatial_variable,
+                            varinfo,
+                            dimensions_file,
+                            coordinate_variables,
+                            index_ranges,
+                            bounding_box=bounding_box,
+                            shape_file_path=shape_file_path,
+                        )
+                    )
+
+    return index_ranges
 
 
 def get_projected_x_y_index_ranges(
     non_spatial_variable: str,
     varinfo: VarInfoFromDmr,
-    dimension_datasets: Dataset,
+    dimensions_file: Dataset,
     index_ranges: IndexRanges,
     bounding_box: BBox = None,
     shape_file_path: str = None,
-    coordinates: Set[str] = set(),
 ) -> IndexRanges:
     """This function returns a dictionary containing the minimum and maximum
     index ranges for a pair of projection x and y coordinates, e.g.:
@@ -157,20 +162,9 @@ def get_projected_x_y_index_ranges(
     projected coordinate points.
 
     """
-    if not coordinates:
-        projected_x, projected_y = get_projected_x_y_variables(
-            varinfo, non_spatial_variable
-        )
-
-    else:
-        projected_x = 'projected_x'
-        projected_y = 'projected_y'
-        override_dimension_datasets = update_dimension_variables(
-            dimension_datasets,
-            coordinates,
-            varinfo,
-        )
-        dimension_datasets = override_dimension_datasets
+    projected_x, projected_y = get_projected_x_y_variables(
+        varinfo, non_spatial_variable
+    )
 
     if (
         projected_x is not None
@@ -180,24 +174,104 @@ def get_projected_x_y_index_ranges(
         crs = get_variable_crs(non_spatial_variable, varinfo)
 
         x_y_extents = get_projected_x_y_extents(
-            dimension_datasets[projected_x][:],
-            dimension_datasets[projected_y][:],
+            dimensions_file[projected_x][:],
+            dimensions_file[projected_y][:],
             crs,
             shape_file=shape_file_path,
             bounding_box=bounding_box,
         )
 
-        x_bounds = get_dimension_bounds(projected_x, varinfo, dimension_datasets)
-        y_bounds = get_dimension_bounds(projected_y, varinfo, dimension_datasets)
+        x_bounds = get_dimension_bounds(projected_x, varinfo, dimensions_file)
+        y_bounds = get_dimension_bounds(projected_y, varinfo, dimensions_file)
 
         x_index_ranges = get_dimension_index_range(
-            dimension_datasets[projected_x][:],
+            dimensions_file[projected_x][:],
+            x_y_extents['x_min'],
+            x_y_extents['x_max'],
+            bounds_values=x_bounds,
+        )
+
+        y_index_ranges = get_dimension_index_range(
+            dimensions_file[projected_y][:],
+            x_y_extents['y_min'],
+            x_y_extents['y_max'],
+            bounds_values=y_bounds,
+        )
+
+        x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
+    else:
+        x_y_index_ranges = {}
+
+    return x_y_index_ranges
+
+
+def get_x_y_index_ranges_from_coordinates(
+    non_spatial_variable: str,
+    varinfo: VarInfoFromDmr,
+    dimension_datasets: Dataset,
+    coordinates: Set[str],
+    index_ranges: IndexRanges,
+    bounding_box: BBox = None,
+    shape_file_path: str = None,
+) -> IndexRanges:
+    """This function returns a dictionary containing the minimum and maximum
+    index ranges for a pair of projection x and y coordinates, e.g.:
+
+    index_ranges = {'/x': (20, 42), '/y': (31, 53)}
+
+    This method is called when the CF standards are not followed in the source
+    granule and only coordinate datasets are provided.
+    The coordinate datasets along with the crs is used to calculate the x-y
+    projected dimension scales.
+    The dimensions of the input, non-spatial variable are checked
+    for associated projection x and y coordinates. If these are present,
+    and they have not already been added to the `index_ranges` cache, the
+    extents of the input spatial subset are determined in these projected
+    coordinates. This requires the derivation of a minimum resolution of
+    the target grid in geographic coordinates. Points must be placed along
+    the exterior of the spatial subset shape. All points are then projected
+    from a geographic Coordinate Reference System (CRS) to the target grid
+    CRS. The minimum and maximum values are then derived from these
+    projected coordinate points.
+
+    """
+    crs = get_variable_crs(non_spatial_variable, varinfo)
+
+    projected_x = 'projected_x'
+    projected_y = 'projected_y'
+    override_dimension_datasets = update_dimension_variables(
+        dimension_datasets, coordinates, varinfo, crs
+    )
+
+    if (
+        projected_x is not None
+        and projected_y is not None
+        and not set((projected_x, projected_y)).issubset(set(index_ranges.keys()))
+    ):
+
+        x_y_extents = get_projected_x_y_extents(
+            override_dimension_datasets[projected_x][:],
+            override_dimension_datasets[projected_y][:],
+            crs,
+            shape_file=shape_file_path,
+            bounding_box=bounding_box,
+        )
+
+        x_bounds = get_dimension_bounds(
+            projected_x, varinfo, override_dimension_datasets
+        )
+        y_bounds = get_dimension_bounds(
+            projected_y, varinfo, override_dimension_datasets
+        )
+
+        x_index_ranges = get_dimension_index_range(
+            override_dimension_datasets[projected_x][:],
             x_y_extents['x_min'],
             x_y_extents['x_max'],
             bounds_values=x_bounds,
         )
         y_index_ranges = get_dimension_index_range(
-            dimension_datasets[projected_y][:],
+            override_dimension_datasets[projected_y][:],
             x_y_extents['y_min'],
             x_y_extents['y_max'],
             bounds_values=y_bounds,

@@ -295,9 +295,6 @@ def get_geo_grid_corners(
     if not lon_arr.size:
         raise MissingCoordinateDataset('longitude')
 
-    # skip fill values when calculating min values
-    # topleft =  minlon, maxlat
-    # bottomright = maxlon, minlat
     top_left_row_idx = 0
     top_left_col_idx = 0
 

@@ -156,7 +156,7 @@
               "Value": "/EASE2_global_projection"
             }
           ],
-          "_Description": "Some versions of these collections omit global grid mapping information"
+          "_Description": "SMAP L3 collections omit global grid mapping information"
         },
         {
           "Applicability": {
@@ -168,7 +168,7 @@
               "Value": "/EASE2_polar_projection"
             }
           ],
-          "_Description": "Some versions of these collections omit polar grid mapping information"
+          "_Description": "SMAP L3 collections omit polar grid mapping information"
         }
       ]
     },
@@ -188,7 +188,7 @@
                 "Value": "/EASE2_global_projection"
               }
             ],
-            "_Description": "Some versions of these collections omit global grid mapping information"
+            "_Description": "SMAP L3 collections omit global grid mapping information"
           },
           {
             "Applicability": {
@@ -200,7 +200,8 @@
                 "Value": "/EASE2_polar_projection"
               }
             ],
-            "_Description": "Some versions of these collections omit polar grid mapping information"
+            "_Description": "SMAP L3 collections omit polar grid mapping information"
+
           }
         ]
     },
@@ -215,7 +216,7 @@
           "Value": "/EASE2_polar_projection"
         }
       ],
-      "_Description": "Some versions of these collections omit polar grid mapping information"
+      "_Description": "SMAP L3 collections omit polar grid mapping information"
     },
     {
         "Applicability": {
@@ -228,7 +229,7 @@
             "Value": "/EASE2_global_projection"
           }
         ],
-        "_Description": "Some versions of these collections omit global grid mapping information"
+        "_Description": "SMAP L3 collections omit global grid mapping information"
     },
     {
         "Applicability": {
@@ -262,7 +263,7 @@
                   "Value": 0.0
               }
             ],
-            "_Description": "Some versions of these collections omit global grid mapping information"
+            "_Description": "Provide missing global grid mapping attributes for SMAP L3 collections."
           },
           {
             "Applicability": {
@@ -289,7 +290,7 @@
                  "Value": 0.0
               }
             ],
-            "_Description": "Some versions of these collections omit polar grid mapping information"
+            "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
           }
         ]
       },

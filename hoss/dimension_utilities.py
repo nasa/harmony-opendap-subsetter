@@ -146,7 +146,7 @@ def get_override_projected_dimensions(
         # if the override is the variable
         override = get_override_projected_dimension_name(varinfo, variable_name)
         override_dimensions = ['projected_y', 'projected_x']
-        if override is not None and override not in override_dimensions:
+        if (override is None) or (override not in override_dimensions):
             override_dimensions = []
     return override_dimensions
 
@@ -164,11 +164,21 @@ def get_coordinate_variables(
         requested_variables, 'coordinates'
     )
     coordinate_variables = []
+    contains_latitude = False
+    contains_longitude = False
     for coordinate in coordinate_variables_set:
         if varinfo.get_variable(coordinate).is_latitude():
             coordinate_variables.insert(0, coordinate)
+            contains_latitude = True
         elif varinfo.get_variable(coordinate).is_longitude():
             coordinate_variables.insert(1, coordinate)
+            contains_longitude = True
+
+    if coordinate_variables:
+        if not contains_latitude:
+            raise MissingCoordinateDataset('latitude')
+        if not contains_longitude:
+            raise MissingCoordinateDataset('longitude')
 
     return coordinate_variables
 
@@ -674,7 +684,8 @@ def add_index_range(
         range_strings = get_range_strings(variable.dimensions, index_ranges)
     else:
         override_dimensions = get_override_projected_dimensions(varinfo, variable_name)
-        range_strings = get_range_strings(override_dimensions, index_ranges)
+        if override_dimensions:
+            range_strings = get_range_strings(override_dimensions, index_ranges)
 
     if all(range_string == '[]' for range_string in range_strings):
         indices_string = ''

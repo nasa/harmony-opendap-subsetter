@@ -184,10 +184,14 @@ def update_dimension_variables(
     y_resolution = (y_max - y_min) / col_size
 
     # create the xy dim scales
-    x_dim = np.arange(x_min, x_max, x_resolution)
+    lat_asc, lon_asc = is_lat_lon_ascending(prefetch_dataset, coordinates, varinfo)
 
-    # The origin is usually the top left and Y values are in decreasing order.
-    if is_latitude_ascending(prefetch_dataset, coordinates, varinfo):
+    if lon_asc:
+        x_dim = np.arange(x_min, x_max, x_resolution)
+    else:
+        x_dim = np.arange(x_min, x_max, -x_resolution)
+
+    if lat_asc:
         y_dim = np.arange(y_max, y_min, y_resolution)
     else:
         y_dim = np.arange(y_max, y_min, -y_resolution)
@@ -216,18 +220,19 @@ def get_row_col_sizes_from_coordinate_datasets(
     return row_size, col_size
 
 
-def is_latitude_ascending(
+def is_lat_lon_ascending(
     prefetch_dataset: Dataset,
     coordinates: Set[str],
     varinfo: VarInfoFromDmr,
-) -> bool:
+) -> tuple[bool, bool]:
     """
-    Checks if the latitude cooordinate datasets have values
+    Checks if the latitude and longitude cooordinate datasets have values
     that are ascending
     """
     lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
     lat_col = lat_arr[:, 0]
-    return is_dimension_ascending(lat_col)
+    lon_row = lon_arr[0, :]
+    return is_dimension_ascending(lat_col), is_dimension_ascending(lon_row)
 
 
 def get_lat_lon_arrays(
@@ -288,11 +293,11 @@ def get_geo_grid_corners(
 
     # get the index of the minimum longitude after checking for invalid entries
     top_left_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmin()]
-    minlon = lon_row[top_left_col_idx]
+    min_lon = lon_row[top_left_col_idx]
 
     # get the index of the maximum longitude after checking for invalid entries
     top_right_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmax()]
-    maxlon = lon_row[top_right_col_idx]
+    max_lon = lon_row[top_right_col_idx]
 
     # get the last valid longitude column to get the latitude array
     lat_col = lat_arr[:, top_right_col_idx]
@@ -307,22 +312,22 @@ def get_geo_grid_corners(
     bottom_right_row_idx = lat_col_valid_indices[
         lat_col[lat_col_valid_indices].argmin()
     ]
-    minlat = lat_col[bottom_right_row_idx]
+    min_lat = lat_col[bottom_right_row_idx]
 
     # get the index of maximum latitude after checking for valid values
     top_right_row_idx = lat_col_valid_indices[lat_col[lat_col_valid_indices].argmax()]
-    maxlat = lat_col[top_right_row_idx]
+    max_lat = lat_col[top_right_row_idx]
 
-    topleft_corner = [minlon, maxlat]
-    topright_corner = [maxlon, maxlat]
-    bottomright_corner = [maxlon, minlat]
-    bottomleft_corner = [minlon, minlat]
+    top_left_corner = [min_lon, max_lat]
+    top_right_corner = [max_lon, max_lat]
+    bottom_right_corner = [max_lon, min_lat]
+    bottom_left_corner = [min_lon, min_lat]
 
     geo_grid_corners = [
-        topleft_corner,
-        topright_corner,
-        bottomright_corner,
-        bottomleft_corner,
+        top_left_corner,
+        top_right_corner,
+        bottom_right_corner,
+        bottom_left_corner,
     ]
     return geo_grid_corners
 

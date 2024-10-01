@@ -74,7 +74,7 @@ def get_prefetch_variables(
     access_token: str,
     config: Config,
 ) -> tuple[str, set[str]] | str:
-    """Determine the dimensions that need to be "pre-fetched" from OPeNDAP in
+    """Determine the variables that need to be "pre-fetched" from OPeNDAP in
     order to derive index ranges upon them. Initially, this was just
     spatial and temporal dimensions, but to support generic dimension
     subsets, all required dimensions must be prefetched, along with any
@@ -83,27 +83,27 @@ def get_prefetch_variables(
     variables will be prefetched and used to calculate dimension-scale values
 
     """
-    required_dimensions = varinfo.get_required_dimensions(required_variables)
-    if required_dimensions:
-        bounds = varinfo.get_references_for_attribute(required_dimensions, 'bounds')
-        required_dimensions.update(bounds)
+    required_variables = varinfo.get_required_dimensions(required_variables)
+    if required_variables:
+        bounds = varinfo.get_references_for_attribute(required_variables, 'bounds')
+        required_variables.update(bounds)
     else:
         coordinate_variables = get_coordinate_variables(varinfo, required_variables)
         if coordinate_variables:
-            required_dimensions = set(coordinate_variables)
+            required_variables = set(coordinate_variables)
 
     logger.info(
         'Variables being retrieved in prefetch request: '
-        f'{format_variable_set_string(required_dimensions)}'
+        f'{format_variable_set_string(required_variables)}'
     )
 
-    required_dimensions_nc4 = get_opendap_nc4(
-        opendap_url, required_dimensions, output_dir, logger, access_token, config
+    required_variables_nc4 = get_opendap_nc4(
+        opendap_url, required_variables, output_dir, logger, access_token, config
     )
 
     # Create bounds variables if necessary.
-    add_bounds_variables(required_dimensions_nc4, required_dimensions, varinfo, logger)
-    return required_dimensions_nc4
+    add_bounds_variables(required_variables_nc4, required_variables, varinfo, logger)
+    return required_variables_nc4
 
 
 def get_override_projected_dimension_name(

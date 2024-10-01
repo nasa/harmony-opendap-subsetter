@@ -118,13 +118,12 @@ def get_override_projected_dimension_name(
 
     """
     override_variable = varinfo.get_variable(variable_name)
+    projected_dimension_name = None
     if override_variable is not None:
         if override_variable.is_latitude():
             projected_dimension_name = 'projected_y'
         elif override_variable.is_longitude():
             projected_dimension_name = 'projected_x'
-        else:
-            projected_dimension_name = None
     return projected_dimension_name
 
 

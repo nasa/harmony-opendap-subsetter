@@ -212,31 +212,27 @@ def get_projected_x_y_index_ranges(
 def get_x_y_index_ranges_from_coordinates(
     non_spatial_variable: str,
     varinfo: VarInfoFromDmr,
-    dimension_datasets: Dataset,
+    prefetch_coordinate_datasets: Dataset,
     coordinates: Set[str],
     index_ranges: IndexRanges,
     bounding_box: BBox = None,
     shape_file_path: str = None,
 ) -> IndexRanges:
     """This function returns a dictionary containing the minimum and maximum
-    index ranges for a pair of projection x and y coordinates, e.g.:
+    index ranges for a pair of lat/lon coordinates, e.g.:
 
     index_ranges = {'/x': (20, 42), '/y': (31, 53)}
 
-    This method is called when the CF standards are not followed in the source
-    granule and only coordinate datasets are provided.
-    The coordinate datasets along with the crs is used to calculate the x-y
-    projected dimension scales.
-    The dimensions of the input, non-spatial variable are checked
-    for associated projection x and y coordinates. If these are present,
-    and they have not already been added to the `index_ranges` cache, the
-    extents of the input spatial subset are determined in these projected
-    coordinates. This requires the derivation of a minimum resolution of
-    the target grid in geographic coordinates. Points must be placed along
-    the exterior of the spatial subset shape. All points are then projected
-    from a geographic Coordinate Reference System (CRS) to the target grid
-    CRS. The minimum and maximum values are then derived from these
-    projected coordinate points.
+    This method is called when the CF standards are not followed
+    in the source granule and only coordinate datasets are provided.
+    The coordinate datasets along with the crs is used to calculate
+    the x-y projected dimension scales. The dimensions of the input,
+    non-spatial variable are checked for associated coordinates. If
+    these are present, and they have not already been added to the
+    `index_ranges` cache, the extents of the input spatial subset
+    are determined in these projected coordinates. The minimum and
+    maximum values are then derived from these projected coordinate
+    points.
 
     """
     crs = get_variable_crs(non_spatial_variable, varinfo)
@@ -244,7 +240,7 @@ def get_x_y_index_ranges_from_coordinates(
     projected_x = 'projected_x'
     projected_y = 'projected_y'
     override_dimension_datasets = update_dimension_variables(
-        dimension_datasets, coordinates, varinfo, crs
+        prefetch_coordinate_datasets, coordinates, varinfo, crs
     )
 
     if (
@@ -261,24 +257,15 @@ def get_x_y_index_ranges_from_coordinates(
             bounding_box=bounding_box,
         )
 
-        x_bounds = get_dimension_bounds(
-            projected_x, varinfo, override_dimension_datasets
-        )
-        y_bounds = get_dimension_bounds(
-            projected_y, varinfo, override_dimension_datasets
-        )
-
         x_index_ranges = get_dimension_index_range(
             override_dimension_datasets[projected_x][:],
             x_y_extents['x_min'],
             x_y_extents['x_max'],
-            bounds_values=x_bounds,
         )
         y_index_ranges = get_dimension_index_range(
             override_dimension_datasets[projected_y][:],
             x_y_extents['y_min'],
             x_y_extents['y_max'],
-            bounds_values=y_bounds,
         )
         x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
     else:

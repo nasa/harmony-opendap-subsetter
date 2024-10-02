@@ -57,7 +57,7 @@ class InvalidRequestedRange(CustomError):
     def __init__(self):
         super().__init__(
             'InvalidRequestedRange',
-            'Input request specified range outside supported ' 'dimension range',
+            'Input request specified range outside supported dimension range',
         )
 
 

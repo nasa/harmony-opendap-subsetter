@@ -299,6 +299,7 @@ def get_geo_grid_corners(
     The fill values in the corner points still needs to be addressed.
     """
     lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
+
     if not lat_arr.size:
         raise MissingCoordinateDataset('latitude')
     if not lon_arr.size:
@@ -307,15 +308,11 @@ def get_geo_grid_corners(
     top_left_row_idx = 0
     top_left_col_idx = 0
 
+    lat_fill, lon_fill = get_fill_values_for_coordinates(coordinates, varinfo)
+
     # get the first row from the longitude dataset
     lon_row = lon_arr[top_left_row_idx, :]
-    lon_row_valid_indices = np.where((lon_row >= -180.0) & (lon_row <= 180.0))[0]
-
-    # if the first row does not have valid indices,
-    # should go down to the next row. We throw an exception
-    # for now till that gets addressed
-    if not lon_row_valid_indices.size:
-        raise MissingValidCoordinateDataset('longitude')
+    lon_row_valid_indices = get_valid_indices(lon_row, lon_fill, 'longitude')
 
     # get the index of the minimum longitude after checking for invalid entries
     top_left_col_idx = lon_row_valid_indices[lon_row[lon_row_valid_indices].argmin()]
@@ -327,12 +324,7 @@ def get_geo_grid_corners(
 
     # get the last valid longitude column to get the latitude array
     lat_col = lat_arr[:, top_right_col_idx]
-    lat_col_valid_indices = np.where((lat_col >= -90.0) & (lat_col <= 90.0))[0]
-
-    # if the longitude values are invalid, should check the other columns
-    # We throw an exception for now till that gets addressed
-    if not lat_col_valid_indices.size:
-        raise MissingValidCoordinateDataset('latitude')
+    lat_col_valid_indices = get_valid_indices(lat_col, lat_fill, 'latitude')
 
     # get the index of minimum latitude after checking for valid values
     bottom_right_row_idx = lat_col_valid_indices[
@@ -344,18 +336,58 @@ def get_geo_grid_corners(
     top_right_row_idx = lat_col_valid_indices[lat_col[lat_col_valid_indices].argmax()]
     max_lat = lat_col[top_right_row_idx]
 
-    top_left_corner = [min_lon, max_lat]
-    top_right_corner = [max_lon, max_lat]
-    bottom_right_corner = [max_lon, min_lat]
-    bottom_left_corner = [min_lon, min_lat]
-
     geo_grid_corners = [
-        top_left_corner,
-        top_right_corner,
-        bottom_right_corner,
-        bottom_left_corner,
+        [min_lon, max_lat],
+        [max_lon, max_lat],
+        [max_lon, min_lat],
+        [min_lon, min_lat],
     ]
     return geo_grid_corners
+
+
+def get_valid_indices(
+    coordinate_row_col: ndarray, coordinate_fill: float, coordinate_name: str
+) -> ndarray:
+    """
+    Returns indices of a valid array without fill values
+    """
+    if coordinate_fill:
+        valid_indices = np.where(coordinate_row_col != coordinate_fill)[0]
+    elif coordinate_name == 'longitude':
+        valid_indices = np.where(
+            (coordinate_row_col >= -180.0) & (coordinate_row_col <= 180.0)
+        )[0]
+    elif coordinate_name == 'latitude':
+        valid_indices = np.where(
+            (coordinate_row_col >= -90.0) & (coordinate_row_col <= 90.0)
+        )[0]
+
+    # if the first row does not have valid indices,
+    # should go down to the next row. We throw an exception
+    # for now till that gets addressed
+    if not valid_indices.size:
+        raise MissingValidCoordinateDataset(coordinate_name)
+    return valid_indices
+
+
+def get_fill_values_for_coordinates(
+    coordinates: Set[str], varinfo: VarInfoFromDmr
+) -> float | None:
+    """
+    returns fill values for the variable. If it does not exist
+    checks for the overrides from the json file. If there is no
+    overrides, returns None
+    """
+    for coordinate in coordinates:
+        coordinate_variable = varinfo.get_variable(coordinate)
+        if coordinate_variable.is_latitude():
+            lat_fill_value = coordinate_variable.get_attribute_value('_fillValue')
+        elif coordinate_variable.is_longitude():
+            lon_fill_value = coordinate_variable.get_attribute_value('_fillValue')
+        # if fill_value is None:
+        # check if there are overrides in hoss_config.json using varinfo
+    # else
+    return lat_fill_value, lon_fill_value
 
 
 def add_bounds_variables(

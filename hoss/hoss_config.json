@@ -302,8 +302,22 @@
       },
       "Attributes": [
         {
-          "Name": "_fill",
-          "Value": "-9999"
+          "Name": "_FillValue",
+          "Value": "-9999.0"
+        }
+      ],
+      "_Description": "Ensure metadata fill value matches what is present in arrays."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SM(A|P|AP|P_E)",
+        "Variable_Pattern": "/Soil_Moisture_Retrieval_(Data|Data_AM|Data_Polar_AM)/(latitude|longitude).*"
+      },
+      "Attributes": [
+        {
+          "Name": "_FillValue",
+          "Value": "-9999.0"
         }
       ],
       "_Description": "Ensure metadata fill value matches what is present in arrays."

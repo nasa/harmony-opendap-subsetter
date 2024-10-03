@@ -27,7 +27,7 @@ from typing import List, Set
 from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
-from varinfo import VarInfoFromDmr
+from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.bbox_utilities import (
     BBox,
@@ -123,15 +123,18 @@ def get_spatial_index_ranges(
                 )
 
         if (not geographic_dimensions) and (not projected_dimensions):
-            coordinate_variables = get_coordinate_variables(varinfo, required_variables)
-            if coordinate_variables:
-                for non_spatial_variable in non_spatial_variables:
+            for non_spatial_variable in non_spatial_variables:
+                latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+                    varinfo, [non_spatial_variable]
+                )
+                if latitude_coordinates and longitude_coordinates:
                     index_ranges.update(
                         get_x_y_index_ranges_from_coordinates(
                             non_spatial_variable,
                             varinfo,
                             dimensions_file,
-                            coordinate_variables,
+                            varinfo.get_variable(latitude_coordinates[0]),
+                            varinfo.get_variable(longitude_coordinates[0]),
                             index_ranges,
                             bounding_box=bounding_box,
                             shape_file_path=shape_file_path,
@@ -213,15 +216,16 @@ def get_x_y_index_ranges_from_coordinates(
     non_spatial_variable: str,
     varinfo: VarInfoFromDmr,
     prefetch_coordinate_datasets: Dataset,
-    coordinates: Set[str],
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
     index_ranges: IndexRanges,
     bounding_box: BBox = None,
     shape_file_path: str = None,
 ) -> IndexRanges:
     """This function returns a dictionary containing the minimum and maximum
-    index ranges for a pair of lat/lon coordinates, e.g.:
+    index ranges for the projected_x and projected_y recalculated dimension scales
 
-    index_ranges = {'/x': (20, 42), '/y': (31, 53)}
+    index_ranges = {'projected_x': (20, 42), 'projected_y': (31, 53)}
 
     This method is called when the CF standards are not followed
     in the source granule and only coordinate datasets are provided.
@@ -236,18 +240,16 @@ def get_x_y_index_ranges_from_coordinates(
 
     """
     crs = get_variable_crs(non_spatial_variable, varinfo)
-
     projected_x = 'projected_x'
     projected_y = 'projected_y'
     override_dimension_datasets = update_dimension_variables(
-        prefetch_coordinate_datasets, coordinates, varinfo, crs
+        prefetch_coordinate_datasets,
+        latitude_coordinate,
+        longitude_coordinate,
+        crs,
     )
 
-    if (
-        projected_x is not None
-        and projected_y is not None
-        and not set((projected_x, projected_y)).issubset(set(index_ranges.keys()))
-    ):
+    if not set((projected_x, projected_y)).issubset(set(index_ranges.keys())):
 
         x_y_extents = get_projected_x_y_extents(
             override_dimension_datasets[projected_x][:],

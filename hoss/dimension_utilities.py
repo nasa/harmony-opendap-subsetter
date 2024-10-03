@@ -73,7 +73,7 @@ def get_prefetch_variables(
     logger: Logger,
     access_token: str,
     config: Config,
-) -> tuple[str, set[str]] | str:
+) -> str:
     """Determine the variables that need to be "pre-fetched" from OPeNDAP in
     order to derive index ranges upon them. Initially, this was just
     spatial and temporal dimensions, but to support generic dimension
@@ -83,33 +83,36 @@ def get_prefetch_variables(
     variables will be prefetched and used to calculate dimension-scale values
 
     """
-    required_variables = varinfo.get_required_dimensions(required_variables)
-    if required_variables:
-        bounds = varinfo.get_references_for_attribute(required_variables, 'bounds')
-        required_variables.update(bounds)
+    prefetch_variables = varinfo.get_required_dimensions(required_variables)
+    if prefetch_variables:
+        bounds = varinfo.get_references_for_attribute(prefetch_variables, 'bounds')
+        prefetch_variables.update(bounds)
     else:
-        coordinate_variables = get_coordinate_variables(varinfo, required_variables)
-        if coordinate_variables:
-            required_variables = set(coordinate_variables)
+        latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+            varinfo, required_variables
+        )
+
+        if latitude_coordinates and longitude_coordinates:
+            prefetch_variables = set(latitude_coordinates + longitude_coordinates)
 
     logger.info(
         'Variables being retrieved in prefetch request: '
-        f'{format_variable_set_string(required_variables)}'
+        f'{format_variable_set_string(prefetch_variables)}'
     )
 
-    required_variables_nc4 = get_opendap_nc4(
-        opendap_url, required_variables, output_dir, logger, access_token, config
+    prefetch_variables_nc4 = get_opendap_nc4(
+        opendap_url, prefetch_variables, output_dir, logger, access_token, config
     )
 
     # Create bounds variables if necessary.
-    add_bounds_variables(required_variables_nc4, required_variables, varinfo, logger)
-    return required_variables_nc4
+    add_bounds_variables(prefetch_variables_nc4, prefetch_variables, varinfo, logger)
+    return prefetch_variables_nc4
 
 
 def get_override_projected_dimension_name(
     varinfo: VarInfoFromDmr,
     variable_name: str,
-) -> str | None:
+) -> str:
     """returns the x-y projection variable names that would
     match the geo coordinate names. The `latitude` coordinate
     variable name gets converted to 'projected_y' dimension scale
@@ -118,7 +121,7 @@ def get_override_projected_dimension_name(
 
     """
     override_variable = varinfo.get_variable(variable_name)
-    projected_dimension_name = None
+    projected_dimension_name = ''
     if override_variable is not None:
         if override_variable.is_latitude():
             projected_dimension_name = 'projected_y'
@@ -134,18 +137,26 @@ def get_override_projected_dimensions(
     """
     Returns the projected dimensions names from coordinate variables
     """
-    coordinate_variables = get_coordinate_variables(varinfo, [variable_name])
-    if coordinate_variables:
+    latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+        varinfo, [variable_name]
+    )
+    if latitude_coordinates and longitude_coordinates:
+        # there should be only 1 lat and lon coordinate for one variable
         override_dimensions = []
-        for coordinate in coordinate_variables:
-            override_dimensions.append(
-                get_override_projected_dimension_name(varinfo, coordinate)
-            )
+        override_dimensions.append(
+            get_override_projected_dimension_name(varinfo, latitude_coordinates[0])
+        )
+        override_dimensions.append(
+            get_override_projected_dimension_name(varinfo, longitude_coordinates[0])
+        )
+
     else:
         # if the override is the variable
-        override = get_override_projected_dimension_name(varinfo, variable_name)
+        override_projected_dimension_name = get_override_projected_dimension_name(
+            varinfo, variable_name
+        )
         override_dimensions = ['projected_y', 'projected_x']
-        if (override is None) or (override not in override_dimensions):
+        if override_projected_dimension_name not in override_dimensions:
             override_dimensions = []
     return override_dimensions
 
@@ -153,7 +164,7 @@ def get_override_projected_dimensions(
 def get_coordinate_variables(
     varinfo: VarInfoFromDmr,
     requested_variables: Set[str],
-) -> list[str]:
+) -> tuple[list, list]:
     """This method returns coordinate variables that are referenced
     in the variables requested. It returns it in a specific order
     [latitude, longitude]
@@ -162,28 +173,27 @@ def get_coordinate_variables(
     coordinate_variables_set = varinfo.get_references_for_attribute(
         requested_variables, 'coordinates'
     )
-    coordinate_variables = []
-    contains_latitude = False
-    contains_longitude = False
-    for coordinate in coordinate_variables_set:
-        if varinfo.get_variable(coordinate).is_latitude():
-            coordinate_variables.insert(0, coordinate)
-            contains_latitude = True
-        elif varinfo.get_variable(coordinate).is_longitude():
-            coordinate_variables.insert(1, coordinate)
-            contains_longitude = True
 
-    if coordinate_variables:
-        if not contains_latitude:
-            raise MissingCoordinateDataset('latitude')
-        if not contains_longitude:
-            raise MissingCoordinateDataset('longitude')
+    latitude_coordinate_variables = [
+        coordinate
+        for coordinate in coordinate_variables_set
+        if varinfo.get_variable(coordinate).is_latitude()
+    ]
 
-    return coordinate_variables
+    longitude_coordinate_variables = [
+        coordinate
+        for coordinate in coordinate_variables_set
+        if varinfo.get_variable(coordinate).is_longitude()
+    ]
+
+    return latitude_coordinate_variables, longitude_coordinate_variables
 
 
 def update_dimension_variables(
-    prefetch_dataset: Dataset, coordinates: Set[str], varinfo: VarInfoFromDmr, crs: CRS
+    prefetch_dataset: Dataset,
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
+    crs: CRS,
 ) -> Dict[str, ndarray]:
     """Generate artificial 1D dimensions variable for each
     2D dimension or coordinate variable
@@ -196,11 +206,19 @@ def update_dimension_variables(
     (5) Generate the x-y dimscale array and return to the calling method
 
     """
+    # if there is more than one grid, determine the lat/lon coordinate
+    # associated with this variable
     row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
-        prefetch_dataset, coordinates, varinfo
+        prefetch_dataset,
+        latitude_coordinate,
+        longitude_coordinate,
     )
 
-    geo_grid_corners = get_geo_grid_corners(prefetch_dataset, coordinates, varinfo)
+    geo_grid_corners = get_geo_grid_corners(
+        prefetch_dataset,
+        latitude_coordinate,
+        longitude_coordinate,
+    )
 
     x_y_extents = get_x_y_extents_from_geographic_points(geo_grid_corners, crs)
 
@@ -213,7 +231,11 @@ def update_dimension_variables(
     y_resolution = (y_max - y_min) / col_size
 
     # create the xy dim scales
-    lat_asc, lon_asc = is_lat_lon_ascending(prefetch_dataset, coordinates, varinfo)
+    lat_asc, lon_asc = is_lat_lon_ascending(
+        prefetch_dataset,
+        latitude_coordinate,
+        longitude_coordinate,
+    )
 
     if lon_asc:
         x_dim = np.arange(x_min, x_max, x_resolution)
@@ -230,14 +252,16 @@ def update_dimension_variables(
 
 def get_row_col_sizes_from_coordinate_datasets(
     prefetch_dataset: Dataset,
-    coordinates: Set[str],
-    varinfo: VarInfoFromDmr,
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
 ) -> Tuple[int, int]:
     """
     This method returns the row and column sizes of the coordinate datasets
 
     """
-    lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
+    lat_arr, lon_arr = get_lat_lon_arrays(
+        prefetch_dataset, latitude_coordinate, longitude_coordinate
+    )
     if lat_arr.ndim > 1:
         col_size = lat_arr.shape[0]
         row_size = lat_arr.shape[1]
@@ -251,14 +275,16 @@ def get_row_col_sizes_from_coordinate_datasets(
 
 def is_lat_lon_ascending(
     prefetch_dataset: Dataset,
-    coordinates: Set[str],
-    varinfo: VarInfoFromDmr,
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
 ) -> tuple[bool, bool]:
     """
     Checks if the latitude and longitude cooordinate datasets have values
     that are ascending
     """
-    lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
+    lat_arr, lon_arr = get_lat_lon_arrays(
+        prefetch_dataset, latitude_coordinate, longitude_coordinate
+    )
     lat_col = lat_arr[:, 0]
     lon_row = lon_arr[0, :]
     return is_dimension_ascending(lat_col), is_dimension_ascending(lon_row)
@@ -266,8 +292,8 @@ def is_lat_lon_ascending(
 
 def get_lat_lon_arrays(
     prefetch_dataset: Dataset,
-    coordinates: Set[str],
-    varinfo: VarInfoFromDmr,
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
 ) -> Tuple[ndarray, ndarray]:
     """
     This method is used to return the lat lon arrays from a 2D
@@ -275,20 +301,17 @@ def get_lat_lon_arrays(
     """
     lat_arr = []
     lon_arr = []
-    for coordinate in coordinates:
-        coordinate_variable = varinfo.get_variable(coordinate)
-        if coordinate_variable.is_latitude():
-            lat_arr = prefetch_dataset[coordinate_variable.full_name_path][:]
-        elif coordinate_variable.is_longitude():
-            lon_arr = prefetch_dataset[coordinate_variable.full_name_path][:]
+
+    lat_arr = prefetch_dataset[latitude_coordinate.full_name_path][:]
+    lon_arr = prefetch_dataset[longitude_coordinate.full_name_path][:]
 
     return lat_arr, lon_arr
 
 
 def get_geo_grid_corners(
     prefetch_dataset: Dataset,
-    coordinates: Set[str],
-    varinfo: VarInfoFromDmr,
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
 ) -> list[Tuple[float]]:
     """
     This method is used to return the lat lon corners from a 2D
@@ -298,7 +321,11 @@ def get_geo_grid_corners(
     are fill values in the corner points to go down to the next row and col
     The fill values in the corner points still needs to be addressed.
     """
-    lat_arr, lon_arr = get_lat_lon_arrays(prefetch_dataset, coordinates, varinfo)
+    lat_arr, lon_arr = get_lat_lon_arrays(
+        prefetch_dataset,
+        latitude_coordinate,
+        longitude_coordinate,
+    )
 
     if not lat_arr.size:
         raise MissingCoordinateDataset('latitude')
@@ -308,7 +335,9 @@ def get_geo_grid_corners(
     top_left_row_idx = 0
     top_left_col_idx = 0
 
-    lat_fill, lon_fill = get_fill_values_for_coordinates(coordinates, varinfo)
+    lat_fill, lon_fill = get_fill_values_for_coordinates(
+        latitude_coordinate, longitude_coordinate
+    )
 
     # get the first row from the longitude dataset
     lon_row = lon_arr[top_left_row_idx, :]
@@ -371,21 +400,19 @@ def get_valid_indices(
 
 
 def get_fill_values_for_coordinates(
-    coordinates: Set[str], varinfo: VarInfoFromDmr
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
 ) -> float | None:
     """
     returns fill values for the variable. If it does not exist
     checks for the overrides from the json file. If there is no
     overrides, returns None
     """
-    for coordinate in coordinates:
-        coordinate_variable = varinfo.get_variable(coordinate)
-        if coordinate_variable.is_latitude():
-            lat_fill_value = coordinate_variable.get_attribute_value('_fillValue')
-        elif coordinate_variable.is_longitude():
-            lon_fill_value = coordinate_variable.get_attribute_value('_fillValue')
-        # if fill_value is None:
-        # check if there are overrides in hoss_config.json using varinfo
+
+    lat_fill_value = latitude_coordinate.get_attribute_value('_fillValue')
+    lon_fill_value = longitude_coordinate.get_attribute_value('_fillValue')
+    # if fill_value is None:
+    # check if there are overrides in hoss_config.json using varinfo
     # else
     return lat_fill_value, lon_fill_value
 

@@ -42,6 +42,7 @@ from hoss.dimension_utilities import (
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
+    get_variables_with_anonymous_dims,
     update_dimension_variables,
 )
 from hoss.projection_utilities import (
@@ -121,25 +122,26 @@ def get_spatial_index_ranges(
                         shape_file_path=shape_file_path,
                     )
                 )
-
-        if (not geographic_dimensions) and (not projected_dimensions):
-            for non_spatial_variable in non_spatial_variables:
-                latitude_coordinates, longitude_coordinates = get_coordinate_variables(
-                    varinfo, [non_spatial_variable]
-                )
-                if latitude_coordinates and longitude_coordinates:
-                    index_ranges.update(
-                        get_x_y_index_ranges_from_coordinates(
-                            non_spatial_variable,
-                            varinfo,
-                            dimensions_file,
-                            varinfo.get_variable(latitude_coordinates[0]),
-                            varinfo.get_variable(longitude_coordinates[0]),
-                            index_ranges,
-                            bounding_box=bounding_box,
-                            shape_file_path=shape_file_path,
-                        )
+        variables_with_anonymous_dims = get_variables_with_anonymous_dims(
+            varinfo, required_variables
+        )
+        for variable_with_anonymous_dims in variables_with_anonymous_dims:
+            latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+                varinfo, [variable_with_anonymous_dims]
+            )
+            if latitude_coordinates and longitude_coordinates:
+                index_ranges.update(
+                    get_x_y_index_ranges_from_coordinates(
+                        variable_with_anonymous_dims,
+                        varinfo,
+                        dimensions_file,
+                        varinfo.get_variable(latitude_coordinates[0]),
+                        varinfo.get_variable(longitude_coordinates[0]),
+                        index_ranges,
+                        bounding_box=bounding_box,
+                        shape_file_path=shape_file_path,
                     )
+                )
 
     return index_ranges
 

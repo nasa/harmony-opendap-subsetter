@@ -161,6 +161,20 @@ def get_override_projected_dimensions(
     return override_dimensions
 
 
+def get_variables_with_anonymous_dims(
+    varinfo: VarInfoFromDmr, required_variables: set[str]
+) -> bool:
+    """
+    returns the list of required variables without any
+    dimensions
+    """
+    return set(
+        required_variable
+        for required_variable in required_variables
+        if len(varinfo.get_variable(required_variable).dimensions) == 0
+    )
+
+
 def get_coordinate_variables(
     varinfo: VarInfoFromDmr,
     requested_variables: Set[str],

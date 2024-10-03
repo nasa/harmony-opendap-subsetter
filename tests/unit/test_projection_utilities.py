@@ -194,6 +194,26 @@ class TestProjectionUtilities(TestCase):
                 'present in granule .dmr file.',
             )
 
+        with self.subTest('grid_mapping override with json configuration'):
+            smap_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3SMP_009.dmr',
+                'SPL3SMP',
+                'hoss/hoss_config.json',
+            )
+            expected_crs = CRS.from_cf(
+                {
+                    'false_easting': 0.0,
+                    'false_northing': 0.0,
+                    'longitude_of_central_meridian': 0.0,
+                    'standard_parallel': 30.0,
+                    'grid_mapping_name': 'lambert_cylindrical_equal_area',
+                }
+            )
+            actual_crs = get_variable_crs(
+                '/Soil_Moisture_Retrieval_Data_AM/surface_flag', smap_varinfo
+            )
+            self.assertEqual(actual_crs, expected_crs)
+
     def test_get_projected_x_y_extents(self):
         """Ensure that the expected values for the x and y dimension extents
         are recovered for a known projected grid and requested input.

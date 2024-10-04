@@ -1,9 +1,8 @@
 ## v1.1.0
 ### 2024-09-10
 
-This version of HOSS provides support for products that do not comply with CF standards like SMAP L3.
-The SMAP L3 products do not have grid mapping variable to provide the projection information.
-They also do not have x-y dimension scales for the projected grid.
+This version of HOSS provides support for gridded products that do not contain CF-Convention
+compliant grid mapping variables and 1-D dimension variables, such as SMAP L3.
 New methods are added to retrieve dimension scales from coordinate attributes and grid mappings, using
 overrides specified in the hoss_config.json configuration file.
 -   `get_coordinate_variables` gets coordinate datasets when the dimension scales are not present in

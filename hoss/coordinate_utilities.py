@@ -8,7 +8,6 @@ from typing import Dict, Set, Tuple
 import numpy as np
 from netCDF4 import Dataset
 from numpy import ndarray
-from numpy.ma.core import MaskedArray
 from pyproj import CRS
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
@@ -133,18 +132,30 @@ def update_dimension_variables(
     (5) Generate the x-y dimscale array and return to the calling method
 
     """
-    # if there is more than one grid, determine the lat/lon coordinate
-    # associated with this variable
-    row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
+    lat_arr, lon_arr = get_lat_lon_arrays(
         prefetch_dataset,
         latitude_coordinate,
         longitude_coordinate,
     )
+    if not lat_arr.size:
+        raise MissingCoordinateDataset('latitude')
+    if not lon_arr.size:
+        raise MissingCoordinateDataset('longitude')
+
+    lat_fill, lon_fill = get_fill_values_for_coordinates(
+        latitude_coordinate, longitude_coordinate
+    )
+
+    row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
+        lat_arr,
+        lon_arr,
+    )
 
     geo_grid_corners = get_geo_grid_corners(
-        prefetch_dataset,
-        latitude_coordinate,
-        longitude_coordinate,
+        lat_arr,
+        lon_arr,
+        lat_fill,
+        lon_fill,
     )
 
     x_y_extents = get_x_y_extents_from_geographic_points(geo_grid_corners, crs)
@@ -158,11 +169,7 @@ def update_dimension_variables(
     y_resolution = (y_max - y_min) / col_size
 
     # create the xy dim scales
-    lat_asc, lon_asc = is_lat_lon_ascending(
-        prefetch_dataset,
-        latitude_coordinate,
-        longitude_coordinate,
-    )
+    lat_asc, lon_asc = is_lat_lon_ascending(lat_arr, lon_arr, lat_fill, lon_fill)
 
     if lon_asc:
         x_dim = np.arange(x_min, x_max, x_resolution)
@@ -178,17 +185,14 @@ def update_dimension_variables(
 
 
 def get_row_col_sizes_from_coordinate_datasets(
-    prefetch_dataset: Dataset,
-    latitude_coordinate: VariableFromDmr,
-    longitude_coordinate: VariableFromDmr,
+    lat_arr: ndarray,
+    lon_arr: ndarray,
 ) -> Tuple[int, int]:
     """
     This method returns the row and column sizes of the coordinate datasets
 
     """
-    lat_arr, lon_arr = get_lat_lon_arrays(
-        prefetch_dataset, latitude_coordinate, longitude_coordinate
-    )
+
     if lat_arr.ndim > 1:
         col_size = lat_arr.shape[0]
         row_size = lat_arr.shape[1]
@@ -201,26 +205,27 @@ def get_row_col_sizes_from_coordinate_datasets(
 
 
 def is_lat_lon_ascending(
-    prefetch_dataset: Dataset,
-    latitude_coordinate: VariableFromDmr,
-    longitude_coordinate: VariableFromDmr,
+    lat_arr: ndarray,
+    lon_arr: ndarray,
+    lat_fill: float,
+    lon_fill: float,
 ) -> tuple[bool, bool]:
     """
     Checks if the latitude and longitude cooordinate datasets have values
     that are ascending
     """
-    lat_arr, lon_arr = get_lat_lon_arrays(
-        prefetch_dataset, latitude_coordinate, longitude_coordinate
-    )
+
     lat_col = lat_arr[:, 0]
     lon_row = lon_arr[0, :]
 
-    first_index, last_index = np.ma.flatnotmasked_edges(lat_col)
-    latitude_ascending = lat_col.size == 1 or lat_col[first_index] < lat_col[last_index]
+    lat_col_valid_indices = get_valid_indices(lon_row, lat_fill, 'latitude')
+    latitude_ascending = (
+        lat_col[lat_col_valid_indices[1]] > lat_col[lat_col_valid_indices[0]]
+    )
 
-    first_index, last_index = np.ma.flatnotmasked_edges(lat_col)
+    lon_row_valid_indices = get_valid_indices(lon_row, lon_fill, 'longitude')
     longitude_ascending = (
-        lon_row.size == 1 or lon_row[first_index] < lon_row[last_index]
+        lon_row[lon_row_valid_indices[1]] > lon_row[lon_row_valid_indices[0]]
     )
 
     return latitude_ascending, longitude_ascending
@@ -245,9 +250,10 @@ def get_lat_lon_arrays(
 
 
 def get_geo_grid_corners(
-    prefetch_dataset: Dataset,
-    latitude_coordinate: VariableFromDmr,
-    longitude_coordinate: VariableFromDmr,
+    lat_arr: ndarray,
+    lon_arr: ndarray,
+    lat_fill: float,
+    lon_fill: float,
 ) -> list[Tuple[float]]:
     """
     This method is used to return the lat lon corners from a 2D
@@ -258,23 +264,9 @@ def get_geo_grid_corners(
     still needs to be addressed. It will raise an exception in those
     cases.
     """
-    lat_arr, lon_arr = get_lat_lon_arrays(
-        prefetch_dataset,
-        latitude_coordinate,
-        longitude_coordinate,
-    )
-
-    if not lat_arr.size:
-        raise MissingCoordinateDataset('latitude')
-    if not lon_arr.size:
-        raise MissingCoordinateDataset('longitude')
 
     top_left_row_idx = 0
     top_left_col_idx = 0
-
-    lat_fill, lon_fill = get_fill_values_for_coordinates(
-        latitude_coordinate, longitude_coordinate
-    )
 
     # get the first row from the longitude dataset
     lon_row = lon_arr[top_left_row_idx, :]

@@ -35,15 +35,17 @@ from hoss.bbox_utilities import (
     get_harmony_message_bbox,
     get_shape_file_geojson,
 )
+from hoss.coordinate_utilities import (
+    get_coordinate_variables,
+    get_variables_with_anonymous_dims,
+    update_dimension_variables,
+)
 from hoss.dimension_utilities import (
     IndexRange,
     IndexRanges,
-    get_coordinate_variables,
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
-    get_variables_with_anonymous_dims,
-    update_dimension_variables,
 )
 from hoss.projection_utilities import (
     get_projected_x_y_extents,

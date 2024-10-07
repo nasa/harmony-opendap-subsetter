@@ -243,6 +243,7 @@ def get_x_y_index_ranges_from_coordinates(
     points.
 
     """
+
     crs = get_variable_crs(non_spatial_variable, varinfo)
     projected_x = 'projected_x'
     projected_y = 'projected_y'
@@ -267,11 +268,13 @@ def get_x_y_index_ranges_from_coordinates(
             override_dimension_datasets[projected_x][:],
             x_y_extents['x_min'],
             x_y_extents['x_max'],
+            bounds_values=None,
         )
         y_index_ranges = get_dimension_index_range(
             override_dimension_datasets[projected_y][:],
             x_y_extents['y_min'],
             x_y_extents['y_max'],
+            bounds_values=None,
         )
         x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
     else:

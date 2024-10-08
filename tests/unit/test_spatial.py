@@ -202,14 +202,13 @@ class TestSpatial(TestCase):
 
         """
         smap_varinfo = VarInfoFromDmr(
-            'tests/data/SC_SPL3SMP_009.dmr',
+            'tests/data/SC_SPL3SMP_008.dmr',
             'SPL3SMP',
             'hoss/hoss_config.json',
         )
-        smap_file_path = 'tests/data/SC_SPL3SMP_009_prefetch.nc4'
+        smap_file_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
         expected_index_ranges = {'projected_x': (487, 595), 'projected_y': (9, 38)}
         bbox = BBox(2, 54, 42, 72)
-        smap_variable_name = '/Soil_Moisture_Retrieval_Data_AM/surface_flag'
 
         latitude_coordinate = smap_varinfo.get_variable(
             '/Soil_Moisture_Retrieval_Data_AM/latitude'

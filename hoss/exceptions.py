@@ -57,7 +57,7 @@ class InvalidRequestedRange(CustomError):
     def __init__(self):
         super().__init__(
             'InvalidRequestedRange',
-            'Input request specified range outside supported ' 'dimension range',
+            'Input request specified range outside supported dimension range',
         )
 
 
@@ -105,6 +105,51 @@ class MissingSpatialSubsetInformation(CustomError):
             'MissingSpatialSubsetInformation',
             'Either a bounding box or shape file must be '
             'specified when performing spatial subsetting.',
+        )
+
+
+class MissingCoordinateDataset(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    datasets and they are missing or empty. These datasets are referred to
+    in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, referring_variable):
+        super().__init__(
+            'MissingCoordinateDataset',
+            f'Coordinate: "{referring_variable}" is '
+            'not present in source granule file.',
+        )
+
+
+class MissingValidCoordinateDataset(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    datasets and they have fill values to the extent that it cannot be used.
+    These datasets are referred in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, referring_variable):
+        super().__init__(
+            'MissingValidCoordinateDataset',
+            f'Coordinate: "{referring_variable}" is '
+            'not valid in source granule file.',
+        )
+
+
+class IrregularCoordinateDatasets(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    datasets and they are missing or empty. These datasets are referred to
+    in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, longitude_shape, latitude_shape):
+        super().__init__(
+            'IrregularCoordinateDatasets',
+            f'Longitude dataset shape: "{longitude_shape}"'
+            f'does not match the latitude dataset shape: "{latitude_shape}"',
         )
 
 

@@ -62,7 +62,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_granule_not_geo(
         self,
@@ -126,7 +126,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_granule_geo(
         self,
@@ -216,7 +216,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_non_geo_no_variables(
         self,
@@ -290,7 +290,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_geo_no_variables(
         self,
@@ -404,7 +404,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_non_variable_dimensions(
         self,
@@ -537,7 +537,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_bounds_reference(
         self,
@@ -638,7 +638,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_temporal(
         self,
@@ -742,7 +742,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_geo_temporal(
         self,
@@ -860,7 +860,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
     @patch('hoss.subset.get_request_shape_file')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_granule_shape(
         self,
@@ -971,7 +971,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
     @patch('hoss.subset.get_request_shape_file')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_granule_shape_and_bbox(
         self,
@@ -1083,7 +1083,7 @@ class TestSubset(TestCase):
     @patch('hoss.subset.get_requested_index_ranges')
     @patch('hoss.subset.get_temporal_index_ranges')
     @patch('hoss.subset.get_spatial_index_ranges')
-    @patch('hoss.subset.prefetch_dimension_variables')
+    @patch('hoss.subset.get_prefetch_variables')
     @patch('hoss.subset.get_varinfo')
     def test_subset_granule_geo_named(
         self,

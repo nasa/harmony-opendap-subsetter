@@ -1,3 +1,22 @@
+## v1.1.0
+### 2024-09-10
+
+This version of HOSS provides support for gridded products that do not contain CF-Convention
+compliant grid mapping variables and 1-D dimension variables, such as SMAP L3.
+New methods are added to retrieve dimension scales from coordinate attributes and grid mappings, using
+overrides specified in the hoss_config.json configuration file.
+-   `get_coordinate_variables` gets coordinate datasets when the dimension scales are not present in
+    the source file. The prefetch gets the coordinate datasets during prefetch when the dimension
+    scales are not present.
+-   `update_dimension_variables` function checks the dimensionality of the coordinate datasets.
+    It then gets a row and column from the 2D datasets to 1D and uses the crs attribute to get
+    the projection of the granule to convert the lat/lon array to projected x-y dimension scales.
+-   `get_override_projected_dimensions` provides the projected dimension scale names after the
+    conversion.
+-   `get_variable_crs` method is also updated to handle cases where the grid mapping variable
+    does not exist in the granule and an override is provided in an updated
+    hoss_config.json
+
 
 ## v1.0.5
 ### 2024-08-19

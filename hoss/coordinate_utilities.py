@@ -305,7 +305,7 @@ def get_valid_indices(
     """
     Returns indices of a valid array without fill values
     """
-
+    valid_indices = np.empty((0, 0))
     if coordinate_fill:
         valid_indices = np.where(
             ~np.isclose(coordinate_row_col, float(coordinate_fill))

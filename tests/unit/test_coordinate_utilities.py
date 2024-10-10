@@ -25,7 +25,7 @@ from hoss.coordinate_utilities import (
     is_lat_lon_ascending,
     update_dimension_variables,
 )
-from hoss.exceptions import MissingCoordinateDataset
+from hoss.exceptions import MissingCoordinateDataset, MissingValidCoordinateDataset
 
 
 class TestCoordinateUtilities(TestCase):
@@ -76,6 +76,39 @@ class TestCoordinateUtilities(TestCase):
         """Remove per-test fixtures."""
         if exists(self.temp_dir):
             rmtree(self.temp_dir)
+
+    def test_get_valid_indices(self):
+        """Ensure that latitude and longitude values are correctly identified as
+        ascending or descending.
+
+        """
+
+        expected_result1 = np.array([0, 1, 2, 3, 4])
+        expected_result2 = np.array([0, 1, 2, 6, 7, 8, 9])
+        expected_result3 = np.empty((0, 0))
+
+        fill_array = np.array([-9999.0, -9999.0, -9999.0, -9999.0])
+        with self.subTest('valid indices with no fill values configured'):
+            actual_result1 = get_valid_indices(self.lat_arr[:, -1], None, 'latitude')
+            print('actual_result1=' f'{actual_result1}')
+            print('expected_result1=' f'{expected_result1}')
+            self.assertTrue(np.array_equal(actual_result1, expected_result1))
+
+        with self.subTest('valid indices with fill values configured'):
+            actual_result2 = get_valid_indices(self.lon_arr[0, :], -9999.0, 'longitude')
+            print('actual_result2=' f'{actual_result2}')
+            print('expected_result2=' f'{expected_result2}')
+            self.assertTrue(np.array_equal(actual_result2, expected_result2))
+
+        with self.subTest('all fill values - no valid indices'):
+            with self.assertRaises(MissingValidCoordinateDataset) as context:
+                actual_result3 = get_valid_indices(fill_array, -9999.0, 'longitude')
+                print('actual_result3=' f'{actual_result3}')
+                print('expected_result3=' f'{expected_result3}')
+                self.assertEqual(
+                    context.exception.message,
+                    'Coordinate: "longitude" is not valid in source granule file.',
+                )
 
     def test_is_lat_lon_ascending(self):
         """Ensure that latitude and longitude values are correctly identified as

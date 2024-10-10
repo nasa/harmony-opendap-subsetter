@@ -137,10 +137,6 @@ def update_dimension_variables(
         latitude_coordinate,
         longitude_coordinate,
     )
-    if not lat_arr.size:
-        raise MissingCoordinateDataset('latitude')
-    if not lon_arr.size:
-        raise MissingCoordinateDataset('longitude')
 
     lat_fill, lon_fill = get_fill_values_for_coordinates(
         latitude_coordinate, longitude_coordinate
@@ -192,7 +188,8 @@ def get_row_col_sizes_from_coordinate_datasets(
     This method returns the row and column sizes of the coordinate datasets
 
     """
-
+    row_size = 0
+    col_size = 0
     if lat_arr.ndim > 1:
         col_size = lat_arr.shape[0]
         row_size = lat_arr.shape[1]
@@ -218,7 +215,7 @@ def is_lat_lon_ascending(
     lat_col = lat_arr[:, 0]
     lon_row = lon_arr[0, :]
 
-    lat_col_valid_indices = get_valid_indices(lon_row, lat_fill, 'latitude')
+    lat_col_valid_indices = get_valid_indices(lat_col, lat_fill, 'latitude')
     latitude_ascending = (
         lat_col[lat_col_valid_indices[1]] > lat_col[lat_col_valid_indices[0]]
     )
@@ -240,13 +237,12 @@ def get_lat_lon_arrays(
     This method is used to return the lat lon arrays from a 2D
     coordinate dataset.
     """
-    lat_arr = []
-    lon_arr = []
-
-    lat_arr = prefetch_dataset[latitude_coordinate.full_name_path][:]
-    lon_arr = prefetch_dataset[longitude_coordinate.full_name_path][:]
-
-    return lat_arr, lon_arr
+    try:
+        lat_arr = prefetch_dataset[latitude_coordinate.full_name_path][:]
+        lon_arr = prefetch_dataset[longitude_coordinate.full_name_path][:]
+        return lat_arr, lon_arr
+    except Exception as exception:
+        raise MissingCoordinateDataset('latitude/longitude') from exception
 
 
 def get_geo_grid_corners(
@@ -254,7 +250,7 @@ def get_geo_grid_corners(
     lon_arr: ndarray,
     lat_fill: float,
     lon_fill: float,
-) -> list[Tuple[float]]:
+) -> list[Tuple[float, float]]:
     """
     This method is used to return the lat lon corners from a 2D
     coordinate dataset. It gets the row and column of the latitude and longitude
@@ -295,10 +291,10 @@ def get_geo_grid_corners(
     max_lat = lat_col[top_right_row_idx]
 
     geo_grid_corners = [
-        [min_lon, max_lat],
-        [max_lon, max_lat],
-        [max_lon, min_lat],
-        [min_lon, min_lat],
+        (min_lon, max_lat),
+        (max_lon, max_lat),
+        (max_lon, min_lat),
+        (min_lon, min_lat),
     ]
     return geo_grid_corners
 
@@ -309,8 +305,11 @@ def get_valid_indices(
     """
     Returns indices of a valid array without fill values
     """
+
     if coordinate_fill:
-        valid_indices = np.where(coordinate_row_col != coordinate_fill)[0]
+        valid_indices = np.where(
+            ~np.isclose(coordinate_row_col, float(coordinate_fill))
+        )[0]
     elif coordinate_name == 'longitude':
         valid_indices = np.where(
             (coordinate_row_col >= -180.0) & (coordinate_row_col <= 180.0)
@@ -331,16 +330,24 @@ def get_valid_indices(
 def get_fill_values_for_coordinates(
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
-) -> float | None:
+) -> tuple[float | None, float | None]:
     """
     returns fill values for the variable. If it does not exist
     checks for the overrides from the json file. If there is no
     overrides, returns None
     """
 
-    lat_fill_value = latitude_coordinate.get_attribute_value('_fillValue')
-    lon_fill_value = longitude_coordinate.get_attribute_value('_fillValue')
+    lat_fill = None
+    lon_fill = None
+    lat_fill_value = latitude_coordinate.get_attribute_value('_FillValue')
+    lon_fill_value = longitude_coordinate.get_attribute_value('_FillValue')
     # if fill_value is None:
     # check if there are overrides in hoss_config.json using varinfo
     # else
-    return lat_fill_value, lon_fill_value
+
+    if lat_fill_value is not None:
+        lat_fill = float(lat_fill_value)
+    if lon_fill_value is not None:
+        lon_fill = float(lon_fill_value)
+
+    return float(lat_fill), float(lon_fill)

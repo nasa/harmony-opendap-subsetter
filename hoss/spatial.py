@@ -247,7 +247,7 @@ def get_x_y_index_ranges_from_coordinates(
     crs = get_variable_crs(non_spatial_variable, varinfo)
     projected_x = 'projected_x'
     projected_y = 'projected_y'
-    override_dimension_datasets = update_dimension_variables(
+    override_dimension_variables = update_dimension_variables(
         prefetch_coordinate_datasets,
         latitude_coordinate,
         longitude_coordinate,
@@ -257,21 +257,21 @@ def get_x_y_index_ranges_from_coordinates(
     if not set((projected_x, projected_y)).issubset(set(index_ranges.keys())):
 
         x_y_extents = get_projected_x_y_extents(
-            override_dimension_datasets[projected_x][:],
-            override_dimension_datasets[projected_y][:],
+            override_dimension_variables[projected_x][:],
+            override_dimension_variables[projected_y][:],
             crs,
             shape_file=shape_file_path,
             bounding_box=bounding_box,
         )
 
         x_index_ranges = get_dimension_index_range(
-            override_dimension_datasets[projected_x][:],
+            override_dimension_variables[projected_x][:],
             x_y_extents['x_min'],
             x_y_extents['x_max'],
             bounds_values=None,
         )
         y_index_ranges = get_dimension_index_range(
-            override_dimension_datasets[projected_y][:],
+            override_dimension_variables[projected_y][:],
             x_y_extents['y_min'],
             x_y_extents['y_max'],
             bounds_values=None,

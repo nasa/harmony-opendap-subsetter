@@ -108,48 +108,61 @@ class MissingSpatialSubsetInformation(CustomError):
         )
 
 
-class MissingCoordinateDataset(CustomError):
+class MissingCoordinateVariable(CustomError):
     """This exception is raised when HOSS tries to get latitude and longitude
-    datasets and they are missing or empty. These datasets are referred to
+    variables and they are missing or empty. These variables are referred to
     in the science variables with coordinate attributes.
 
     """
 
     def __init__(self, referring_variable):
         super().__init__(
-            'MissingCoordinateDataset',
+            'MissingCoordinateVariable',
             f'Coordinate: "{referring_variable}" is '
             'not present in source granule file.',
         )
 
 
-class MissingValidCoordinateDataset(CustomError):
+class InvalidCoordinateVariable(CustomError):
     """This exception is raised when HOSS tries to get latitude and longitude
-    datasets and they have fill values to the extent that it cannot be used.
-    These datasets are referred in the science variables with coordinate attributes.
+    variables and they have fill values to the extent that it cannot be used.
+    These variables are referred in the science variables with coordinate attributes.
 
     """
 
     def __init__(self, referring_variable):
         super().__init__(
-            'MissingValidCoordinateDataset',
+            'InvalidCoordinateVariable',
             f'Coordinate: "{referring_variable}" is '
             'not valid in source granule file.',
         )
 
 
-class IrregularCoordinateDatasets(CustomError):
+class IrregularCoordinateVariables(CustomError):
     """This exception is raised when HOSS tries to get latitude and longitude
-    datasets and they are missing or empty. These datasets are referred to
+    coordinate variable and they are missing or empty. These variables are referred to
     in the science variables with coordinate attributes.
 
     """
 
     def __init__(self, longitude_shape, latitude_shape):
         super().__init__(
-            'IrregularCoordinateDatasets',
-            f'Longitude dataset shape: "{longitude_shape}"'
-            f'does not match the latitude dataset shape: "{latitude_shape}"',
+            'IrregularCoordinateVariables',
+            f'Longitude coordinate shape: "{longitude_shape}"'
+            f'does not match the latitude coordinate shape: "{latitude_shape}"',
+        )
+
+
+class CannotComputeDimensionResolution(CustomError):
+    """This exception is raised when the two values passed to
+    the method computing the resolution are equal
+
+    """
+
+    def __init__(self, dim_value, dim_index):
+        super().__init__(
+            'CannotComputeDimensionResolution',
+            f'dim_value: "{dim_value}" dim_index: "{dim_index}"',
         )
 
 

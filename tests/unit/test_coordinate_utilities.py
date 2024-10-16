@@ -14,18 +14,16 @@ from varinfo import VarInfoFromDmr
 from hoss.coordinate_utilities import (
     get_coordinate_variables,
     get_fill_values_for_coordinates,
-    get_geo_grid_corners,
     get_lat_lon_arrays,
     get_override_projected_dimension_name,
     get_override_projected_dimensions,
     get_row_col_sizes_from_coordinate_datasets,
+    get_two_valid_geo_grid_points,
     get_valid_indices,
     get_variables_with_anonymous_dims,
-    get_x_y_extents_from_geographic_points,
-    is_lat_lon_ascending,
     update_dimension_variables,
 )
-from hoss.exceptions import MissingCoordinateDataset, MissingValidCoordinateDataset
+from hoss.exceptions import InvalidCoordinateVariable, MissingCoordinateVariable
 
 
 class TestCoordinateUtilities(TestCase):
@@ -83,74 +81,51 @@ class TestCoordinateUtilities(TestCase):
 
         """
 
-        expected_result1 = np.array([0, 1, 2, 3, 4])
-        expected_result2 = np.array([0, 1, 2, 6, 7, 8, 9])
-        expected_result3 = np.empty((0, 0))
+        expected_valid_indices_lat_arr = np.array([0, 1, 2, 3, 4])
+        expected_valid_indices_lon_arr = np.array([0, 1, 2, 6, 7, 8, 9])
 
         fill_array = np.array([-9999.0, -9999.0, -9999.0, -9999.0])
         with self.subTest('valid indices with no fill values configured'):
-            actual_result1 = get_valid_indices(self.lat_arr[:, -1], None, 'latitude')
-            print('actual_result1=' f'{actual_result1}')
-            print('expected_result1=' f'{expected_result1}')
-            self.assertTrue(np.array_equal(actual_result1, expected_result1))
-
-        with self.subTest('valid indices with fill values configured'):
-            actual_result2 = get_valid_indices(self.lon_arr[0, :], -9999.0, 'longitude')
-            print('actual_result2=' f'{actual_result2}')
-            print('expected_result2=' f'{expected_result2}')
-            self.assertTrue(np.array_equal(actual_result2, expected_result2))
-
-        with self.subTest('all fill values - no valid indices'):
-            with self.assertRaises(MissingValidCoordinateDataset) as context:
-                actual_result3 = get_valid_indices(fill_array, -9999.0, 'longitude')
-                print('actual_result3=' f'{actual_result3}')
-                print('expected_result3=' f'{expected_result3}')
-                self.assertEqual(
-                    context.exception.message,
-                    'Coordinate: "longitude" is not valid in source granule file.',
-                )
-
-    def test_is_lat_lon_ascending(self):
-        """Ensure that latitude and longitude values are correctly identified as
-        ascending or descending.
-
-        """
-
-        expected_result = False, True
-        with self.subTest('ascending order even with fill values'):
-            self.assertEqual(
-                is_lat_lon_ascending(self.lat_arr, self.lon_arr, -9999, -9999),
-                expected_result,
+            valid_indices_lat_arr = get_valid_indices(
+                self.lat_arr[:, -1], None, 'latitude'
+            )
+            self.assertTrue(
+                np.array_equal(valid_indices_lat_arr, expected_valid_indices_lat_arr)
             )
 
-    def test_get_geo_grid_corners(self):
-        """Ensure that the correct corner points returned by the methos
+        with self.subTest('valid indices with fill values configured'):
+            valid_indices_lon_arr = get_valid_indices(
+                self.lon_arr[0, :], -9999.0, 'longitude'
+            )
+            self.assertTrue(
+                np.array_equal(valid_indices_lon_arr, expected_valid_indices_lon_arr)
+            )
+
+        with self.subTest('all fill values - no valid indices'):
+            valid_indices = get_valid_indices(fill_array, -9999.0, 'longitude')
+            self.assertTrue(valid_indices.size == 0)
+
+    def test_get_two_valid_geo_grid_points(self):
+        """Ensure that two valid lat/lon points returned by the method
         with a set of lat/lon coordinates as input
 
         """
-        prefetch_dataset = Dataset(self.nc4file, 'r+')
+        prefetch_dataset = Dataset(self.nc4file, 'r')
         lat_fill = -9999.0
         lon_fill = -9999.0
+        row_size = 406
+        col_size = 964
 
-        # lat_arr = prefetch_dataset[self.latitude][:]
-        # lon_arr = prefetch_dataset[self.longitude][:]
+        expected_geo_grid_points = [(-179.3, 89.3), (-120.2, -88.1)]
 
-        expected_geo_corners = [
-            (-179.3, 89.3),
-            (178.4, 89.3),
-            (178.4, -88.1),
-            (-179.3, -88.1),
-        ]
-
-        with self.subTest('Get geo grid corners from coordinates'):
-            actual_geo_corners = get_geo_grid_corners(
-                self.lat_arr,
-                self.lon_arr,
-                lat_fill,
-                lon_fill,
+        with self.subTest('Get two valid geo grid points from coordinates'):
+            actual_geo_grid_points = get_two_valid_geo_grid_points(
+                self.lat_arr, self.lon_arr, lat_fill, lon_fill, row_size, col_size
             )
-            for actual, expected in zip(actual_geo_corners, expected_geo_corners):
-                self.assertAlmostEqual(actual[0], expected[0], places=1)
-                self.assertAlmostEqual(actual[1], expected[1], places=1)
+            for actual, expected in zip(
+                actual_geo_grid_points.values(), expected_geo_grid_points
+            ):
+                self.assertEqual(actual[0], expected[0])
+                self.assertEqual(actual[1], expected[1])
 
         prefetch_dataset.close()

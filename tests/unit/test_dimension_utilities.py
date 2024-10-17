@@ -23,12 +23,12 @@ from hoss.dimension_utilities import (
     get_dimension_indices_from_bounds,
     get_dimension_indices_from_values,
     get_fill_slice,
+    get_prefetch_variables,
     get_requested_index_ranges,
     is_almost_in,
     is_dimension_ascending,
     is_index_subset,
     needs_bounds,
-    prefetch_dimension_variables,
     write_bounds,
 )
 from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
@@ -328,7 +328,7 @@ class TestDimensionUtilities(TestCase):
 
     @patch('hoss.dimension_utilities.add_bounds_variables')
     @patch('hoss.dimension_utilities.get_opendap_nc4')
-    def test_prefetch_dimension_variables(
+    def test_get_prefetch_variables(
         self, mock_get_opendap_nc4, mock_add_bounds_variables
     ):
         """Ensure that when a list of required variables is specified, a
@@ -349,7 +349,7 @@ class TestDimensionUtilities(TestCase):
         required_dimensions = {'/latitude', '/longitude', '/time'}
 
         self.assertEqual(
-            prefetch_dimension_variables(
+            get_prefetch_variables(
                 url,
                 self.varinfo,
                 required_variables,
@@ -569,7 +569,7 @@ class TestDimensionUtilities(TestCase):
         }
 
         self.assertEqual(
-            prefetch_dimension_variables(
+            get_prefetch_variables(
                 url,
                 self.varinfo_with_bounds,
                 required_variables,

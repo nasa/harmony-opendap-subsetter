@@ -31,12 +31,13 @@ def get_override_projected_dimension_name(
 
     """
     override_variable = varinfo.get_variable(variable_name)
-    projected_dimension_name = ''
     if override_variable is not None:
         if override_variable.is_latitude():
             projected_dimension_name = 'projected_y'
         elif override_variable.is_longitude():
             projected_dimension_name = 'projected_x'
+        else:
+            projected_dimension_name = ''
     return projected_dimension_name
 
 
@@ -327,7 +328,7 @@ def get_dimension_scale_from_dimvalues(
         dim_max = dim_values[0] + (dim_resolution * (dim_size - dim_indices[0] - 1))
         dim_data = np.linspace(dim_min, dim_max, dim_size)
     else:
-        dim_max = dim_values[0] + (dim_resolution * dim_indices[0])
+        dim_max = dim_values[0] + (-dim_resolution * dim_indices[0])
         dim_min = dim_values[0] - (-dim_resolution * (dim_size - dim_indices[0] - 1))
         dim_data = np.linspace(dim_max, dim_min, dim_size)
 
@@ -382,7 +383,7 @@ def get_valid_indices(
     """
     Returns indices of a valid array without fill values
     """
-    valid_indices = np.empty((0, 0))
+
     if coordinate_fill:
         valid_indices = np.where(
             ~np.isclose(coordinate_row_col, float(coordinate_fill))
@@ -395,6 +396,8 @@ def get_valid_indices(
         valid_indices = np.where(
             (coordinate_row_col >= -90.0) & (coordinate_row_col <= 90.0)
         )[0]
+    else:
+        valid_indices = np.empty((0, 0))
 
     return valid_indices
 

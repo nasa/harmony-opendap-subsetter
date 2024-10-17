@@ -162,6 +162,7 @@ class CannotComputeDimensionResolution(CustomError):
     def __init__(self, dim_value, dim_index):
         super().__init__(
             'CannotComputeDimensionResolution',
+            'Cannot compute the dimension resolution for '
             f'dim_value: "{dim_value}" dim_index: "{dim_index}"',
         )
 

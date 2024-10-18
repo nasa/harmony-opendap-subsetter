@@ -16,5 +16,5 @@
 #
 harmony-py~=0.4.10
 netCDF4~=1.6.4
-notebook~=7.0.4
+notebook~=7.2.2
 xarray~=2023.9.0

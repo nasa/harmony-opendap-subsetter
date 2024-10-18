@@ -59,24 +59,6 @@
       "Epoch": "2018-01-01T00:00:00.000000"
     }
   ],
-  "Grid_Mapping_Data": [
-    {
-      "Grid_Mapping_Dataset_Name": "EASE2_Global",
-      "grid_mapping_name": "lambert_cylindrical_equal_area",
-      "standard_parallel": 30.0,
-      "longitude_of_central_meridian": 0.0,
-      "false_easting": 0.0,
-      "false_northing": 0.0
-    },
-    {
-      "Grid_Mapping_Dataset_Name": "EASE2_Polar",
-      "grid_mapping_name": "lambert_azimuthal_equal_area",
-      "longitude_of_projection_origin": 0.0,
-      "latitude_of_projection_origin": 90.0,
-      "false_easting": 0.0,
-      "false_northing": 0.0
-    }
-  ],
   "CF_Overrides": [
     {
       "Applicability": {
@@ -161,34 +143,58 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3FT(P|P_E)"
+        "ShortNamePath": "SPL3FT(P|P_E)",
+        "Variable_Pattern": "(?i).*global.*"
       },
-      "Applicability_Group": [
+      "Attributes": [
         {
-          "Applicability": {
-            "Variable_Pattern": "(?i).*global.*"
-          },
-          "Attributes": [
-            {
-              "Name": "Grid_Mapping",
-              "Value": "EASE2_Global"
-            }
-          ],
-          "_Description": "Some versions of these collections omit global grid mapping information"
-        },
-        {
-          "Applicability": {
-            "Variable_Pattern": "(?i).*polar.*"
-          },
-          "Attributes": [
-            {
-              "Name": "Grid_Mapping",
-              "Value": "EASE2_Polar"
-            }
-          ],
-          "_Description": "Some versions of these collections omit polar grid mapping information"
+          "Name": "grid_mapping",
+          "Value": "/EASE2_global_projection"
         }
-      ]
+      ],
+      "_Description": "SMAP L3 collections omit global grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FT(P|P_E)",
+        "Variable_Pattern": "(?i).*polar.*"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_polar_projection"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit polar grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP_E",
+        "Variable_Pattern": "Soil_Moisture_Retrieval_Data_(A|P)M/.*"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_global_projection"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit global grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP_E",
+        "Variable_Pattern": "Soil_Moisture_Retrieval_Data_Polar_(A|P)M/.*"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_polar_projection"
+          }
+        ],
+        "_Description": "SMAP L3 collections omit polar grid mapping information"
     },
     {
       "Applicability": {
@@ -197,11 +203,84 @@
       },
       "Attributes": [
         {
-          "Name": "Grid_Mapping",
-          "Value": "EASE2_Polar"
+          "Name": "grid_mapping",
+          "Value": "/EASE2_polar_projection"
         }
       ],
-      "_Description": "Some versions of these collections omit polar grid mapping information"
+      "_Description": "SMAP L3 collections omit polar grid mapping information"
+    },
+    {
+        "Applicability": {
+          "Mission": "SMAP",
+          "ShortNamePath": "SPL3SM(P|A|AP)|SPL2SMAP_S"
+        },
+        "Attributes": [
+          {
+            "Name": "grid_mapping",
+            "Value": "/EASE2_global_projection"
+          }
+        ],
+        "_Description": "SMAP L3 collections omit global grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FT(P|P_E)|SPL3SM(P|P_E|A|AP)|SPL2SMAP_S",
+        "Variable_Pattern": "/EASE2_global_projection"
+      },
+      "Attributes": [
+       {
+          "Name": "grid_mapping_name",
+          "Value": "lambert_cylindrical_equal_area"
+       },
+       {
+          "Name":"standard_parallel",
+          "Value": 30.0
+       },
+       {
+          "Name": "longitude_of_central_meridian",
+          "Value": 0.0
+       },
+       {
+          "Name": "false_easting",
+          "Value": 0.0
+       },
+       {
+           "Name": "false_northing",
+           "Value": 0.0
+       }
+      ],
+      "_Description": "Provide missing global grid mapping attributes for SMAP L3 collections."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FT(P|P_E)|SPL3SM(P|P_E|A|AP)|SPL2SMAP_S",
+        "Variable_Pattern": "/EASE2_polar_projection"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping_name",
+          "Value": "lambert_azimuthal_equal_area"
+        },
+        {
+          "Name": "longitude_of_projection_origin",
+          "Value" : 0.0
+        },
+        {
+          "Name": "latitude_of_projection_origin",
+          "Value": 90.0
+        },
+        {
+          "Name": "false_easting",
+          "Value": 0.0
+        },
+        {
+          "Name": "false_northing",
+          "Value": 0.0
+        }
+      ],
+      "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
     },
     {
       "Applicability": {
@@ -211,11 +290,39 @@
       },
       "Attributes": [
         {
-          "Name": "_fill",
-          "Value": "-9999"
+          "Name": "_FillValue",
+          "Value": "-9999.0"
         }
       ],
       "_Description": "Ensure metadata fill value matches what is present in arrays."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SM(A|P|AP|P_E)",
+        "Variable_Pattern": "/Soil_Moisture_Retrieval_(Data|Data_AM|Data_Polar_AM)/(latitude|longitude).*"
+      },
+      "Attributes": [
+        {
+          "Name": "_FillValue",
+          "Value": "-9999.0"
+        }
+      ],
+      "_Description": "Ensure metadata fill value matches what is present in arrays."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP",
+        "Variable_Pattern": "/Soil_Moisture_Retrieval_Data_PM/.*"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data_PM/latitude_pm, /Soil_Moisture_Retrieval_Data_PM/longitude_pm"
+        }
+      ],
+      "_Description": "Ensure variables in /Soil_Moisture_Retrieval_Data_PM group point to correct coordinate variables."
     },
     {
       "Applicability": {

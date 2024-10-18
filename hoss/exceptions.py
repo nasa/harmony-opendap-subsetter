@@ -57,7 +57,7 @@ class InvalidRequestedRange(CustomError):
     def __init__(self):
         super().__init__(
             'InvalidRequestedRange',
-            'Input request specified range outside supported ' 'dimension range',
+            'Input request specified range outside supported dimension range',
         )
 
 
@@ -105,6 +105,65 @@ class MissingSpatialSubsetInformation(CustomError):
             'MissingSpatialSubsetInformation',
             'Either a bounding box or shape file must be '
             'specified when performing spatial subsetting.',
+        )
+
+
+class MissingCoordinateVariable(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    variables and they are missing or empty. These variables are referred to
+    in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, referring_variable):
+        super().__init__(
+            'MissingCoordinateVariable',
+            f'Coordinate: "{referring_variable}" is '
+            'not present in source granule file.',
+        )
+
+
+class InvalidCoordinateVariable(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    variables and they have fill values to the extent that it cannot be used.
+    These variables are referred in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, referring_variable):
+        super().__init__(
+            'InvalidCoordinateVariable',
+            f'Coordinate: "{referring_variable}" is '
+            'not valid in source granule file.',
+        )
+
+
+class IrregularCoordinateVariables(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    coordinate variable and they are missing or empty. These variables are referred to
+    in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, longitude_shape, latitude_shape):
+        super().__init__(
+            'IrregularCoordinateVariables',
+            f'Longitude coordinate shape: "{longitude_shape}"'
+            f'does not match the latitude coordinate shape: "{latitude_shape}"',
+        )
+
+
+class CannotComputeDimensionResolution(CustomError):
+    """This exception is raised when the two values passed to
+    the method computing the resolution are equal
+
+    """
+
+    def __init__(self, dim_value, dim_index):
+        super().__init__(
+            'CannotComputeDimensionResolution',
+            'Cannot compute the dimension resolution for '
+            f'dim_value: "{dim_value}" dim_index: "{dim_index}"',
         )
 
 

@@ -3,45 +3,41 @@
     coordinate variable data to x/y dimension scales
 """
 
-from typing import Set, Tuple
-
 import numpy as np
 from netCDF4 import Dataset
-from numpy import ndarray
+
+# from numpy import ndarray
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.exceptions import (
-    CannotComputeDimensionResolution,
-    IrregularCoordinateVariables,
+    InvalidCoordinateDataset,
+    InvalidCoordinateVariable,
+    InvalidSizingInCoordinateVariables,
     MissingCoordinateVariable,
+    MissingVariable,
 )
 
 
-def get_override_projected_dimension_names(
-    varinfo: VarInfoFromDmr, variable_name: str
-) -> str:
+def get_projected_dimension_names(varinfo: VarInfoFromDmr, variable_name: str) -> str:
     """returns the x-y projection variable names that would
-    match the group of geo coordinate names. The  coordinate
-    variable name gets converted to 'projected_y' dimension scale
-    and 'projected_x'
+    match the group of the input variable. The 'projected_y' dimension scale
+    and 'projected_x' names are returned with the group pathname
 
     """
-    override_variable = varinfo.get_variable(variable_name)
+    variable = varinfo.get_variable(variable_name)
 
-    if override_variable is not None and (
-        override_variable.is_latitude() or override_variable.is_longitude()
-    ):
+    if variable is not None:
         projected_dimension_names = [
-            f'{override_variable.group_path}/projected_y',
-            f'{override_variable.group_path}/projected_x',
+            f'{variable.group_path}/projected_y',
+            f'{variable.group_path}/projected_x',
         ]
     else:
-        raise MissingCoordinateVariable(override_variable.full_name_path)
+        raise MissingVariable(variable_name)
 
     return projected_dimension_names
 
 
-def get_override_projected_dimensions(
+def get_projected_dimension_names_from_coordinate_variables(
     varinfo: VarInfoFromDmr,
     variable_name: str,
 ) -> list[str]:
@@ -52,10 +48,8 @@ def get_override_projected_dimensions(
         varinfo, [variable_name]
     )
 
-    override_dimensions = []
-    if latitude_coordinates and longitude_coordinates:
-        # there should be only 1 lat and lon coordinate for one variable
-        override_dimensions = get_override_projected_dimension_names(
+    if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
+        projected_dimension_names = get_projected_dimension_names(
             varinfo, latitude_coordinates[0]
         )
 
@@ -64,18 +58,20 @@ def get_override_projected_dimensions(
         varinfo.get_variable(variable_name).is_latitude()
         or varinfo.get_variable(variable_name).is_longitude()
     ):
-        override_dimensions = get_override_projected_dimension_names(
+        projected_dimension_names = get_projected_dimension_names(
             varinfo, variable_name
         )
-    return override_dimensions
+    else:
+        projected_dimension_names = []
+    return projected_dimension_names
 
 
 def get_variables_with_anonymous_dims(
     varinfo: VarInfoFromDmr, variables: set[str]
 ) -> set[str]:
     """
-    returns a set of variables without any
-    dimensions
+    returns a set of variables without any dimension scales
+    associated with it
     """
     return set(
         variable
@@ -86,40 +82,44 @@ def get_variables_with_anonymous_dims(
 
 def get_coordinate_variables(
     varinfo: VarInfoFromDmr,
-    requested_variables: Set[str],
+    requested_variables: list,
 ) -> tuple[list, list]:
-    """This method returns coordinate variables that are referenced
-    in the variables requested. It returns it in a specific order
-    [latitude, longitude]
+    """This function returns latitude and longitude variables listed in the
+    CF-Convention coordinates metadata attribute. It returns them in a specific
+    order [latitude, longitude]"
     """
+    print(f'requested_variables={requested_variables}')
 
-    coordinate_variables_set = sorted(
-        varinfo.get_references_for_attribute(requested_variables, 'coordinates')
+    coordinate_variables_list = varinfo.get_references_for_attribute(
+        requested_variables, 'coordinates'
     )
-
+    print(f'coordinate_variables_list={coordinate_variables_list}')
     latitude_coordinate_variables = [
         coordinate
-        for coordinate in coordinate_variables_set
+        for coordinate in coordinate_variables_list
         if varinfo.get_variable(coordinate).is_latitude()
     ]
+    print(f'latitude_coordinate_variables={latitude_coordinate_variables}')
 
     longitude_coordinate_variables = [
         coordinate
-        for coordinate in coordinate_variables_set
+        for coordinate in coordinate_variables_list
         if varinfo.get_variable(coordinate).is_longitude()
     ]
+    print(f'longitude_coordinate_variables={longitude_coordinate_variables}')
 
     return latitude_coordinate_variables, longitude_coordinate_variables
 
 
 def get_row_col_sizes_from_coordinate_datasets(
-    lat_arr: ndarray,
-    lon_arr: ndarray,
-) -> Tuple[int, int]:
+    lat_arr: np.ndarray,
+    lon_arr: np.ndarray,
+) -> tuple[int, int]:
     """
     This method returns the row and column sizes of the coordinate datasets
 
     """
+    # ToDo - if the coordinates are 3D
     if lat_arr.ndim > 1 and lon_arr.shape == lat_arr.shape:
         col_size = lat_arr.shape[1]
         row_size = lat_arr.shape[0]
@@ -129,42 +129,33 @@ def get_row_col_sizes_from_coordinate_datasets(
         and lat_arr.size > 0
         and lon_arr.size > 0
     ):
+        # Todo: The ordering needs to be checked
         col_size = lon_arr.size
         row_size = lat_arr.size
     else:
-        raise IrregularCoordinateVariables(lon_arr.shape, lat_arr.shape)
+        raise InvalidSizingInCoordinateVariables(lon_arr.shape, lat_arr.shape)
     return row_size, col_size
 
 
-def get_lat_lon_arrays(
+def get_coordinate_array(
     prefetch_dataset: Dataset,
-    latitude_coordinate: VariableFromDmr,
-    longitude_coordinate: VariableFromDmr,
-) -> Tuple[ndarray, ndarray]:
-    """
-    This method is used to return the lat lon arrays from a 2D
+    coordinate_name: str,
+) -> np.ndarray:
+    """This function returns the `numpy` array from a
     coordinate dataset.
+
     """
     try:
-        lat_arr = prefetch_dataset[latitude_coordinate.full_name_path][:]
+        coordinate_array = prefetch_dataset[coordinate_name][:]
     except Exception as exception:
-        raise MissingCoordinateVariable(
-            latitude_coordinate.full_name_path
-        ) from exception
+        raise MissingCoordinateVariable(coordinate_name) from exception
 
-    try:
-        lon_arr = prefetch_dataset[longitude_coordinate.full_name_path][:]
-    except Exception as exception:
-        raise MissingCoordinateVariable(
-            longitude_coordinate.full_name_path
-        ) from exception
-
-    return lat_arr, lon_arr
+    return coordinate_array
 
 
 def get_dimension_scale_from_dimvalues(
-    dim_values: ndarray, dim_indices: ndarray, dim_size: float
-) -> ndarray:
+    dim_values: np.ndarray, dim_indices: np.ndarray, dim_size: float
+) -> np.ndarray:
     """
     return a full dimension scale based on the 2 projected points and
     grid size
@@ -175,7 +166,7 @@ def get_dimension_scale_from_dimvalues(
             dim_indices[1] - dim_indices[0]
         )
     if dim_resolution == 0.0:
-        raise CannotComputeDimensionResolution(dim_values[0], dim_indices[0])
+        raise InvalidCoordinateDataset(dim_values[0], dim_indices[0])
 
     # create the dim scale
     dim_asc = dim_values[1] > dim_values[0]
@@ -193,8 +184,8 @@ def get_dimension_scale_from_dimvalues(
 
 
 def get_valid_indices(
-    coordinate_row_col: ndarray, coordinate_fill: float, coordinate_name: str
-) -> ndarray:
+    coordinate_row_col: np.ndarray, coordinate_fill: float, coordinate_name: str
+) -> np.ndarray:
     """
     Returns indices of a valid array without fill values
     """

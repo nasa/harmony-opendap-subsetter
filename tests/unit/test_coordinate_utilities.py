@@ -1,7 +1,5 @@
 from logging import getLogger
 from os.path import exists
-from shutil import copy, rmtree
-from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import ANY, patch
 
@@ -12,9 +10,9 @@ from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
+    get_1D_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
-    get_dimension_scale_from_dimvalues,
     get_fill_value_for_coordinate,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
@@ -44,6 +42,11 @@ class TestCoordinateUtilities(TestCase):
         cls.logger = getLogger('tests')
         cls.varinfo = VarInfoFromDmr(
             'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            config_file='hoss/hoss_config.json',
+        )
+        cls.test_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008_fake.dmr',
             'SPL3SMP',
             config_file='hoss/hoss_config.json',
         )
@@ -119,11 +122,6 @@ class TestCoordinateUtilities(TestCase):
     def tearDown(self):
         """Remove per-test fixtures."""
 
-    def test_create_dimension_scales_from_coordinates(self):
-        """Ensure that the dimension scales created from the
-        coordinates are as expected
-        """
-
     def test_get_coordinate_variables(self):
         """Ensure that the correct coordinate variables are
         retrieved for the reqquested science variable
@@ -144,13 +142,10 @@ class TestCoordinateUtilities(TestCase):
             ],
         )
 
-        with self.subTest('Retrieves expected coordinates for the requested variable'):
+        with self.subTest('Retrieves expected coordinates for the requested variables'):
             actual_coordinate_variables = get_coordinate_variables(
                 self.varinfo, requested_science_variables
             )
-            print(f'expected_coordinate_variables={expected_coordinate_variables}')
-            print(f'actual_coordinate_variables={actual_coordinate_variables}')
-            self.maxDiff = None
             # the order of the results maybe random
             self.assertEqual(
                 len(expected_coordinate_variables), len(actual_coordinate_variables)
@@ -167,45 +162,39 @@ class TestCoordinateUtilities(TestCase):
             for expected_variable in expected_coordinate_variables[1]:
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
 
-    def test_get_dimension_scale_from_dimvalues(self):
+    def test_get_1D_dim_array_from_dimvalues(self):
         """Ensure that the dimension scale generated from the
         provided dimension values are accurate for ascending and
         descending scales
         """
 
-        dim_values_asc = np.array([2, 4])
-        dim_indices_asc = np.array([0, 1])
-        dim_size_asc = 12
-        expected_dim_asc = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24])
-
-        dim_values_desc = np.array([100, 70])
-        dim_indices_desc = np.array([2, 5])
-        dim_size_desc = 10
-        expected_dim_desc = np.array([120, 110, 100, 90, 80, 70, 60, 50, 40, 30])
-
-        dim_values_invalid = np.array([2, 2])
-        dim_indices_asc = np.array([0, 1])
-        dim_size_asc = 12
-
-        dim_values_desc = np.array([100, 70])
-        dim_indices_invalid = np.array([5, 5])
-        dim_size_desc = 10
-
         with self.subTest('valid ascending dim scale'):
-            dim_scale_values = get_dimension_scale_from_dimvalues(
+            dim_values_asc = np.array([2, 4])
+            dim_indices_asc = np.array([0, 1])
+            dim_size_asc = 12
+            expected_dim_asc = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24])
+            dim_array_values = get_1D_dim_array_data_from_dimvalues(
                 dim_values_asc, dim_indices_asc, dim_size_asc
             )
-            self.assertTrue(np.array_equal(dim_scale_values, expected_dim_asc))
+            self.assertTrue(np.array_equal(dim_array_values, expected_dim_asc))
 
         with self.subTest('valid descending dim scale'):
-            dim_scale_values = get_dimension_scale_from_dimvalues(
+            dim_values_desc = np.array([100, 70])
+            dim_indices_desc = np.array([2, 5])
+            dim_size_desc = 10
+            expected_dim_desc = np.array([120, 110, 100, 90, 80, 70, 60, 50, 40, 30])
+
+            dim_array_values = get_1D_dim_array_data_from_dimvalues(
                 dim_values_desc, dim_indices_desc, dim_size_desc
             )
-            self.assertTrue(np.array_equal(dim_scale_values, expected_dim_desc))
+            self.assertTrue(np.array_equal(dim_array_values, expected_dim_desc))
 
         with self.subTest('invalid dimension values'):
+            dim_values_invalid = np.array([2, 2])
+            dim_indices_asc = np.array([0, 1])
+            dim_size_asc = 12
             with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_dimension_scale_from_dimvalues(
+                get_1D_dim_array_data_from_dimvalues(
                     dim_values_invalid, dim_indices_asc, dim_size_asc
                 )
             self.assertEqual(
@@ -215,8 +204,11 @@ class TestCoordinateUtilities(TestCase):
             )
 
         with self.subTest('invalid dimension indices'):
+            dim_values_desc = np.array([100, 70])
+            dim_indices_invalid = np.array([5, 5])
+            dim_size_desc = 10
             with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_dimension_scale_from_dimvalues(
+                get_1D_dim_array_data_from_dimvalues(
                     dim_values_desc, dim_indices_invalid, dim_size_desc
                 )
             self.assertEqual(
@@ -249,35 +241,40 @@ class TestCoordinateUtilities(TestCase):
         """Ensures that the expected lat/lon arrays are retrieved
         for the coordinate variables
         """
-        prefetch_dataset = Dataset(self.nc4file, 'r')
         expected_shape = (406, 964)
         with self.subTest('Expected latitude array'):
-            lat_prefetch_arr = get_coordinate_array(
-                prefetch_dataset,
-                self.varinfo.get_variable(self.latitude).full_name_path,
-            )
-            self.assertTupleEqual(lat_prefetch_arr.shape, expected_shape)
-
-        with self.subTest('Expected longitude array'):
-            lon_prefetch_arr = get_coordinate_array(
-                prefetch_dataset,
-                self.varinfo.get_variable(self.longitude).full_name_path,
-            )
-            self.assertTupleEqual(lon_prefetch_arr.shape, expected_shape)
-
-        with self.subTest('Missing coordinate'):
-            with self.assertRaises(MissingCoordinateVariable) as context:
-                lat_prefetch_arr, lon_prefetch_arr = get_coordinate_array(
+            with Dataset(self.nc4file, 'r') as prefetch_dataset:
+                lat_prefetch_arr = get_coordinate_array(
                     prefetch_dataset,
-                    self.varinfo.get_variable(
-                        '/Soil_Moisture_Retrieval_Data_AM/longitude_centroid'
-                    ),
+                    self.latitude,
                 )
-                self.assertEqual(
-                    context.exception.message,
-                    'Coordinate: "/Soil_Moisture_Retrieval_Data_AM/latitude_centroid" is '
-                    'not present in coordinate prefetch file.',
+                self.assertTupleEqual(lat_prefetch_arr.shape, expected_shape)
+                np.testing.assert_array_equal(
+                    lat_prefetch_arr, prefetch_dataset[self.latitude][:]
                 )
+        with self.subTest('Expected longitude array'):
+            with Dataset(self.nc4file, 'r') as prefetch_dataset:
+                lon_prefetch_arr = get_coordinate_array(
+                    prefetch_dataset, self.longitude
+                )
+                self.assertTupleEqual(lon_prefetch_arr.shape, expected_shape)
+                np.testing.assert_array_equal(
+                    lon_prefetch_arr, prefetch_dataset[self.longitude][:]
+                )
+        with self.subTest('Missing coordinate'):
+            with Dataset(self.nc4file, 'r') as prefetch_dataset:
+                with self.assertRaises(MissingCoordinateVariable) as context:
+                    coord_arr = (
+                        get_coordinate_array(
+                            prefetch_dataset,
+                            '/Soil_Moisture_Retrieval_Data_AM/longitude_centroid',
+                        ),
+                    )
+                    self.assertEqual(
+                        context.exception.message,
+                        'Coordinate: "/Soil_Moisture_Retrieval_Data_AM/latitude_centroid" is '
+                        'not present in coordinate prefetch file.',
+                    )
 
     def test_get_projected_dimension_names(self):
         """Ensure that the expected projected dimension name
@@ -316,7 +313,7 @@ class TestCoordinateUtilities(TestCase):
                 'not present in source granule file.',
             )
 
-    def test_get_projected_dimensions_names_from_coordinate_variables(self):
+    def test_get_projected_dimension_names_from_coordinate_variables(self):
         """Ensure that the expected projected dimension name
         is returned for the coordinate variables
         """
@@ -333,7 +330,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Retrieves expected override dimensions for the science variable'
         ):
-            self.assertEqual(
+            self.assertListEqual(
                 get_projected_dimension_names_from_coordinate_variables(
                     self.varinfo, '/Soil_Moisture_Retrieval_Data_AM/surface_flag'
                 ),
@@ -343,7 +340,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Retrieves expected override dimensions for the longitude variable'
         ):
-            self.assertEqual(
+            self.assertListEqual(
                 get_projected_dimension_names_from_coordinate_variables(
                     self.varinfo, self.longitude
                 ),
@@ -353,7 +350,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Retrieves expected override dimensions for the latitude variable'
         ):
-            self.assertEqual(
+            self.assertListEqual(
                 get_projected_dimension_names_from_coordinate_variables(
                     self.varinfo, self.latitude
                 ),
@@ -363,7 +360,16 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Retrieves expected override dimensions science variable with a different grid'
         ):
-            self.assertEqual(
+            self.assertListEqual(
+                get_projected_dimension_names_from_coordinate_variables(
+                    self.varinfo, '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm'
+                ),
+                expected_override_dimensions_PM,
+            )
+        with self.subTest(
+            'Retrieves empty dimensions list when science variable has no coordinates'
+        ):
+            self.assertListEqual(
                 get_projected_dimension_names_from_coordinate_variables(
                     self.varinfo, '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm'
                 ),
@@ -377,8 +383,17 @@ class TestCoordinateUtilities(TestCase):
         expected_row_col_sizes = (5, 10)
         lat_1d_array = np.array([1, 2, 3, 4])
         lon_1d_array = np.array([6, 7, 8, 9])
-        lat_irregular_array = np.array([[1, 2, 3], [3, 4, 5]])
-        lon_irregular_array = np.array([[6, 7], [8, 9], [10, 11]])
+        lat_mismatched_array = np.array([[1, 2, 3], [3, 4, 5]])
+        lon_mismatched_array = np.array([[6, 7], [8, 9], [10, 11]])
+        lat_empty_ndim_array = np.array(
+            0,
+        )
+        lon_empty_ndim_array = np.array(
+            0,
+        )
+        lat_empty_size_array = np.array([])
+        lon_empty_size_array = np.array([])
+
         with self.subTest('Retrieves the expected row col sizes from the coordinates'):
             self.assertEqual(
                 get_row_col_sizes_from_coordinate_datasets(self.lat_arr, self.lon_arr),
@@ -395,13 +410,44 @@ class TestCoordinateUtilities(TestCase):
         ):
             with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_irregular_array, lon_irregular_array
+                    lat_mismatched_array, lon_mismatched_array
                 )
             self.assertEqual(
                 context.exception.message,
-                f'Longitude coordinate shape: "{lon_irregular_array.shape}"'
-                f'does not match the latitude coordinate shape: "{lat_irregular_array.shape}"',
+                f'Longitude coordinate shape: "{lon_mismatched_array.shape}"'
+                f'does not match the latitude coordinate shape: "{lat_mismatched_array.shape}"',
             )
+        with self.subTest(
+            'Raises an exception when Both arrays are 1-D, but latitude has a zero size'
+        ):
+            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+                get_row_col_sizes_from_coordinate_datasets(
+                    lat_empty_size_array, lon_1d_array
+                )
+
+        with self.subTest(
+            'Raises an exception when Both arrays are 1-D, but longitude has a zero size'
+        ):
+            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+                get_row_col_sizes_from_coordinate_datasets(
+                    lat_1d_array, lon_empty_size_array
+                )
+
+        with self.subTest(
+            'Raises an exception when latitude array that is zero dimensional'
+        ):
+            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+                get_row_col_sizes_from_coordinate_datasets(
+                    lat_empty_ndim_array, lon_1d_array
+                )
+
+        with self.subTest(
+            'Raises an exception when longitude array that is zero dimensional'
+        ):
+            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+                get_row_col_sizes_from_coordinate_datasets(
+                    lat_1d_array, lon_empty_ndim_array
+                )
 
     def test_get_valid_indices(self):
         """Ensure that latitude and longitude values are correctly identified as
@@ -416,21 +462,19 @@ class TestCoordinateUtilities(TestCase):
             valid_indices_lat_arr = get_valid_indices(
                 self.lat_arr[:, -1], None, 'latitude'
             )
-            self.assertTrue(
-                np.array_equal(valid_indices_lat_arr, expected_valid_indices_lat_arr)
+            np.testing.assert_array_equal(
+                valid_indices_lat_arr, expected_valid_indices_lat_arr
             )
-
         with self.subTest('valid indices with fill values configured'):
             valid_indices_lon_arr = get_valid_indices(
                 self.lon_arr[0, :], -9999.0, 'longitude'
             )
-            self.assertTrue(
-                np.array_equal(valid_indices_lon_arr, expected_valid_indices_lon_arr)
+            np.testing.assert_array_equal(
+                valid_indices_lon_arr, expected_valid_indices_lon_arr
             )
-
         with self.subTest('all fill values - no valid indices'):
             valid_indices = get_valid_indices(fill_array, -9999.0, 'longitude')
-            self.assertTrue(valid_indices.size == 0)
+            self.assertEqual(valid_indices.size, 0)
 
     def test_get_variables_with_anonymous_dims(self):
         """Ensure that variables with no dimensions are
@@ -441,12 +485,32 @@ class TestCoordinateUtilities(TestCase):
             '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
             '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
         }
-
+        requested_science_variables_with_dimensions = {
+            '/Soil_Moisture_Retrieval_Data_AM/variable_has_dim',
+            '/Soil_Moisture_Retrieval_Data_AM/variable_has_anonymous_dim',
+        }
         with self.subTest('Retrieves variables with no dimensions'):
             variables_with_anonymous_dims = get_variables_with_anonymous_dims(
-                self.varinfo, requested_science_variables
+                self.test_varinfo, requested_science_variables
             )
             self.assertSetEqual(
                 variables_with_anonymous_dims,
                 requested_science_variables,
+            )
+        with self.subTest('Does not retrieve variables with dimensions'):
+            variables_with_anonymous_dims = get_variables_with_anonymous_dims(
+                self.test_varinfo, {'/Soil_Moisture_Retrieval_Data_AM/variable_has_dim'}
+            )
+            self.assertTrue(len(variables_with_anonymous_dims) == 0)
+
+        with self.subTest(
+            'Only retrieves variables with anonymous dimensions,'
+            'when the request has both'
+        ):
+            variables_with_anonymous_dims = get_variables_with_anonymous_dims(
+                self.test_varinfo, requested_science_variables_with_dimensions
+            )
+            self.assertSetEqual(
+                variables_with_anonymous_dims,
+                {'/Soil_Moisture_Retrieval_Data_AM/variable_has_anonymous_dim'},
             )

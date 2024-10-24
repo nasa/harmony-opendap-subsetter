@@ -1,6 +1,6 @@
 """ This module contains utility functions used for
-    coordinate variables and methods to convert the
-    coordinate variable data to x/y dimension scales
+    coordinate variables and functions to convert the
+    coordinate variable data to projected x/y dimension values
 """
 
 import numpy as np
@@ -20,7 +20,7 @@ from hoss.exceptions import (
 
 def get_projected_dimension_names(varinfo: VarInfoFromDmr, variable_name: str) -> str:
     """returns the x-y projection variable names that would
-    match the group of the input variable. The 'projected_y' dimension scale
+    match the group of the input variable. The 'projected_y' dimension
     and 'projected_x' names are returned with the group pathname
 
     """
@@ -70,9 +70,10 @@ def get_variables_with_anonymous_dims(
     varinfo: VarInfoFromDmr, variables: set[str]
 ) -> set[str]:
     """
-    returns a set of variables without any dimension scales
+    returns a set of variables without any dimensions
     associated with it
     """
+
     return set(
         variable
         for variable in variables
@@ -88,25 +89,21 @@ def get_coordinate_variables(
     CF-Convention coordinates metadata attribute. It returns them in a specific
     order [latitude, longitude]"
     """
-    print(f'requested_variables={requested_variables}')
 
     coordinate_variables_list = varinfo.get_references_for_attribute(
         requested_variables, 'coordinates'
     )
-    print(f'coordinate_variables_list={coordinate_variables_list}')
     latitude_coordinate_variables = [
         coordinate
         for coordinate in coordinate_variables_list
         if varinfo.get_variable(coordinate).is_latitude()
     ]
-    print(f'latitude_coordinate_variables={latitude_coordinate_variables}')
 
     longitude_coordinate_variables = [
         coordinate
         for coordinate in coordinate_variables_list
         if varinfo.get_variable(coordinate).is_longitude()
     ]
-    print(f'longitude_coordinate_variables={longitude_coordinate_variables}')
 
     return latitude_coordinate_variables, longitude_coordinate_variables
 
@@ -116,7 +113,7 @@ def get_row_col_sizes_from_coordinate_datasets(
     lon_arr: np.ndarray,
 ) -> tuple[int, int]:
     """
-    This method returns the row and column sizes of the coordinate datasets
+    This function returns the row and column sizes of the coordinate datasets
 
     """
     # ToDo - if the coordinates are 3D
@@ -147,60 +144,72 @@ def get_coordinate_array(
     """
     try:
         coordinate_array = prefetch_dataset[coordinate_name][:]
-    except Exception as exception:
+    except IndexError as exception:
         raise MissingCoordinateVariable(coordinate_name) from exception
 
     return coordinate_array
 
 
-def get_dimension_scale_from_dimvalues(
-    dim_values: np.ndarray, dim_indices: np.ndarray, dim_size: float
+def get_1D_dim_array_data_from_dimvalues(
+    dim_values: np.ndarray, dim_indices: np.ndarray, dim_size: int
 ) -> np.ndarray:
     """
-    return a full dimension scale based on the 2 projected points and
+    return a full dimension data array based on the 2 projected points and
     grid size
     """
-    dim_resolution = 0.0
+
     if (dim_indices[1] != dim_indices[0]) and (dim_values[1] != dim_values[0]):
         dim_resolution = (dim_values[1] - dim_values[0]) / (
             dim_indices[1] - dim_indices[0]
         )
-    if dim_resolution == 0.0:
+    else:
         raise InvalidCoordinateDataset(dim_values[0], dim_indices[0])
 
-    # create the dim scale
-    dim_asc = dim_values[1] > dim_values[0]
+    # calculate the dimension data
+    # dim_asc = dim_values[1] > dim_values[0]
 
-    if dim_asc:
-        dim_min = dim_values[0] + (dim_resolution * dim_indices[0])
-        dim_max = dim_values[0] + (dim_resolution * (dim_size - dim_indices[0] - 1))
-        dim_data = np.linspace(dim_min, dim_max, dim_size)
-    else:
-        dim_max = dim_values[0] + (-dim_resolution * dim_indices[0])
-        dim_min = dim_values[0] - (-dim_resolution * (dim_size - dim_indices[0] - 1))
-        dim_data = np.linspace(dim_max, dim_min, dim_size)
+    # if dim_asc:
+    #     dim_min = dim_values[0] + (dim_resolution * dim_indices[0])
+    #     dim_max = dim_values[0] + (dim_resolution * (dim_size - dim_indices[0] - 1))
+    #     dim_data = np.linspace(dim_min, dim_max, dim_size)
+    # else:
+    #     dim_max = dim_values[0] + (-dim_resolution * dim_indices[0])
+    #     dim_min = dim_values[0] - (-dim_resolution * (dim_size - dim_indices[0] - 1))
+    #     dim_data = np.linspace(dim_max, dim_min, dim_size)
 
-    return dim_data
+    dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
+    dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
+    return np.linspace(dim_min, dim_max, dim_size)
+
+    # return dim_data
 
 
 def get_valid_indices(
     coordinate_row_col: np.ndarray, coordinate_fill: float, coordinate_name: str
 ) -> np.ndarray:
     """
-    Returns indices of a valid array without fill values
+    Returns indices of a valid array without fill values if the fill
+    value is provided. If it is not provided, we check for valid values
+    for latitude and longitude
     """
 
     if coordinate_fill:
         valid_indices = np.where(
             ~np.isclose(coordinate_row_col, float(coordinate_fill))
         )[0]
-    elif coordinate_name == 'longitude':
+    if coordinate_name == 'longitude':
         valid_indices = np.where(
-            (coordinate_row_col >= -180.0) & (coordinate_row_col <= 180.0)
+            # (-180.0 <= coordinate_row_col <= 360.0).all()
+            # (coordinate_row_col > -90.0) and (coordinate_row_col < 90.0)
+            (coordinate_row_col > -180.0)
+            & (coordinate_row_col < 360.0)
         )[0]
     elif coordinate_name == 'latitude':
         valid_indices = np.where(
-            (coordinate_row_col >= -90.0) & (coordinate_row_col <= 90.0)
+            # (-90.0 <= coordinate_row_col <= 90.0).all()
+            # (coordinate_row_col > -90.0) and (coordinate_row_col < 90.0)
+            (coordinate_row_col > -90.0)
+            & (coordinate_row_col < 90.0)
         )[0]
     else:
         valid_indices = np.empty((0, 0))

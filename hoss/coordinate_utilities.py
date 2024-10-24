@@ -165,18 +165,6 @@ def get_1D_dim_array_data_from_dimvalues(
     else:
         raise InvalidCoordinateDataset(dim_values[0], dim_indices[0])
 
-    # calculate the dimension data
-    # dim_asc = dim_values[1] > dim_values[0]
-
-    # if dim_asc:
-    #     dim_min = dim_values[0] + (dim_resolution * dim_indices[0])
-    #     dim_max = dim_values[0] + (dim_resolution * (dim_size - dim_indices[0] - 1))
-    #     dim_data = np.linspace(dim_min, dim_max, dim_size)
-    # else:
-    #     dim_max = dim_values[0] + (-dim_resolution * dim_indices[0])
-    #     dim_min = dim_values[0] - (-dim_resolution * (dim_size - dim_indices[0] - 1))
-    #     dim_data = np.linspace(dim_max, dim_min, dim_size)
-
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
     return np.linspace(dim_min, dim_max, dim_size)

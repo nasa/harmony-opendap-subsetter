@@ -162,7 +162,7 @@ class TestCoordinateUtilities(TestCase):
             for expected_variable in expected_coordinate_variables[1]:
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
 
-    def test_get_1D_dim_array_from_dimvalues(self):
+    def test_get_1D_dim_array_data_from_dimvalues(self):
         """Ensure that the dimension scale generated from the
         provided dimension values are accurate for ascending and
         descending scales

@@ -13,7 +13,6 @@ from hoss.coordinate_utilities import (
     get_1D_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
-    get_fill_value_for_coordinate,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
     get_row_col_sizes_from_coordinate_datasets,
@@ -21,9 +20,9 @@ from hoss.coordinate_utilities import (
     get_variables_with_anonymous_dims,
 )
 from hoss.exceptions import (
+    IncompatibleCoordinateVariables,
     InvalidCoordinateDataset,
     InvalidCoordinateVariable,
-    InvalidSizingInCoordinateVariables,
     MissingCoordinateVariable,
     MissingVariable,
 )
@@ -57,7 +56,7 @@ class TestCoordinateUtilities(TestCase):
         cls.lon_arr = np.array(
             [
                 [-179.3, -120.2, -60.6, -9999, -9999, -9999, 80.2, 120.6, 150.5, 178.4],
-                [-179.3, -120.2, -60.6, -9999, -9999, -9999, 80.2, 120.6, 150.5, 178.4],
+                [-179.3, -120.2, -60.6, -999, 999, -9999, 80.2, 120.6, 150.5, 178.4],
                 [-179.3, -120.2, -60.6, -9999, -9999, -9999, 80.2, 120.6, 150.5, 178.4],
                 [-179.3, -120.2, -60.6, -9999, -9999, -9999, 80.2, 120.6, 150.5, 178.4],
                 [-179.3, -120.2, -60.6, -9999, -9999, -9999, 80.2, 120.6, 150.5, 178.4],
@@ -69,8 +68,8 @@ class TestCoordinateUtilities(TestCase):
                 [89.3, 89.3, -9999, 89.3, 89.3, 89.3, -9999, 89.3, 89.3, 89.3],
                 [50.3, 50.3, 50.3, 50.3, 50.3, 50.3, -9999, 50.3, 50.3, 50.3],
                 [1.3, 1.3, 1.3, 1.3, 1.3, 1.3, -9999, -9999, 1.3, 1.3],
-                [-9999, -60.2, -60.2, -9999, -9999, -9999, -60.2, -60.2, -60.2, -60.2],
-                [-88.1, -88.1, -88.1, -9999, -9999, -9999, -88.1, -88.1, -88.1, -88.1],
+                [-9999, -60.2, -60.2, -99, -9999, -9999, -60.2, -60.2, -60.2, -60.2],
+                [-88.1, -88.1, -88.1, 99, -9999, -9999, -88.1, -88.1, -88.1, -88.1],
             ]
         )
 
@@ -215,26 +214,6 @@ class TestCoordinateUtilities(TestCase):
                 context.exception.message,
                 'Cannot compute the dimension resolution for '
                 'dim_value: "100" dim_index: "5"',
-            )
-
-    def test_get_fill_value_for_coordinate(self):
-        """Ensure that the fill values for the coordinates
-        are correctly returned
-
-        """
-        latitude_coordinate = self.varinfo.get_variable(self.latitude)
-        with self.subTest('Retrieves expected fill value for the latitude variable'):
-            self.assertEqual(
-                get_fill_value_for_coordinate(latitude_coordinate), -9999.0
-            )
-        with self.subTest('Returns None when there is no fill value for a variable'):
-            self.assertEqual(
-                get_fill_value_for_coordinate(
-                    self.varinfo.get_variable(
-                        '/Soil_Moisture_Retrieval_Data_AM/tb_time_utc'
-                    )
-                ),
-                None,
             )
 
     def test_get_coordinate_array(self):
@@ -408,7 +387,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Raises an exception when the lat and lon array shapes do not match'
         ):
-            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+            with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
                     lat_mismatched_array, lon_mismatched_array
                 )
@@ -420,7 +399,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Raises an exception when Both arrays are 1-D, but latitude has a zero size'
         ):
-            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+            with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
                     lat_empty_size_array, lon_1d_array
                 )
@@ -428,7 +407,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Raises an exception when Both arrays are 1-D, but longitude has a zero size'
         ):
-            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+            with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
                     lat_1d_array, lon_empty_size_array
                 )
@@ -436,7 +415,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Raises an exception when latitude array that is zero dimensional'
         ):
-            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+            with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
                     lat_empty_ndim_array, lon_1d_array
                 )
@@ -444,7 +423,7 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Raises an exception when longitude array that is zero dimensional'
         ):
-            with self.assertRaises(InvalidSizingInCoordinateVariables) as context:
+            with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
                     lat_1d_array, lon_empty_ndim_array
                 )
@@ -454,26 +433,46 @@ class TestCoordinateUtilities(TestCase):
         ascending or descending.
 
         """
-        expected_valid_indices_lat_arr = np.array([0, 1, 2, 3, 4])
-        expected_valid_indices_lon_arr = np.array([0, 1, 2, 6, 7, 8, 9])
+        expected_valid_indices_lat_arr_with_fill = np.array([1, 2, 3, 4])
+        expected_valid_indices_lon_arr_with_fill = np.array([0, 1, 2, 6, 7, 8, 9])
+
+        expected_valid_indices_lat_arr_over_range = np.array([0, 1, 2])
+        expected_valid_indices_lon_arr_over_range = np.array([0, 1, 2, 6, 7, 8, 9])
 
         fill_array = np.array([-9999.0, -9999.0, -9999.0, -9999.0])
-        with self.subTest('valid indices with no fill values configured'):
+
+        with self.subTest('valid indices for latitude with fill values'):
             valid_indices_lat_arr = get_valid_indices(
-                self.lat_arr[:, -1], None, 'latitude'
+                self.lat_arr[:, 2], self.varinfo.get_variable(self.latitude)
             )
             np.testing.assert_array_equal(
-                valid_indices_lat_arr, expected_valid_indices_lat_arr
+                valid_indices_lat_arr, expected_valid_indices_lat_arr_with_fill
             )
-        with self.subTest('valid indices with fill values configured'):
+        with self.subTest('valid indices for longitude with fill values'):
             valid_indices_lon_arr = get_valid_indices(
-                self.lon_arr[0, :], -9999.0, 'longitude'
+                self.lon_arr[0, :], self.varinfo.get_variable(self.longitude)
             )
             np.testing.assert_array_equal(
-                valid_indices_lon_arr, expected_valid_indices_lon_arr
+                valid_indices_lon_arr, expected_valid_indices_lon_arr_with_fill
+            )
+        with self.subTest('latitude values beyond valid range'):
+            valid_indices_lat_arr = get_valid_indices(
+                self.lat_arr[:, 3], self.varinfo.get_variable(self.latitude)
+            )
+            np.testing.assert_array_equal(
+                valid_indices_lat_arr, expected_valid_indices_lat_arr_over_range
+            )
+        with self.subTest('longitude values beyond valid range'):
+            valid_indices_lon_arr = get_valid_indices(
+                self.lon_arr[1, :], self.varinfo.get_variable(self.longitude)
+            )
+            np.testing.assert_array_equal(
+                valid_indices_lon_arr, expected_valid_indices_lon_arr_over_range
             )
         with self.subTest('all fill values - no valid indices'):
-            valid_indices = get_valid_indices(fill_array, -9999.0, 'longitude')
+            valid_indices = get_valid_indices(
+                fill_array, self.varinfo.get_variable(self.longitude)
+            )
             self.assertEqual(valid_indices.size, 0)
 
     def test_get_variables_with_anonymous_dims(self):

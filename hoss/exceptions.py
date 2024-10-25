@@ -151,7 +151,7 @@ class InvalidCoordinateVariable(CustomError):
         )
 
 
-class InvalidSizingInCoordinateVariables(CustomError):
+class IncompatibleCoordinateVariables(CustomError):
     """This exception is raised when HOSS tries to get latitude and longitude
     coordinate variable and they do not match in shape or have a size of 0.
 
@@ -159,7 +159,7 @@ class InvalidSizingInCoordinateVariables(CustomError):
 
     def __init__(self, longitude_shape, latitude_shape):
         super().__init__(
-            'InvalidSizingInCoordinateVariables',
+            'IncompatibleCoordinateVariables',
             f'Longitude coordinate shape: "{longitude_shape}"'
             f'does not match the latitude coordinate shape: "{latitude_shape}"',
         )

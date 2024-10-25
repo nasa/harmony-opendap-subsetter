@@ -10,9 +10,9 @@ from netCDF4 import Dataset
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.exceptions import (
+    IncompatibleCoordinateVariables,
     InvalidCoordinateDataset,
     InvalidCoordinateVariable,
-    InvalidSizingInCoordinateVariables,
     MissingCoordinateVariable,
     MissingVariable,
 )
@@ -130,7 +130,7 @@ def get_row_col_sizes_from_coordinate_datasets(
         col_size = lon_arr.size
         row_size = lat_arr.size
     else:
-        raise InvalidSizingInCoordinateVariables(lon_arr.shape, lat_arr.shape)
+        raise IncompatibleCoordinateVariables(lon_arr.shape, lat_arr.shape)
     return row_size, col_size
 
 
@@ -169,11 +169,9 @@ def get_1D_dim_array_data_from_dimvalues(
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
     return np.linspace(dim_min, dim_max, dim_size)
 
-    # return dim_data
-
 
 def get_valid_indices(
-    coordinate_row_col: np.ndarray, coordinate_fill: float, coordinate_name: str
+    coordinate_row_col: np.ndarray, coordinate: VariableFromDmr
 ) -> np.ndarray:
     """
     Returns indices of a valid array without fill values if the fill
@@ -181,40 +179,32 @@ def get_valid_indices(
     for latitude and longitude
     """
 
+    coordinate_fill = coordinate.get_attribute_value('_FillValue')
     if coordinate_fill:
         valid_indices = np.where(
             ~np.isclose(coordinate_row_col, float(coordinate_fill))
         )[0]
-    if coordinate_name == 'longitude':
-        valid_indices = np.where(
-            # (-180.0 <= coordinate_row_col <= 360.0).all()
-            # (coordinate_row_col > -90.0) and (coordinate_row_col < 90.0)
-            (coordinate_row_col > -180.0)
-            & (coordinate_row_col < 360.0)
-        )[0]
-    elif coordinate_name == 'latitude':
-        valid_indices = np.where(
-            # (-90.0 <= coordinate_row_col <= 90.0).all()
-            # (coordinate_row_col > -90.0) and (coordinate_row_col < 90.0)
-            (coordinate_row_col > -90.0)
-            & (coordinate_row_col < 90.0)
-        )[0]
     else:
-        valid_indices = np.empty((0, 0))
+        valid_indices = np.where(coordinate_row_col)[0]
 
-    return valid_indices
-
-
-def get_fill_value_for_coordinate(
-    coordinate: VariableFromDmr,
-) -> float | None:
-    """
-    returns fill values for the variable. If it does not exist
-    checks for the overrides from the json file. If there is no
-    overrides, returns None
-    """
-
-    fill_value = coordinate.get_attribute_value('_FillValue')
-    if fill_value is not None:
-        return float(fill_value)
-    return fill_value
+    if coordinate.is_longitude():
+        filtered_valid_indices = np.array(
+            [
+                index
+                for index in valid_indices
+                if coordinate_row_col[index] >= -180.0
+                and coordinate_row_col[index] <= 360.0
+            ]
+        )
+    elif coordinate.is_latitude():
+        filtered_valid_indices = np.array(
+            [
+                index
+                for index in valid_indices
+                if coordinate_row_col[index] >= -90.0
+                and coordinate_row_col[index] <= 90.0
+            ]
+        )
+    else:
+        filtered_valid_indices = np.empty((0, 0))
+    return filtered_valid_indices

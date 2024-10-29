@@ -77,7 +77,18 @@ def get_variables_with_anonymous_dims(
     return set(
         variable
         for variable in variables
-        if len(varinfo.get_variable(variable).dimensions) == 0
+        if (len(varinfo.get_variable(variable).dimensions) == 0)
+        or (any_absent_dimension_variables(varinfo, variable))
+    )
+
+
+def any_absent_dimension_variables(
+    varinfo: VarInfoFromDmr, variable: VariableFromDmr
+) -> bool:
+
+    return any(
+        varinfo.get_variable(dimension) is None
+        for dimension in varinfo.get_variable(variable).dimensions
     )
 
 

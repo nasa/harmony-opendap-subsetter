@@ -178,33 +178,31 @@ def get_valid_indices(
     value is provided. If it is not provided, we check for valid values
     for latitude and longitude
     """
-
+    # get_attribute_value returns a value of type `str`
     coordinate_fill = coordinate.get_attribute_value('_FillValue')
-    if coordinate_fill:
-        valid_indices = np.where(
-            ~np.isclose(coordinate_row_col, float(coordinate_fill))
-        )[0]
+    if coordinate_fill is not None:
+        is_not_fill = ~np.isclose(coordinate_row_col, float(coordinate_fill))
     else:
-        valid_indices = np.where(coordinate_row_col)[0]
+        # Creates an entire array of `True` values.
+        is_not_fill = np.ones_like(coordinate_row_col, dtype=bool)
 
     if coordinate.is_longitude():
-        filtered_valid_indices = np.array(
-            [
-                index
-                for index in valid_indices
-                if coordinate_row_col[index] >= -180.0
-                and coordinate_row_col[index] <= 360.0
-            ]
-        )
+        valid_indices = np.where(
+            np.logical_and(
+                is_not_fill,
+                np.logical_and(
+                    coordinate_row_col >= -180.0, coordinate_row_col <= 360.0
+                ),
+            )
+        )[0]
     elif coordinate.is_latitude():
-        filtered_valid_indices = np.array(
-            [
-                index
-                for index in valid_indices
-                if coordinate_row_col[index] >= -90.0
-                and coordinate_row_col[index] <= 90.0
-            ]
-        )
+        valid_indices = np.where(
+            np.logical_and(
+                is_not_fill,
+                np.logical_and(coordinate_row_col >= -90.0, coordinate_row_col <= 90.0),
+            )
+        )[0]
     else:
-        filtered_valid_indices = np.empty((0, 0))
-    return filtered_valid_indices
+        valid_indices = np.empty((0, 0))
+
+    return valid_indices

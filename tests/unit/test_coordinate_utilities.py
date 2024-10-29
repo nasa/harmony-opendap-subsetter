@@ -359,34 +359,25 @@ class TestCoordinateUtilities(TestCase):
         """Ensure that the correct row and column sizes are
         returned for the requested coordinates
         """
-        expected_row_col_sizes = (5, 10)
-        lat_1d_array = np.array([1, 2, 3, 4])
-        lon_1d_array = np.array([6, 7, 8, 9])
-        lat_mismatched_array = np.array([[1, 2, 3], [3, 4, 5]])
-        lon_mismatched_array = np.array([[6, 7], [8, 9], [10, 11]])
-        lat_empty_ndim_array = np.array(
-            0,
-        )
-        lon_empty_ndim_array = np.array(
-            0,
-        )
-        lat_empty_size_array = np.array([])
-        lon_empty_size_array = np.array([])
 
         with self.subTest('Retrieves the expected row col sizes from the coordinates'):
+            expected_row_col_sizes = (5, 10)
             self.assertEqual(
                 get_row_col_sizes_from_coordinate_datasets(self.lat_arr, self.lon_arr),
                 expected_row_col_sizes,
             )
         with self.subTest('Retrieves the expected row col sizes for the 1d array'):
             self.assertEqual(
-                get_row_col_sizes_from_coordinate_datasets(lat_1d_array, lon_1d_array),
-                (4, 4),
+                get_row_col_sizes_from_coordinate_datasets(
+                    np.array([1, 2, 3, 4]), np.array([5, 6, 7, 8, 9])
+                ),
+                (4, 5),
             )
-
         with self.subTest(
             'Raises an exception when the lat and lon array shapes do not match'
         ):
+            lat_mismatched_array = np.array([[1, 2, 3], [3, 4, 5]])
+            lon_mismatched_array = np.array([[6, 7], [8, 9], [10, 11]])
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
                     lat_mismatched_array, lon_mismatched_array
@@ -399,33 +390,41 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest(
             'Raises an exception when Both arrays are 1-D, but latitude has a zero size'
         ):
+            lat_empty_size_array = np.array([])
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_empty_size_array, lon_1d_array
+                    lat_empty_size_array, np.array([5, 6, 7, 8])
                 )
 
         with self.subTest(
             'Raises an exception when Both arrays are 1-D, but longitude has a zero size'
         ):
+            lon_empty_size_array = np.array([])
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_1d_array, lon_empty_size_array
+                    np.array([6, 7, 8, 9]), lon_empty_size_array
                 )
 
         with self.subTest(
             'Raises an exception when latitude array that is zero dimensional'
         ):
+            lat_empty_ndim_array = np.array(
+                0,
+            )
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_empty_ndim_array, lon_1d_array
+                    lat_empty_ndim_array, np.array([1, 2, 3, 4])
                 )
 
         with self.subTest(
             'Raises an exception when longitude array that is zero dimensional'
         ):
+            lon_empty_ndim_array = np.array(
+                0,
+            )
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_1d_array, lon_empty_ndim_array
+                    np.array([1, 2, 3, 4]), lon_empty_ndim_array
                 )
 
     def test_get_valid_indices(self):

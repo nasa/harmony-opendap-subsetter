@@ -270,6 +270,8 @@
         </UInt16>
     </Group>
     <Group name="Soil_Moisture_Retrieval_Data_PM">
+    	<Dimension name="fake_dim_1" size="406"/>
+    	<Dimension name="fake_dim_2" size="964"/>
         <UInt16 name="surface_flag_pm">
             <Dim size="406"/>
             <Dim size="964"/>
@@ -311,9 +313,9 @@
                 <Value>-9999.</Value>
             </Attribute>
         </Float32>
-        <Float32 name="vegetation_opacity_pm">
-            <Dim size="406"/>
-            <Dim size="964"/>
+        <Float32 name="variable_with_fake_dims">
+       	    <Dim name="fake_dim_1"/>
+            <Dim name="fake_dim_2"/>
             <Attribute name="long_name" type="String">
                 <Value>The measured opacity of the vegetation used in DCA retrievals in the grid cell.</Value>
             </Attribute>
@@ -329,9 +331,10 @@
             <Attribute name="_FillValue" type="Float32">
                 <Value>-9999.</Value>
             </Attribute>
-            <Attribute name="HDF5_HARDLINK" type="String">
-                <Value>/Soil_Moisture_Retrieval_Data_PM/vegetation_opacity_dca_pm</Value>
-            </Attribute>
+           <Attribute name="DIMENSION_LABELS" type="String">
+                <Value>fake_dim_1</Value>
+                <Value>fake_dim_2</Value>
+           </Attribute>
         </Float32>
         <Float32 name="latitude_pm">
             <Dim size="406"/>

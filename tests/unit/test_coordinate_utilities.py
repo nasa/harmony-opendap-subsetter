@@ -10,6 +10,7 @@ from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
+    any_absent_dimension_variables,
     get_1D_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
@@ -476,18 +477,15 @@ class TestCoordinateUtilities(TestCase):
 
     def test_get_variables_with_anonymous_dims(self):
         """Ensure that variables with no dimensions are
-        retrieved for the reqquested science variable
+        retrieved for the requested science variable
 
         """
-        requested_science_variables = {
-            '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
-            '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
-        }
-        requested_science_variables_with_dimensions = {
-            '/Soil_Moisture_Retrieval_Data_AM/variable_has_dim',
-            '/Soil_Moisture_Retrieval_Data_AM/variable_has_anonymous_dim',
-        }
+
         with self.subTest('Retrieves variables with no dimensions'):
+            requested_science_variables = {
+                '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+                '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
+            }
             variables_with_anonymous_dims = get_variables_with_anonymous_dims(
                 self.test_varinfo, requested_science_variables
             )
@@ -505,6 +503,10 @@ class TestCoordinateUtilities(TestCase):
             'Only retrieves variables with anonymous dimensions,'
             'when the request has both'
         ):
+            requested_science_variables_with_dimensions = {
+                '/Soil_Moisture_Retrieval_Data_AM/variable_has_dim',
+                '/Soil_Moisture_Retrieval_Data_AM/variable_has_anonymous_dim',
+            }
             variables_with_anonymous_dims = get_variables_with_anonymous_dims(
                 self.test_varinfo, requested_science_variables_with_dimensions
             )
@@ -512,3 +514,32 @@ class TestCoordinateUtilities(TestCase):
                 variables_with_anonymous_dims,
                 {'/Soil_Moisture_Retrieval_Data_AM/variable_has_anonymous_dim'},
             )
+        with self.subTest(
+            'retrieves variables with fake dimensions,' 'when the request has both'
+        ):
+            variables_with_fake_dims = get_variables_with_anonymous_dims(
+                self.test_varinfo,
+                {'/Soil_Moisture_Retrieval_Data_PM/variable_with_fake_dims'},
+            )
+            self.assertSetEqual(
+                variables_with_fake_dims,
+                {'/Soil_Moisture_Retrieval_Data_PM/variable_with_fake_dims'},
+            )
+
+    def test_any_absent_dimension_variables(self):
+        """Ensure that variables with fake dimensions are
+        detected with a True return value
+
+        """
+
+        with self.subTest('Returns true for variables with fake dimensions'):
+            variable_has_fake_dims = any_absent_dimension_variables(
+                self.test_varinfo,
+                '/Soil_Moisture_Retrieval_Data_PM/variable_with_fake_dims',
+            )
+            self.assertTrue(variable_has_fake_dims)
+        with self.subTest('Returns false for variables with dimensions'):
+            variable_has_fake_dims = any_absent_dimension_variables(
+                self.test_varinfo, '/Soil_Moisture_Retrieval_Data_AM/variable_has_dim'
+            )
+            self.assertFalse(variable_has_fake_dims)

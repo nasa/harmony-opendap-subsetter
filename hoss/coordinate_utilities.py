@@ -82,10 +82,11 @@ def get_variables_with_anonymous_dims(
     )
 
 
-def any_absent_dimension_variables(
-    varinfo: VarInfoFromDmr, variable: VariableFromDmr
-) -> bool:
-
+def any_absent_dimension_variables(varinfo: VarInfoFromDmr, variable: str) -> bool:
+    """returns variable with fake dimensions - dimensions
+    that have been created by opendap, but are not really
+    dimension variables
+    """
     return any(
         varinfo.get_variable(dimension) is None
         for dimension in varinfo.get_variable(variable).dimensions

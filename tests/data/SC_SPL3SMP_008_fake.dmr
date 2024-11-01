@@ -1,0 +1,403 @@
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xmlns:dmrpp="http://xml.opendap.org/dap/dmrpp/1.0.0#" dapVersion="4.0" dmrVersion="1.0" name="SMAP_L3_SM_P_20150331_R18290_002.h5" dmrpp:href="OPeNDAP_DMRpp_DATA_ACCESS_URL" dmrpp:version="3.21.0-428">
+    <Attribute name="build_dmrpp_metadata" type="Container">
+        <Attribute name="build_dmrpp" type="String">
+            <Value>3.21.0-428</Value>
+        </Attribute>
+        <Attribute name="bes" type="String">
+            <Value>3.21.0-428</Value>
+        </Attribute>
+        <Attribute name="libdap" type="String">
+            <Value>libdap-3.21.0-103</Value>
+        </Attribute>
+        <Attribute name="invocation" type="String">
+            <Value>build_dmrpp -c /tmp/bes_conf_IAud -f /usr/share/hyrax/DATA/SMAP_L3_SM_P_20150331_R18290_002.h5 -r /tmp/dmr__0PmwFd -u OPeNDAP_DMRpp_DATA_ACCESS_URL -M</Value>
+        </Attribute>
+    </Attribute>
+    <Group name="Soil_Moisture_Retrieval_Data_AM">
+        <Float32 name="longitude">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="latitude">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+        </Float32>
+        <Dimension name="fake_lon_dim" size="120"/>
+        <Float64 name="fake_lon_dim">
+            <Dim name="/Soil_Moisture_Retrieval_Data_AM/fake_lon_dim"/>
+            <Attribute name="long_name" type="String">
+                <Value>north polar grid longitude</Value>
+            </Attribute>
+            <Attribute name="standard_name" type="String">
+                <Value>longitude</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>-180.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>180.</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>The north polar grid longitude </Value>
+            </Attribute>
+            <Attribute name="axis" type="String">
+                <Value>X</Value>
+            </Attribute>
+        </Float64>
+        <Dimension name="fake_lat_dim" size="30"/>
+        <Float64 name="fake_lat_dim">
+            <Dim name="/Soil_Moisture_Retrieval_Data_AM/fake_lat_dim"/>
+            <Attribute name="long_name" type="String">
+                <Value>north polar grid latitude</Value>
+            </Attribute>
+            <Attribute name="standard_name" type="String">
+                <Value>latitude</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+              <Value>degrees_north</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>L3B ATM ATBD, Section 2.0, Section 5.0, Table 5.</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>60.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>The north polar grid latitude
+                </Value>
+             </Attribute>
+            <Attribute name="axis" type="String">
+                <Value>Y</Value>
+            </Attribute>
+        </Float64>
+        <Byte name="landcover_class">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Dim size="3"/>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>An enumerated type that specifies the most common landcover class
+                 in the grid cell based on the IGBP landcover map. The array order is longitude (ascending), followed by latitude (descending), and followed by IGBP land cover type descending dominance (only the first three types are listed)</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </Byte>
+        <Float32 name="longitude_centroid">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Weighted average of the longitude of the center of the brightness temperature footprints that fall within the EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-180.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>179.9989929</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </Float32>
+        <Float32 name="no_coordinate_variable">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>The measured opacity of the vegetation used in the SCA-H retrieval in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-999999.875</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>999999.875</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="no_lon_coordinate_variable">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Dim size="3"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The fraction of the grid cell that contains the most common land cover in that area based on the IGBP landcover map.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </Float32>
+        <Float32 name="variable_has_dim">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Dim name="/Soil_Moisture_Retrieval_Data_AM/fake_lat_dim"/>
+            <Dim name="/Soil_Moisture_Retrieval_Data_AM/fake_lon_dim"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative DCA soil moisture measurement for the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.01999999955</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </Float32>
+        <UInt16 name="no_lat_coordinate_variable">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>The column index of the 36 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>963</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </UInt16>
+        <Float32 name="variable_has_anonymous_dim">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Temperature at land surface based on GMAO GEOS-5 data.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>Kelvins</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>350.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </Float32>
+        <UInt16 name="surface_flag">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record ambient surface conditions for the grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>36_km_static_water_body 36_km_radar_water_body_detection 36_km_coastal_proximity 36_km_urban_area 36_km_precipitation 36_km_snow_or_ice 36_km_permanent_snow_or_ice 36_km_radiometer_frozen_ground 36_km_model_frozen_ground 36_km_mountainous_terrain 36_km_dense_vegetation 36_km_nadir_region</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </UInt16>
+    </Group>
+    <Group name="Soil_Moisture_Retrieval_Data_PM">
+    	<Dimension name="fake_dim_1" size="406"/>
+    	<Dimension name="fake_dim_2" size="964"/>
+        <UInt16 name="surface_flag_pm">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record ambient surface conditions for the grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>36_km_static_water_body 36_km_radar_water_body_detection 36_km_coastal_proximity 36_km_urban_area 36_km_precipitation 36_km_snow_or_ice 36_km_permanent_snow_or_ice 36_km_radar_frozen_ground 36_km_model_frozen_ground 36_km_mountainous_terrain 36_km_dense_vegetation 36_km_nadir_region</Value>
+            </Attribute>
+        </UInt16>
+        <Float32 name="longitude_pm">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-180.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>179.9989929</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="variable_with_fake_dims">
+       	    <Dim name="fake_dim_1"/>
+            <Dim name="fake_dim_2"/>
+            <Attribute name="long_name" type="String">
+                <Value>The measured opacity of the vegetation used in DCA retrievals in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-999999.875</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>999999.875</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+           <Attribute name="DIMENSION_LABELS" type="String">
+                <Value>fake_dim_1</Value>
+                <Value>fake_dim_2</Value>
+           </Attribute>
+        </Float32>
+        <Float32 name="latitude_pm">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-90.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="surface_temperature_pm">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Temperature at land surface based on GMAO GEOS-5 data.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>Kelvins</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/latitude /Soil_Moisture_Retrieval_Data_AM/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>350.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="soil_moisture_fake">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative SCA-V soil moisture measurement for the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.01999999955</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+    </Group>
+</Dataset>

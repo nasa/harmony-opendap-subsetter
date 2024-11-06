@@ -27,13 +27,19 @@ from typing import List, Set
 from harmony.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
-from varinfo import VarInfoFromDmr
+from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.bbox_utilities import (
     BBox,
     get_geographic_bbox,
     get_harmony_message_bbox,
     get_shape_file_geojson,
+)
+from hoss.coordinate_utilities import (
+    create_dimension_array_from_coordinates,
+    get_coordinate_variables,
+    get_projected_dimension_names_from_coordinate_variables,
+    get_variables_with_anonymous_dims,
 )
 from hoss.dimension_utilities import (
     IndexRange,
@@ -78,6 +84,10 @@ def get_spatial_index_ranges(
     around the exterior of the user-defined GeoJSON shape, to ensure the
     correct extents are derived.
 
+    if geographic and projected dimensions are not specified in the granule,
+    the coordinate datasets are used to calculate the x-y dimensions and the index ranges
+    are calculated similar to a projected grid.
+
     """
     bounding_box = get_harmony_message_bbox(harmony_message)
     index_ranges = {}
@@ -91,7 +101,7 @@ def get_spatial_index_ranges(
     )
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
-        if len(geographic_dimensions) > 0:
+        if geographic_dimensions:
             # If there is no bounding box, but there is a shape file, calculate
             # a bounding box to encapsulate the GeoJSON shape:
             if bounding_box is None and shape_file_path is not None:
@@ -103,13 +113,34 @@ def get_spatial_index_ranges(
                     dimension, varinfo, dimensions_file, bounding_box
                 )
 
-        if len(projected_dimensions) > 0:
+        if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
                 index_ranges.update(
                     get_projected_x_y_index_ranges(
                         non_spatial_variable,
                         varinfo,
                         dimensions_file,
+                        index_ranges,
+                        bounding_box=bounding_box,
+                        shape_file_path=shape_file_path,
+                    )
+                )
+        variables_with_anonymous_dims = get_variables_with_anonymous_dims(
+            varinfo, required_variables
+        )
+        for variable_with_anonymous_dims in variables_with_anonymous_dims:
+            print(f'variable_with_anonymous_dims={variable_with_anonymous_dims}')
+            latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+                varinfo, [variable_with_anonymous_dims]
+            )
+            if latitude_coordinates and longitude_coordinates:
+                index_ranges.update(
+                    get_x_y_index_ranges_from_coordinates(
+                        variable_with_anonymous_dims,
+                        varinfo,
+                        dimensions_file,
+                        varinfo.get_variable(latitude_coordinates[0]),
+                        varinfo.get_variable(longitude_coordinates[0]),
                         index_ranges,
                         bounding_box=bounding_box,
                         shape_file_path=shape_file_path,
@@ -180,6 +211,79 @@ def get_projected_x_y_index_ranges(
             bounds_values=y_bounds,
         )
 
+        x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
+    else:
+        x_y_index_ranges = {}
+
+    return x_y_index_ranges
+
+
+def get_x_y_index_ranges_from_coordinates(
+    non_spatial_variable: str,
+    varinfo: VarInfoFromDmr,
+    prefetch_coordinate_datasets: Dataset,
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
+    index_ranges: IndexRanges,
+    bounding_box: BBox = None,
+    shape_file_path: str = None,
+) -> IndexRanges:
+    """This function returns a dictionary containing the minimum and maximum
+    index ranges for the projected_x and projected_y recalculated dimension scales
+
+    index_ranges = {'projected_x': (20, 42), 'projected_y': (31, 53)}
+
+    This method is called when the CF standards are not followed
+    in the source granule and only coordinate datasets are provided.
+    The coordinate datasets along with the crs is used to calculate
+    the x-y projected dimension scales. The dimensions of the input,
+    non-spatial variable are checked for associated coordinates. If
+    these are present, and they have not already been added to the
+    `index_ranges` cache, the extents of the input spatial subset
+    are determined in these projected coordinates. The minimum and
+    maximum values are then derived from these projected coordinate
+    points.
+
+    """
+
+    crs = get_variable_crs(non_spatial_variable, varinfo)
+
+    projected_dimension_names = get_projected_dimension_names_from_coordinate_variables(
+        varinfo, non_spatial_variable
+    )
+
+    dimension_arrays = create_dimension_array_from_coordinates(
+        prefetch_coordinate_datasets,
+        latitude_coordinate,
+        longitude_coordinate,
+        crs,
+        projected_dimension_names,
+    )
+
+    projected_y, projected_x = dimension_arrays.keys()
+
+    if not set((projected_x, projected_y)).issubset(set(index_ranges.keys())):
+
+        x_y_extents = get_projected_x_y_extents(
+            dimension_arrays[projected_x][:],
+            dimension_arrays[projected_y][:],
+            crs,
+            shape_file=shape_file_path,
+            bounding_box=bounding_box,
+        )
+
+        x_index_ranges = get_dimension_index_range(
+            dimension_arrays[projected_x][:],
+            x_y_extents['x_min'],
+            x_y_extents['x_max'],
+            bounds_values=None,
+        )
+        y_index_ranges = get_dimension_index_range(
+            dimension_arrays[projected_y][:],
+            x_y_extents['y_min'],
+            x_y_extents['y_max'],
+            bounds_values=None,
+        )
         x_y_index_ranges = {projected_x: x_index_ranges, projected_y: y_index_ranges}
     else:
         x_y_index_ranges = {}

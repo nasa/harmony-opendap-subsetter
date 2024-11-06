@@ -21,13 +21,17 @@ from hoss.dimension_utilities import (
     IndexRanges,
     add_index_range,
     get_fill_slice,
+    get_prefetch_variables,
     get_requested_index_ranges,
     is_index_subset,
-    prefetch_dimension_variables,
 )
 from hoss.spatial import get_spatial_index_ranges
 from hoss.temporal import get_temporal_index_ranges
-from hoss.utilities import download_url, format_variable_set_string, get_opendap_nc4
+from hoss.utilities import (
+    download_url,
+    format_variable_set_string,
+    get_opendap_nc4,
+)
 
 
 def subset_granule(
@@ -87,7 +91,7 @@ def subset_granule(
 
     if request_is_index_subset:
         # Prefetch all dimension variables in full:
-        dimensions_path = prefetch_dimension_variables(
+        dimensions_path = get_prefetch_variables(
             opendap_url,
             varinfo,
             required_variables,
@@ -122,6 +126,7 @@ def subset_granule(
             shape_file_path = get_request_shape_file(
                 harmony_message, output_dir, logger, config
             )
+
             index_ranges.update(
                 get_spatial_index_ranges(
                     required_variables,

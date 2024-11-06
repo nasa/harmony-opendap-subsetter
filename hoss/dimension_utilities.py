@@ -22,8 +22,14 @@ from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 from varinfo import VariableFromDmr, VarInfoFromDmr
 
-from hoss.bbox_utilities import flatten_list
-from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
+from hoss.coordinate_utilities import (
+    get_coordinate_variables,
+    get_projected_dimension_names_from_coordinate_variables,
+)
+from hoss.exceptions import (
+    InvalidNamedDimension,
+    InvalidRequestedRange,
+)
 from hoss.utilities import (
     format_variable_set_string,
     get_opendap_nc4,
@@ -55,7 +61,7 @@ def is_index_subset(message: Message) -> bool:
     )
 
 
-def prefetch_dimension_variables(
+def get_prefetch_variables(
     opendap_url: str,
     varinfo: VarInfoFromDmr,
     required_variables: Set[str],
@@ -64,45 +70,39 @@ def prefetch_dimension_variables(
     access_token: str,
     config: Config,
 ) -> str:
-    """Determine the dimensions that need to be "pre-fetched" from OPeNDAP in
+    """Determine the variables that need to be "pre-fetched" from OPeNDAP in
     order to derive index ranges upon them. Initially, this was just
     spatial and temporal dimensions, but to support generic dimension
     subsets, all required dimensions must be prefetched, along with any
     associated bounds variables referred to via the "bounds" metadata
-    attribute.
+    attribute. In cases where dimension variables do not exist, coordinate
+    variables will be prefetched and used to calculate dimension-scale values
 
     """
-    required_dimensions = varinfo.get_required_dimensions(required_variables)
-
-    # Iterate through all requested dimensions and extract a list of bounds
-    # references for each that has any. This will produce a list of lists,
-    # which should be flattened into a single list and then combined into a set
-    # to remove duplicates.
-    bounds = set(
-        flatten_list(
-            [
-                list(varinfo.get_variable(dimension).references.get('bounds'))
-                for dimension in required_dimensions
-                if varinfo.get_variable(dimension).references.get('bounds') is not None
-            ]
+    prefetch_variables = varinfo.get_required_dimensions(required_variables)
+    if prefetch_variables:
+        bounds = varinfo.get_references_for_attribute(prefetch_variables, 'bounds')
+        prefetch_variables.update(bounds)
+    else:
+        latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+            varinfo, required_variables
         )
-    )
 
-    required_dimensions.update(bounds)
+        if latitude_coordinates and longitude_coordinates:
+            prefetch_variables = set(latitude_coordinates + longitude_coordinates)
 
     logger.info(
         'Variables being retrieved in prefetch request: '
-        f'{format_variable_set_string(required_dimensions)}'
+        f'{format_variable_set_string(prefetch_variables)}'
     )
 
-    required_dimensions_nc4 = get_opendap_nc4(
-        opendap_url, required_dimensions, output_dir, logger, access_token, config
+    prefetch_variables_nc4 = get_opendap_nc4(
+        opendap_url, prefetch_variables, output_dir, logger, access_token, config
     )
 
     # Create bounds variables if necessary.
-    add_bounds_variables(required_dimensions_nc4, required_dimensions, varinfo, logger)
-
-    return required_dimensions_nc4
+    add_bounds_variables(prefetch_variables_nc4, prefetch_variables, varinfo, logger)
+    return prefetch_variables_nc4
 
 
 def add_bounds_variables(
@@ -409,7 +409,9 @@ def get_dimension_indices_from_bounds(
 
 
 def add_index_range(
-    variable_name: str, varinfo: VarInfoFromDmr, index_ranges: IndexRanges
+    variable_name: str,
+    varinfo: VarInfoFromDmr,
+    index_ranges: IndexRanges,
 ) -> str:
     """Append the index ranges of each dimension for the specified variable.
     If there are no dimensions with listed index ranges, then the full
@@ -418,27 +420,44 @@ def add_index_range(
     the antimeridian or Prime Meridian) will have a minimum index greater
     than the maximum index. In this case the full dimension range should be
     requested, as the related values will be masked before returning the
-    output to the user.
+    output to the user. When the dimensions are not available, the coordinate
+    variables are used to calculate the projected dimensions.
 
     """
     variable = varinfo.get_variable(variable_name)
-
     range_strings = []
-
-    for dimension in variable.dimensions:
-        dimension_range = index_ranges.get(dimension)
-
-        if dimension_range is not None and dimension_range[0] <= dimension_range[1]:
-            range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
-        else:
-            range_strings.append('[]')
+    if variable.dimensions:
+        range_strings = get_range_strings(variable.dimensions, index_ranges)
+    else:
+        override_dimensions = get_projected_dimension_names_from_coordinate_variables(
+            varinfo, variable_name
+        )
+        if override_dimensions:
+            range_strings = get_range_strings(override_dimensions, index_ranges)
 
     if all(range_string == '[]' for range_string in range_strings):
         indices_string = ''
     else:
         indices_string = ''.join(range_strings)
-
     return f'{variable_name}{indices_string}'
+
+
+def get_range_strings(
+    variable_dimensions: list,
+    index_ranges: IndexRanges,
+) -> list:
+    """Calculates the index ranges for each dimension of the variable
+    and returns the list of index ranges
+    """
+    range_strings = []
+    for dimension in variable_dimensions:
+        dimension_range = index_ranges.get(dimension)
+        if dimension_range is not None and dimension_range[0] <= dimension_range[1]:
+            range_strings.append(f'[{dimension_range[0]}:{dimension_range[1]}]')
+        else:
+            range_strings.append('[]')
+
+    return range_strings
 
 
 def get_fill_slice(dimension: str, fill_ranges: IndexRanges) -> slice:
@@ -549,7 +568,12 @@ def get_dimension_bounds(
     be returned.
 
     """
-    bounds = varinfo.get_variable(dimension_name).references.get('bounds')
+    try:
+        # For pseudo-variables, `varinfo.get_variable` returns `None` and
+        # therefore has no `references` attribute.
+        bounds = varinfo.get_variable(dimension_name).references.get('bounds')
+    except AttributeError:
+        bounds = None
 
     if bounds is not None:
         try:

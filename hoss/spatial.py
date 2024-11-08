@@ -129,7 +129,6 @@ def get_spatial_index_ranges(
             varinfo, required_variables
         )
         for variable_with_anonymous_dims in variables_with_anonymous_dims:
-            print(f'variable_with_anonymous_dims={variable_with_anonymous_dims}')
             latitude_coordinates, longitude_coordinates = get_coordinate_variables(
                 varinfo, [variable_with_anonymous_dims]
             )

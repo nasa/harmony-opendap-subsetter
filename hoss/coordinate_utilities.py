@@ -183,6 +183,7 @@ def get_1D_dim_array_data_from_dimvalues(
 
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
+
     return np.linspace(dim_min, dim_max, dim_size)
 
 
@@ -194,7 +195,7 @@ def get_valid_indices(
     value is provided. If it is not provided, we check for valid values
     for latitude and longitude
     """
-    # print(f'coordinate_row_col={coordinate_row_col}')
+
     # get_attribute_value returns a value of type `str`
     coordinate_fill = coordinate.get_attribute_value('_FillValue')
     if coordinate_fill is not None:
@@ -221,18 +222,18 @@ def get_valid_indices(
         )[0]
     else:
         valid_indices = np.empty((0, 0))
-    print(f'valid_indices={valid_indices}')
+
     return valid_indices
 
 
-def get_two_valid_geo_grid_points(
+def get_row_col_geo_grid_points(
     lat_arr: np.ndarray,
     lon_arr: np.ndarray,
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
     row_size: float,
     col_size: float,
-) -> dict[int, tuple]:
+) -> tuple[dict, dict]:
     """
     This method is used to return two valid lat lon points from a 2D
     coordinate dataset. It gets the row and column of the latitude and longitude
@@ -240,81 +241,53 @@ def get_two_valid_geo_grid_points(
     This method does not go down to the next row and col. if the selected row and
     column all have fills, it will raise an exception in those cases.
     """
-    first_row_col_index = -1
-    first_row_row_index = 0
-    last_col_row_index = -1
-    last_col_col_index = col_size - 1
-    lat_row_valid_indices = lon_row_valid_indices = np.empty((0, 0))
 
-    # get the first row with points that are valid in the lat and lon rows
-    first_row_row_index, lat_row_valid_indices = get_valid_indices_in_dataset(
-        lat_arr, row_size, latitude_coordinate, 'row', first_row_row_index
+    geo_grid_indexes_row, geo_grid_indexes_col = get_row_col_valid_indices_in_dataset(
+        lat_arr, lon_arr, row_size, col_size, latitude_coordinate, longitude_coordinate
     )
-    first_row_row_index1, lon_row_valid_indices = get_valid_indices_in_dataset(
-        lon_arr, row_size, longitude_coordinate, 'row', first_row_row_index
-    )
-    # get a point that is common on both row datasets
-    if (
-        (first_row_row_index == first_row_row_index1)
-        and (lat_row_valid_indices.size > 0)
-        and (lon_row_valid_indices.size > 0)
-    ):
-        first_row_col_index = np.intersect1d(
-            lat_row_valid_indices, lon_row_valid_indices
-        )[0]
+    # 2 points in same row - column indices are changing
+    # point1_row_index, point1_col_index = geo_grid_indexes_row[0]
+    # point2_row_index, point2_col_index = geo_grid_indexes_row[1]
 
-        print(f'first_row_row_index={first_row_row_index}')
-        print(f'first_row_col_index={first_row_col_index}')
+    # 2 points in same column - row indices are changing
+    # point3_row_index, point3_col_index = geo_grid_indexes_col[0]
+    # point4_row_index, point4_col_index = geo_grid_indexes_col[1]
 
-    # get a valid column from the latitude and longitude datasets
-    last_col_col_index, lon_col_valid_indices = get_valid_indices_in_dataset(
-        lon_arr, col_size, longitude_coordinate, 'col', last_col_col_index
-    )
-    last_col_col_index1, lat_col_valid_indices = get_valid_indices_in_dataset(
-        lat_arr, col_size, latitude_coordinate, 'col', last_col_col_index
-    )
-
-    # get a point that is common to both column datasets
-    if (
-        (last_col_col_index == last_col_col_index1)
-        and (lat_col_valid_indices.size > 0)
-        and (lon_col_valid_indices.size > 0)
-    ):
-        last_col_row_index = np.intersect1d(
-            lat_col_valid_indices, lon_col_valid_indices
-        )[-1]
-
-        print(f'last_col_col_index={last_col_col_index}')
-        print(f'last_col_row_index={last_col_row_index}')
-
-    # if the whole row and whole column has no valid indices
-    # we throw an exception now. This can be extended to move
-    # to the next row/col
-    if first_row_col_index == -1:
-        raise InvalidCoordinateVariable('latitude/longitude')
-    if last_col_row_index == -1:
-        raise InvalidCoordinateVariable('latitude/longitude')
-
-    geo_grid_indexes = [
-        (first_row_row_index, first_row_col_index),
-        (last_col_row_index, last_col_col_index),
-    ]
-
-    geo_grid_points = [
+    geo_grid_col_points = [
         (
-            lon_arr[first_row_row_index][first_row_col_index],
-            lat_arr[first_row_row_index][first_row_col_index],
+            lon_arr[geo_grid_indexes_row[0][0]][geo_grid_indexes_row[0][1]],
+            lat_arr[geo_grid_indexes_row[0][0]][geo_grid_indexes_row[0][1]],
         ),
         (
-            lon_arr[last_col_row_index][last_col_col_index],
-            lat_arr[last_col_row_index][last_col_col_index],
+            lon_arr[geo_grid_indexes_row[1][0]][geo_grid_indexes_row[1][1]],
+            lat_arr[geo_grid_indexes_row[1][0]][geo_grid_indexes_row[1][1]],
         ),
     ]
 
-    return {
-        geo_grid_indexes[0]: geo_grid_points[0],
-        geo_grid_indexes[1]: geo_grid_points[1],
-    }
+    geo_grid_row_points = [
+        (
+            # lon_arr[point3_row_index][point3_col_index],
+            # lat_arr[point3_row_index][point3_col_index],
+            lon_arr[geo_grid_indexes_col[0][0]][geo_grid_indexes_col[0][1]],
+            lat_arr[geo_grid_indexes_col[0][0]][geo_grid_indexes_col[0][1]],
+        ),
+        (
+            # lon_arr[point4_row_index][point4_col_index],
+            # lat_arr[point4_row_index][point4_col_index],
+            lon_arr[geo_grid_indexes_col[1][0]][geo_grid_indexes_col[1][1]],
+            lat_arr[geo_grid_indexes_col[1][0]][geo_grid_indexes_col[1][1]],
+        ),
+    ]
+    return (
+        {
+            geo_grid_indexes_col[0]: geo_grid_row_points[0],
+            geo_grid_indexes_col[1]: geo_grid_row_points[1],
+        },
+        {
+            geo_grid_indexes_row[0]: geo_grid_col_points[0],
+            geo_grid_indexes_row[1]: geo_grid_col_points[1],
+        },
+    )
 
 
 def get_x_y_values_from_geographic_points(points: Dict, crs: CRS) -> Dict[tuple, tuple]:
@@ -336,47 +309,79 @@ def get_x_y_values_from_geographic_points(points: Dict, crs: CRS) -> Dict[tuple,
     return x_y_points
 
 
-def get_valid_indices_in_dataset(
-    coordinate_arr: np.ndarray,
-    dim_size: int,
-    coordinate: VariableFromDmr,
-    span_type: str,
-    start_index: int,
-) -> tuple[int, np.ndarray]:
+def get_row_col_valid_indices_in_dataset(
+    lat_arr: np.ndarray,
+    lon_arr: np.ndarray,
+    row_size: int,
+    col_size: int,
+    lat_coordinate: VariableFromDmr,
+    lon_coordinate: VariableFromDmr,
+) -> tuple[list, list]:
     """
     This method gets valid indices in a row or column of a
     coordinate dataset
     """
-    coordinate_index = start_index
-    valid_indices = []
-    if span_type == 'row':
-        valid_indices = get_valid_indices(
-            coordinate_arr[coordinate_index, :], coordinate
-        )
-    else:
-        valid_indices = get_valid_indices(
-            coordinate_arr[:, coordinate_index], coordinate
+    # coordinate_index = start_index
+    valid_row_indices = valid_col_indices = np.empty((0, 0))
+    # if span_type == 'row':
+    # get 2 points in the row
+    # while valid_col_indices.size < 2:
+    # if span_type == 'row':
+    max_col_distance = 0
+    valid_row_index = row_coordinate_index = -1
+    max_range_valid_col_indices = np.empty(0)
+    while row_coordinate_index < row_size - 1:
+        row_coordinate_index = row_coordinate_index + 1
+        valid_col_indices = np.intersect1d(
+            get_valid_indices(lat_arr[row_coordinate_index, :], lat_coordinate),
+            get_valid_indices(lon_arr[row_coordinate_index, :], lon_coordinate),
         )
 
-    while valid_indices.size == 0:
-        if span_type == 'row':
-            if coordinate_index < dim_size:
-                coordinate_index = coordinate_index + 1
-                valid_indices = get_valid_indices(
-                    coordinate_arr[coordinate_index, :],
-                    coordinate,
-                )
-            else:
-                raise InvalidCoordinateVariable(coordinate.full_name_path)
-        else:
-            if coordinate_index > 0:
-                coordinate_index = coordinate_index - 1
-                valid_indices = get_valid_indices(
-                    coordinate_arr[:, coordinate_index], coordinate
-                )
-            else:
-                raise InvalidCoordinateVariable(coordinate.full_name_path)
-    return coordinate_index, valid_indices
+        if valid_col_indices.size >= 2 and (
+            max_col_distance < (valid_col_indices[-1] - valid_col_indices[0])
+        ):
+            max_col_distance = valid_col_indices[-1] - valid_col_indices[0]
+            max_range_valid_col_indices = valid_col_indices
+            valid_row_index = row_coordinate_index
+
+    if valid_row_index < 0 or max_range_valid_col_indices.size < 2:
+        raise InvalidCoordinateVariable(lat_coordinate.full_name_path)
+
+    # span type is col
+    # get 2 points in a column
+    # while valid_row_indices.size < 2:
+    max_row_distance = 0
+    valid_col_index = col_coordinate_index = col_size
+    max_range_valid_row_indices = np.empty(0)
+    while col_coordinate_index > 0:
+        col_coordinate_index = col_coordinate_index - 1
+        valid_row_indices = np.intersect1d(
+            get_valid_indices(lat_arr[:, col_coordinate_index], lat_coordinate),
+            get_valid_indices(lon_arr[:, col_coordinate_index], lon_coordinate),
+        )
+        if valid_row_indices.size >= 2 and (
+            max_row_distance < (valid_row_indices[-1] - valid_row_indices[0])
+        ):
+            max_row_distance = valid_row_indices[-1] - valid_row_indices[0]
+            max_range_valid_row_indices = valid_row_indices
+            valid_col_index = col_coordinate_index
+
+    if col_coordinate_index >= col_size or max_range_valid_row_indices.size < 2:
+        raise InvalidCoordinateVariable(lon_coordinate.full_name_path)
+
+    # same row . 2 column points
+    geo_grid_indexes_row = [
+        (valid_row_index, max_range_valid_col_indices[0]),
+        (valid_row_index, max_range_valid_col_indices[-1]),
+    ]
+
+    # same column, 2 row points
+    geo_grid_indexes_col = [
+        (max_range_valid_row_indices[0], valid_col_index),
+        (max_range_valid_row_indices[-1], valid_col_index),
+    ]
+
+    return geo_grid_indexes_row, geo_grid_indexes_col
 
 
 def create_dimension_array_from_coordinates(
@@ -406,18 +411,22 @@ def create_dimension_array_from_coordinates(
         lat_arr,
         lon_arr,
     )
-    geo_grid_points = get_two_valid_geo_grid_points(
+
+    geo_grid_row_points, geo_grid_col_points = get_row_col_geo_grid_points(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate, row_size, col_size
     )
 
-    x_y_values = get_x_y_values_from_geographic_points(geo_grid_points, crs)
+    x_y_values1 = get_x_y_values_from_geographic_points(geo_grid_row_points, crs)
+    # y value changes across the row indices
+    row_indices = [list(x_y_values1.keys())[0][0], list(x_y_values1.keys())[1][0]]
+    y_values = [list(x_y_values1.values())[0][1], list(x_y_values1.values())[1][1]]
 
-    row_indices, col_indices = zip(*list(x_y_values.keys()))
-
-    x_values, y_values = zip(*list(x_y_values.values()))
+    x_y_values2 = get_x_y_values_from_geographic_points(geo_grid_col_points, crs)
+    # x value changes across the col indices
+    col_indices = [list(x_y_values2.keys())[0][1], list(x_y_values2.keys())[1][1]]
+    x_values = [list(x_y_values2.values())[0][0], list(x_y_values2.values())[1][0]]
 
     y_dim = get_1D_dim_array_data_from_dimvalues(y_values, row_indices, row_size)
-
     x_dim = get_1D_dim_array_data_from_dimvalues(x_values, col_indices, col_size)
 
     projected_y, projected_x = tuple(projected_dimension_names)

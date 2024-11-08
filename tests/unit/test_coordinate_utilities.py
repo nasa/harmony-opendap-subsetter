@@ -16,10 +16,10 @@ from hoss.coordinate_utilities import (
     get_coordinate_variables,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
+    get_row_col_geo_grid_points,
     get_row_col_sizes_from_coordinate_datasets,
-    get_two_valid_geo_grid_points,
+    get_row_col_valid_indices_in_dataset,
     get_valid_indices,
-    get_valid_indices_in_dataset,
     get_variables_with_anonymous_dims,
     get_x_y_values_from_geographic_points,
 )
@@ -505,15 +505,18 @@ class TestCoordinateUtilities(TestCase):
             )
             self.assertFalse(variable_has_fake_dims)
 
-    def test_get_two_valid_geo_grid_points(self):
+    def test_get_row_col_geo_grid_points(self):
         """Ensure that two valid lat/lon points returned by the method
         with a set of lat/lon coordinates as input
 
         """
 
-        with self.subTest('Get two valid geo grid points from coordinates'):
-            expected_geo_grid_points = [(-179.3, 89.3), (178.4, -88.1)]
-            actual_geo_grid_points = get_two_valid_geo_grid_points(
+        with self.subTest('Get two sets of valid geo grid points from coordinates'):
+            expected_geo_grid_points = (
+                {(0, 9): (178.4, 89.3), (4, 9): (178.4, -88.1)},
+                {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
+            )
+            actual_geo_grid_points = get_row_col_geo_grid_points(
                 self.lat_arr,
                 self.lon_arr,
                 self.varinfo.get_variable(self.latitude),
@@ -521,10 +524,9 @@ class TestCoordinateUtilities(TestCase):
                 5,
                 10,
             )
-            for actual_geo_grid_point, expected_geo_grid_point in zip(
-                actual_geo_grid_points.values(), expected_geo_grid_points
-            ):
-                self.assertEqual(actual_geo_grid_point, expected_geo_grid_point)
+
+            self.assertDictEqual(actual_geo_grid_points[0], expected_geo_grid_points[0])
+            self.assertDictEqual(actual_geo_grid_points[1], expected_geo_grid_points[1])
 
         with self.subTest('Get two valid geo grid points from reversed coordinates'):
             lon_arr_reversed = np.array(
@@ -612,8 +614,11 @@ class TestCoordinateUtilities(TestCase):
                     ],
                 ]
             )
-            expected_geo_grid_points_reversed = [(-179.3, 89.3), (150.5, -89.3)]
-            actual_geo_grid_points = get_two_valid_geo_grid_points(
+            expected_geo_grid_points_reversed = (
+                {(0, 8): (-179.3, -79.3), (4, 8): (178.4, -79.3)},
+                {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
+            )
+            actual_geo_grid_points_reversed = get_row_col_geo_grid_points(
                 lat_arr_reversed,
                 lon_arr_reversed,
                 self.varinfo.get_variable(self.latitude),
@@ -621,7 +626,10 @@ class TestCoordinateUtilities(TestCase):
                 5,
                 10,
             )
-            for actual_geo_grid_point, expected_geo_grid_point in zip(
-                actual_geo_grid_points.values(), expected_geo_grid_points_reversed
-            ):
-                self.assertEqual(actual_geo_grid_point, expected_geo_grid_point)
+
+            self.assertDictEqual(
+                actual_geo_grid_points_reversed[0], expected_geo_grid_points_reversed[0]
+            )
+            self.assertDictEqual(
+                actual_geo_grid_points_reversed[1], expected_geo_grid_points_reversed[1]
+            )

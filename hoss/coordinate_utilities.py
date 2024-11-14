@@ -13,7 +13,6 @@ from varinfo import VariableFromDmr, VarInfoFromDmr
 from hoss.exceptions import (
     IncompatibleCoordinateVariables,
     InvalidCoordinateDataset,
-    InvalidCoordinateVariable,
     MissingCoordinateVariable,
     MissingVariable,
 )
@@ -166,7 +165,7 @@ def get_coordinate_array(
     return coordinate_array
 
 
-def get_1D_dim_array_data_from_dimvalues(
+def get_dim_array_data_from_dimvalues(
     dim_values: np.ndarray, dim_indices: np.ndarray, dim_size: int
 ) -> np.ndarray:
     """
@@ -188,7 +187,7 @@ def get_1D_dim_array_data_from_dimvalues(
 
 
 def get_valid_indices(
-    coordinate_row_col: np.ndarray, coordinate: VariableFromDmr
+    lat_lon_array: np.ndarray, coordinate: VariableFromDmr
 ) -> np.ndarray:
     """
     Returns indices of a valid array without fill values if the fill
@@ -199,31 +198,25 @@ def get_valid_indices(
     # get_attribute_value returns a value of type `str`
     coordinate_fill = coordinate.get_attribute_value('_FillValue')
     if coordinate_fill is not None:
-        is_not_fill = ~np.isclose(coordinate_row_col, float(coordinate_fill))
+        is_not_fill = ~np.isclose(lat_lon_array, float(coordinate_fill))
     else:
         # Creates an entire array of `True` values.
-        is_not_fill = np.ones_like(coordinate_row_col, dtype=bool)
+        is_not_fill = np.ones_like(lat_lon_array, dtype=bool)
 
     if coordinate.is_longitude():
-        valid_indices = np.where(
-            np.logical_and(
-                is_not_fill,
-                np.logical_and(
-                    coordinate_row_col >= -180.0, coordinate_row_col <= 360.0
-                ),
-            )
-        )[0]
+        valid_indices = np.logical_and(
+            is_not_fill,
+            np.logical_and(lat_lon_array >= -180.0, lat_lon_array <= 360.0),
+        )
     elif coordinate.is_latitude():
-        valid_indices = np.where(
-            np.logical_and(
-                is_not_fill,
-                np.logical_and(coordinate_row_col >= -90.0, coordinate_row_col <= 90.0),
-            )
-        )[0]
+        valid_indices = np.logical_and(
+            is_not_fill,
+            np.logical_and(lat_lon_array >= -90.0, lat_lon_array <= 90.0),
+        )
     else:
         valid_indices = np.empty((0, 0))
 
-    return valid_indices
+    return valid_indices  # throw an exception
 
 
 def get_row_col_geo_grid_points(
@@ -231,8 +224,6 @@ def get_row_col_geo_grid_points(
     lon_arr: np.ndarray,
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
-    row_size: float,
-    col_size: float,
 ) -> tuple[dict, dict]:
     """
     This method is used to return two valid lat lon points from a 2D
@@ -242,50 +233,52 @@ def get_row_col_geo_grid_points(
     column all have fills, it will raise an exception in those cases.
     """
 
-    geo_grid_indexes_row, geo_grid_indexes_col = get_row_col_valid_indices_in_dataset(
-        lat_arr, lon_arr, row_size, col_size, latitude_coordinate, longitude_coordinate
+    geo_grid_indices_row, geo_grid_indices_col = get_row_col_valid_indices_in_dataset(
+        lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
-    # 2 points in same row - column indices are changing
-    # point1_row_index, point1_col_index = geo_grid_indexes_row[0]
-    # point2_row_index, point2_col_index = geo_grid_indexes_row[1]
-
-    # 2 points in same column - row indices are changing
-    # point3_row_index, point3_col_index = geo_grid_indexes_col[0]
-    # point4_row_index, point4_col_index = geo_grid_indexes_col[1]
 
     geo_grid_col_points = [
         (
-            lon_arr[geo_grid_indexes_row[0][0]][geo_grid_indexes_row[0][1]],
-            lat_arr[geo_grid_indexes_row[0][0]][geo_grid_indexes_row[0][1]],
+            lon_arr[geo_grid_indices_row[0][0]][geo_grid_indices_row[0][1]],
+            lat_arr[geo_grid_indices_row[0][0]][geo_grid_indices_row[0][1]],
         ),
         (
-            lon_arr[geo_grid_indexes_row[1][0]][geo_grid_indexes_row[1][1]],
-            lat_arr[geo_grid_indexes_row[1][0]][geo_grid_indexes_row[1][1]],
+            lon_arr[geo_grid_indices_row[1][0]][geo_grid_indices_row[1][1]],
+            lat_arr[geo_grid_indices_row[1][0]][geo_grid_indices_row[1][1]],
         ),
     ]
 
     geo_grid_row_points = [
         (
-            # lon_arr[point3_row_index][point3_col_index],
-            # lat_arr[point3_row_index][point3_col_index],
-            lon_arr[geo_grid_indexes_col[0][0]][geo_grid_indexes_col[0][1]],
-            lat_arr[geo_grid_indexes_col[0][0]][geo_grid_indexes_col[0][1]],
+            lon_arr[geo_grid_indices_col[0][0]][geo_grid_indices_col[0][1]],
+            lat_arr[geo_grid_indices_col[0][0]][geo_grid_indices_col[0][1]],
         ),
         (
-            # lon_arr[point4_row_index][point4_col_index],
-            # lat_arr[point4_row_index][point4_col_index],
-            lon_arr[geo_grid_indexes_col[1][0]][geo_grid_indexes_col[1][1]],
-            lat_arr[geo_grid_indexes_col[1][0]][geo_grid_indexes_col[1][1]],
+            lon_arr[geo_grid_indices_col[1][0]][geo_grid_indices_col[1][1]],
+            lat_arr[geo_grid_indices_col[1][0]][geo_grid_indices_col[1][1]],
         ),
     ]
+
     return (
         {
-            geo_grid_indexes_col[0]: geo_grid_row_points[0],
-            geo_grid_indexes_col[1]: geo_grid_row_points[1],
+            (
+                geo_grid_indices_col[0][0],
+                geo_grid_indices_col[0][1],
+            ): geo_grid_row_points[0],
+            (
+                geo_grid_indices_col[1][0],
+                geo_grid_indices_col[1][1],
+            ): geo_grid_row_points[1],
         },
         {
-            geo_grid_indexes_row[0]: geo_grid_col_points[0],
-            geo_grid_indexes_row[1]: geo_grid_col_points[1],
+            (
+                geo_grid_indices_row[0][0],
+                geo_grid_indices_row[0][1],
+            ): geo_grid_col_points[0],
+            (
+                geo_grid_indices_row[1][0],
+                geo_grid_indices_row[1][1],
+            ): geo_grid_col_points[1],
         },
     )
 
@@ -295,6 +288,7 @@ def get_x_y_values_from_geographic_points(points: Dict, crs: CRS) -> Dict[tuple,
     those points to the target grid. Then return the x-y dimscales
 
     """
+
     point_longitudes, point_latitudes = zip(*list(points.values()))
 
     from_geo_transformer = Transformer.from_crs(4326, crs)
@@ -312,8 +306,6 @@ def get_x_y_values_from_geographic_points(points: Dict, crs: CRS) -> Dict[tuple,
 def get_row_col_valid_indices_in_dataset(
     lat_arr: np.ndarray,
     lon_arr: np.ndarray,
-    row_size: int,
-    col_size: int,
     lat_coordinate: VariableFromDmr,
     lon_coordinate: VariableFromDmr,
 ) -> tuple[list, list]:
@@ -321,67 +313,58 @@ def get_row_col_valid_indices_in_dataset(
     This method gets valid indices in a row or column of a
     coordinate dataset
     """
-    # coordinate_index = start_index
-    valid_row_indices = valid_col_indices = np.empty((0, 0))
-    # if span_type == 'row':
-    # get 2 points in the row
-    # while valid_col_indices.size < 2:
-    # if span_type == 'row':
-    max_col_distance = 0
-    valid_row_index = row_coordinate_index = -1
-    max_range_valid_col_indices = np.empty(0)
-    while row_coordinate_index < row_size - 1:
-        row_coordinate_index = row_coordinate_index + 1
-        valid_col_indices = np.intersect1d(
-            get_valid_indices(lat_arr[row_coordinate_index, :], lat_coordinate),
-            get_valid_indices(lon_arr[row_coordinate_index, :], lon_coordinate),
-        )
+    valid_lat_lon_mask = np.logical_and(
+        get_valid_indices(lat_arr, lat_coordinate),
+        get_valid_indices(lon_arr, lon_coordinate),
+    )
 
-        if valid_col_indices.size >= 2 and (
-            max_col_distance < (valid_col_indices[-1] - valid_col_indices[0])
-        ):
-            max_col_distance = valid_col_indices[-1] - valid_col_indices[0]
-            max_range_valid_col_indices = valid_col_indices
-            valid_row_index = row_coordinate_index
+    # get maximally spread points within rows
+    max_x_spread_pts = get_max_x_spread_pts(~valid_lat_lon_mask)
 
-    if valid_row_index < 0 or max_range_valid_col_indices.size < 2:
-        raise InvalidCoordinateVariable(lat_coordinate.full_name_path)
-
-    # span type is col
-    # get 2 points in a column
-    # while valid_row_indices.size < 2:
-    max_row_distance = 0
-    valid_col_index = col_coordinate_index = col_size
-    max_range_valid_row_indices = np.empty(0)
-    while col_coordinate_index > 0:
-        col_coordinate_index = col_coordinate_index - 1
-        valid_row_indices = np.intersect1d(
-            get_valid_indices(lat_arr[:, col_coordinate_index], lat_coordinate),
-            get_valid_indices(lon_arr[:, col_coordinate_index], lon_coordinate),
-        )
-        if valid_row_indices.size >= 2 and (
-            max_row_distance < (valid_row_indices[-1] - valid_row_indices[0])
-        ):
-            max_row_distance = valid_row_indices[-1] - valid_row_indices[0]
-            max_range_valid_row_indices = valid_row_indices
-            valid_col_index = col_coordinate_index
-
-    if col_coordinate_index >= col_size or max_range_valid_row_indices.size < 2:
-        raise InvalidCoordinateVariable(lon_coordinate.full_name_path)
-
-    # same row . 2 column points
-    geo_grid_indexes_row = [
-        (valid_row_index, max_range_valid_col_indices[0]),
-        (valid_row_index, max_range_valid_col_indices[-1]),
+    # Doing the same for the columns is done by transposing the valid_mask
+    # and then fixing the results from [x, y] to [y, x].
+    max_y_spread_trsp = get_max_x_spread_pts(np.transpose(~valid_lat_lon_mask))
+    max_y_spread_pts = [
+        np.flip(max_y_spread_trsp[0]),
+        np.flip(max_y_spread_trsp[1]),
     ]
 
-    # same column, 2 row points
-    geo_grid_indexes_col = [
-        (max_range_valid_row_indices[0], valid_col_index),
-        (max_range_valid_row_indices[-1], valid_col_index),
-    ]
+    return max_y_spread_pts, max_x_spread_pts
 
-    return geo_grid_indexes_row, geo_grid_indexes_col
+
+def get_max_x_spread_pts(
+    valid_mask: np.ndarray,  # Numpy Mask Array, e.g., invalid latitudes & longitudes
+) -> tuple:  # 2 points by indices, [[y_ind, x_ind], [y_ind, x_ind]
+    """
+    # This function returns two data points by x, y indices that are spread farthest
+    # from each other in the same row, i.e., have the greatest delta-x value - and
+    # are valid data points from the valid_mask array passed in. The input array
+    # must be a 2D Numpy mask array providing the valid data points, e.g., filtering
+    # out fill values and out-of-range values.
+    """
+    # fill a sample array with x-index values, x_ind[i, j] = j
+    x_ind = np.array(
+        [
+            # [j for j in range(valid_mask.shape[1])]
+            list(range(valid_mask.shape[1]))
+            for i in range(valid_mask.shape[0])
+        ]
+    )
+    # mask x_ind to hide the invalid data points
+    valid_x_ind = np.ma.array(x_ind, mask=valid_mask)
+
+    # ptp (peak-to-peak) finds the greatest delta-x value amongst valid points
+    # for each row. Result is 1D
+    x_ind_spread = valid_x_ind.ptp(axis=1)
+
+    # This finds which row has the greatest spread (delta-x)
+    max_x_spread_row = np.argmax(x_ind_spread)
+
+    # Using the row reference, find the min-x and max-x
+    min_x_ind = np.min(valid_x_ind[max_x_spread_row])
+    max_x_ind = np.max(valid_x_ind[max_x_spread_row])
+
+    return [[max_x_spread_row, min_x_ind], [max_x_spread_row, max_x_ind]]
 
 
 def create_dimension_array_from_coordinates(
@@ -412,10 +395,9 @@ def create_dimension_array_from_coordinates(
         lon_arr,
     )
 
-    geo_grid_row_points, geo_grid_col_points = get_row_col_geo_grid_points(
-        lat_arr, lon_arr, latitude_coordinate, longitude_coordinate, row_size, col_size
+    geo_grid_col_points, geo_grid_row_points = get_row_col_geo_grid_points(
+        lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
-
     x_y_values1 = get_x_y_values_from_geographic_points(geo_grid_row_points, crs)
     # y value changes across the row indices
     row_indices = [list(x_y_values1.keys())[0][0], list(x_y_values1.keys())[1][0]]
@@ -426,8 +408,8 @@ def create_dimension_array_from_coordinates(
     col_indices = [list(x_y_values2.keys())[0][1], list(x_y_values2.keys())[1][1]]
     x_values = [list(x_y_values2.values())[0][0], list(x_y_values2.values())[1][0]]
 
-    y_dim = get_1D_dim_array_data_from_dimvalues(y_values, row_indices, row_size)
-    x_dim = get_1D_dim_array_data_from_dimvalues(x_values, col_indices, col_size)
+    y_dim = get_dim_array_data_from_dimvalues(y_values, row_indices, row_size)
+    x_dim = get_dim_array_data_from_dimvalues(x_values, col_indices, col_size)
 
     projected_y, projected_x = tuple(projected_dimension_names)
     return {projected_y: y_dim, projected_x: x_dim}

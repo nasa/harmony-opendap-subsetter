@@ -11,9 +11,9 @@ from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
     any_absent_dimension_variables,
-    get_1D_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
+    get_dim_array_data_from_dimvalues,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
     get_row_col_geo_grid_points,
@@ -123,7 +123,7 @@ class TestCoordinateUtilities(TestCase):
             for expected_variable in expected_coordinate_variables[1]:
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
 
-    def test_get_1D_dim_array_data_from_dimvalues(self):
+    def test_get_dim_array_data_from_dimvalues(self):
         """Ensure that the dimension scale generated from the
         provided dimension values are accurate for ascending and
         descending scales
@@ -134,7 +134,7 @@ class TestCoordinateUtilities(TestCase):
             dim_indices_asc = np.array([0, 1])
             dim_size_asc = 12
             expected_dim_asc = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24])
-            dim_array_values = get_1D_dim_array_data_from_dimvalues(
+            dim_array_values = get_dim_array_data_from_dimvalues(
                 dim_values_asc, dim_indices_asc, dim_size_asc
             )
             self.assertTrue(np.array_equal(dim_array_values, expected_dim_asc))
@@ -145,7 +145,7 @@ class TestCoordinateUtilities(TestCase):
             dim_size_desc = 10
             expected_dim_desc = np.array([120, 110, 100, 90, 80, 70, 60, 50, 40, 30])
 
-            dim_array_values = get_1D_dim_array_data_from_dimvalues(
+            dim_array_values = get_dim_array_data_from_dimvalues(
                 dim_values_desc, dim_indices_desc, dim_size_desc
             )
             self.assertTrue(np.array_equal(dim_array_values, expected_dim_desc))
@@ -155,7 +155,7 @@ class TestCoordinateUtilities(TestCase):
             dim_indices_asc = np.array([0, 1])
             dim_size_asc = 12
             with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_1D_dim_array_data_from_dimvalues(
+                get_dim_array_data_from_dimvalues(
                     dim_values_invalid, dim_indices_asc, dim_size_asc
                 )
             self.assertEqual(
@@ -169,7 +169,7 @@ class TestCoordinateUtilities(TestCase):
             dim_indices_invalid = np.array([5, 5])
             dim_size_desc = 10
             with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_1D_dim_array_data_from_dimvalues(
+                get_dim_array_data_from_dimvalues(
                     dim_values_desc, dim_indices_invalid, dim_size_desc
                 )
             self.assertEqual(
@@ -328,7 +328,7 @@ class TestCoordinateUtilities(TestCase):
                 get_row_col_sizes_from_coordinate_datasets(self.lat_arr, self.lon_arr),
                 expected_row_col_sizes,
             )
-        with self.subTest('Retrieves the expected row col sizes for the 1d array'):
+        with self.subTest('Retrieves the expected row col sizes for the dim array'):
             self.assertEqual(
                 get_row_col_sizes_from_coordinate_datasets(
                     np.array([1, 2, 3, 4]), np.array([5, 6, 7, 8, 9])
@@ -394,15 +394,17 @@ class TestCoordinateUtilities(TestCase):
         ascending or descending.
 
         """
-        expected_valid_indices_lat_arr_with_fill = np.array([1, 2, 3, 4])
-        expected_valid_indices_lon_arr_with_fill = np.array([0, 1, 2, 6, 7, 8, 9])
-
-        expected_valid_indices_lat_arr_over_range = np.array([0, 1, 2])
+        # expected_valid_indices_lat_arr_with_fill = np.array([1, 2, 3, 4])
+        # expected_valid_indices_lon_arr_with_fill = np.array([0, 1, 2, 6, 7, 8, 9])
+        # expected_valid_indices_lat_arr_over_range = np.array([0, 1, 2])
         expected_valid_indices_lon_arr_over_range = np.array([0, 1, 2, 6, 7, 8, 9])
 
         fill_array = np.array([-9999.0, -9999.0, -9999.0, -9999.0])
 
         with self.subTest('valid indices for latitude with fill values'):
+            expected_valid_indices_lat_arr_with_fill = np.array(
+                [False, True, True, True, True]
+            )
             valid_indices_lat_arr = get_valid_indices(
                 self.lat_arr[:, 2], self.varinfo.get_variable(self.latitude)
             )
@@ -410,6 +412,9 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lat_arr, expected_valid_indices_lat_arr_with_fill
             )
         with self.subTest('valid indices for longitude with fill values'):
+            expected_valid_indices_lon_arr_with_fill = np.array(
+                [True, True, True, False, False, False, True, True, True, True]
+            )
             valid_indices_lon_arr = get_valid_indices(
                 self.lon_arr[0, :], self.varinfo.get_variable(self.longitude)
             )
@@ -417,6 +422,9 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lon_arr, expected_valid_indices_lon_arr_with_fill
             )
         with self.subTest('latitude values beyond valid range'):
+            expected_valid_indices_lat_arr_over_range = np.array(
+                [True, True, True, False, False]
+            )
             valid_indices_lat_arr = get_valid_indices(
                 self.lat_arr[:, 3], self.varinfo.get_variable(self.latitude)
             )
@@ -424,6 +432,9 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lat_arr, expected_valid_indices_lat_arr_over_range
             )
         with self.subTest('longitude values beyond valid range'):
+            expected_valid_indices_lon_arr_over_range = np.array(
+                [True, True, True, False, False, False, True, True, True, True]
+            )
             valid_indices_lon_arr = get_valid_indices(
                 self.lon_arr[1, :], self.varinfo.get_variable(self.longitude)
             )
@@ -431,10 +442,13 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lon_arr, expected_valid_indices_lon_arr_over_range
             )
         with self.subTest('all fill values - no valid indices'):
-            valid_indices = get_valid_indices(
+            expected_valid_indices_fill_values = np.array([False, False, False, False])
+            valid_indices_all_fill = get_valid_indices(
                 fill_array, self.varinfo.get_variable(self.longitude)
             )
-            self.assertEqual(valid_indices.size, 0)
+            np.testing.assert_array_equal(
+                valid_indices_all_fill, expected_valid_indices_fill_values
+            )
 
     def test_get_variables_with_anonymous_dims(self):
         """Ensure that variables with no dimensions are
@@ -513,16 +527,17 @@ class TestCoordinateUtilities(TestCase):
 
         with self.subTest('Get two sets of valid geo grid points from coordinates'):
             expected_geo_grid_points = (
-                {(0, 9): (178.4, 89.3), (4, 9): (178.4, -88.1)},
+                # {(0, 9): (178.4, 89.3), (4, 9): (178.4, -88.1)},
+                # {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
                 {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
+                {(0, 0): (-179.3, 89.3), (4, 0): (-179.3, -88.1)},
+                # {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
             )
             actual_geo_grid_points = get_row_col_geo_grid_points(
                 self.lat_arr,
                 self.lon_arr,
                 self.varinfo.get_variable(self.latitude),
                 self.varinfo.get_variable(self.longitude),
-                5,
-                10,
             )
 
             self.assertDictEqual(actual_geo_grid_points[0], expected_geo_grid_points[0])
@@ -615,16 +630,17 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             expected_geo_grid_points_reversed = (
-                {(0, 8): (-179.3, -79.3), (4, 8): (178.4, -79.3)},
+                # {(0, 8): (-179.3, -79.3), (4, 8): (178.4, -79.3)},
+                # {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
                 {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
+                {(0, 0): (-179.3, 89.3), (4, 0): (178.4, -89.3)},
+                # {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
             )
             actual_geo_grid_points_reversed = get_row_col_geo_grid_points(
                 lat_arr_reversed,
                 lon_arr_reversed,
                 self.varinfo.get_variable(self.latitude),
                 self.varinfo.get_variable(self.longitude),
-                5,
-                10,
             )
 
             self.assertDictEqual(

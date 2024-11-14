@@ -7,6 +7,7 @@ import numpy as np
 from harmony.util import config
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
+from pyproj import CRS
 from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
@@ -14,6 +15,7 @@ from hoss.coordinate_utilities import (
     get_coordinate_array,
     get_coordinate_variables,
     get_dim_array_data_from_dimvalues,
+    get_max_x_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
     get_row_col_geo_grid_points,
@@ -527,11 +529,8 @@ class TestCoordinateUtilities(TestCase):
 
         with self.subTest('Get two sets of valid geo grid points from coordinates'):
             expected_geo_grid_points = (
-                # {(0, 9): (178.4, 89.3), (4, 9): (178.4, -88.1)},
-                # {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
                 {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
                 {(0, 0): (-179.3, 89.3), (4, 0): (-179.3, -88.1)},
-                # {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
             )
             actual_geo_grid_points = get_row_col_geo_grid_points(
                 self.lat_arr,
@@ -630,11 +629,8 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             expected_geo_grid_points_reversed = (
-                # {(0, 8): (-179.3, -79.3), (4, 8): (178.4, -79.3)},
-                # {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
                 {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
                 {(0, 0): (-179.3, 89.3), (4, 0): (178.4, -89.3)},
-                # {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
             )
             actual_geo_grid_points_reversed = get_row_col_geo_grid_points(
                 lat_arr_reversed,
@@ -649,3 +645,83 @@ class TestCoordinateUtilities(TestCase):
             self.assertDictEqual(
                 actual_geo_grid_points_reversed[1], expected_geo_grid_points_reversed[1]
             )
+
+    def test_get_max_x_spread_pts(self):
+        """Ensure that two valid sets of indices are returned by the function
+        with a masked dataset as input
+
+        """
+
+        with self.subTest('Get two sets of valid indices for points from coordinates'):
+            valid_values = np.array(
+                [
+                    [True, True, True, True, False, False, True, True, True, True],
+                    [True, True, True, False, False, False, True, True, True, True],
+                    [True, True, True, False, True, False, True, True, True, True],
+                    [True, True, True, False, False, False, True, True, True, True],
+                    [True, True, False, False, False, False, True, True, True, True],
+                ]
+            )
+            expected_indices = [[0, 0], [0, 9]]
+
+            actual_indices = get_max_x_spread_pts(~valid_values)
+
+            self.assertTrue(actual_indices[0] == expected_indices[0])
+            self.assertTrue(actual_indices[1] == expected_indices[1])
+
+    def test_get_row_col_valid_indices_in_dataset(self):
+        """Ensure that two sets of valid indices are
+        returned by the method with a set of lat/lon coordinates as input
+
+        """
+        with self.subTest('Get two sets of valid indices from coordinates dataset'):
+            expected_grid_indices = (
+                [(0, 0), (0, 9)],
+                [(0, 0), (4, 0)],
+            )
+            actual_grid_indices = get_row_col_valid_indices_in_dataset(
+                self.lat_arr,
+                self.lon_arr,
+                self.varinfo.get_variable(self.latitude),
+                self.varinfo.get_variable(self.longitude),
+            )
+
+            self.assertTrue(actual_grid_indices[0], expected_grid_indices[0])
+            self.assertTrue(actual_grid_indices[1], expected_grid_indices[1])
+
+    def test_get_x_y_values_from_geographic_points(self):
+        """Ensure that the correct x-values are returned by the function
+        with a set of geographic coordinates as input.
+
+        """
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+
+        with self.subTest('Get valid x-y points from coordinates in a row'):
+            two_col_points_in_a_row = {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)}
+            expected_x_y_points = {
+                (0, 0): (-17299990.048985746, 7341677.255608977),
+                (0, 9): (17213152.396759935, 7341677.255608977),
+            }
+            actual_x_y_points = get_x_y_values_from_geographic_points(
+                two_col_points_in_a_row, crs
+            )
+            self.assertDictEqual(actual_x_y_points, expected_x_y_points)
+
+        with self.subTest('Get valid x-y points from coordinates in a col'):
+            two_row_points_in_a_col = {(0, 0): (-179.3, 89.3), (4, 0): (-179.3, -88.1)}
+            expected_x_y_points = {
+                (0, 0): (-17299990.048985746, 7341677.255608977),
+                (4, 0): (-17299990.048985746, -7338157.219843731),
+            }
+            actual_x_y_points = get_x_y_values_from_geographic_points(
+                two_row_points_in_a_col, crs
+            )
+            self.assertDictEqual(actual_x_y_points, expected_x_y_points)

@@ -310,8 +310,8 @@ def get_row_col_valid_indices_in_dataset(
     lon_coordinate: VariableFromDmr,
 ) -> tuple[list, list]:
     """
-    This method gets valid indices in a row or column of a
-    coordinate dataset
+    This function gets valid indices across rows and columns of
+    both the latitude and longitude datasets
     """
     valid_lat_lon_mask = np.logical_and(
         get_valid_indices(lat_arr, lat_coordinate),
@@ -334,7 +334,7 @@ def get_row_col_valid_indices_in_dataset(
 
 def get_max_x_spread_pts(
     valid_mask: np.ndarray,  # Numpy Mask Array, e.g., invalid latitudes & longitudes
-) -> tuple:  # 2 points by indices, [[y_ind, x_ind], [y_ind, x_ind]
+) -> list[list]:  # 2 points by indices, [[y_ind, x_ind], [y_ind, x_ind]
     """
     # This function returns two data points by x, y indices that are spread farthest
     # from each other in the same row, i.e., have the greatest delta-x value - and

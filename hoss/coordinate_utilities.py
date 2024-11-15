@@ -165,12 +165,14 @@ def get_coordinate_array(
     return coordinate_array
 
 
-def get_dim_array_data_from_dimvalues(
-    dim_values: np.ndarray, dim_indices: np.ndarray, dim_size: int
-) -> np.ndarray:
+def get_1d_dim_array_data_from_dimvalues(
+    dim_values: np.ndarray,  # 2 element 1D array [ <x>, <y> ]
+    dim_indices: np.ndarray,  # 2 element 1D array [ <i>, <j> ]
+    dim_size: int,  # all dim_indices values => 0, <= dim_size
+) -> np.ndarray:  # 1D of size = dim_size, with proper dimension array values
     """
-    return a full dimension data array based on the 2 projected points and
-    grid size
+    return a full dimension data array based upon 2 valid projected values
+    within - indices given - and the full dimension size
     """
 
     if (dim_indices[1] != dim_indices[0]) and (dim_values[1] != dim_values[0]):
@@ -190,9 +192,12 @@ def get_valid_indices(
     lat_lon_array: np.ndarray, coordinate: VariableFromDmr
 ) -> np.ndarray:
     """
-    Returns indices of a valid array without fill values if the fill
-    value is provided. If it is not provided, we check for valid values
-    for latitude and longitude
+    Returns an array of boolean values
+    - true, false - indicating a valid value (non-fill, within range)
+    for a given coordinate variable
+    - latitude or longitude - or
+    returns an empty ndarray of size (0,0) for any other variable.
+    Note a numpy mask is the opposite of a valids array.
     """
 
     # get_attribute_value returns a value of type `str`
@@ -387,7 +392,7 @@ def create_dimension_array_from_coordinates(
     x_y_values1 = get_x_y_values_from_geographic_points(geo_grid_row_points, crs)
     col_indices_for_x = [col_index[1] for col_index in col_indices]
     x_values = [x_y_value[0] for x_y_value in list(x_y_values1)]
-    x_dim = get_dim_array_data_from_dimvalues(x_values, col_indices_for_x, col_size)
+    x_dim = get_1d_dim_array_data_from_dimvalues(x_values, col_indices_for_x, col_size)
 
     geo_grid_col_points = [
         (lon_arr[row, col], lat_arr[row, col]) for row, col in row_indices
@@ -395,7 +400,7 @@ def create_dimension_array_from_coordinates(
     x_y_values2 = get_x_y_values_from_geographic_points(geo_grid_col_points, crs)
     row_indices_for_y = [row_index[0] for row_index in row_indices]
     y_values = [x_y_value[1] for x_y_value in list(x_y_values2)]
-    y_dim = get_dim_array_data_from_dimvalues(y_values, row_indices_for_y, row_size)
+    y_dim = get_1d_dim_array_data_from_dimvalues(y_values, row_indices_for_y, row_size)
 
     projected_y, projected_x = tuple(projected_dimension_names)
     return {projected_y: y_dim, projected_x: x_dim}

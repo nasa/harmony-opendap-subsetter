@@ -12,9 +12,9 @@ from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
     any_absent_dimension_variables,
+    get_1d_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
-    get_dim_array_data_from_dimvalues,
     get_max_x_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
@@ -125,7 +125,7 @@ class TestCoordinateUtilities(TestCase):
             for expected_variable in expected_coordinate_variables[1]:
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
 
-    def test_get_dim_array_data_from_dimvalues(self):
+    def test_get_1d_dim_array_data_from_dimvalues(self):
         """Ensure that the dimension scale generated from the
         provided dimension values are accurate for ascending and
         descending scales
@@ -136,7 +136,7 @@ class TestCoordinateUtilities(TestCase):
             dim_indices_asc = np.array([0, 1])
             dim_size_asc = 12
             expected_dim_asc = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24])
-            dim_array_values = get_dim_array_data_from_dimvalues(
+            dim_array_values = get_1d_dim_array_data_from_dimvalues(
                 dim_values_asc, dim_indices_asc, dim_size_asc
             )
             self.assertTrue(np.array_equal(dim_array_values, expected_dim_asc))
@@ -147,7 +147,7 @@ class TestCoordinateUtilities(TestCase):
             dim_size_desc = 10
             expected_dim_desc = np.array([120, 110, 100, 90, 80, 70, 60, 50, 40, 30])
 
-            dim_array_values = get_dim_array_data_from_dimvalues(
+            dim_array_values = get_1d_dim_array_data_from_dimvalues(
                 dim_values_desc, dim_indices_desc, dim_size_desc
             )
             self.assertTrue(np.array_equal(dim_array_values, expected_dim_desc))
@@ -157,7 +157,7 @@ class TestCoordinateUtilities(TestCase):
             dim_indices_asc = np.array([0, 1])
             dim_size_asc = 12
             with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_dim_array_data_from_dimvalues(
+                get_1d_dim_array_data_from_dimvalues(
                     dim_values_invalid, dim_indices_asc, dim_size_asc
                 )
             self.assertEqual(
@@ -171,7 +171,7 @@ class TestCoordinateUtilities(TestCase):
             dim_indices_invalid = np.array([5, 5])
             dim_size_desc = 10
             with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_dim_array_data_from_dimvalues(
+                get_1d_dim_array_data_from_dimvalues(
                     dim_values_desc, dim_indices_invalid, dim_size_desc
                 )
             self.assertEqual(

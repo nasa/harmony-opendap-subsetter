@@ -224,7 +224,8 @@ def get_row_col_geo_grid_points(
     lon_arr: np.ndarray,
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
-) -> tuple[dict, dict]:
+    # ) -> tuple[dict, dict]:
+) -> tuple[list, list]:
     """
     This method is used to return two valid lat lon points from a 2D
     coordinate dataset. It gets the row and column of the latitude and longitude
@@ -238,52 +239,35 @@ def get_row_col_geo_grid_points(
     )
 
     geo_grid_col_points = [
-        (
-            lon_arr[geo_grid_indices_row[0][0]][geo_grid_indices_row[0][1]],
-            lat_arr[geo_grid_indices_row[0][0]][geo_grid_indices_row[0][1]],
-        ),
-        (
-            lon_arr[geo_grid_indices_row[1][0]][geo_grid_indices_row[1][1]],
-            lat_arr[geo_grid_indices_row[1][0]][geo_grid_indices_row[1][1]],
-        ),
+        (lon_arr[row, col], lat_arr[row, col]) for row, col in geo_grid_indices_row
     ]
-
     geo_grid_row_points = [
-        (
-            lon_arr[geo_grid_indices_col[0][0]][geo_grid_indices_col[0][1]],
-            lat_arr[geo_grid_indices_col[0][0]][geo_grid_indices_col[0][1]],
-        ),
-        (
-            lon_arr[geo_grid_indices_col[1][0]][geo_grid_indices_col[1][1]],
-            lat_arr[geo_grid_indices_col[1][0]][geo_grid_indices_col[1][1]],
-        ),
+        (lon_arr[row, col], lat_arr[row, col]) for row, col in geo_grid_indices_col
     ]
 
-    return (
-        {
-            (
-                geo_grid_indices_col[0][0],
-                geo_grid_indices_col[0][1],
-            ): geo_grid_row_points[0],
-            (
-                geo_grid_indices_col[1][0],
-                geo_grid_indices_col[1][1],
-            ): geo_grid_row_points[1],
-        },
-        {
-            (
-                geo_grid_indices_row[0][0],
-                geo_grid_indices_row[0][1],
-            ): geo_grid_col_points[0],
-            (
-                geo_grid_indices_row[1][0],
-                geo_grid_indices_row[1][1],
-            ): geo_grid_col_points[1],
-        },
+    return geo_grid_row_points, geo_grid_col_points
+
+
+def get_x_y_values_from_geographic_points(points: list, crs: CRS) -> list[tuple]:
+    """Take an input list of (longitude, latitude) coordinates and project
+    those points to the target grid. Then return the x-y dimscales
+
+    """
+
+    point_longitudes, point_latitudes = zip(*list(points))
+
+    from_geo_transformer = Transformer.from_crs(4326, crs)
+    points_x, points_y = (  # pylint: disable=unpacking-non-sequence
+        from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
+    x_y_points = list(zip(points_x, points_y))
+
+    return x_y_points
 
 
-def get_x_y_values_from_geographic_points(points: Dict, crs: CRS) -> Dict[tuple, tuple]:
+def get_x_y_values_from_geographic_points1(
+    points: Dict, crs: CRS
+) -> Dict[tuple, tuple]:
     """Take an input list of (longitude, latitude) coordinates and project
     those points to the target grid. Then return the x-y dimscales
 
@@ -389,27 +373,29 @@ def create_dimension_array_from_coordinates(
         prefetch_dataset,
         longitude_coordinate.full_name_path,
     )
-
     row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
         lat_arr,
         lon_arr,
     )
-
-    geo_grid_col_points, geo_grid_row_points = get_row_col_geo_grid_points(
+    row_indices, col_indices = get_row_col_valid_indices_in_dataset(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
+
+    geo_grid_row_points = [
+        (lon_arr[row, col], lat_arr[row, col]) for row, col in col_indices
+    ]
     x_y_values1 = get_x_y_values_from_geographic_points(geo_grid_row_points, crs)
-    # y value changes across the row indices
-    row_indices = [list(x_y_values1.keys())[0][0], list(x_y_values1.keys())[1][0]]
-    y_values = [list(x_y_values1.values())[0][1], list(x_y_values1.values())[1][1]]
+    col_indices_for_x = [col_index[1] for col_index in col_indices]
+    x_values = [x_y_value[0] for x_y_value in list(x_y_values1)]
+    x_dim = get_dim_array_data_from_dimvalues(x_values, col_indices_for_x, col_size)
 
+    geo_grid_col_points = [
+        (lon_arr[row, col], lat_arr[row, col]) for row, col in row_indices
+    ]
     x_y_values2 = get_x_y_values_from_geographic_points(geo_grid_col_points, crs)
-    # x value changes across the col indices
-    col_indices = [list(x_y_values2.keys())[0][1], list(x_y_values2.keys())[1][1]]
-    x_values = [list(x_y_values2.values())[0][0], list(x_y_values2.values())[1][0]]
-
-    y_dim = get_dim_array_data_from_dimvalues(y_values, row_indices, row_size)
-    x_dim = get_dim_array_data_from_dimvalues(x_values, col_indices, col_size)
+    row_indices_for_y = [row_index[0] for row_index in row_indices]
+    y_values = [x_y_value[1] for x_y_value in list(x_y_values2)]
+    y_dim = get_dim_array_data_from_dimvalues(y_values, row_indices_for_y, row_size)
 
     projected_y, projected_x = tuple(projected_dimension_names)
     return {projected_y: y_dim, projected_x: x_dim}

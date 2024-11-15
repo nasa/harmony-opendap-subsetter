@@ -529,8 +529,8 @@ class TestCoordinateUtilities(TestCase):
 
         with self.subTest('Get two sets of valid geo grid points from coordinates'):
             expected_geo_grid_points = (
-                {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)},
-                {(0, 0): (-179.3, 89.3), (4, 0): (-179.3, -88.1)},
+                [(-179.3, 89.3), (178.4, 89.3)],
+                [(-179.3, 89.3), (-179.3, -88.1)],
             )
             actual_geo_grid_points = get_row_col_geo_grid_points(
                 self.lat_arr,
@@ -539,8 +539,8 @@ class TestCoordinateUtilities(TestCase):
                 self.varinfo.get_variable(self.longitude),
             )
 
-            self.assertDictEqual(actual_geo_grid_points[0], expected_geo_grid_points[0])
-            self.assertDictEqual(actual_geo_grid_points[1], expected_geo_grid_points[1])
+            self.assertListEqual(actual_geo_grid_points[0], expected_geo_grid_points[0])
+            self.assertListEqual(actual_geo_grid_points[1], expected_geo_grid_points[1])
 
         with self.subTest('Get two valid geo grid points from reversed coordinates'):
             lon_arr_reversed = np.array(
@@ -629,8 +629,8 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             expected_geo_grid_points_reversed = (
-                {(0, 0): (-179.3, 89.3), (0, 9): (-179.3, -89.3)},
-                {(0, 0): (-179.3, 89.3), (4, 0): (178.4, -89.3)},
+                [(-179.3, 89.3), (-179.3, -89.3)],
+                [(-179.3, 89.3), (178.4, -89.3)],
             )
             actual_geo_grid_points_reversed = get_row_col_geo_grid_points(
                 lat_arr_reversed,
@@ -639,10 +639,10 @@ class TestCoordinateUtilities(TestCase):
                 self.varinfo.get_variable(self.longitude),
             )
 
-            self.assertDictEqual(
+            self.assertListEqual(
                 actual_geo_grid_points_reversed[0], expected_geo_grid_points_reversed[0]
             )
-            self.assertDictEqual(
+            self.assertListEqual(
                 actual_geo_grid_points_reversed[1], expected_geo_grid_points_reversed[1]
             )
 
@@ -705,23 +705,24 @@ class TestCoordinateUtilities(TestCase):
         )
 
         with self.subTest('Get valid x-y points from coordinates in a row'):
-            two_col_points_in_a_row = {(0, 0): (-179.3, 89.3), (0, 9): (178.4, 89.3)}
-            expected_x_y_points = {
-                (0, 0): (-17299990.048985746, 7341677.255608977),
-                (0, 9): (17213152.396759935, 7341677.255608977),
-            }
+            two_col_points_in_a_row = [(-179.3, 89.3), (178.4, 89.3)]
+
+            expected_x_y_points = [
+                (-17299990.048985746, 7341677.255608977),
+                (17213152.396759935, 7341677.255608977),
+            ]
             actual_x_y_points = get_x_y_values_from_geographic_points(
                 two_col_points_in_a_row, crs
             )
-            self.assertDictEqual(actual_x_y_points, expected_x_y_points)
+            self.assertListEqual(actual_x_y_points, expected_x_y_points)
 
         with self.subTest('Get valid x-y points from coordinates in a col'):
-            two_row_points_in_a_col = {(0, 0): (-179.3, 89.3), (4, 0): (-179.3, -88.1)}
-            expected_x_y_points = {
-                (0, 0): (-17299990.048985746, 7341677.255608977),
-                (4, 0): (-17299990.048985746, -7338157.219843731),
-            }
+            two_row_points_in_a_col = (-179.3, 89.3), (-179.3, -88.1)
+            expected_x_y_points = [
+                (-17299990.048985746, 7341677.255608977),
+                (-17299990.048985746, -7338157.219843731),
+            ]
             actual_x_y_points = get_x_y_values_from_geographic_points(
                 two_row_points_in_a_col, crs
             )
-            self.assertDictEqual(actual_x_y_points, expected_x_y_points)
+            self.assertListEqual(actual_x_y_points, expected_x_y_points)

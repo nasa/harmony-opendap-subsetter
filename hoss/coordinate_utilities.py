@@ -253,12 +253,14 @@ def get_row_col_geo_grid_points(
     return geo_grid_row_points, geo_grid_col_points
 
 
-def get_x_y_values_from_geographic_points(points: list, crs: CRS) -> list[tuple]:
+def get_x_y_values_from_geographic_points(
+    points: list[tuple],  # list of data points as tuple in (lon, lat) order
+    crs: CRS,  # CRS object from PyProj
+) -> list[tuple]:  # list of X-Y points as tuple in (X, Y) order
     """Take an input list of (longitude, latitude) coordinates and project
     those points to the target grid. Then return the x-y dimscales
 
     """
-
     point_longitudes, point_latitudes = zip(*list(points))
 
     from_geo_transformer = Transformer.from_crs(4326, crs)

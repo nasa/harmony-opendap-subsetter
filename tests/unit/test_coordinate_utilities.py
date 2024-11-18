@@ -20,8 +20,8 @@ from hoss.coordinate_utilities import (
     get_projected_dimension_names_from_coordinate_variables,
     get_row_col_geo_grid_points,
     get_row_col_sizes_from_coordinate_datasets,
-    get_row_col_valid_indices_in_dataset,
     get_valid_indices,
+    get_valid_row_col_pairs,
     get_variables_with_anonymous_dims,
     get_x_y_values_from_geographic_points,
 )
@@ -528,19 +528,24 @@ class TestCoordinateUtilities(TestCase):
         """
 
         with self.subTest('Get two sets of valid geo grid points from coordinates'):
+            expected_row_indices = [[0, 0], [4, 0]]
+            expected_col_indices = [[0, 0], [0, 9]]
             expected_geo_grid_points = (
                 [(-179.3, 89.3), (178.4, 89.3)],
                 [(-179.3, 89.3), (-179.3, -88.1)],
             )
-            actual_geo_grid_points = get_row_col_geo_grid_points(
-                self.lat_arr,
-                self.lon_arr,
-                self.varinfo.get_variable(self.latitude),
-                self.varinfo.get_variable(self.longitude),
+            row_indices, col_indices, row_points, col_points = (
+                get_row_col_geo_grid_points(
+                    self.lat_arr,
+                    self.lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
             )
-
-            self.assertListEqual(actual_geo_grid_points[0], expected_geo_grid_points[0])
-            self.assertListEqual(actual_geo_grid_points[1], expected_geo_grid_points[1])
+            self.assertListEqual(row_indices, expected_row_indices)
+            self.assertListEqual(col_indices, expected_col_indices)
+            self.assertListEqual(row_points, expected_geo_grid_points[0])
+            self.assertListEqual(col_points, expected_geo_grid_points[1])
 
         with self.subTest('Get two valid geo grid points from reversed coordinates'):
             lon_arr_reversed = np.array(
@@ -628,23 +633,26 @@ class TestCoordinateUtilities(TestCase):
                     ],
                 ]
             )
+            expected_row_indices = [[0, 0], [4, 0]]
+            expected_col_indices = [[0, 0], [0, 9]]
             expected_geo_grid_points_reversed = (
                 [(-179.3, 89.3), (-179.3, -89.3)],
                 [(-179.3, 89.3), (178.4, -89.3)],
             )
-            actual_geo_grid_points_reversed = get_row_col_geo_grid_points(
-                lat_arr_reversed,
-                lon_arr_reversed,
-                self.varinfo.get_variable(self.latitude),
-                self.varinfo.get_variable(self.longitude),
+
+            row_indices, col_indices, row_points, col_points = (
+                get_row_col_geo_grid_points(
+                    lat_arr_reversed,
+                    lon_arr_reversed,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
             )
 
-            self.assertListEqual(
-                actual_geo_grid_points_reversed[0], expected_geo_grid_points_reversed[0]
-            )
-            self.assertListEqual(
-                actual_geo_grid_points_reversed[1], expected_geo_grid_points_reversed[1]
-            )
+            self.assertListEqual(row_indices, expected_row_indices)
+            self.assertListEqual(col_indices, expected_col_indices)
+            self.assertListEqual(row_points, expected_geo_grid_points_reversed[0])
+            self.assertListEqual(col_points, expected_geo_grid_points_reversed[1])
 
     def test_get_max_x_spread_pts(self):
         """Ensure that two valid sets of indices are returned by the function
@@ -669,7 +677,7 @@ class TestCoordinateUtilities(TestCase):
             self.assertTrue(actual_indices[0] == expected_indices[0])
             self.assertTrue(actual_indices[1] == expected_indices[1])
 
-    def test_get_row_col_valid_indices_in_dataset(self):
+    def test_get_valid_row_col_pairs(self):
         """Ensure that two sets of valid indices are
         returned by the method with a set of lat/lon coordinates as input
 
@@ -679,7 +687,7 @@ class TestCoordinateUtilities(TestCase):
                 [(0, 0), (0, 9)],
                 [(0, 0), (4, 0)],
             )
-            actual_grid_indices = get_row_col_valid_indices_in_dataset(
+            actual_grid_indices = get_valid_row_col_pairs(
                 self.lat_arr,
                 self.lon_arr,
                 self.varinfo.get_variable(self.latitude),

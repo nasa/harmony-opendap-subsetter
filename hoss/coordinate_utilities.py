@@ -229,28 +229,31 @@ def get_row_col_geo_grid_points(
     lon_arr: np.ndarray,
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
-    # ) -> tuple[dict, dict]:
-) -> tuple[list, list]:
+) -> tuple[list, list, list, list]:
     """
-    This method is used to return two valid lat lon points from a 2D
-    coordinate dataset. It gets the row and column of the latitude and longitude
-    arrays to get two valid points. This does a check for fill values and
-    This method does not go down to the next row and col. if the selected row and
-    column all have fills, it will raise an exception in those cases.
+    This method is used to return two sets of valid indices and the
+    corresponding two sets of row and col lat lon points from 2D
+    coordinate datasets.
     """
 
-    geo_grid_indices_row, geo_grid_indices_col = get_row_col_valid_indices_in_dataset(
+    row_indices, col_indices = get_valid_row_col_pairs(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
 
     geo_grid_col_points = [
-        (lon_arr[row, col], lat_arr[row, col]) for row, col in geo_grid_indices_row
-    ]
-    geo_grid_row_points = [
-        (lon_arr[row, col], lat_arr[row, col]) for row, col in geo_grid_indices_col
+        (lon_arr[row, col], lat_arr[row, col]) for row, col in row_indices
     ]
 
-    return geo_grid_row_points, geo_grid_col_points
+    geo_grid_row_points = [
+        (lon_arr[row, col], lat_arr[row, col]) for row, col in col_indices
+    ]
+
+    return (
+        row_indices,
+        col_indices,
+        geo_grid_row_points,
+        geo_grid_col_points,
+    )
 
 
 def get_x_y_values_from_geographic_points(
@@ -272,37 +275,18 @@ def get_x_y_values_from_geographic_points(
     return x_y_points
 
 
-def get_x_y_values_from_geographic_points1(
-    points: Dict, crs: CRS
-) -> Dict[tuple, tuple]:
-    """Take an input list of (longitude, latitude) coordinates and project
-    those points to the target grid. Then return the x-y dimscales
-
-    """
-
-    point_longitudes, point_latitudes = zip(*list(points.values()))
-
-    from_geo_transformer = Transformer.from_crs(4326, crs)
-    points_x, points_y = (  # pylint: disable=unpacking-non-sequence
-        from_geo_transformer.transform(point_latitudes, point_longitudes)
-    )
-
-    x_y_points = {}
-    for index, point_x, point_y in zip(list(points.keys()), points_x, points_y):
-        x_y_points.update({index: (point_x, point_y)})
-
-    return x_y_points
-
-
-def get_row_col_valid_indices_in_dataset(
+def get_valid_row_col_pairs(
     lat_arr: np.ndarray,
     lon_arr: np.ndarray,
     lat_coordinate: VariableFromDmr,
     lon_coordinate: VariableFromDmr,
 ) -> tuple[list, list]:
     """
-    This function gets valid indices across rows and columns of
-    both the latitude and longitude datasets
+    This function finds a set of indices maximally spread across
+    a row, and the set maximally spread across a column, with the
+    indices being valid in both the latitude and longitude datasets.
+    When interpolating between these points, the maximal spread
+    ensures the greatest interpolation accuracy.
     """
     valid_lat_lon_mask = np.logical_and(
         get_valid_indices(lat_arr, lat_coordinate),
@@ -316,8 +300,8 @@ def get_row_col_valid_indices_in_dataset(
     # and then fixing the results from [x, y] to [y, x].
     max_y_spread_trsp = get_max_x_spread_pts(np.transpose(~valid_lat_lon_mask))
     max_y_spread_pts = [
-        np.flip(max_y_spread_trsp[0]),
-        np.flip(max_y_spread_trsp[1]),
+        list(np.flip(max_y_spread_trsp[0])),
+        list(np.flip(max_y_spread_trsp[1])),
     ]
 
     return max_y_spread_pts, max_x_spread_pts
@@ -384,24 +368,23 @@ def create_dimension_array_from_coordinates(
         lat_arr,
         lon_arr,
     )
-    row_indices, col_indices = get_row_col_valid_indices_in_dataset(
-        lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
-    )
 
-    geo_grid_row_points = [
-        (lon_arr[row, col], lat_arr[row, col]) for row, col in col_indices
-    ]
+    row_indices, col_indices, geo_grid_row_points, geo_grid_col_points = (
+        get_row_col_geo_grid_points(
+            lat_arr,
+            lon_arr,
+            latitude_coordinate,
+            longitude_coordinate,
+        )
+    )
     x_y_values1 = get_x_y_values_from_geographic_points(geo_grid_row_points, crs)
-    col_indices_for_x = [col_index[1] for col_index in col_indices]
-    x_values = [x_y_value[0] for x_y_value in list(x_y_values1)]
+    col_indices_for_x = np.transpose(col_indices)[1]
+    x_values = np.transpose(x_y_values1)[0]
     x_dim = get_1d_dim_array_data_from_dimvalues(x_values, col_indices_for_x, col_size)
 
-    geo_grid_col_points = [
-        (lon_arr[row, col], lat_arr[row, col]) for row, col in row_indices
-    ]
     x_y_values2 = get_x_y_values_from_geographic_points(geo_grid_col_points, crs)
-    row_indices_for_y = [row_index[0] for row_index in row_indices]
-    y_values = [x_y_value[1] for x_y_value in list(x_y_values2)]
+    row_indices_for_y = np.transpose(row_indices)[0]
+    y_values = np.transpose(x_y_values2)[1]
     y_dim = get_1d_dim_array_data_from_dimvalues(y_values, row_indices_for_y, row_size)
 
     projected_y, projected_x = tuple(projected_dimension_names)

@@ -15,10 +15,10 @@ from hoss.coordinate_utilities import (
     get_1d_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
+    get_dimension_array_from_geo_points,
     get_max_x_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
-    get_row_col_geo_grid_points,
     get_row_col_sizes_from_coordinate_datasets,
     get_valid_indices,
     get_valid_row_col_pairs,
@@ -162,7 +162,7 @@ class TestCoordinateUtilities(TestCase):
                 )
             self.assertEqual(
                 context.exception.message,
-                'Cannot compute the dimension resolution for '
+                'The data does not have at least two valid values '
                 'dim_value: "2" dim_index: "0"',
             )
 
@@ -176,7 +176,7 @@ class TestCoordinateUtilities(TestCase):
                 )
             self.assertEqual(
                 context.exception.message,
-                'Cannot compute the dimension resolution for '
+                'The data does not have at least two valid values '
                 'dim_value: "100" dim_index: "5"',
             )
 
@@ -518,139 +518,6 @@ class TestCoordinateUtilities(TestCase):
             )
             self.assertFalse(variable_has_fake_dims)
 
-    def test_get_row_col_geo_grid_points(self):
-        """Ensure that two valid lat/lon points returned by the method
-        with a set of lat/lon coordinates as input
-
-        """
-
-        with self.subTest('Get two sets of valid geo grid points from coordinates'):
-            expected_row_indices = [[0, 0], [4, 0]]
-            expected_col_indices = [[0, 0], [0, 9]]
-            expected_geo_grid_points = (
-                [(-179.3, 89.3), (178.4, 89.3)],
-                [(-179.3, 89.3), (-179.3, -88.1)],
-            )
-            row_indices, col_indices, row_points, col_points = (
-                get_row_col_geo_grid_points(
-                    self.lat_arr,
-                    self.lon_arr,
-                    self.varinfo.get_variable(self.latitude),
-                    self.varinfo.get_variable(self.longitude),
-                )
-            )
-            self.assertListEqual(row_indices, expected_row_indices)
-            self.assertListEqual(col_indices, expected_col_indices)
-            self.assertListEqual(row_points, expected_geo_grid_points[0])
-            self.assertListEqual(col_points, expected_geo_grid_points[1])
-
-        with self.subTest('Get two valid geo grid points from reversed coordinates'):
-            lon_arr_reversed = np.array(
-                [
-                    [
-                        -179.3,
-                        -179.3,
-                        -179.3,
-                        -179.3,
-                        -9999,
-                        -9999,
-                        -179.3,
-                        -179.3,
-                        -179.3,
-                        -179.3,
-                    ],
-                    [
-                        -120.2,
-                        -120.2,
-                        -120.2,
-                        -9999,
-                        -9999,
-                        -120.2,
-                        -120.2,
-                        -120.2,
-                        -120.2,
-                        -120.2,
-                    ],
-                    [20.6, 20.6, 20.6, 20.6, 20.6, 20.6, 20.6, 20.6, -9999, -9999],
-                    [
-                        150.5,
-                        150.5,
-                        150.5,
-                        150.5,
-                        150.5,
-                        150.5,
-                        -9999,
-                        -9999,
-                        150.5,
-                        150.5,
-                    ],
-                    [
-                        178.4,
-                        178.4,
-                        178.4,
-                        178.4,
-                        178.4,
-                        178.4,
-                        178.4,
-                        -9999,
-                        178.4,
-                        178.4,
-                    ],
-                ]
-            )
-
-            lat_arr_reversed = np.array(
-                [
-                    [89.3, 79.3, -9999, 59.3, 29.3, 2.1, -9999, -59.3, -79.3, -89.3],
-                    [89.3, 79.3, 60.3, 59.3, 29.3, 2.1, -9999, -59.3, -79.3, -89.3],
-                    [89.3, -9999, 60.3, 59.3, 29.3, 2.1, -9999, -9999, -9999, -89.3],
-                    [
-                        -9999,
-                        79.3,
-                        -60.3,
-                        -9999,
-                        -9999,
-                        -9999,
-                        -60.2,
-                        -59.3,
-                        -79.3,
-                        -89.3,
-                    ],
-                    [
-                        -89.3,
-                        79.3,
-                        -60.3,
-                        -9999,
-                        -9999,
-                        -9999,
-                        -60.2,
-                        -59.3,
-                        -79.3,
-                        -9999,
-                    ],
-                ]
-            )
-            expected_row_indices = [[0, 0], [4, 0]]
-            expected_col_indices = [[0, 0], [0, 9]]
-            expected_geo_grid_points_reversed = (
-                [(-179.3, 89.3), (-179.3, -89.3)],
-                [(-179.3, 89.3), (178.4, -89.3)],
-            )
-
-            row_indices, col_indices, row_points, col_points = (
-                get_row_col_geo_grid_points(
-                    lat_arr_reversed,
-                    lon_arr_reversed,
-                    self.varinfo.get_variable(self.latitude),
-                    self.varinfo.get_variable(self.longitude),
-                )
-            )
-
-            self.assertListEqual(row_indices, expected_row_indices)
-            self.assertListEqual(col_indices, expected_col_indices)
-            self.assertListEqual(row_points, expected_geo_grid_points_reversed[0])
-            self.assertListEqual(col_points, expected_geo_grid_points_reversed[1])
-
     def test_get_max_x_spread_pts(self):
         """Ensure that two valid sets of indices are returned by the function
         with a masked dataset as input
@@ -731,3 +598,40 @@ class TestCoordinateUtilities(TestCase):
                 two_row_points_in_a_col, crs
             )
             self.assertListEqual(actual_x_y_points, expected_x_y_points)
+
+    def test_get_dimension_array_from_geo_points(self):
+        """Ensure that a valid x/y dimension array is returned
+        with a geo array of lat/lon values
+
+        """
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+        with self.subTest('Get y dimension array from geo coordinates'):
+            row_indices = [[0, 0], [4, 0]]
+            ymax = 7341677.255608977
+            ymin = -25687950.314159617
+
+            dim_array = get_dimension_array_from_geo_points(
+                self.lat_arr, self.lon_arr, crs, row_indices, 10, True
+            )
+            self.assertEqual(dim_array.size, 10)
+            self.assertEqual(dim_array[0], ymax)
+            self.assertEqual(dim_array[-1], ymin)
+
+        with self.subTest('Get x dimension array from geo coordinates'):
+            col_indices = [[0, 0], [0, 9]]
+            xmin = -17299990.048985746
+            xmax = -1960815.628654331
+            dim_array = get_dimension_array_from_geo_points(
+                self.lat_arr, self.lon_arr, crs, col_indices, 5, False
+            )
+            self.assertEqual(dim_array.size, 5)
+            self.assertEqual(dim_array[0], xmin)
+            self.assertEqual(dim_array[-1], xmax)

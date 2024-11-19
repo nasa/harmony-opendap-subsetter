@@ -166,9 +166,8 @@ class IncompatibleCoordinateVariables(CustomError):
 
 
 class InvalidCoordinateData(CustomError):
-    """This exception is raised when the two values passed to
-    the function computing the resolution are equal. This could
-    occur when there are too many fill values and distinct valid
+    """This exception is raised when the data does not contain at least.
+    two valid points. This could occur when there are too many fill values and distinct valid
     indices could not be obtained
 
     """
@@ -176,7 +175,7 @@ class InvalidCoordinateData(CustomError):
     def __init__(self, dim_value, dim_index):
         super().__init__(
             'InvalidCoordinateData',
-            'Cannot compute the dimension resolution for '
+            'The data does not have at least two valid values '
             f'dim_value: "{dim_value}" dim_index: "{dim_index}"',
         )
 

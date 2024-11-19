@@ -49,6 +49,11 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     another are stored in the `Variable.references` dictionary attribute
     as sets. There should only be one reference in the `grid_mapping`
     attribute value, so the first element of the set is retrieved.
+    If the grid mapping variable, as referred to in the grid_mapping
+    CF-Convention metadata attribute, does not exist in the file then
+    the earthdata-varinfo configuration file is checked, as it may
+    contain metadata overrides specified for that non-existent variable
+    name.
 
     """
     grid_mapping = next(

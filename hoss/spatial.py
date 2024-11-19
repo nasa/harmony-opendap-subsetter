@@ -36,7 +36,7 @@ from hoss.bbox_utilities import (
     get_shape_file_geojson,
 )
 from hoss.coordinate_utilities import (
-    create_dimension_array_from_coordinates,
+    create_dimension_arrays_from_coordinates,
     get_coordinate_variables,
     get_projected_dimension_names_from_coordinate_variables,
     get_variables_with_anonymous_dims,
@@ -84,7 +84,7 @@ def get_spatial_index_ranges(
     around the exterior of the user-defined GeoJSON shape, to ensure the
     correct extents are derived.
 
-    if geographic and projected dimensions are not specified in the granule,
+    If geographic and projected dimensions are not specified in the granule,
     the coordinate datasets are used to calculate the x-y dimensions and the index ranges
     are calculated similar to a projected grid.
 
@@ -251,7 +251,7 @@ def get_x_y_index_ranges_from_coordinates(
         varinfo, non_spatial_variable
     )
 
-    dimension_arrays = create_dimension_array_from_coordinates(
+    dimension_arrays = create_dimension_arrays_from_coordinates(
         prefetch_coordinate_datasets,
         latitude_coordinate,
         longitude_coordinate,

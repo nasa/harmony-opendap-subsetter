@@ -194,7 +194,9 @@ class TestProjectionUtilities(TestCase):
                 'present in granule .dmr file.',
             )
 
-        with self.subTest('grid_mapping override with json configuration'):
+        with self.subTest(
+            'attributes for missing grid_mapping retrieved from earthdata-varinfo configuration file'
+        ):
             smap_varinfo = VarInfoFromDmr(
                 'tests/data/SC_SPL3SMP_008.dmr',
                 'SPL3SMP',

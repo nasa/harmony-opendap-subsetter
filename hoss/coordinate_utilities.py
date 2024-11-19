@@ -3,8 +3,6 @@
     coordinate variable data to projected x/y dimension values
 """
 
-from typing import Dict
-
 import numpy as np
 from netCDF4 import Dataset
 from pyproj import CRS, Transformer
@@ -12,6 +10,7 @@ from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.exceptions import (
     IncompatibleCoordinateVariables,
+    InvalidCoordinateData,
     InvalidCoordinateDataset,
     MissingCoordinateVariable,
     MissingVariable,
@@ -97,11 +96,12 @@ def get_coordinate_variables(
     varinfo: VarInfoFromDmr,
     requested_variables: list,
 ) -> tuple[list, list]:
-    """This function returns latitude and longitude variables listed in the
-    CF-Convention coordinates metadata attribute. It returns them in a specific
-    order [latitude, longitude]"
+    """This function returns latitude and longitude variable names from
+    latitude and longitude variables listed in the CF-Convention coordinates
+    metadata attribute. It returns them in a specific
+    order [latitude_name, longitude_name]"
     """
-    # varinfo returns a set and not a list
+
     coordinate_variables = varinfo.get_references_for_attribute(
         requested_variables, 'coordinates'
     )
@@ -166,13 +166,16 @@ def get_coordinate_array(
 
 
 def get_1d_dim_array_data_from_dimvalues(
-    dim_values: np.ndarray,  # 2 element 1D array [ <x>, <y> ]
-    dim_indices: np.ndarray,  # 2 element 1D array [ <i>, <j> ]
-    dim_size: int,  # all dim_indices values => 0, <= dim_size
-) -> np.ndarray:  # 1D of size = dim_size, with proper dimension array values
+    dim_values: np.ndarray,
+    dim_indices: np.ndarray,
+    dim_size: int,
+) -> np.ndarray:
     """
     return a full dimension data array based upon 2 valid projected values
-    within - indices given - and the full dimension size
+    (x and y) given in dim_values which are within the indices given in
+    dim_indices and the full dimension size provided in dim_size. The
+    dim_indices need to be between 0 and less than the dim_size.
+    returns a 1D array of size = dim_size with proper dimension array values
     """
 
     if (dim_indices[1] != dim_indices[0]) and (dim_values[1] != dim_values[0]):
@@ -180,7 +183,7 @@ def get_1d_dim_array_data_from_dimvalues(
             dim_indices[1] - dim_indices[0]
         )
     else:
-        raise InvalidCoordinateDataset(dim_values[0], dim_indices[0])
+        raise InvalidCoordinateData(dim_values[0], dim_indices[0])
 
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
@@ -194,10 +197,11 @@ def get_valid_indices(
     """
     Returns an array of boolean values
     - true, false - indicating a valid value (non-fill, within range)
-    for a given coordinate variable
+    for a given coordinate variable. A value of True means the
+    value is valid
     - latitude or longitude - or
     returns an empty ndarray of size (0,0) for any other variable.
-    Note a numpy mask is the opposite of a valids array.
+
     """
 
     # get_attribute_value returns a value of type `str`
@@ -219,9 +223,9 @@ def get_valid_indices(
             np.logical_and(lat_lon_array >= -90.0, lat_lon_array <= 90.0),
         )
     else:
-        valid_indices = np.empty((0, 0))
+        raise InvalidCoordinateDataset(coordinate.full_name_path)
 
-    return valid_indices  # throw an exception
+    return valid_indices
 
 
 def get_row_col_geo_grid_points(
@@ -270,9 +274,8 @@ def get_x_y_values_from_geographic_points(
     points_x, points_y = (  # pylint: disable=unpacking-non-sequence
         from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
-    x_y_points = list(zip(points_x, points_y))
 
-    return x_y_points
+    return list(zip(points_x, points_y))
 
 
 def get_valid_row_col_pairs(
@@ -308,23 +311,19 @@ def get_valid_row_col_pairs(
 
 
 def get_max_x_spread_pts(
-    valid_mask: np.ndarray,  # Numpy Mask Array, e.g., invalid latitudes & longitudes
-) -> list[list]:  # 2 points by indices, [[y_ind, x_ind], [y_ind, x_ind]
+    valid_mask: np.ndarray,
+) -> list[list]:
     """
-    # This function returns two data points by x, y indices that are spread farthest
-    # from each other in the same row, i.e., have the greatest delta-x value - and
-    # are valid data points from the valid_mask array passed in. The input array
-    # must be a 2D Numpy mask array providing the valid data points, e.g., filtering
-    # out fill values and out-of-range values.
+    This function returns two data points by x, y indices that are spread farthest
+    from each other in the same row, i.e., have the greatest delta-x value - and
+    are valid data points from the valid_mask array passed in. The input array
+    must be a 2D Numpy mask array providing the valid data points, e.g., filtering
+    out fill values and out-of-range values.
+    - input is Numpy Mask Array, e.g., invalid latitudes & longitudes
+    - returns 2 points by indices, [[y_ind, x_ind], [y_ind, x_ind]
     """
     # fill a sample array with x-index values, x_ind[i, j] = j
-    x_ind = np.array(
-        [
-            # [j for j in range(valid_mask.shape[1])]
-            list(range(valid_mask.shape[1]))
-            for i in range(valid_mask.shape[0])
-        ]
-    )
+    x_ind = np.indices((valid_mask.shape[0], valid_mask.shape[1]))[1]
     # mask x_ind to hide the invalid data points
     valid_x_ind = np.ma.array(x_ind, mask=valid_mask)
 
@@ -342,13 +341,13 @@ def get_max_x_spread_pts(
     return [[max_x_spread_row, min_x_ind], [max_x_spread_row, max_x_ind]]
 
 
-def create_dimension_array_from_coordinates(
+def create_dimension_arrays_from_coordinates(
     prefetch_dataset: Dataset,
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
     crs: CRS,
     projected_dimension_names: list,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     """Generate artificial 1D dimensions scales for each
     2D dimension or coordinate variable.
     1) Get 2 valid geo grid points

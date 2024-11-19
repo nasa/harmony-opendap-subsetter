@@ -27,7 +27,7 @@ from hoss.coordinate_utilities import (
 )
 from hoss.exceptions import (
     IncompatibleCoordinateVariables,
-    InvalidCoordinateDataset,
+    InvalidCoordinateData,
     InvalidCoordinateVariable,
     MissingCoordinateVariable,
     MissingVariable,
@@ -156,7 +156,7 @@ class TestCoordinateUtilities(TestCase):
             dim_values_invalid = np.array([2, 2])
             dim_indices_asc = np.array([0, 1])
             dim_size_asc = 12
-            with self.assertRaises(InvalidCoordinateDataset) as context:
+            with self.assertRaises(InvalidCoordinateData) as context:
                 get_1d_dim_array_data_from_dimvalues(
                     dim_values_invalid, dim_indices_asc, dim_size_asc
                 )
@@ -170,7 +170,7 @@ class TestCoordinateUtilities(TestCase):
             dim_values_desc = np.array([100, 70])
             dim_indices_invalid = np.array([5, 5])
             dim_size_desc = 10
-            with self.assertRaises(InvalidCoordinateDataset) as context:
+            with self.assertRaises(InvalidCoordinateData) as context:
                 get_1d_dim_array_data_from_dimvalues(
                     dim_values_desc, dim_indices_invalid, dim_size_desc
                 )
@@ -396,9 +396,6 @@ class TestCoordinateUtilities(TestCase):
         ascending or descending.
 
         """
-        # expected_valid_indices_lat_arr_with_fill = np.array([1, 2, 3, 4])
-        # expected_valid_indices_lon_arr_with_fill = np.array([0, 1, 2, 6, 7, 8, 9])
-        # expected_valid_indices_lat_arr_over_range = np.array([0, 1, 2])
         expected_valid_indices_lon_arr_over_range = np.array([0, 1, 2, 6, 7, 8, 9])
 
         fill_array = np.array([-9999.0, -9999.0, -9999.0, -9999.0])

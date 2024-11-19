@@ -81,8 +81,9 @@ def get_prefetch_variables(
     """
     prefetch_variables = varinfo.get_required_dimensions(required_variables)
     if prefetch_variables:
-        bounds = varinfo.get_references_for_attribute(prefetch_variables, 'bounds')
-        prefetch_variables.update(bounds)
+        prefetch_variables.update(
+            varinfo.get_references_for_attribute(prefetch_variables, 'bounds')
+        )
     else:
         latitude_coordinates, longitude_coordinates = get_coordinate_variables(
             varinfo, required_variables
@@ -420,20 +421,23 @@ def add_index_range(
     the antimeridian or Prime Meridian) will have a minimum index greater
     than the maximum index. In this case the full dimension range should be
     requested, as the related values will be masked before returning the
-    output to the user. When the dimensions are not available, the coordinate
-    variables are used to calculate the projected dimensions.
+    output to the user. When a variable does not have named dimensions,
+    the index_ranges cache is checked for dimensions derived from the
+    coordinates CF-Conventions metadata attribute.
 
     """
     variable = varinfo.get_variable(variable_name)
     range_strings = []
+
     if variable.dimensions:
-        range_strings = get_range_strings(variable.dimensions, index_ranges)
+        variable_dimensions = variable.dimensions
     else:
-        override_dimensions = get_projected_dimension_names_from_coordinate_variables(
+        # Anonymous dimensions, so check for dimension derived from coordinates:
+        variable_dimensions = get_projected_dimension_names_from_coordinate_variables(
             varinfo, variable_name
         )
-        if override_dimensions:
-            range_strings = get_range_strings(override_dimensions, index_ranges)
+
+    range_strings = get_range_strings(variable_dimensions, index_ranges)
 
     if all(range_string == '[]' for range_string in range_strings):
         indices_string = ''
@@ -446,8 +450,13 @@ def get_range_strings(
     variable_dimensions: list,
     index_ranges: IndexRanges,
 ) -> list:
-    """Calculates the index ranges for each dimension of the variable
-    and returns the list of index ranges
+    """Retrieves index ranges which is a list of string elements
+    [min:max] from cache. If there is not an index range in the
+    cache for a dimension, the returned string is []. A bounding box
+    can cross the longitudinal edge of the grid. In those cases the
+    minimum dimension index is greater than the maximum dimension
+    index and this function will return []. HOSS will request the
+    full dimension range from OPeNDAP when the index range is [].
     """
     range_strings = []
     for dimension in variable_dimensions:

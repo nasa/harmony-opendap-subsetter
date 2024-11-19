@@ -165,7 +165,7 @@ class IncompatibleCoordinateVariables(CustomError):
         )
 
 
-class InvalidCoordinateDataset(CustomError):
+class InvalidCoordinateData(CustomError):
     """This exception is raised when the two values passed to
     the function computing the resolution are equal. This could
     occur when there are too many fill values and distinct valid
@@ -175,9 +175,23 @@ class InvalidCoordinateDataset(CustomError):
 
     def __init__(self, dim_value, dim_index):
         super().__init__(
-            'InvalidCoordinateDataset',
+            'InvalidCoordinateData',
             'Cannot compute the dimension resolution for '
             f'dim_value: "{dim_value}" dim_index: "{dim_index}"',
+        )
+
+
+class InvalidCoordinateDataset(CustomError):
+    """This exception is raised when there are too
+    many fill values and two distinct valid indices
+    could not be obtained
+
+    """
+
+    def __init__(self, coordinate_name):
+        super().__init__(
+            'InvalidCoordinateDataset',
+            f'Cannot get valid indices for {coordinate_name}',
         )
 
 

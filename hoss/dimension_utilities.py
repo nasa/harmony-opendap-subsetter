@@ -102,11 +102,13 @@ def get_prefetch_variables(
     )
 
     # Create bounds variables if necessary.
-    add_bounds_variables(prefetch_variables_nc4, prefetch_variables, varinfo, logger)
+    check_add_artificial_bounds(
+        prefetch_variables_nc4, prefetch_variables, varinfo, logger
+    )
     return prefetch_variables_nc4
 
 
-def add_bounds_variables(
+def check_add_artificial_bounds(
     dimensions_nc4: str,
     required_dimensions: Set[str],
     varinfo: VarInfoFromDmr,

@@ -14,8 +14,8 @@ from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
 
 from hoss.dimension_utilities import (
-    add_bounds_variables,
     add_index_range,
+    check_add_artificial_bounds,
     get_bounds_array,
     get_dimension_bounds,
     get_dimension_extents,
@@ -326,10 +326,10 @@ class TestDimensionUtilities(TestCase):
         with self.subTest('A filled dimension returns slice(start, stop).'):
             self.assertEqual(get_fill_slice('/longitude', fill_ranges), slice(16, 200))
 
-    @patch('hoss.dimension_utilities.add_bounds_variables')
+    @patch('hoss.dimension_utilities.check_add_artificial_bounds')
     @patch('hoss.dimension_utilities.get_opendap_nc4')
     def test_get_prefetch_variables(
-        self, mock_get_opendap_nc4, mock_add_bounds_variables
+        self, mock_get_opendap_nc4, mock_check_add_artificial_bounds
     ):
         """Ensure that when a list of required variables is specified, a
         request to OPeNDAP will be sent requesting only those that are
@@ -365,13 +365,13 @@ class TestDimensionUtilities(TestCase):
             url, required_dimensions, output_dir, self.logger, access_token, self.config
         )
 
-        mock_add_bounds_variables.assert_called_once_with(
+        mock_check_add_artificial_bounds.assert_called_once_with(
             prefetch_path, required_dimensions, self.varinfo, self.logger
         )
 
     @patch('hoss.dimension_utilities.needs_bounds')
     @patch('hoss.dimension_utilities.write_bounds')
-    def test_add_bounds_variables(self, mock_write_bounds, mock_needs_bounds):
+    def test_check_add_artificial_bounds(self, mock_write_bounds, mock_needs_bounds):
         """Ensure that `write_bounds` is called when it's needed,
         and that it's not called when it's not needed.
 
@@ -389,7 +389,7 @@ class TestDimensionUtilities(TestCase):
 
         with self.subTest('Bounds need to be written'):
             mock_needs_bounds.return_value = True
-            add_bounds_variables(
+            check_add_artificial_bounds(
                 prefetch_dataset_name,
                 required_dimensions,
                 varinfo_prefetch,
@@ -402,7 +402,7 @@ class TestDimensionUtilities(TestCase):
 
         with self.subTest('Bounds should not be written'):
             mock_needs_bounds.return_value = False
-            add_bounds_variables(
+            check_add_artificial_bounds(
                 prefetch_dataset_name,
                 required_dimensions,
                 varinfo_prefetch,

@@ -162,8 +162,7 @@ class TestCoordinateUtilities(TestCase):
                 )
             self.assertEqual(
                 context.exception.message,
-                'The data does not have at least two valid values '
-                'dim_value: "2" dim_index: "0"',
+                'No distinct valid coordinate points - ' 'dim_index=0, dim_value=2',
             )
 
         with self.subTest('invalid dimension indices'):
@@ -176,8 +175,7 @@ class TestCoordinateUtilities(TestCase):
                 )
             self.assertEqual(
                 context.exception.message,
-                'The data does not have at least two valid values '
-                'dim_value: "100" dim_index: "5"',
+                'No distinct valid coordinate points - ' 'dim_index=5, dim_value=100',
             )
 
     def test_get_coordinate_array(self):
@@ -535,11 +533,39 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             expected_indices = [[0, 0], [0, 9]]
-
             actual_indices = get_max_x_spread_pts(~valid_values)
-
             self.assertTrue(actual_indices[0] == expected_indices[0])
             self.assertTrue(actual_indices[1] == expected_indices[1])
+
+        with self.subTest('With just one valid index in the coordinates'):
+            valid_values = np.array(
+                [
+                    [False, False, False],
+                    [False, True, False],
+                    [False, False, False],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_max_x_spread_pts(~valid_values)
+                self.assertEqual(
+                    context.exception.message,
+                    'Only one valid point in coordinate data',
+                )
+
+        with self.subTest('No valid points from coordinates'):
+            valid_values = np.array(
+                [
+                    [False, False, False],
+                    [False, False, False],
+                    [False, False, False],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_max_x_spread_pts(~valid_values)
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
 
     def test_get_valid_row_col_pairs(self):
         """Ensure that two sets of valid indices are

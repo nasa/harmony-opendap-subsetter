@@ -172,11 +172,10 @@ class InvalidCoordinateData(CustomError):
 
     """
 
-    def __init__(self, dim_value, dim_index):
+    def __init__(self, custom_msg):
         super().__init__(
             'InvalidCoordinateData',
-            'The data does not have at least two valid values '
-            f'dim_value: "{dim_value}" dim_index: "{dim_index}"',
+            f'{custom_msg}',
         )
 
 

@@ -183,7 +183,9 @@ def get_1d_dim_array_data_from_dimvalues(
             dim_indices[1] - dim_indices[0]
         )
     else:
-        raise InvalidCoordinateData(dim_values[0], dim_indices[0])
+        raise InvalidCoordinateData(
+            f'No distinct valid coordinate points - dim_index={dim_indices[0]}, dim_value={dim_values[0]}'
+        )
 
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
@@ -295,8 +297,12 @@ def get_max_x_spread_pts(
     x_ind = np.indices(
         (valid_geospatial_mask.shape[0], valid_geospatial_mask.shape[1])
     )[1]
+
     # mask x_ind to hide the invalid data points
     valid_x_ind = np.ma.array(x_ind, mask=valid_geospatial_mask)
+
+    if valid_x_ind.count() == 0:
+        raise InvalidCoordinateData("No valid coordinate data")
 
     # ptp (peak-to-peak) finds the greatest delta-x value amongst valid points
     # for each row. Result is 1D
@@ -311,7 +317,7 @@ def get_max_x_spread_pts(
 
     # There is just one valid point
     if min_x_ind == max_x_ind:
-        raise InvalidCoordinateData(x_ind_spread, min_x_ind)
+        raise InvalidCoordinateData("Only one valid point in coordinate data")
 
     return [[max_x_spread_row, min_x_ind], [max_x_spread_row, max_x_ind]]
 

@@ -24,6 +24,7 @@ from hoss.dimension_utilities import (
     get_dimension_indices_from_values,
     get_fill_slice,
     get_prefetch_variables,
+    get_range_strings,
     get_requested_index_ranges,
     is_almost_in,
     is_dimension_ascending,
@@ -311,6 +312,45 @@ class TestDimensionUtilities(TestCase):
             self.assertEqual(
                 add_index_range('/sst_dtime', self.varinfo, index_ranges),
                 '/sst_dtime[][12:34][]',
+            )
+
+    def test_get_range_strings(self):
+        """Ensure the correct combinations of range_strings are added as
+        suffixes to the input variable based upon that variable's dimensions.
+        If a dimension range has the lower index > upper index, that
+        indicates the bounding box crosses the edge of the grid. In this
+        instance, the full range of the variable should be retrieved.
+
+        """
+        with self.subTest('all dimensions found in index_ranges'):
+            variable_list = ['/Grid/lon', '/Grid/lat']
+            index_ranges = {'/Grid/lat': (600, 699), '/Grid/lon': (2200, 2299)}
+            expected_range_strings = range_strings = ['[2200:2299]', '[600:699]']
+            self.assertEqual(
+                get_range_strings(variable_list, index_ranges), expected_range_strings
+            )
+
+        with self.subTest('only some dimensions found in index range'):
+            variable_list = ['/Grid/time', '/Grid/lon', '/Grid/lat']
+            index_ranges = {'/Grid/lat': (600, 699), '/Grid/lon': (2200, 2299)}
+            expected_range_strings = ['[]', '[2200:2299]', '[600:699]']
+            self.assertEqual(
+                get_range_strings(variable_list, index_ranges),
+                expected_range_strings,
+            )
+
+        with self.subTest('No variables found in index ranges'):
+            variable_list = ['/Grid/time', '/Grid/lon', '/Grid/lat']
+            self.assertEqual(get_range_strings(variable_list, {}), ['[]', '[]', '[]'])
+        with self.subTest(
+            'when dimension range lower index is greater than upper index'
+        ):
+            variable_list = ['/Grid/time', '/Grid/lon', '/Grid/lat']
+            index_ranges = {'/Grid/lat': (699, 600), '/Grid/lon': (2200, 2299)}
+            expected_range_strings = ['[]', '[2200:2299]', '[]']
+            self.assertEqual(
+                get_range_strings(variable_list, index_ranges),
+                expected_range_strings,
             )
 
     def test_get_fill_slice(self):

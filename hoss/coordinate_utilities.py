@@ -184,7 +184,8 @@ def get_1d_dim_array_data_from_dimvalues(
         )
     else:
         raise InvalidCoordinateData(
-            f'No distinct valid coordinate points - dim_index={dim_indices[0]}, dim_value={dim_values[0]}'
+            'No distinct valid coordinate points - '
+            f'dim_index={dim_indices[0]}, dim_value={dim_values[0]}'
         )
 
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])

@@ -587,6 +587,103 @@ class TestCoordinateUtilities(TestCase):
             self.assertTrue(actual_grid_indices[0], expected_grid_indices[0])
             self.assertTrue(actual_grid_indices[1], expected_grid_indices[1])
 
+        with self.subTest('Only a single valid point in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 40.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 100.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+        with self.subTest('valid points in one row in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [40.1, 40.1, 40.1, 40.1, 40.1],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-179.0, -10.0, 100.1, 130.0, 179.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+        with self.subTest('valid points in one column in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 40.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -50.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 100.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, 100.1, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+        with self.subTest('no valid points in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+
     def test_get_x_y_values_from_geographic_points(self):
         """Ensure that the correct x-values are returned by the function
         with a set of geographic coordinates as input.

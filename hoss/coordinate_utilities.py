@@ -190,7 +190,6 @@ def get_1d_dim_array_data_from_dimvalues(
 
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
-
     return np.linspace(dim_min, dim_max, dim_size)
 
 
@@ -354,16 +353,30 @@ def create_dimension_arrays_from_coordinates(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
 
+    y_x_order, projected_y = get_dimension_order(
+        lat_arr, lon_arr, row_indices, True, projected_dimension_names
+    )
+    # if is row, the index_for_dimension is 0
     y_dim = get_dimension_array_from_geo_points(
-        lat_arr, lon_arr, crs, row_indices, row_size, True
+        lat_arr, lon_arr, crs, row_indices, row_size, 0, y_x_order
     )
 
+    x_y_order, projected_x = get_dimension_order(
+        lat_arr,
+        lon_arr,
+        col_indices,
+        False,
+        projected_dimension_names,
+    )
+    # if is column, the index_for_dimension is 1
     x_dim = get_dimension_array_from_geo_points(
-        lat_arr, lon_arr, crs, col_indices, col_size, False
+        lat_arr, lon_arr, crs, col_indices, col_size, 1, x_y_order
     )
 
-    projected_y, projected_x = tuple(projected_dimension_names)
-    return {projected_y: y_dim, projected_x: x_dim}
+    # projected_y, projected_x = tuple(projected_dimension_names)
+    if y_x_order == 1:
+        return {projected_y: y_dim, projected_x: x_dim}
+    return {projected_x: x_dim, projected_y: y_dim}
 
 
 def get_dimension_array_from_geo_points(
@@ -372,27 +385,67 @@ def get_dimension_array_from_geo_points(
     crs: CRS,
     dimension_indices: list,
     dimension_size: int,
-    is_row=True,
+    index_for_dimension: int,
+    x_or_y_index: int,
 ) -> np.ndarray:
     """This function uses the list of lat/lon points corresponding
     to a list of array indices and reprojects it with the CRS
     provided and scales the x/y values to a dimension array with the dimension
-    size provided
+    size provided. index_for_dimension is 0 for row and
+    1 for column. x_or_y_index is 1 if latitude is used for row
+    and is 0 if longitude is used for row. (it determines the dimension order)
 
     """
-    if is_row:
-        index_for_dimension = 0
-        x_or_y_index = 1
-    else:
-        index_for_dimension = 1
-        x_or_y_index = 0
 
     geo_grid_points = [
         (lon_arr[row, col], lat_arr[row, col]) for row, col in dimension_indices
     ]
+
     x_y_values = get_x_y_values_from_geographic_points(geo_grid_points, crs)
+
     indices_for_dimension = np.transpose(dimension_indices)[index_for_dimension]
+
     dimension_values = np.transpose(x_y_values)[x_or_y_index]
+
     return get_1d_dim_array_data_from_dimvalues(
         dimension_values, indices_for_dimension, dimension_size
     )
+
+
+def get_dimension_order(
+    lat_array_points: np.ndarray,
+    lon_array_points: np.ndarray,
+    dimension_indices: list,
+    is_row: bool,
+    projected_dimension_names: list,
+) -> list[int, str]:
+    """Determines the order of dimensions based on whether the
+    latitude and longitude are varying across row or column
+    """
+    projected_y, projected_x = tuple(projected_dimension_names)
+
+    # if lat/lon array is 2D and variables are also 2D
+    lat_arr_values = [lat_array_points[i][j] for i, j in dimension_indices]
+    lon_arr_values = [lon_array_points[i][j] for i, j in dimension_indices]
+
+    # if it is row and lat is changing return 1
+    # and call it y
+    if is_row is True and np.all(np.diff(lat_arr_values) != 0):
+        return (1, projected_y)
+
+    # if it is row and lon is changing return 0
+    # and call it y
+    if is_row is True and np.all(np.diff(lon_arr_values) != 0):
+        return (0, projected_y)
+
+    # if it is col and lat is changing return 0 and
+    # call it x
+    if is_row is False and np.all(np.diff(lat_arr_values) != 0):
+        return (1, projected_x)
+
+    # if it is col and lon is changing return 1 and
+    # call it x
+    if is_row is False and np.all(np.diff(lon_arr_values) != 0):
+        return (0, projected_x)
+
+    raise InvalidCoordinateData("lat/lon values are constant")

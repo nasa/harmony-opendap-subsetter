@@ -16,6 +16,7 @@ from hoss.coordinate_utilities import (
     get_coordinate_array,
     get_coordinate_variables,
     get_dimension_array_from_geo_points,
+    get_dimension_order,
     get_max_x_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
@@ -76,6 +77,90 @@ class TestCoordinateUtilities(TestCase):
                 [1.3, 1.3, 1.3, 1.3, 1.3, 1.3, -9999, -9999, 1.3, 1.3],
                 [-9999, -60.2, -60.2, -99, -9999, -9999, -60.2, -60.2, -60.2, -60.2],
                 [-88.1, -88.1, -88.1, 99, -9999, -9999, -88.1, -88.1, -88.1, -88.1],
+            ]
+        )
+        cls.lon_arr_reversed = np.array(
+            [
+                [
+                    -179.3,
+                    -179.3,
+                    -179.3,
+                    -179.3,
+                    -9999,
+                    -9999,
+                    -179.3,
+                    -179.3,
+                    -179.3,
+                    -179.3,
+                ],
+                [
+                    -120.2,
+                    -120.2,
+                    -120.2,
+                    -9999,
+                    -9999,
+                    -120.2,
+                    -120.2,
+                    -120.2,
+                    -120.2,
+                    -120.2,
+                ],
+                [20.6, 20.6, 20.6, 20.6, 20.6, 20.6, 20.6, 20.6, -9999, -9999],
+                [
+                    150.5,
+                    150.5,
+                    150.5,
+                    150.5,
+                    150.5,
+                    150.5,
+                    -9999,
+                    -9999,
+                    150.5,
+                    150.5,
+                ],
+                [
+                    178.4,
+                    178.4,
+                    178.4,
+                    178.4,
+                    178.4,
+                    178.4,
+                    178.4,
+                    -9999,
+                    178.4,
+                    178.4,
+                ],
+            ]
+        )
+        cls.lat_arr_reversed = np.array(
+            [
+                [89.3, 79.3, -9999, 59.3, 29.3, 2.1, -9999, -59.3, -79.3, -89.3],
+                [89.3, 79.3, 60.3, 59.3, 29.3, 2.1, -9999, -59.3, -79.3, -89.3],
+                [89.3, -9999, 60.3, 59.3, 29.3, 2.1, -9999, -9999, -9999, -89.3],
+                [
+                    -9999,
+                    79.3,
+                    -60.3,
+                    -9999,
+                    -9999,
+                    -9999,
+                    -60.2,
+                    -59.3,
+                    -79.3,
+                    -89.3,
+                ],
+                [
+                    89.3,
+                    79.3,
+                    -60.3,
+                    -9999,
+                    -9999,
+                    -9999,
+                    -60.2,
+                    -59.3,
+                    -79.3,
+                    -9999,
+                ],
             ]
         )
 
@@ -736,25 +821,116 @@ class TestCoordinateUtilities(TestCase):
                 'grid_mapping_name': 'lambert_cylindrical_equal_area',
             }
         )
-        with self.subTest('Get y dimension array from geo coordinates'):
+        with self.subTest('Get y-row dimension array from geo coordinates'):
             row_indices = [[0, 0], [4, 0]]
             ymax = 7341677.255608977
             ymin = -25687950.314159617
 
             dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr, self.lon_arr, crs, row_indices, 10, True
+                self.lat_arr, self.lon_arr, crs, row_indices, 10, 0, 1
             )
             self.assertEqual(dim_array.size, 10)
             self.assertEqual(dim_array[0], ymax)
             self.assertEqual(dim_array[-1], ymin)
 
-        with self.subTest('Get x dimension array from geo coordinates'):
+        with self.subTest('Get x-col dimension array from geo coordinates'):
             col_indices = [[0, 0], [0, 9]]
             xmin = -17299990.048985746
             xmax = -1960815.628654331
             dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr, self.lon_arr, crs, col_indices, 5, False
+                self.lat_arr, self.lon_arr, crs, col_indices, 5, 1, 0
             )
             self.assertEqual(dim_array.size, 5)
             self.assertEqual(dim_array[0], xmin)
             self.assertEqual(dim_array[-1], xmax)
+
+        with self.subTest('Get y-row dimension array from reversed lat/lon array'):
+            row_indices = [[0, 0], [4, 0]]
+            dim_min = -17299990.048985746
+            dim_max = 17213152.396759935
+            dim_array = get_dimension_array_from_geo_points(
+                self.lat_arr_reversed,
+                self.lon_arr_reversed,
+                crs,
+                row_indices,
+                5,
+                0,
+                0,
+            )
+            self.assertEqual(dim_array.size, 5)
+            self.assertEqual(dim_array[0], dim_min)
+            self.assertEqual(dim_array[-1], dim_max)
+
+        with self.subTest('Get x-col dimension array from reversed lat/lon array'):
+            col_indices = [[0, 0], [0, 9]]
+
+            dim_max = 7341677.255608977
+            dim_min = -7341677.255608977
+
+            dim_array = get_dimension_array_from_geo_points(
+                self.lat_arr_reversed,
+                self.lon_arr_reversed,
+                crs,
+                col_indices,
+                10,
+                1,
+                1,
+            )
+            self.assertEqual(dim_array.size, 10)
+            self.assertEqual(dim_array[0], dim_max)
+            self.assertEqual(dim_array[-1], dim_min)
+
+    def test_get_dimension_order(self):
+        """Ensure that the correct dimension order index
+        is returned with a geo array of lat/lon values
+        """
+
+        with self.subTest('Get y dimension index from geo coordinates'):
+            row_indices = [[0, 0], [4, 0]]
+            dim_names = ['projected_y', 'projected_x']
+            lat_row_values = [self.lat_arr[i][j] for i, j in row_indices]
+            lon_row_values = [self.lon_arr[i][j] for i, j in row_indices]
+            y_dim_index, y_name = get_dimension_order(
+                self.lat_arr, self.lon_arr, row_indices, True, dim_names
+            )
+            self.assertEqual(y_dim_index, 1)
+            self.assertEqual(y_name, 'projected_y')
+
+        with self.subTest('Get x dimension index from geo coordinates'):
+            col_indices = [[0, 0], [0, 9]]
+            lat_col_values = [self.lat_arr[i][j] for i, j in col_indices]
+            lon_col_values = [self.lon_arr[i][j] for i, j in col_indices]
+            dim_index, x_name = get_dimension_order(
+                self.lat_arr, self.lon_arr, col_indices, False, dim_names
+            )
+            self.assertEqual(dim_index, 0)
+            self.assertEqual(x_name, 'projected_x')
+
+        with self.subTest('Get y dimension index from reversed lat/lon array'):
+            row_indices = [[0, 0], [4, 0]]
+            dim_names = ['projected_y', 'projected_x']
+            lat_row_values = [self.lat_arr_reversed[i][j] for i, j in row_indices]
+            lon_row_values = [self.lon_arr_reversed[i][j] for i, j in row_indices]
+            y_dim_index, y_name = get_dimension_order(
+                self.lat_arr_reversed,
+                self.lon_arr_reversed,
+                row_indices,
+                True,
+                dim_names,
+            )
+            self.assertEqual(y_dim_index, 0)
+            self.assertEqual(y_name, 'projected_y')
+
+        with self.subTest('Get x dimension index from reversed lat/lon array'):
+            col_indices = [[0, 0], [0, 9]]
+            lat_col_values = [self.lat_arr_reversed[i][j] for i, j in col_indices]
+            lon_col_values = [self.lon_arr_reversed[i][j] for i, j in col_indices]
+            dim_index, x_name = get_dimension_order(
+                self.lat_arr_reversed,
+                self.lon_arr_reversed,
+                col_indices,
+                False,
+                dim_names,
+            )
+            self.assertEqual(dim_index, 1)
+            self.assertEqual(x_name, 'projected_x')

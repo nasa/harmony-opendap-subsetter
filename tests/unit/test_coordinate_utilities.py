@@ -410,15 +410,28 @@ class TestCoordinateUtilities(TestCase):
         with self.subTest('Retrieves the expected row col sizes from the coordinates'):
             expected_row_col_sizes = (5, 10)
             self.assertEqual(
-                get_row_col_sizes_from_coordinate_datasets(self.lat_arr, self.lon_arr),
+                get_row_col_sizes_from_coordinate_datasets(
+                    self.lat_arr, self.lon_arr, dim_order_is_y_x=True
+                ),
                 expected_row_col_sizes,
             )
         with self.subTest('Retrieves the expected row col sizes for the dim array'):
             self.assertEqual(
                 get_row_col_sizes_from_coordinate_datasets(
-                    np.array([1, 2, 3, 4]), np.array([5, 6, 7, 8, 9])
+                    np.array([1, 2, 3, 4]),
+                    np.array([5, 6, 7, 8, 9]),
+                    dim_order_is_y_x=True,
                 ),
                 (4, 5),
+            )
+        with self.subTest('Retrieves the expected row col sizes for the dim array'):
+            self.assertEqual(
+                get_row_col_sizes_from_coordinate_datasets(
+                    np.array([1, 2, 3, 4]),
+                    np.array([5, 6, 7, 8, 9]),
+                    dim_order_is_y_x=False,
+                ),
+                (5, 4),
             )
         with self.subTest(
             'Raises an exception when the lat and lon array shapes do not match'
@@ -427,7 +440,7 @@ class TestCoordinateUtilities(TestCase):
             lon_mismatched_array = np.array([[6, 7], [8, 9], [10, 11]])
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_mismatched_array, lon_mismatched_array
+                    lat_mismatched_array, lon_mismatched_array, dim_order_is_y_x=True
                 )
             self.assertEqual(
                 context.exception.message,
@@ -440,7 +453,7 @@ class TestCoordinateUtilities(TestCase):
             lat_empty_size_array = np.array([])
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_empty_size_array, np.array([5, 6, 7, 8])
+                    lat_empty_size_array, np.array([5, 6, 7, 8]), dim_order_is_y_x=True
                 )
 
         with self.subTest(
@@ -449,7 +462,7 @@ class TestCoordinateUtilities(TestCase):
             lon_empty_size_array = np.array([])
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    np.array([6, 7, 8, 9]), lon_empty_size_array
+                    np.array([6, 7, 8, 9]), lon_empty_size_array, dim_order_is_y_x=True
                 )
 
         with self.subTest(
@@ -460,7 +473,7 @@ class TestCoordinateUtilities(TestCase):
             )
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    lat_empty_ndim_array, np.array([1, 2, 3, 4])
+                    lat_empty_ndim_array, np.array([1, 2, 3, 4]), dim_order_is_y_x=True
                 )
 
         with self.subTest(
@@ -471,7 +484,14 @@ class TestCoordinateUtilities(TestCase):
             )
             with self.assertRaises(IncompatibleCoordinateVariables) as context:
                 get_row_col_sizes_from_coordinate_datasets(
-                    np.array([1, 2, 3, 4]), lon_empty_ndim_array
+                    np.array([1, 2, 3, 4]), lon_empty_ndim_array, dim_order_is_y_x=True
+                )
+        with self.subTest('Raises an exception when lat/lon arr is more than 2D'):
+            lat_3d_array = np.arange(24).reshape(2, 3, 4)
+            lon_3d_array = np.arange(24).reshape(2, 3, 4)
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_row_col_sizes_from_coordinate_datasets(
+                    lat_3d_array, lat_3d_array, dim_order_is_y_x=True
                 )
 
     def test_get_valid_indices(self):
@@ -827,7 +847,13 @@ class TestCoordinateUtilities(TestCase):
             ymin = -25687950.314159617
 
             dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr, self.lon_arr, crs, row_indices, 10, 0, 1
+                self.lat_arr,
+                self.lon_arr,
+                crs,
+                row_indices,
+                10,
+                dim_order_is_y_x=True,
+                use_row_not_col=True,
             )
             self.assertEqual(dim_array.size, 10)
             self.assertEqual(dim_array[0], ymax)
@@ -838,7 +864,13 @@ class TestCoordinateUtilities(TestCase):
             xmin = -17299990.048985746
             xmax = -1960815.628654331
             dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr, self.lon_arr, crs, col_indices, 5, 1, 0
+                self.lat_arr,
+                self.lon_arr,
+                crs,
+                col_indices,
+                5,
+                dim_order_is_y_x=True,
+                use_row_not_col=False,
             )
             self.assertEqual(dim_array.size, 5)
             self.assertEqual(dim_array[0], xmin)
@@ -854,8 +886,8 @@ class TestCoordinateUtilities(TestCase):
                 crs,
                 row_indices,
                 5,
-                0,
-                0,
+                dim_order_is_y_x=False,
+                use_row_not_col=True,
             )
             self.assertEqual(dim_array.size, 5)
             self.assertEqual(dim_array[0], dim_min)
@@ -873,8 +905,8 @@ class TestCoordinateUtilities(TestCase):
                 crs,
                 col_indices,
                 10,
-                1,
-                1,
+                dim_order_is_y_x=False,
+                use_row_not_col=False,
             )
             self.assertEqual(dim_array.size, 10)
             self.assertEqual(dim_array[0], dim_max)
@@ -884,53 +916,65 @@ class TestCoordinateUtilities(TestCase):
         """Ensure that the correct dimension order index
         is returned with a geo array of lat/lon values
         """
-
-        with self.subTest('Get y dimension index from geo coordinates'):
+        with self.subTest('Get y_x order when latitude is changing across row'):
             row_indices = [[0, 0], [4, 0]]
-            dim_names = ['projected_y', 'projected_x']
-            lat_row_values = [self.lat_arr[i][j] for i, j in row_indices]
-            lon_row_values = [self.lon_arr[i][j] for i, j in row_indices]
-            y_dim_index, y_name = get_dimension_order(
-                self.lat_arr, self.lon_arr, row_indices, True, dim_names
+            y_x_order = get_dimension_order(
+                self.lat_arr, self.lon_arr, row_indices, is_row=True
             )
-            self.assertEqual(y_dim_index, 1)
-            self.assertEqual(y_name, 'projected_y')
+            self.assertEqual(y_x_order, True)
 
-        with self.subTest('Get x dimension index from geo coordinates'):
+        with self.subTest('Get y_x order when longitude is changing across column'):
             col_indices = [[0, 0], [0, 9]]
-            lat_col_values = [self.lat_arr[i][j] for i, j in col_indices]
-            lon_col_values = [self.lon_arr[i][j] for i, j in col_indices]
-            dim_index, x_name = get_dimension_order(
-                self.lat_arr, self.lon_arr, col_indices, False, dim_names
+            y_x_order = get_dimension_order(
+                self.lat_arr, self.lon_arr, col_indices, is_row=False
             )
-            self.assertEqual(dim_index, 0)
-            self.assertEqual(x_name, 'projected_x')
+            self.assertEqual(y_x_order, True)
 
-        with self.subTest('Get y dimension index from reversed lat/lon array'):
+        with self.subTest('Get y_x order when longitude is changing across row'):
             row_indices = [[0, 0], [4, 0]]
-            dim_names = ['projected_y', 'projected_x']
-            lat_row_values = [self.lat_arr_reversed[i][j] for i, j in row_indices]
-            lon_row_values = [self.lon_arr_reversed[i][j] for i, j in row_indices]
-            y_dim_index, y_name = get_dimension_order(
+            y_x_order = get_dimension_order(
                 self.lat_arr_reversed,
                 self.lon_arr_reversed,
                 row_indices,
-                True,
-                dim_names,
+                is_row=True,
             )
-            self.assertEqual(y_dim_index, 0)
-            self.assertEqual(y_name, 'projected_y')
+            self.assertEqual(y_x_order, False)
 
-        with self.subTest('Get x dimension index from reversed lat/lon array'):
+        with self.subTest('Get y_x order when latitude is changing across column'):
             col_indices = [[0, 0], [0, 9]]
-            lat_col_values = [self.lat_arr_reversed[i][j] for i, j in col_indices]
-            lon_col_values = [self.lon_arr_reversed[i][j] for i, j in col_indices]
-            dim_index, x_name = get_dimension_order(
+            y_x_order = get_dimension_order(
                 self.lat_arr_reversed,
                 self.lon_arr_reversed,
                 col_indices,
-                False,
-                dim_names,
+                is_row=False,
             )
-            self.assertEqual(dim_index, 1)
-            self.assertEqual(x_name, 'projected_x')
+            self.assertEqual(y_x_order, False)
+
+        with self.subTest('Get y_x order when latitude and longitude are not varying'):
+            lat_arr = np.array(
+                [
+                    [90.1, 90.1, 90.1],
+                    [90.1, 90.1, 90.1],
+                    [90.1, 90.1, 90.1],
+                    [90.1, 90.1, 90.1],
+                    [90.1, 90.1, 90.1],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [120.1, 120.1, 120.1],
+                    [120.1, 120.1, 120.1],
+                    [120.1, 120.1, 120.1],
+                    [120.1, 120.1, 120.1],
+                    [120.1, 120.1, 120.1],
+                ]
+            )
+            row_indices = [[0, 0], [4, 0]]
+            with self.assertRaises(InvalidCoordinateData) as context:
+                y_x_order = get_dimension_order(
+                    lat_arr, lon_arr, row_indices, is_row=True
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'lat/lon values are constant',
+                )

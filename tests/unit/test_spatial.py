@@ -57,6 +57,44 @@ class TestSpatial(TestCase):
             {'/x': (37, 56), '/y': (7, 26)},
         )
 
+    def test_get_spatial_index_ranges_projected_from_coordinates(self):
+        """Ensure that correct index ranges can be calculated for a SMAP L3
+        granule. This granule has variables that do no have dimensions, but
+        they have coordinate attributes.
+
+        """
+        harmony_message = Message({'subset': {'bbox': [2, 54, 42, 72]}})
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            'hoss/hoss_config.json',
+        )
+        prefetch_path = 'tests/data/SC_SPL3SMP_009_prefetch.nc4'
+        required_variables = {
+            '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+            '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
+            '/Soil_Moisture_Retrieval_Data_AM/latitude',
+            '/Soil_Moisture_Retrieval_Data_AM/longitude',
+            '/Soil_Moisture_Retrieval_Data_PM/latitude_pm',
+            '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
+        }
+        expected_index_ranges = {
+            '/Soil_Moisture_Retrieval_Data_AM/projected_x': (487, 594),
+            '/Soil_Moisture_Retrieval_Data_AM/projected_y': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_PM/projected_x': (487, 594),
+            '/Soil_Moisture_Retrieval_Data_PM/projected_y': (9, 38),
+        }
+
+        self.assertDictEqual(
+            get_spatial_index_ranges(
+                required_variables,
+                smap_varinfo,
+                prefetch_path,
+                harmony_message,
+            ),
+            expected_index_ranges,
+        )
+
     def test_get_spatial_index_ranges_geographic(self):
         """Ensure that correct index ranges can be calculated for:
 

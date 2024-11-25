@@ -12,6 +12,7 @@ from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
     any_absent_dimension_variables,
+    create_dimension_arrays_from_coordinates,
     get_1d_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
@@ -973,6 +974,160 @@ class TestCoordinateUtilities(TestCase):
             with self.assertRaises(InvalidCoordinateData) as context:
                 y_x_order = get_dimension_order(
                     lat_arr, lon_arr, row_indices, is_row=True
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'lat/lon values are constant',
+                )
+
+    def test_create_dimension_arrays_from_coordinates(
+        self,
+    ):
+        """Ensure that the correct x and y dim arrays
+        are returned from a lat/lon prefetch dataset and
+        crs provided.
+        """
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            'hoss/hoss_config.json',
+        )
+        smap_file_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
+
+        latitude_coordinate = smap_varinfo.get_variable(
+            '/Soil_Moisture_Retrieval_Data_AM/latitude'
+        )
+        longitude_coordinate = smap_varinfo.get_variable(
+            '/Soil_Moisture_Retrieval_Data_AM/longitude'
+        )
+        projected_dimension_names_am = [
+            '/Soil_Moisture_Retrieval_Data_AM/projected_y',
+            '/Soil_Moisture_Retrieval_Data_AM/projected_x',
+        ]
+        projected_dimension_names_pm = [
+            '/Soil_Moisture_Retrieval_Data_PM/projected_y',
+            '/Soil_Moisture_Retrieval_Data_PM/projected_x',
+        ]
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+        expected_xdim = np.array([-17349514.353068016, 17349514.353068016])
+        expected_ydim = np.array([7296524.6913595535, -7296524.691359556])
+
+        with self.subTest('Projected x-y dim arrays from coordinate datasets'):
+            with Dataset(smap_file_path, 'r') as smap_prefetch:
+                x_y_dim_am = create_dimension_arrays_from_coordinates(
+                    smap_prefetch,
+                    latitude_coordinate,
+                    longitude_coordinate,
+                    crs,
+                    projected_dimension_names_am,
+                )
+                x_y_dim_pm = create_dimension_arrays_from_coordinates(
+                    smap_prefetch,
+                    latitude_coordinate,
+                    longitude_coordinate,
+                    crs,
+                    projected_dimension_names_pm,
+                )
+
+                self.assertListEqual(
+                    list(x_y_dim_am.keys()), projected_dimension_names_am
+                )
+                self.assertListEqual(
+                    list(x_y_dim_pm.keys()), projected_dimension_names_pm
+                )
+                self.assertEqual(
+                    x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/projected_y'][0],
+                    expected_ydim[0],
+                )
+                self.assertEqual(
+                    x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/projected_y'][-1],
+                    expected_ydim[-1],
+                )
+                self.assertEqual(
+                    x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/projected_x'][0],
+                    expected_xdim[0],
+                )
+                self.assertEqual(
+                    x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/projected_x'][-1],
+                    expected_xdim[-1],
+                )
+                self.assertEqual(
+                    x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/projected_y'][0],
+                    expected_ydim[0],
+                )
+                self.assertEqual(
+                    x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/projected_y'][-1],
+                    expected_ydim[-1],
+                )
+                self.assertEqual(
+                    x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/projected_x'][0],
+                    expected_xdim[0],
+                )
+                self.assertEqual(
+                    x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/projected_x'][-1],
+                    expected_xdim[-1],
+                )
+        with self.subTest('Invalid data in coordinate datasets'):
+            prefetch = {
+                '/Soil_Moisture_Retrieval_Data_AM/latitude': np.array(
+                    [
+                        [89.3, 89.3, -9999, 89.3, 89.3],
+                        [-9999, -9999, -60.2, -60.2, -60.2],
+                        [-88.1, -9999, -88.1, -88.1, -88.1],
+                    ]
+                ),
+                '/Soil_Moisture_Retrieval_Data_AM/longitude': np.array(
+                    [
+                        [-9999, -9999, -9999, -9999, 178.4],
+                        [-179.3, -9999, -9999, -9999, -9999],
+                        [-179.3, -9999, -9999, -9999, -9999],
+                    ]
+                ),
+            }
+            with self.assertRaises(InvalidCoordinateData) as context:
+                create_dimension_arrays_from_coordinates(
+                    prefetch,
+                    latitude_coordinate,
+                    longitude_coordinate,
+                    crs,
+                    projected_dimension_names_am,
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'lat/lon values are constant',
+                )
+        with self.subTest('Cannot determine x-y order in coordinate datasets'):
+            prefetch = {
+                '/Soil_Moisture_Retrieval_Data_AM/latitude': np.array(
+                    [
+                        [89.3, 89.3, -9999, 89.3, 89.3],
+                        [-9999, -9999, 89.3, 89.3, 89.3],
+                        [89.3, 89.3, 89.3, 89.3, 89.3],
+                    ]
+                ),
+                '/Soil_Moisture_Retrieval_Data_AM/longitude': np.array(
+                    [
+                        [-9999, -9999, -9999, -9999, 178.4],
+                        [-179.3, -9999, -9999, -9999, -9999],
+                        [-179.3, -9999, -9999, -9999, -9999],
+                    ]
+                ),
+            }
+            with self.assertRaises(InvalidCoordinateData) as context:
+                create_dimension_arrays_from_coordinates(
+                    prefetch,
+                    latitude_coordinate,
+                    longitude_coordinate,
+                    crs,
+                    projected_dimension_names_am,
                 )
                 self.assertEqual(
                     context.exception.message,

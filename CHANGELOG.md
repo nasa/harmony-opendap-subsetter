@@ -1,3 +1,19 @@
+## v1.1.0
+### 2024-11-25
+
+This version of HOSS provides support for gridded products that do not contain
+CF-Convention compliant grid mapping variables and 1-D dimension variables, such
+as SMAP L3. Functions updated to retrieve coordinate attributes and grid mappings,
+using overrides specified in the hoss_config.json configuration file.
+This implementation uses the latitude/longitude values across one row, and one
+column to project it to the target grid using Proj and to compute the the X-Y
+dimension arrays. Functions have been added to check any fill values present in
+the coordinate variable data. Check for the dimension order for 2D datasets is
+done using the latitude and longitude data varying across the row versus the
+column. Support for multiple grids is handled by associating the group-name into
+the cache-name for coordinates already processed for dimension ranges.
+Several new functions related to this implementation have been added to
+a new module `coordinate_utilities.py`.
 
 ## v1.0.5
 ### 2024-08-19

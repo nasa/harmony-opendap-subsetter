@@ -32,7 +32,11 @@ from hoss.dimension_utilities import (
     needs_bounds,
     write_bounds,
 )
-from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
+from hoss.exceptions import (
+    InvalidIndexSubsetRequest,
+    InvalidNamedDimension,
+    InvalidRequestedRange,
+)
 
 
 class TestDimensionUtilities(TestCase):
@@ -490,7 +494,7 @@ class TestDimensionUtilities(TestCase):
         )
         with self.subTest('No coordinate variables'):
             mock_get_coordinate_variables.return_value = ([], [])
-            self.assertEqual(
+            with self.assertRaises(InvalidIndexSubsetRequest):
                 get_prefetch_variables(
                     url,
                     varinfo,
@@ -499,19 +503,15 @@ class TestDimensionUtilities(TestCase):
                     self.logger,
                     access_token,
                     self.config,
-                ),
-                prefetch_path,
-            )
+                )
+
             mock_get_coordinate_variables.assert_called_once_with(
                 varinfo,
                 requested_variables,
             )
-            mock_get_opendap_nc4.assert_called_once_with(
-                url, set(), output_dir, self.logger, access_token, self.config
-            )
-            mock_check_add_artificial_bounds.assert_called_once_with(
-                prefetch_path, set(), varinfo, self.logger
-            )
+            mock_get_opendap_nc4.assert_not_called()
+            mock_check_add_artificial_bounds.assert_not_called()
+
         mock_get_coordinate_variables.reset_mock()
         mock_get_opendap_nc4.reset_mock()
         mock_check_add_artificial_bounds.reset_mock()
@@ -521,7 +521,7 @@ class TestDimensionUtilities(TestCase):
                 ['/Soil_Moisture_Retrieval_Data_AM/latitude'],
                 [],
             )
-            self.assertEqual(
+            with self.assertRaises(InvalidIndexSubsetRequest):
                 get_prefetch_variables(
                     url,
                     varinfo,
@@ -530,19 +530,14 @@ class TestDimensionUtilities(TestCase):
                     self.logger,
                     access_token,
                     self.config,
-                ),
-                prefetch_path,
-            )
+                )
+
             mock_get_coordinate_variables.assert_called_once_with(
                 varinfo,
                 requested_variables,
             )
-            mock_get_opendap_nc4.assert_called_once_with(
-                url, set(), output_dir, self.logger, access_token, self.config
-            )
-            mock_check_add_artificial_bounds.assert_called_once_with(
-                prefetch_path, set(), varinfo, self.logger
-            )
+            mock_get_opendap_nc4.assert_not_called()
+            mock_check_add_artificial_bounds.assert_not_called()
 
     @patch('hoss.dimension_utilities.needs_bounds')
     @patch('hoss.dimension_utilities.write_bounds')

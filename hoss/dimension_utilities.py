@@ -27,6 +27,7 @@ from hoss.coordinate_utilities import (
     get_projected_dimension_names_from_coordinate_variables,
 )
 from hoss.exceptions import (
+    InvalidIndexSubsetRequest,
     InvalidNamedDimension,
     InvalidRequestedRange,
 )
@@ -76,8 +77,9 @@ def get_prefetch_variables(
     subsets, all required dimensions must be prefetched, along with any
     associated bounds variables referred to via the "bounds" metadata
     attribute. In cases where dimension variables do not exist, coordinate
-    variables will be prefetched and used to calculate dimension-scale values
-
+    variables will be prefetched and used to calculate dimension-scale values.
+    If there are no prefetch variables, the function will raise an
+    InvalidIndexSubsetRequest exception.
     """
     prefetch_variables = varinfo.get_required_dimensions(required_variables)
     if prefetch_variables:
@@ -91,6 +93,11 @@ def get_prefetch_variables(
 
         if latitude_coordinates and longitude_coordinates:
             prefetch_variables = set(latitude_coordinates + longitude_coordinates)
+
+    if not prefetch_variables:
+        raise InvalidIndexSubsetRequest(
+            "No dimensions or coordinates exist for the requested variables"
+        )
 
     logger.info(
         'Variables being retrieved in prefetch request: '

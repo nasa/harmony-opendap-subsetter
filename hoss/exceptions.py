@@ -136,6 +136,21 @@ class MissingCoordinateVariable(CustomError):
         )
 
 
+class InvalidIndexSubsetRequest(CustomError):
+    """This exception is raised when HOSS tries to get dimensions or
+    coordinate variables as part of a prefetch from opendap when there is
+    a spatial or temporal request, and there are no prefetch variables
+    returned.
+
+    """
+
+    def __init__(self, custom_msg):
+        super().__init__(
+            'InvalidIndexSubsetRequest',
+            custom_msg,
+        )
+
+
 class InvalidCoordinateVariable(CustomError):
     """This exception is raised when HOSS tries to get latitude and longitude
     variables and they have fill values to the extent that it cannot be used.

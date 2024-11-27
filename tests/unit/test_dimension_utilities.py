@@ -383,7 +383,7 @@ class TestDimensionUtilities(TestCase):
         mock_get_opendap_nc4.return_value = prefetch_path
 
         access_token = 'access'
-        output_dir = 'tests/output'
+        output_dir = self.temp_dir
         url = 'https://url_to_opendap_granule'
         required_variables = {'/latitude', '/longitude', '/time', '/wind_speed'}
         required_dimensions = {'/latitude', '/longitude', '/time'}
@@ -424,7 +424,7 @@ class TestDimensionUtilities(TestCase):
         prefetch_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
         mock_get_opendap_nc4.return_value = prefetch_path
         access_token = 'access'
-        output_dir = 'tests/output'
+        output_dir = self.temp_dir
         url = 'https://url_to_opendap_granule'
         prefetch_variables = {
             '/Soil_Moisture_Retrieval_Data_AM/latitude',
@@ -468,14 +468,15 @@ class TestDimensionUtilities(TestCase):
         mock_check_add_artificial_bounds,
         mock_get_coordinate_variables,
     ):
-        """Ensure that when a list of required variables is specified, a
-         If two coordinate variables are also not present, the opendap prefetch request will not include any
-        dimension variables.
+        """Ensure that when a list of required variables is specified,
+        If dimension variables are not present and two coordinate
+        variables are also not present, the opendap prefetch request
+        will not include any dimension variables.
         """
         prefetch_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
         mock_get_opendap_nc4.return_value = prefetch_path
         access_token = 'access'
-        output_dir = 'tests/output'
+        output_dir = self.temp_dir
         url = 'https://url_to_opendap_granule'
 
         requested_variables = {

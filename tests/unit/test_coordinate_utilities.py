@@ -125,6 +125,48 @@ class TestCoordinateUtilities(TestCase):
             for expected_variable in expected_coordinate_variables[1]:
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
 
+        with self.subTest('No lat coordinate variables for the requested variables'):
+            # should return one valid list and an empty list
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_lat_coordinate_variable'],
+            )
+            self.assertTupleEqual(
+                actual_coordinate_variables,
+                ([], ['/Soil_Moisture_Retrieval_Data_AM/longitude']),
+            )
+        with self.subTest('No lon coordinate variables for the requested variables'):
+            # should return one valid list and an empty list
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_lon_coordinate_variable'],
+            )
+            self.assertTupleEqual(
+                actual_coordinate_variables,
+                (['/Soil_Moisture_Retrieval_Data_AM/latitude'], []),
+            )
+        with self.subTest('No coordinate variables for the requested variables'):
+            # should return empty lists
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_coordinate_variable'],
+            )
+            self.assertTupleEqual(actual_coordinate_variables, ([], []))
+        with self.subTest('Missing coordinate variables'):
+            # should return empty lists
+            missing_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/variable_with_missing_coordinates'],
+            )
+            self.assertTupleEqual(missing_coordinate_variables, ([], []))
+        with self.subTest('Fake coordinate variables'):
+            # should return empty lists
+            fake_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/variable_with_fake_coordinates'],
+            )
+            self.assertTupleEqual(fake_coordinate_variables, ([], []))
+
     def test_get_1d_dim_array_data_from_dimvalues(self):
         """Ensure that the dimension scale generated from the
         provided dimension values are accurate for ascending and

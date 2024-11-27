@@ -16,7 +16,7 @@ from hoss.coordinate_utilities import (
     get_coordinate_array,
     get_coordinate_variables,
     get_dimension_array_from_geo_points,
-    get_max_x_spread_pts,
+    get_max_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
     get_row_col_sizes_from_coordinate_datasets,
@@ -516,7 +516,7 @@ class TestCoordinateUtilities(TestCase):
             )
             self.assertFalse(variable_has_fake_dims)
 
-    def test_get_max_x_spread_pts(self):
+    def test_get_max_spread_pts(self):
         """Ensure that two valid sets of indices are returned by the function
         with a masked dataset as input
 
@@ -533,7 +533,7 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             expected_indices = [[0, 0], [0, 9]]
-            actual_indices = get_max_x_spread_pts(~valid_values)
+            actual_indices = get_max_spread_pts(~valid_values)
             self.assertTrue(actual_indices[0] == expected_indices[0])
             self.assertTrue(actual_indices[1] == expected_indices[1])
 
@@ -546,7 +546,7 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             with self.assertRaises(InvalidCoordinateData) as context:
-                get_max_x_spread_pts(~valid_values)
+                get_max_spread_pts(~valid_values)
                 self.assertEqual(
                     context.exception.message,
                     'Only one valid point in coordinate data',
@@ -561,7 +561,7 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             with self.assertRaises(InvalidCoordinateData) as context:
-                get_max_x_spread_pts(~valid_values)
+                get_max_spread_pts(~valid_values)
                 self.assertEqual(
                     context.exception.message,
                     'No valid coordinate data',

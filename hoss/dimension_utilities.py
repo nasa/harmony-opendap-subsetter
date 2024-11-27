@@ -579,12 +579,8 @@ def get_dimension_bounds(
     be returned.
 
     """
-    try:
-        # For pseudo-variables, `varinfo.get_variable` returns `None` and
-        # therefore has no `references` attribute.
-        bounds = varinfo.get_variable(dimension_name).references.get('bounds')
-    except AttributeError:
-        bounds = None
+
+    bounds = varinfo.get_variable(dimension_name).references.get('bounds')
 
     if bounds is not None:
         try:

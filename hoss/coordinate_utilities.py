@@ -272,11 +272,11 @@ def get_valid_row_col_pairs(
     )
 
     # get maximally spread points within rows
-    max_x_spread_pts = get_max_x_spread_pts(~valid_lat_lon_mask)
+    max_x_spread_pts = get_max_spread_pts(~valid_lat_lon_mask)
 
     # Doing the same for the columns is done by transposing the valid_mask
     # and then fixing the results from [x, y] to [y, x].
-    max_y_spread_trsp = get_max_x_spread_pts(np.transpose(~valid_lat_lon_mask))
+    max_y_spread_trsp = get_max_spread_pts(np.transpose(~valid_lat_lon_mask))
     max_y_spread_pts = [
         list(np.flip(max_y_spread_trsp[0])),
         list(np.flip(max_y_spread_trsp[1])),
@@ -285,7 +285,7 @@ def get_valid_row_col_pairs(
     return max_y_spread_pts, max_x_spread_pts
 
 
-def get_max_x_spread_pts(
+def get_max_spread_pts(
     valid_geospatial_mask: np.ndarray,
 ) -> list[list]:
     """
@@ -297,33 +297,33 @@ def get_max_x_spread_pts(
     - input is Numpy Mask Array, e.g., invalid latitudes & longitudes
     - returns 2 points by indices, [[y_ind, x_ind], [y_ind, x_ind]
     """
-    # fill a sample array with x-index values, x_ind[i, j] = j
-    x_ind = np.indices(
+    # fill a sample array with index values, arr_ind[i, j] = j
+    arr_indices = np.indices(
         (valid_geospatial_mask.shape[0], valid_geospatial_mask.shape[1])
     )[1]
 
-    # mask x_ind to hide the invalid data points
-    valid_x_ind = np.ma.array(x_ind, mask=valid_geospatial_mask)
+    # mask arr_ind to hide the invalid data points
+    valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask)
 
-    if valid_x_ind.count() == 0:
+    if valid_indices.count() == 0:
         raise InvalidCoordinateData("No valid coordinate data")
 
     # ptp (peak-to-peak) finds the greatest delta-x value amongst valid points
     # for each row. Result is 1D
-    x_ind_spread = valid_x_ind.ptp(axis=1)
+    index_spread = valid_indices.ptp(axis=1)
 
     # This finds which row has the greatest spread (delta-x)
-    max_x_spread_row = np.argmax(x_ind_spread)
+    max_spread = np.argmax(index_spread)
 
-    # Using the row reference, find the min-x and max-x
-    min_x_ind = np.min(valid_x_ind[max_x_spread_row])
-    max_x_ind = np.max(valid_x_ind[max_x_spread_row])
+    # Using the row reference, find the min and max
+    min_index = np.min(valid_indices[max_spread])
+    max_index = np.max(valid_indices[max_spread])
 
     # There is just one valid point
-    if min_x_ind == max_x_ind:
+    if min_index == max_index:
         raise InvalidCoordinateData("Only one valid point in coordinate data")
 
-    return [[max_x_spread_row, min_x_ind], [max_x_spread_row, max_x_ind]]
+    return [[max_spread, min_index], [max_spread, max_index]]
 
 
 def create_dimension_arrays_from_coordinates(

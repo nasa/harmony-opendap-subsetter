@@ -34,6 +34,20 @@
                 <Value>degrees_north</Value>
             </Attribute>
         </Float32>
+        <Float32 name="fake_lon">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="fake_lat">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+        </Float32>
         <Dimension name="fake_lon_dim" size="120"/>
         <Float64 name="fake_lon_dim">
             <Dim name="/Soil_Moisture_Retrieval_Data_AM/fake_lon_dim"/>
@@ -137,6 +151,50 @@
             </Attribute>
             <Map name="/Soil_Moisture_Retrieval_Data_AM/latitude"/>
             <Map name="/Soil_Moisture_Retrieval_Data_AM/longitude"/>
+        </Float32>
+        <Float32 name ="variable_with_missing_coordinates">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative SCA-V soil moisture measurement for the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/missing_lat /Soil_Moisture_Retrieval_Data_AM/missing_lon</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.01999999955</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name ="variable_with_fake_coordinates">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative SCA-V soil moisture measurement for the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/fake_lat /Soil_Moisture_Retrieval_Data_AM/fake_lon</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.01999999955</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
         </Float32>
         <Float32 name="no_coordinate_variable">
             <Dim size="406"/>
@@ -380,7 +438,7 @@
                 <Value>-9999.</Value>
             </Attribute>
         </Float32>
-        <Float32 name="soil_moisture_fake">
+       <Float32 name ="variable_with_fake_coordinates">
             <Dim size="406"/>
             <Dim size="964"/>
             <Attribute name="long_name" type="String">
@@ -388,6 +446,9 @@
             </Attribute>
             <Attribute name="units" type="String">
                 <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_PM/fake_lat /Soil_Moisture_Retrieval_Data_PM/fake_lon</Value>
             </Attribute>
             <Attribute name="valid_min" type="Float32">
                 <Value>0.01999999955</Value>

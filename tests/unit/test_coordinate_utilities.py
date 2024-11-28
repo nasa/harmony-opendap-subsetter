@@ -18,7 +18,7 @@ from hoss.coordinate_utilities import (
     get_coordinate_variables,
     get_dimension_array_from_geo_points,
     get_dimension_order,
-    get_max_x_spread_pts,
+    get_max_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
     get_row_col_sizes_from_coordinate_datasets,
@@ -210,6 +210,48 @@ class TestCoordinateUtilities(TestCase):
 
             for expected_variable in expected_coordinate_variables[1]:
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
+
+        with self.subTest('No lat coordinate variables for the requested variables'):
+            # should return one valid list and an empty list
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_lat_coordinate_variable'],
+            )
+            self.assertTupleEqual(
+                actual_coordinate_variables,
+                ([], ['/Soil_Moisture_Retrieval_Data_AM/longitude']),
+            )
+        with self.subTest('No lon coordinate variables for the requested variables'):
+            # should return one valid list and an empty list
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_lon_coordinate_variable'],
+            )
+            self.assertTupleEqual(
+                actual_coordinate_variables,
+                (['/Soil_Moisture_Retrieval_Data_AM/latitude'], []),
+            )
+        with self.subTest('No coordinate variables for the requested variables'):
+            # should return empty lists
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_coordinate_variable'],
+            )
+            self.assertTupleEqual(actual_coordinate_variables, ([], []))
+        with self.subTest('Missing coordinate variables'):
+            # should return empty lists
+            missing_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/variable_with_missing_coordinates'],
+            )
+            self.assertTupleEqual(missing_coordinate_variables, ([], []))
+        with self.subTest('Fake coordinate variables'):
+            # should return empty lists
+            fake_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/variable_with_fake_coordinates'],
+            )
+            self.assertTupleEqual(fake_coordinate_variables, ([], []))
 
     def test_get_1d_dim_array_data_from_dimvalues(self):
         """Ensure that the dimension scale generated from the
@@ -622,7 +664,7 @@ class TestCoordinateUtilities(TestCase):
             )
             self.assertFalse(variable_has_fake_dims)
 
-    def test_get_max_x_spread_pts(self):
+    def test_get_max_spread_pts(self):
         """Ensure that two valid sets of indices are returned by the function
         with a masked dataset as input
 
@@ -639,7 +681,7 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             expected_indices = [[0, 0], [0, 9]]
-            actual_indices = get_max_x_spread_pts(~valid_values)
+            actual_indices = get_max_spread_pts(~valid_values)
             self.assertTrue(actual_indices[0] == expected_indices[0])
             self.assertTrue(actual_indices[1] == expected_indices[1])
 
@@ -652,7 +694,7 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             with self.assertRaises(InvalidCoordinateData) as context:
-                get_max_x_spread_pts(~valid_values)
+                get_max_spread_pts(~valid_values)
                 self.assertEqual(
                     context.exception.message,
                     'Only one valid point in coordinate data',
@@ -667,7 +709,7 @@ class TestCoordinateUtilities(TestCase):
                 ]
             )
             with self.assertRaises(InvalidCoordinateData) as context:
-                get_max_x_spread_pts(~valid_values)
+                get_max_spread_pts(~valid_values)
                 self.assertEqual(
                     context.exception.message,
                     'No valid coordinate data',

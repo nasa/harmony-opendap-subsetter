@@ -32,7 +32,11 @@ from hoss.dimension_utilities import (
     needs_bounds,
     write_bounds,
 )
-from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
+from hoss.exceptions import (
+    InvalidIndexSubsetRequest,
+    InvalidNamedDimension,
+    InvalidRequestedRange,
+)
 
 
 class TestDimensionUtilities(TestCase):
@@ -383,7 +387,7 @@ class TestDimensionUtilities(TestCase):
         mock_get_opendap_nc4.return_value = prefetch_path
 
         access_token = 'access'
-        output_dir = 'tests/output'
+        output_dir = self.temp_dir
         url = 'https://url_to_opendap_granule'
         required_variables = {'/latitude', '/longitude', '/time', '/wind_speed'}
         required_dimensions = {'/latitude', '/longitude', '/time'}
@@ -424,7 +428,7 @@ class TestDimensionUtilities(TestCase):
         prefetch_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
         mock_get_opendap_nc4.return_value = prefetch_path
         access_token = 'access'
-        output_dir = 'tests/output'
+        output_dir = self.temp_dir
         url = 'https://url_to_opendap_granule'
         prefetch_variables = {
             '/Soil_Moisture_Retrieval_Data_AM/latitude',
@@ -468,14 +472,15 @@ class TestDimensionUtilities(TestCase):
         mock_check_add_artificial_bounds,
         mock_get_coordinate_variables,
     ):
-        """Ensure that when a list of required variables is specified, a
-         If two coordinate variables are also not present, the opendap prefetch request will not include any
-        dimension variables.
+        """Ensure that when a list of required variables is specified,
+        If dimension variables are not present and two coordinate
+        variables are also not present, the opendap prefetch request
+        will not include any dimension variables.
         """
         prefetch_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
         mock_get_opendap_nc4.return_value = prefetch_path
         access_token = 'access'
-        output_dir = 'tests/output'
+        output_dir = self.temp_dir
         url = 'https://url_to_opendap_granule'
 
         requested_variables = {
@@ -489,7 +494,7 @@ class TestDimensionUtilities(TestCase):
         )
         with self.subTest('No coordinate variables'):
             mock_get_coordinate_variables.return_value = ([], [])
-            self.assertEqual(
+            with self.assertRaises(InvalidIndexSubsetRequest):
                 get_prefetch_variables(
                     url,
                     varinfo,
@@ -498,19 +503,15 @@ class TestDimensionUtilities(TestCase):
                     self.logger,
                     access_token,
                     self.config,
-                ),
-                prefetch_path,
-            )
+                )
+
             mock_get_coordinate_variables.assert_called_once_with(
                 varinfo,
                 requested_variables,
             )
-            mock_get_opendap_nc4.assert_called_once_with(
-                url, set(), output_dir, self.logger, access_token, self.config
-            )
-            mock_check_add_artificial_bounds.assert_called_once_with(
-                prefetch_path, set(), varinfo, self.logger
-            )
+            mock_get_opendap_nc4.assert_not_called()
+            mock_check_add_artificial_bounds.assert_not_called()
+
         mock_get_coordinate_variables.reset_mock()
         mock_get_opendap_nc4.reset_mock()
         mock_check_add_artificial_bounds.reset_mock()
@@ -520,7 +521,7 @@ class TestDimensionUtilities(TestCase):
                 ['/Soil_Moisture_Retrieval_Data_AM/latitude'],
                 [],
             )
-            self.assertEqual(
+            with self.assertRaises(InvalidIndexSubsetRequest):
                 get_prefetch_variables(
                     url,
                     varinfo,
@@ -529,19 +530,14 @@ class TestDimensionUtilities(TestCase):
                     self.logger,
                     access_token,
                     self.config,
-                ),
-                prefetch_path,
-            )
+                )
+
             mock_get_coordinate_variables.assert_called_once_with(
                 varinfo,
                 requested_variables,
             )
-            mock_get_opendap_nc4.assert_called_once_with(
-                url, set(), output_dir, self.logger, access_token, self.config
-            )
-            mock_check_add_artificial_bounds.assert_called_once_with(
-                prefetch_path, set(), varinfo, self.logger
-            )
+            mock_get_opendap_nc4.assert_not_called()
+            mock_check_add_artificial_bounds.assert_not_called()
 
     @patch('hoss.dimension_utilities.needs_bounds')
     @patch('hoss.dimension_utilities.write_bounds')

@@ -124,26 +124,30 @@ def get_coordinate_variables(
 
 
 def get_row_col_sizes_from_coordinate_datasets(
-    lat_arr: np.ndarray,
-    lon_arr: np.ndarray,
+    lat_arr: np.ndarray, lon_arr: np.ndarray, dim_order_is_y_x: bool
 ) -> tuple[int, int]:
     """
     This function returns the row and column sizes of the coordinate datasets
 
     """
     # ToDo - if the coordinates are 3D
-    if lat_arr.ndim > 1 and lon_arr.shape == lat_arr.shape:
+    if lat_arr.ndim == 2 and lon_arr.shape == lat_arr.shape:
         col_size = lat_arr.shape[1]
         row_size = lat_arr.shape[0]
+    elif lat_arr.ndim > 2 and lon_arr.shape == lat_arr.shape:
+        raise InvalidCoordinateData("Greater than 2D is not supported yet")
     elif (
         lat_arr.ndim == 1
         and lon_arr.ndim == 1
         and lat_arr.size > 0
         and lon_arr.size > 0
     ):
-        # Todo: The ordering needs to be checked
-        col_size = lon_arr.size
-        row_size = lat_arr.size
+        if dim_order_is_y_x:
+            col_size = lon_arr.size
+            row_size = lat_arr.size
+        else:
+            col_size = lat_arr.size
+            row_size = lon_arr.size
     else:
         raise IncompatibleCoordinateVariables(lon_arr.shape, lat_arr.shape)
     return row_size, col_size
@@ -190,7 +194,6 @@ def get_1d_dim_array_data_from_dimvalues(
 
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
-
     return np.linspace(dim_min, dim_max, dim_size)
 
 
@@ -341,25 +344,44 @@ def create_dimension_arrays_from_coordinates(
         prefetch_dataset,
         longitude_coordinate.full_name_path,
     )
-    row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
-        lat_arr,
-        lon_arr,
-    )
 
     row_indices, col_indices = get_valid_row_col_pairs(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
 
+    dim_order_is_y_x = get_dimension_order(lat_arr, lon_arr, row_indices, is_row=True)
+    dim_order = get_dimension_order(lat_arr, lon_arr, col_indices, is_row=False)
+    if dim_order_is_y_x != dim_order:
+        raise InvalidCoordinateData("the order of dimensions do not match")
+
+    row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
+        lat_arr, lon_arr, dim_order_is_y_x
+    )
+
     y_dim = get_dimension_array_from_geo_points(
-        lat_arr, lon_arr, crs, row_indices, row_size, True
+        lat_arr,
+        lon_arr,
+        crs,
+        row_indices,
+        row_size,
+        dim_order_is_y_x,
+        use_row_not_col=True,
     )
 
     x_dim = get_dimension_array_from_geo_points(
-        lat_arr, lon_arr, crs, col_indices, col_size, False
+        lat_arr,
+        lon_arr,
+        crs,
+        col_indices,
+        col_size,
+        dim_order_is_y_x,
+        use_row_not_col=False,
     )
-
     projected_y, projected_x = tuple(projected_dimension_names)
-    return {projected_y: y_dim, projected_x: x_dim}
+
+    if dim_order_is_y_x:
+        return {projected_y: y_dim, projected_x: x_dim}
+    return {projected_x: x_dim, projected_y: y_dim}
 
 
 def get_dimension_array_from_geo_points(
@@ -368,27 +390,73 @@ def get_dimension_array_from_geo_points(
     crs: CRS,
     dimension_indices: list,
     dimension_size: int,
-    is_row=True,
+    dim_order_is_y_x: bool,
+    use_row_not_col: bool,
 ) -> np.ndarray:
     """This function uses the list of lat/lon points corresponding
     to a list of array indices and reprojects it with the CRS
     provided and scales the x/y values to a dimension array with the dimension
-    size provided
+    size provided. index_for_dimension is 0 for row and
+    1 for column. x_or_y_index is 1 if latitude is used for row
+    and is 0 if longitude is used for row. (it determines the dimension order)
 
     """
-    if is_row:
+    if use_row_not_col:
         index_for_dimension = 0
-        x_or_y_index = 1
+        if dim_order_is_y_x:
+            x_or_y_index = 1
+        else:
+            x_or_y_index = 0
     else:
         index_for_dimension = 1
-        x_or_y_index = 0
+        if dim_order_is_y_x:
+            x_or_y_index = 0
+        else:
+            x_or_y_index = 1
 
     geo_grid_points = [
         (lon_arr[row, col], lat_arr[row, col]) for row, col in dimension_indices
     ]
+
     x_y_values = get_x_y_values_from_geographic_points(geo_grid_points, crs)
+
     indices_for_dimension = np.transpose(dimension_indices)[index_for_dimension]
+
     dimension_values = np.transpose(x_y_values)[x_or_y_index]
+
     return get_1d_dim_array_data_from_dimvalues(
         dimension_values, indices_for_dimension, dimension_size
     )
+
+
+def get_dimension_order(
+    lat_array_points: np.ndarray,
+    lon_array_points: np.ndarray,
+    dimension_indices: list,
+    is_row: bool,
+) -> bool:
+    """Determines the order of dimensions based on whether the
+    latitude and longitude are varying across row or column
+    """
+
+    # if lat/lon array is 2D and variables are also 2D
+    lat_arr_values = [lat_array_points[i][j] for i, j in dimension_indices]
+    lon_arr_values = [lon_array_points[i][j] for i, j in dimension_indices]
+
+    # if it is row and lat is changing y_x order is true
+    if (is_row is True) and (np.allclose(lat_arr_values, lat_arr_values[0]) is False):
+        return True
+
+    # if it is row and lon is changing return y_x order is false
+    if (is_row is True) and (np.allclose(lon_arr_values, lon_arr_values[0]) is False):
+        return False
+
+    # if it is col and lat is changing y_x order is false
+    if (is_row is False) and (np.allclose(lat_arr_values, lat_arr_values[0]) is False):
+        return False
+
+    # if it is col and lon is changing y_x order is true
+    if (is_row is False) and (np.allclose(lon_arr_values, lon_arr_values[0]) is False):
+        return True
+
+    raise InvalidCoordinateData("lat/lon values are constant")

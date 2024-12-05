@@ -174,7 +174,8 @@ def get_1d_dim_array_data_from_dimvalues(
     dim_indices: np.ndarray,
     dim_size: int,
 ) -> np.ndarray:
-    """Return a full dimension data array based upon 2 valid projected values
+    """
+    Return a full dimension data array based upon 2 valid projected values
     given in dim_values and located by dim_indices. The dim_indices need
     to be between 0 and dim_size. Returns a 1D array of size = dim_size
     with proper dimension array values, with linear interpolation between
@@ -200,7 +201,8 @@ def get_1d_dim_array_data_from_dimvalues(
 def get_valid_indices(
     lat_lon_array: np.ndarray, coordinate: VariableFromDmr
 ) -> np.ndarray:
-    """Returns an array of boolean values indicating valid values - non-fill,
+    """
+    Returns an array of boolean values indicating valid values - non-fill,
     within range - for a given coordinate variable. Returns an empty
     ndarray of size (0,0) for any other variable.
 
@@ -255,7 +257,8 @@ def get_valid_row_col_pairs(
     lat_coordinate: VariableFromDmr,
     lon_coordinate: VariableFromDmr,
 ) -> tuple[list, list]:
-    """This function finds a set of indices maximally spread across
+    """
+    This function finds a set of indices maximally spread across
     a row, and the set maximally spread across a column, with the
     indices being valid in both the latitude and longitude datasets.
     When interpolating between these points, the maximal spread
@@ -283,7 +286,8 @@ def get_valid_row_col_pairs(
 def get_max_spread_pts(
     valid_geospatial_mask: np.ndarray,
 ) -> list[list]:
-    """This function returns two data points by x, y indices that are spread farthest
+    """
+    This function returns two data points by x, y indices that are spread farthest
     from each other in the same row, i.e., have the greatest delta-x value - and
     are valid data points from the valid_geospatial_mask array passed in. The input array
     must be a 2D Numpy mask array providing the valid data points, e.g., filtering

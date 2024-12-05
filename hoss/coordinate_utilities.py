@@ -171,11 +171,11 @@ def get_1d_dim_array_data_from_dimvalues(
     dim_size: int,
 ) -> np.ndarray:
     """
-    return a full dimension data array based upon 2 valid projected values
-    (x and y) given in dim_values which are within the indices given in
-    dim_indices and the full dimension size provided in dim_size. The
-    dim_indices need to be between 0 and less than the dim_size.
-    returns a 1D array of size = dim_size with proper dimension array values
+    Return a full dimension data array based upon 2 valid projected values
+    given in dim_values and located by dim_indices. The dim_indices need
+    to be between 0 and dim_size. Returns a 1D array of size = dim_size
+    with proper dimension array values, with linear interpolation between
+    the given dim_values.
     """
 
     if (dim_indices[1] != dim_indices[0]) and (dim_values[1] != dim_values[0]):
@@ -198,13 +198,9 @@ def get_valid_indices(
     lat_lon_array: np.ndarray, coordinate: VariableFromDmr
 ) -> np.ndarray:
     """
-    Returns an array of boolean values
-    - true, false - indicating a valid value (non-fill, within range)
-    for a given coordinate variable. A value of True means the
-    value is valid
-    - latitude or longitude - or
-    returns an empty ndarray of size (0,0) for any other variable.
-
+    Returns an array of boolean values indicating valid values - non-fill,
+    within range - for a given coordinate variable. Returns an empty
+    ndarray of size (0,0) for any other variable.
     """
 
     # get_attribute_value returns a value of type `str`

@@ -14,8 +14,8 @@ from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr
 
 from hoss.dimension_utilities import (
-    add_bounds_variables,
     add_index_range,
+    check_add_artificial_bounds,
     get_bounds_array,
     get_dimension_bounds,
     get_dimension_extents,
@@ -23,15 +23,20 @@ from hoss.dimension_utilities import (
     get_dimension_indices_from_bounds,
     get_dimension_indices_from_values,
     get_fill_slice,
+    get_prefetch_variables,
+    get_range_strings,
     get_requested_index_ranges,
     is_almost_in,
     is_dimension_ascending,
     is_index_subset,
     needs_bounds,
-    prefetch_dimension_variables,
     write_bounds,
 )
-from hoss.exceptions import InvalidNamedDimension, InvalidRequestedRange
+from hoss.exceptions import (
+    InvalidIndexSubsetRequest,
+    InvalidNamedDimension,
+    InvalidRequestedRange,
+)
 
 
 class TestDimensionUtilities(TestCase):
@@ -313,6 +318,45 @@ class TestDimensionUtilities(TestCase):
                 '/sst_dtime[][12:34][]',
             )
 
+    def test_get_range_strings(self):
+        """Ensure the correct combinations of range_strings are added as
+        suffixes to the input variable based upon that variable's dimensions.
+        If a dimension range has the lower index > upper index, that
+        indicates the bounding box crosses the edge of the grid. In this
+        instance, the full range of the variable should be retrieved.
+
+        """
+        with self.subTest('all dimensions found in index_ranges'):
+            variable_list = ['/Grid/lon', '/Grid/lat']
+            index_ranges = {'/Grid/lat': (600, 699), '/Grid/lon': (2200, 2299)}
+            expected_range_strings = range_strings = ['[2200:2299]', '[600:699]']
+            self.assertEqual(
+                get_range_strings(variable_list, index_ranges), expected_range_strings
+            )
+
+        with self.subTest('only some dimensions found in index range'):
+            variable_list = ['/Grid/time', '/Grid/lon', '/Grid/lat']
+            index_ranges = {'/Grid/lat': (600, 699), '/Grid/lon': (2200, 2299)}
+            expected_range_strings = ['[]', '[2200:2299]', '[600:699]']
+            self.assertEqual(
+                get_range_strings(variable_list, index_ranges),
+                expected_range_strings,
+            )
+
+        with self.subTest('No variables found in index ranges'):
+            variable_list = ['/Grid/time', '/Grid/lon', '/Grid/lat']
+            self.assertEqual(get_range_strings(variable_list, {}), ['[]', '[]', '[]'])
+        with self.subTest(
+            'when dimension range lower index is greater than upper index'
+        ):
+            variable_list = ['/Grid/time', '/Grid/lon', '/Grid/lat']
+            index_ranges = {'/Grid/lat': (699, 600), '/Grid/lon': (2200, 2299)}
+            expected_range_strings = ['[]', '[2200:2299]', '[]']
+            self.assertEqual(
+                get_range_strings(variable_list, index_ranges),
+                expected_range_strings,
+            )
+
     def test_get_fill_slice(self):
         """Ensure that a slice object is correctly formed for a requested
         dimension.
@@ -326,10 +370,10 @@ class TestDimensionUtilities(TestCase):
         with self.subTest('A filled dimension returns slice(start, stop).'):
             self.assertEqual(get_fill_slice('/longitude', fill_ranges), slice(16, 200))
 
-    @patch('hoss.dimension_utilities.add_bounds_variables')
+    @patch('hoss.dimension_utilities.check_add_artificial_bounds')
     @patch('hoss.dimension_utilities.get_opendap_nc4')
-    def test_prefetch_dimension_variables(
-        self, mock_get_opendap_nc4, mock_add_bounds_variables
+    def test_get_prefetch_variables(
+        self, mock_get_opendap_nc4, mock_check_add_artificial_bounds
     ):
         """Ensure that when a list of required variables is specified, a
         request to OPeNDAP will be sent requesting only those that are
@@ -343,13 +387,13 @@ class TestDimensionUtilities(TestCase):
         mock_get_opendap_nc4.return_value = prefetch_path
 
         access_token = 'access'
-        output_dir = 'tests/output'
+        output_dir = self.temp_dir
         url = 'https://url_to_opendap_granule'
         required_variables = {'/latitude', '/longitude', '/time', '/wind_speed'}
         required_dimensions = {'/latitude', '/longitude', '/time'}
 
         self.assertEqual(
-            prefetch_dimension_variables(
+            get_prefetch_variables(
                 url,
                 self.varinfo,
                 required_variables,
@@ -364,14 +408,140 @@ class TestDimensionUtilities(TestCase):
         mock_get_opendap_nc4.assert_called_once_with(
             url, required_dimensions, output_dir, self.logger, access_token, self.config
         )
-
-        mock_add_bounds_variables.assert_called_once_with(
+        mock_check_add_artificial_bounds.assert_called_once_with(
             prefetch_path, required_dimensions, self.varinfo, self.logger
         )
 
+    @patch('hoss.dimension_utilities.check_add_artificial_bounds')
+    @patch('hoss.dimension_utilities.get_opendap_nc4')
+    def test_get_prefetch_variables_with_anonymous_dimensions(
+        self,
+        mock_get_opendap_nc4,
+        mock_check_add_artificial_bounds,
+    ):
+        """Ensure that when a list of required variables is specified,
+        and the required dimension variables are not present,
+        checks and retrieves coordinate variables which is used
+        in the opendap prefetch request.
+
+        """
+        prefetch_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
+        mock_get_opendap_nc4.return_value = prefetch_path
+        access_token = 'access'
+        output_dir = self.temp_dir
+        url = 'https://url_to_opendap_granule'
+        prefetch_variables = {
+            '/Soil_Moisture_Retrieval_Data_AM/latitude',
+            '/Soil_Moisture_Retrieval_Data_AM/longitude',
+        }
+        requested_variables = {
+            '/Soil_Moisture_Retrieval_Data_AM/albedo',
+            '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+        }
+        varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            config_file='hoss/hoss_config.json',
+        )
+
+        self.assertEqual(
+            get_prefetch_variables(
+                url,
+                varinfo,
+                requested_variables,
+                output_dir,
+                self.logger,
+                access_token,
+                self.config,
+            ),
+            prefetch_path,
+        )
+        mock_get_opendap_nc4.assert_called_once_with(
+            url, prefetch_variables, output_dir, self.logger, access_token, self.config
+        )
+        mock_check_add_artificial_bounds.assert_called_once_with(
+            prefetch_path, prefetch_variables, varinfo, self.logger
+        )
+
+    @patch('hoss.dimension_utilities.get_coordinate_variables')
+    @patch('hoss.dimension_utilities.check_add_artificial_bounds')
+    @patch('hoss.dimension_utilities.get_opendap_nc4')
+    def test_get_prefetch_variables_with_no_anonymous_dimensions(
+        self,
+        mock_get_opendap_nc4,
+        mock_check_add_artificial_bounds,
+        mock_get_coordinate_variables,
+    ):
+        """Ensure that when a list of required variables is specified,
+        If dimension variables are not present and two coordinate
+        variables are also not present, the opendap prefetch request
+        will not include any dimension variables.
+        """
+        prefetch_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
+        mock_get_opendap_nc4.return_value = prefetch_path
+        access_token = 'access'
+        output_dir = self.temp_dir
+        url = 'https://url_to_opendap_granule'
+
+        requested_variables = {
+            '/Soil_Moisture_Retrieval_Data_AM/albedo',
+            '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+        }
+        varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            config_file='hoss/hoss_config.json',
+        )
+        with self.subTest('No coordinate variables'):
+            mock_get_coordinate_variables.return_value = ([], [])
+            with self.assertRaises(InvalidIndexSubsetRequest):
+                get_prefetch_variables(
+                    url,
+                    varinfo,
+                    requested_variables,
+                    output_dir,
+                    self.logger,
+                    access_token,
+                    self.config,
+                )
+
+            mock_get_coordinate_variables.assert_called_once_with(
+                varinfo,
+                requested_variables,
+            )
+            mock_get_opendap_nc4.assert_not_called()
+            mock_check_add_artificial_bounds.assert_not_called()
+
+        mock_get_coordinate_variables.reset_mock()
+        mock_get_opendap_nc4.reset_mock()
+        mock_check_add_artificial_bounds.reset_mock()
+
+        with self.subTest('Only one coordinate variable'):
+            mock_get_coordinate_variables.return_value = (
+                ['/Soil_Moisture_Retrieval_Data_AM/latitude'],
+                [],
+            )
+            with self.assertRaises(InvalidIndexSubsetRequest):
+                get_prefetch_variables(
+                    url,
+                    varinfo,
+                    requested_variables,
+                    output_dir,
+                    self.logger,
+                    access_token,
+                    self.config,
+                )
+
+            mock_get_coordinate_variables.assert_called_once_with(
+                varinfo,
+                requested_variables,
+            )
+            mock_get_opendap_nc4.assert_not_called()
+            mock_check_add_artificial_bounds.assert_not_called()
+
     @patch('hoss.dimension_utilities.needs_bounds')
     @patch('hoss.dimension_utilities.write_bounds')
-    def test_add_bounds_variables(self, mock_write_bounds, mock_needs_bounds):
+    def test_check_add_artificial_bounds(self, mock_write_bounds, mock_needs_bounds):
         """Ensure that `write_bounds` is called when it's needed,
         and that it's not called when it's not needed.
 
@@ -389,7 +559,7 @@ class TestDimensionUtilities(TestCase):
 
         with self.subTest('Bounds need to be written'):
             mock_needs_bounds.return_value = True
-            add_bounds_variables(
+            check_add_artificial_bounds(
                 prefetch_dataset_name,
                 required_dimensions,
                 varinfo_prefetch,
@@ -402,7 +572,7 @@ class TestDimensionUtilities(TestCase):
 
         with self.subTest('Bounds should not be written'):
             mock_needs_bounds.return_value = False
-            add_bounds_variables(
+            check_add_artificial_bounds(
                 prefetch_dataset_name,
                 required_dimensions,
                 varinfo_prefetch,
@@ -569,7 +739,7 @@ class TestDimensionUtilities(TestCase):
         }
 
         self.assertEqual(
-            prefetch_dimension_variables(
+            get_prefetch_variables(
                 url,
                 self.varinfo_with_bounds,
                 required_variables,

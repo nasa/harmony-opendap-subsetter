@@ -49,6 +49,11 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     another are stored in the `Variable.references` dictionary attribute
     as sets. There should only be one reference in the `grid_mapping`
     attribute value, so the first element of the set is retrieved.
+    If the grid mapping variable, as referred to in the grid_mapping
+    CF-Convention metadata attribute, does not exist in the file then
+    the earthdata-varinfo configuration file is checked, as it may
+    contain metadata overrides specified for that non-existent variable
+    name.
 
     """
     grid_mapping = next(
@@ -57,9 +62,21 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
 
     if grid_mapping is not None:
         try:
-            crs = CRS.from_cf(varinfo.get_variable(grid_mapping).attributes)
+            grid_mapping_variable = varinfo.get_variable(grid_mapping)
+            if grid_mapping_variable is not None:
+                cf_attributes = grid_mapping_variable.attributes
+            else:
+                # check for any overrides
+                cf_attributes = varinfo.get_missing_variable_attributes(grid_mapping)
+
+            if cf_attributes:
+                crs = CRS.from_cf(cf_attributes)
+            else:
+                raise MissingGridMappingVariable(grid_mapping, variable)
+
         except AttributeError as exception:
             raise MissingGridMappingVariable(grid_mapping, variable) from exception
+
     else:
         raise MissingGridMappingMetadata(variable)
 

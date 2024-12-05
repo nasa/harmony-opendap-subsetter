@@ -136,6 +136,21 @@ class MissingCoordinateVariable(CustomError):
         )
 
 
+class InvalidIndexSubsetRequest(CustomError):
+    """This exception is raised when HOSS tries to get dimensions or
+    coordinate variables as part of a prefetch from opendap when there is
+    a spatial or temporal request, and there are no prefetch variables
+    returned.
+
+    """
+
+    def __init__(self, custom_msg):
+        super().__init__(
+            'InvalidIndexSubsetRequest',
+            custom_msg,
+        )
+
+
 class InvalidCoordinateVariable(CustomError):
     """This exception is raised when HOSS tries to get latitude and longitude
     variables and they have fill values to the extent that it cannot be used.
@@ -165,19 +180,31 @@ class IncompatibleCoordinateVariables(CustomError):
         )
 
 
-class InvalidCoordinateDataset(CustomError):
-    """This exception is raised when the two values passed to
-    the function computing the resolution are equal. This could
-    occur when there are too many fill values and distinct valid
+class InvalidCoordinateData(CustomError):
+    """This exception is raised when the data does not contain at least.
+    two valid points. This could occur when there are too many fill values and distinct valid
     indices could not be obtained
 
     """
 
-    def __init__(self, dim_value, dim_index):
+    def __init__(self, custom_msg):
+        super().__init__(
+            'InvalidCoordinateData',
+            f'{custom_msg}',
+        )
+
+
+class InvalidCoordinateDataset(CustomError):
+    """This exception is raised when there are too
+    many fill values and two distinct valid indices
+    could not be obtained
+
+    """
+
+    def __init__(self, coordinate_name):
         super().__init__(
             'InvalidCoordinateDataset',
-            'Cannot compute the dimension resolution for '
-            f'dim_value: "{dim_value}" dim_index: "{dim_index}"',
+            f'Cannot get valid indices for {coordinate_name}',
         )
 
 

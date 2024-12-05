@@ -7,22 +7,27 @@ import numpy as np
 from harmony.util import config
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
+from pyproj import CRS
 from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
     any_absent_dimension_variables,
-    get_1D_dim_array_data_from_dimvalues,
+    get_1d_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
+    get_dimension_array_from_geo_points,
+    get_max_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
     get_row_col_sizes_from_coordinate_datasets,
     get_valid_indices,
+    get_valid_row_col_pairs,
     get_variables_with_anonymous_dims,
+    get_x_y_values_from_geographic_points,
 )
 from hoss.exceptions import (
     IncompatibleCoordinateVariables,
-    InvalidCoordinateDataset,
+    InvalidCoordinateData,
     InvalidCoordinateVariable,
     MissingCoordinateVariable,
     MissingVariable,
@@ -74,48 +79,6 @@ class TestCoordinateUtilities(TestCase):
             ]
         )
 
-        cls.lon_arr_reversed = np.array(
-            [
-                [
-                    -179.3,
-                    -179.3,
-                    -179.3,
-                    -179.3,
-                    -9999,
-                    -9999,
-                    -179.3,
-                    -179.3,
-                    -179.3,
-                    -179.3,
-                ],
-                [
-                    -120.2,
-                    -120.2,
-                    -120.2,
-                    -9999,
-                    -9999,
-                    -120.2,
-                    -120.2,
-                    -120.2,
-                    -120.2,
-                    -120.2,
-                ],
-                [20.6, 20.6, 20.6, 20.6, 20.6, 20.6, 20.6, 20.6, -9999, -9999],
-                [150.5, 150.5, 150.5, 150.5, 150.5, 150.5, -9999, -9999, 150.5, 150.5],
-                [178.4, 178.4, 178.4, 178.4, 178.4, 178.4, 178.4, -9999, 178.4, 178.4],
-            ]
-        )
-
-        cls.lat_arr_reversed = np.array(
-            [
-                [89.3, 79.3, -9999, 59.3, 29.3, 2.1, -9999, -59.3, -79.3, -89.3],
-                [89.3, 79.3, 60.3, 59.3, 29.3, 2.1, -9999, -59.3, -79.3, -89.3],
-                [89.3, -9999, 60.3, 59.3, 29.3, 2.1, -9999, -9999, -9999, -89.3],
-                [-9999, 79.3, -60.3, -9999, -9999, -9999, -60.2, -59.3, -79.3, -89.3],
-                [-89.3, 79.3, -60.3, -9999, -9999, -9999, -60.2, -59.3, -79.3, -9999],
-            ]
-        )
-
     def setUp(self):
         """Create fixtures that should be unique per test."""
 
@@ -162,7 +125,49 @@ class TestCoordinateUtilities(TestCase):
             for expected_variable in expected_coordinate_variables[1]:
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
 
-    def test_get_1D_dim_array_data_from_dimvalues(self):
+        with self.subTest('No lat coordinate variables for the requested variables'):
+            # should return one valid list and an empty list
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_lat_coordinate_variable'],
+            )
+            self.assertTupleEqual(
+                actual_coordinate_variables,
+                ([], ['/Soil_Moisture_Retrieval_Data_AM/longitude']),
+            )
+        with self.subTest('No lon coordinate variables for the requested variables'):
+            # should return one valid list and an empty list
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_lon_coordinate_variable'],
+            )
+            self.assertTupleEqual(
+                actual_coordinate_variables,
+                (['/Soil_Moisture_Retrieval_Data_AM/latitude'], []),
+            )
+        with self.subTest('No coordinate variables for the requested variables'):
+            # should return empty lists
+            actual_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/no_coordinate_variable'],
+            )
+            self.assertTupleEqual(actual_coordinate_variables, ([], []))
+        with self.subTest('Missing coordinate variables'):
+            # should return empty lists
+            missing_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/variable_with_missing_coordinates'],
+            )
+            self.assertTupleEqual(missing_coordinate_variables, ([], []))
+        with self.subTest('Fake coordinate variables'):
+            # should return empty lists
+            fake_coordinate_variables = get_coordinate_variables(
+                self.test_varinfo,
+                ['/Soil_Moisture_Retrieval_Data_AM/variable_with_fake_coordinates'],
+            )
+            self.assertTupleEqual(fake_coordinate_variables, ([], []))
+
+    def test_get_1d_dim_array_data_from_dimvalues(self):
         """Ensure that the dimension scale generated from the
         provided dimension values are accurate for ascending and
         descending scales
@@ -173,7 +178,7 @@ class TestCoordinateUtilities(TestCase):
             dim_indices_asc = np.array([0, 1])
             dim_size_asc = 12
             expected_dim_asc = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24])
-            dim_array_values = get_1D_dim_array_data_from_dimvalues(
+            dim_array_values = get_1d_dim_array_data_from_dimvalues(
                 dim_values_asc, dim_indices_asc, dim_size_asc
             )
             self.assertTrue(np.array_equal(dim_array_values, expected_dim_asc))
@@ -184,7 +189,7 @@ class TestCoordinateUtilities(TestCase):
             dim_size_desc = 10
             expected_dim_desc = np.array([120, 110, 100, 90, 80, 70, 60, 50, 40, 30])
 
-            dim_array_values = get_1D_dim_array_data_from_dimvalues(
+            dim_array_values = get_1d_dim_array_data_from_dimvalues(
                 dim_values_desc, dim_indices_desc, dim_size_desc
             )
             self.assertTrue(np.array_equal(dim_array_values, expected_dim_desc))
@@ -193,28 +198,26 @@ class TestCoordinateUtilities(TestCase):
             dim_values_invalid = np.array([2, 2])
             dim_indices_asc = np.array([0, 1])
             dim_size_asc = 12
-            with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_1D_dim_array_data_from_dimvalues(
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_1d_dim_array_data_from_dimvalues(
                     dim_values_invalid, dim_indices_asc, dim_size_asc
                 )
             self.assertEqual(
                 context.exception.message,
-                'Cannot compute the dimension resolution for '
-                'dim_value: "2" dim_index: "0"',
+                'No distinct valid coordinate points - ' 'dim_index=0, dim_value=2',
             )
 
         with self.subTest('invalid dimension indices'):
             dim_values_desc = np.array([100, 70])
             dim_indices_invalid = np.array([5, 5])
             dim_size_desc = 10
-            with self.assertRaises(InvalidCoordinateDataset) as context:
-                get_1D_dim_array_data_from_dimvalues(
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_1d_dim_array_data_from_dimvalues(
                     dim_values_desc, dim_indices_invalid, dim_size_desc
                 )
             self.assertEqual(
                 context.exception.message,
-                'Cannot compute the dimension resolution for '
-                'dim_value: "100" dim_index: "5"',
+                'No distinct valid coordinate points - ' 'dim_index=5, dim_value=100',
             )
 
     def test_get_coordinate_array(self):
@@ -367,7 +370,7 @@ class TestCoordinateUtilities(TestCase):
                 get_row_col_sizes_from_coordinate_datasets(self.lat_arr, self.lon_arr),
                 expected_row_col_sizes,
             )
-        with self.subTest('Retrieves the expected row col sizes for the 1d array'):
+        with self.subTest('Retrieves the expected row col sizes for the dim array'):
             self.assertEqual(
                 get_row_col_sizes_from_coordinate_datasets(
                     np.array([1, 2, 3, 4]), np.array([5, 6, 7, 8, 9])
@@ -433,15 +436,14 @@ class TestCoordinateUtilities(TestCase):
         ascending or descending.
 
         """
-        expected_valid_indices_lat_arr_with_fill = np.array([1, 2, 3, 4])
-        expected_valid_indices_lon_arr_with_fill = np.array([0, 1, 2, 6, 7, 8, 9])
-
-        expected_valid_indices_lat_arr_over_range = np.array([0, 1, 2])
         expected_valid_indices_lon_arr_over_range = np.array([0, 1, 2, 6, 7, 8, 9])
 
         fill_array = np.array([-9999.0, -9999.0, -9999.0, -9999.0])
 
         with self.subTest('valid indices for latitude with fill values'):
+            expected_valid_indices_lat_arr_with_fill = np.array(
+                [False, True, True, True, True]
+            )
             valid_indices_lat_arr = get_valid_indices(
                 self.lat_arr[:, 2], self.varinfo.get_variable(self.latitude)
             )
@@ -449,6 +451,9 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lat_arr, expected_valid_indices_lat_arr_with_fill
             )
         with self.subTest('valid indices for longitude with fill values'):
+            expected_valid_indices_lon_arr_with_fill = np.array(
+                [True, True, True, False, False, False, True, True, True, True]
+            )
             valid_indices_lon_arr = get_valid_indices(
                 self.lon_arr[0, :], self.varinfo.get_variable(self.longitude)
             )
@@ -456,6 +461,9 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lon_arr, expected_valid_indices_lon_arr_with_fill
             )
         with self.subTest('latitude values beyond valid range'):
+            expected_valid_indices_lat_arr_over_range = np.array(
+                [True, True, True, False, False]
+            )
             valid_indices_lat_arr = get_valid_indices(
                 self.lat_arr[:, 3], self.varinfo.get_variable(self.latitude)
             )
@@ -463,6 +471,9 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lat_arr, expected_valid_indices_lat_arr_over_range
             )
         with self.subTest('longitude values beyond valid range'):
+            expected_valid_indices_lon_arr_over_range = np.array(
+                [True, True, True, False, False, False, True, True, True, True]
+            )
             valid_indices_lon_arr = get_valid_indices(
                 self.lon_arr[1, :], self.varinfo.get_variable(self.longitude)
             )
@@ -470,10 +481,13 @@ class TestCoordinateUtilities(TestCase):
                 valid_indices_lon_arr, expected_valid_indices_lon_arr_over_range
             )
         with self.subTest('all fill values - no valid indices'):
-            valid_indices = get_valid_indices(
+            expected_valid_indices_fill_values = np.array([False, False, False, False])
+            valid_indices_all_fill = get_valid_indices(
                 fill_array, self.varinfo.get_variable(self.longitude)
             )
-            self.assertEqual(valid_indices.size, 0)
+            np.testing.assert_array_equal(
+                valid_indices_all_fill, expected_valid_indices_fill_values
+            )
 
     def test_get_variables_with_anonymous_dims(self):
         """Ensure that variables with no dimensions are
@@ -543,3 +557,246 @@ class TestCoordinateUtilities(TestCase):
                 self.test_varinfo, '/Soil_Moisture_Retrieval_Data_AM/variable_has_dim'
             )
             self.assertFalse(variable_has_fake_dims)
+
+    def test_get_max_spread_pts(self):
+        """Ensure that two valid sets of indices are returned by the function
+        with a masked dataset as input
+
+        """
+
+        with self.subTest('Get two sets of valid indices for points from coordinates'):
+            valid_values = np.array(
+                [
+                    [True, True, True, True, False, False, True, True, True, True],
+                    [True, True, True, False, False, False, True, True, True, True],
+                    [True, True, True, False, True, False, True, True, True, True],
+                    [True, True, True, False, False, False, True, True, True, True],
+                    [True, True, False, False, False, False, True, True, True, True],
+                ]
+            )
+            expected_indices = [[0, 0], [0, 9]]
+            actual_indices = get_max_spread_pts(~valid_values)
+            self.assertTrue(actual_indices[0] == expected_indices[0])
+            self.assertTrue(actual_indices[1] == expected_indices[1])
+
+        with self.subTest('With just one valid index in the coordinates'):
+            valid_values = np.array(
+                [
+                    [False, False, False],
+                    [False, True, False],
+                    [False, False, False],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_max_spread_pts(~valid_values)
+                self.assertEqual(
+                    context.exception.message,
+                    'Only one valid point in coordinate data',
+                )
+
+        with self.subTest('No valid points from coordinates'):
+            valid_values = np.array(
+                [
+                    [False, False, False],
+                    [False, False, False],
+                    [False, False, False],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_max_spread_pts(~valid_values)
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+
+    def test_get_valid_row_col_pairs(self):
+        """Ensure that two sets of valid indices are
+        returned by the method with a set of lat/lon coordinates as input
+
+        """
+        with self.subTest('Get two sets of valid indices from coordinates dataset'):
+            expected_grid_indices = (
+                [(0, 0), (0, 9)],
+                [(0, 0), (4, 0)],
+            )
+            actual_grid_indices = get_valid_row_col_pairs(
+                self.lat_arr,
+                self.lon_arr,
+                self.varinfo.get_variable(self.latitude),
+                self.varinfo.get_variable(self.longitude),
+            )
+
+            self.assertTrue(actual_grid_indices[0], expected_grid_indices[0])
+            self.assertTrue(actual_grid_indices[1], expected_grid_indices[1])
+
+        with self.subTest('Only a single valid point in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 40.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 100.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+        with self.subTest('valid points in one row in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [40.1, 40.1, 40.1, 40.1, 40.1],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-179.0, -10.0, 100.1, 130.0, 179.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+        with self.subTest('valid points in one column in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 40.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -50.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-9999.0, -9999.0, 100.1, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, 100.1, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+        with self.subTest('no valid points in coordinates dataset'):
+            lat_arr = np.array(
+                [
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            lon_arr = np.array(
+                [
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                    [-9999.0, -9999.0, -9999.0, -9999.0, -9999.0],
+                ]
+            )
+            with self.assertRaises(InvalidCoordinateData) as context:
+                get_valid_row_col_pairs(
+                    lat_arr,
+                    lon_arr,
+                    self.varinfo.get_variable(self.latitude),
+                    self.varinfo.get_variable(self.longitude),
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'No valid coordinate data',
+                )
+
+    def test_get_x_y_values_from_geographic_points(self):
+        """Ensure that the correct x-values are returned by the function
+        with a set of geographic coordinates as input.
+
+        """
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+
+        with self.subTest('Get valid x-y points from coordinates in a row'):
+            two_col_points_in_a_row = [(-179.3, 89.3), (178.4, 89.3)]
+
+            expected_x_y_points = [
+                (-17299990.048985746, 7341677.255608977),
+                (17213152.396759935, 7341677.255608977),
+            ]
+            actual_x_y_points = get_x_y_values_from_geographic_points(
+                two_col_points_in_a_row, crs
+            )
+            self.assertListEqual(actual_x_y_points, expected_x_y_points)
+
+        with self.subTest('Get valid x-y points from coordinates in a col'):
+            two_row_points_in_a_col = (-179.3, 89.3), (-179.3, -88.1)
+            expected_x_y_points = [
+                (-17299990.048985746, 7341677.255608977),
+                (-17299990.048985746, -7338157.219843731),
+            ]
+            actual_x_y_points = get_x_y_values_from_geographic_points(
+                two_row_points_in_a_col, crs
+            )
+            self.assertListEqual(actual_x_y_points, expected_x_y_points)
+
+    def test_get_dimension_array_from_geo_points(self):
+        """Ensure that a valid x/y dimension array is returned
+        with a geo array of lat/lon values
+
+        """
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+        with self.subTest('Get y dimension array from geo coordinates'):
+            row_indices = [[0, 0], [4, 0]]
+            ymax = 7341677.255608977
+            ymin = -25687950.314159617
+
+            dim_array = get_dimension_array_from_geo_points(
+                self.lat_arr, self.lon_arr, crs, row_indices, 10, True
+            )
+            self.assertEqual(dim_array.size, 10)
+            self.assertEqual(dim_array[0], ymax)
+            self.assertEqual(dim_array[-1], ymin)
+
+        with self.subTest('Get x dimension array from geo coordinates'):
+            col_indices = [[0, 0], [0, 9]]
+            xmin = -17299990.048985746
+            xmax = -1960815.628654331
+            dim_array = get_dimension_array_from_geo_points(
+                self.lat_arr, self.lon_arr, crs, col_indices, 5, False
+            )
+            self.assertEqual(dim_array.size, 5)
+            self.assertEqual(dim_array[0], xmin)
+            self.assertEqual(dim_array[-1], xmax)

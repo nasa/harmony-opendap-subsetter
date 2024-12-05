@@ -180,7 +180,6 @@ def get_1d_dim_array_data_from_dimvalues(
     to be between 0 and dim_size. Returns a 1D array of size = dim_size
     with proper dimension array values, with linear interpolation between
     the given dim_values.
-
     """
 
     if (dim_indices[1] != dim_indices[0]) and (dim_values[1] != dim_values[0]):
@@ -205,7 +204,6 @@ def get_valid_indices(
     Returns an array of boolean values indicating valid values - non-fill,
     within range - for a given coordinate variable. Returns an empty
     ndarray of size (0,0) for any other variable.
-
     """
 
     # get_attribute_value returns a value of type `str`
@@ -338,7 +336,6 @@ def create_dimension_arrays_from_coordinates(
     3) Generate the x-y dimscale array and return to the calling method
 
     """
-
     lat_arr = get_coordinate_array(
         prefetch_dataset,
         latitude_coordinate.full_name_path,

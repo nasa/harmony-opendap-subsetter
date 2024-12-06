@@ -80,6 +80,7 @@ class TestCoordinateUtilities(TestCase):
                 [-88.1, -88.1, -88.1, 99, -9999, -9999, -88.1, -88.1, -88.1, -88.1],
             ]
         )
+
         cls.lon_arr_reversed = np.array(
             [
                 [
@@ -164,6 +165,7 @@ class TestCoordinateUtilities(TestCase):
                 ],
             ]
         )
+
 
     def setUp(self):
         """Create fixtures that should be unique per test."""
@@ -884,12 +886,15 @@ class TestCoordinateUtilities(TestCase):
                 'grid_mapping_name': 'lambert_cylindrical_equal_area',
             }
         )
+
         with self.subTest('Get y-row dimension array from geo coordinates'):
+
             row_indices = [[0, 0], [4, 0]]
             ymax = 7341677.255608977
             ymin = -25687950.314159617
 
             dim_array = get_dimension_array_from_geo_points(
+
                 self.lat_arr,
                 self.lon_arr,
                 crs,
@@ -897,12 +902,15 @@ class TestCoordinateUtilities(TestCase):
                 10,
                 dim_order_is_y_x=True,
                 use_row_not_col=True,
+
             )
             self.assertEqual(dim_array.size, 10)
             self.assertEqual(dim_array[0], ymax)
             self.assertEqual(dim_array[-1], ymin)
 
+
         with self.subTest('Get x-col dimension array from geo coordinates'):
+
             col_indices = [[0, 0], [0, 9]]
             xmin = -17299990.048985746
             xmax = -1960815.628654331
@@ -914,10 +922,12 @@ class TestCoordinateUtilities(TestCase):
                 5,
                 dim_order_is_y_x=True,
                 use_row_not_col=False,
+
             )
             self.assertEqual(dim_array.size, 5)
             self.assertEqual(dim_array[0], xmin)
             self.assertEqual(dim_array[-1], xmax)
+
 
         with self.subTest('Get y-row dimension array from reversed lat/lon array'):
             row_indices = [[0, 0], [4, 0]]
@@ -1175,3 +1185,4 @@ class TestCoordinateUtilities(TestCase):
                     context.exception.message,
                     'lat/lon values are constant',
                 )
+

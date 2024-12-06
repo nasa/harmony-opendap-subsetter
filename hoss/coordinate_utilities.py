@@ -194,6 +194,7 @@ def get_1d_dim_array_data_from_dimvalues(
 
     dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
+
     return np.linspace(dim_min, dim_max, dim_size)
 
 
@@ -345,9 +346,11 @@ def create_dimension_arrays_from_coordinates(
         longitude_coordinate.full_name_path,
     )
 
+
     row_indices, col_indices = get_valid_row_col_pairs(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
+
 
     dim_order_is_y_x = get_dimension_order(lat_arr, lon_arr, row_indices, is_row=True)
     dim_order = get_dimension_order(lat_arr, lon_arr, col_indices, is_row=False)
@@ -384,6 +387,7 @@ def create_dimension_arrays_from_coordinates(
     return {projected_x: x_dim, projected_y: y_dim}
 
 
+
 def get_dimension_array_from_geo_points(
     lat_arr: np.ndarray,
     lon_arr: np.ndarray,
@@ -392,6 +396,7 @@ def get_dimension_array_from_geo_points(
     dimension_size: int,
     dim_order_is_y_x: bool,
     use_row_not_col: bool,
+
 ) -> np.ndarray:
     """This function uses the list of lat/lon points corresponding
     to a list of array indices and reprojects it with the CRS
@@ -414,9 +419,11 @@ def get_dimension_array_from_geo_points(
         else:
             x_or_y_index = 1
 
+
     geo_grid_points = [
         (lon_arr[row, col], lat_arr[row, col]) for row, col in dimension_indices
     ]
+
 
     x_y_values = get_x_y_values_from_geographic_points(geo_grid_points, crs)
 
@@ -460,3 +467,4 @@ def get_dimension_order(
         return True
 
     raise InvalidCoordinateData("lat/lon values are constant")
+

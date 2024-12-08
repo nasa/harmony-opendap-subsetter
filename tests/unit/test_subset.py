@@ -1454,3 +1454,121 @@ class TestSubset(TestCase):
                     ]
                 )
                 mock_get_fill_slice.reset_mock()
+
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.get_prefetch_variables')
+    @patch('hoss.subset.get_varinfo')
+    def test_subset_granule_with_no_dimensions(
+        self,
+        mock_get_varinfo,
+        mock_get_prefetch_variables,
+        mock_get_spatial_index_ranges,
+        mock_get_opendap_nc4,
+    ):
+        """Ensure a request to extract both a variable and spatial subset for
+        a granule without dimensions but with valid coordinate attributes
+        without error. Because a bounding box is specified in this request,
+        the prefetch functionality and the HOSS spatial_index
+        functionality in `hoss.spatial.py` should be called.
+
+        """
+        harmony_message = Message(
+            {'accessToken': self.access_token, 'subset': {'bbox': [2, 54, 42, 72]}}
+        )
+        harmony_source = Source(
+            {
+                'collection': 'C1268452378-EEDTEST',
+                'shortName': 'SPL3SMP',
+                'variables': [
+                    {
+                        'id': 'V1255903615-EEDTEST',
+                        'name': 'surface_flag',
+                        'fullPath': '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+                    },
+                    {
+                        'id': 'V1238395077-EEDTEST',
+                        'name': 'surface_flag_pm',
+                        'fullPath': '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
+                    },
+                ],
+            }
+        )
+        granule_url = 'https://harmony.earthdata.nasa.gov/bucket/spl3smp'
+        collection_short_name = 'SPL3SMP'
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            'hoss/hoss_config.json',
+        )
+        prefetch_path = 'tests/data/SC_SPL3SMP_009_prefetch.nc4'
+        subset_output_path = 'SC_SPL3SMP.009_296012210.nc4'
+        required_variables = {
+            '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+            '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
+            '/Soil_Moisture_Retrieval_Data_AM/latitude',
+            '/Soil_Moisture_Retrieval_Data_AM/longitude',
+            '/Soil_Moisture_Retrieval_Data_PM/latitude_pm',
+            '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
+        }
+
+        variables_with_ranges = {
+            '/Soil_Moisture_Retrieval_Data_AM/longitude[9:38][487:595]',
+            '/Soil_Moisture_Retrieval_Data_PM/longitude_pm[9:38][487:595]',
+            '/Soil_Moisture_Retrieval_Data_AM/latitude[9:38][487:595]',
+            '/Soil_Moisture_Retrieval_Data_AM/surface_flag[9:38][487:595]',
+            '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm[9:38][487:595]',
+            '/Soil_Moisture_Retrieval_Data_PM/latitude_pm[9:38][487:595]',
+        }
+        expected_index_ranges = {
+            '/Soil_Moisture_Retrieval_Data_AM/projected_x': (487, 595),
+            '/Soil_Moisture_Retrieval_Data_AM/projected_y': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_PM/projected_x': (487, 595),
+            '/Soil_Moisture_Retrieval_Data_PM/projected_y': (9, 38),
+        }
+
+        mock_get_varinfo.return_value = smap_varinfo
+        mock_get_prefetch_variables.return_value = prefetch_path
+        mock_get_spatial_index_ranges.return_value = expected_index_ranges
+        mock_get_opendap_nc4.return_value = subset_output_path
+
+        output_path = subset_granule(
+            granule_url,
+            harmony_source,
+            self.output_dir,
+            harmony_message,
+            self.logger,
+            self.config,
+        )
+
+        self.assertEqual(output_path, subset_output_path)
+        mock_get_varinfo.assert_called_once_with(
+            granule_url,
+            self.output_dir,
+            self.logger,
+            collection_short_name,
+            self.access_token,
+            self.config,
+        )
+
+        mock_get_prefetch_variables.assert_called_once_with(
+            granule_url,
+            smap_varinfo,
+            required_variables,
+            self.output_dir,
+            self.logger,
+            self.access_token,
+            self.config,
+        )
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            required_variables, smap_varinfo, prefetch_path, harmony_message, None
+        )
+
+        mock_get_opendap_nc4.assert_called_once_with(
+            granule_url,
+            variables_with_ranges,
+            self.output_dir,
+            self.logger,
+            self.access_token,
+            self.config,
+        )

@@ -16,8 +16,7 @@ from hoss.coordinate_utilities import (
     get_1d_dim_array_data_from_dimvalues,
     get_coordinate_array,
     get_coordinate_variables,
-    get_dimension_array_from_geo_points,
-    get_dimension_order,
+    get_dimension_order_and_dim_values,
     get_max_spread_pts,
     get_projected_dimension_names,
     get_projected_dimension_names_from_coordinate_variables,
@@ -25,7 +24,6 @@ from hoss.coordinate_utilities import (
     get_valid_indices,
     get_valid_row_col_pairs,
     get_variables_with_anonymous_dims,
-    get_x_y_values_from_geographic_points,
 )
 from hoss.exceptions import (
     IncompatibleCoordinateVariables,
@@ -835,133 +833,7 @@ class TestCoordinateUtilities(TestCase):
                     'No valid coordinate data',
                 )
 
-    def test_get_x_y_values_from_geographic_points(self):
-        """Ensure that the correct x-values are returned by the function
-        with a set of geographic coordinates as input.
-
-        """
-        crs = CRS.from_cf(
-            {
-                'false_easting': 0.0,
-                'false_northing': 0.0,
-                'longitude_of_central_meridian': 0.0,
-                'standard_parallel': 30.0,
-                'grid_mapping_name': 'lambert_cylindrical_equal_area',
-            }
-        )
-
-        with self.subTest('Get valid x-y points from coordinates in a row'):
-            two_col_points_in_a_row = [(-179.3, 89.3), (178.4, 89.3)]
-
-            expected_x_y_points = [
-                (-17299990.048985746, 7341677.255608977),
-                (17213152.396759935, 7341677.255608977),
-            ]
-            actual_x_y_points = get_x_y_values_from_geographic_points(
-                two_col_points_in_a_row, crs
-            )
-            self.assertListEqual(actual_x_y_points, expected_x_y_points)
-
-        with self.subTest('Get valid x-y points from coordinates in a col'):
-            two_row_points_in_a_col = (-179.3, 89.3), (-179.3, -88.1)
-            expected_x_y_points = [
-                (-17299990.048985746, 7341677.255608977),
-                (-17299990.048985746, -7338157.219843731),
-            ]
-            actual_x_y_points = get_x_y_values_from_geographic_points(
-                two_row_points_in_a_col, crs
-            )
-            self.assertListEqual(actual_x_y_points, expected_x_y_points)
-
-    def test_get_dimension_array_from_geo_points(self):
-        """Ensure that a valid x/y dimension array is returned
-        with a geo array of lat/lon values
-
-        """
-        crs = CRS.from_cf(
-            {
-                'false_easting': 0.0,
-                'false_northing': 0.0,
-                'longitude_of_central_meridian': 0.0,
-                'standard_parallel': 30.0,
-                'grid_mapping_name': 'lambert_cylindrical_equal_area',
-            }
-        )
-
-        with self.subTest('Get y-row dimension array from geo coordinates'):
-
-            row_indices = [[0, 0], [4, 0]]
-            ymax = 7341677.255608977
-            ymin = -25687950.314159617
-
-            dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr,
-                self.lon_arr,
-                crs,
-                row_indices,
-                10,
-                dim_order_is_y_x=True,
-                use_row_not_col=True,
-            )
-            self.assertEqual(dim_array.size, 10)
-            self.assertEqual(dim_array[0], ymax)
-            self.assertEqual(dim_array[-1], ymin)
-
-        with self.subTest('Get x-col dimension array from geo coordinates'):
-
-            col_indices = [[0, 0], [0, 9]]
-            xmin = -17299990.048985746
-            xmax = -1960815.628654331
-            dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr,
-                self.lon_arr,
-                crs,
-                col_indices,
-                5,
-                dim_order_is_y_x=True,
-                use_row_not_col=False,
-            )
-            self.assertEqual(dim_array.size, 5)
-            self.assertEqual(dim_array[0], xmin)
-            self.assertEqual(dim_array[-1], xmax)
-
-        with self.subTest('Get y-row dimension array from reversed lat/lon array'):
-            row_indices = [[0, 0], [4, 0]]
-            dim_min = -17299990.048985746
-            dim_max = 17213152.396759935
-            dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr_reversed,
-                self.lon_arr_reversed,
-                crs,
-                row_indices,
-                5,
-                dim_order_is_y_x=False,
-                use_row_not_col=True,
-            )
-            self.assertEqual(dim_array.size, 5)
-            self.assertEqual(dim_array[0], dim_min)
-            self.assertEqual(dim_array[-1], dim_max)
-
-        with self.subTest('Get x-col dimension array from reversed lat/lon array'):
-            col_indices = [[0, 0], [0, 9]]
-
-            dim_max = 7341677.255608977
-            dim_min = -7341677.255608977
-
-            dim_array = get_dimension_array_from_geo_points(
-                self.lat_arr_reversed,
-                self.lon_arr_reversed,
-                crs,
-                col_indices,
-                10,
-                dim_order_is_y_x=False,
-                use_row_not_col=False,
-            )
-            self.assertEqual(dim_array.size, 10)
-            self.assertEqual(dim_array[0], dim_max)
-            self.assertEqual(dim_array[-1], dim_min)
-
-    def test_get_dimension_order(self):
+    def test_get_dimension_order_and_dim_values(self):
         """Ensure that the correct dimension order index
         is returned with a geo array of lat/lon values
         """
@@ -974,23 +846,26 @@ class TestCoordinateUtilities(TestCase):
                 'grid_mapping_name': 'lambert_cylindrical_equal_area',
             }
         )
-        with self.subTest('Get y_x order when latitude is changing across row'):
+        with self.subTest('Get y_x order when projected_dim is changing across row'):
             row_indices = [[0, 0], [4, 0]]
-            y_x_order = get_dimension_order(
+            expected_dim_values = [7341677.255608977, -7338157.219843731]
+            y_x_order, dim_values = get_dimension_order_and_dim_values(
                 self.lat_arr, self.lon_arr, row_indices, crs, is_row=True
             )
             self.assertEqual(y_x_order, True)
-
-        with self.subTest('Get y_x order when longitude is changing across column'):
+            self.assertListEqual(dim_values, expected_dim_values)
+        with self.subTest('Get y_x order when projected_dim is changing across column'):
             col_indices = [[0, 0], [0, 9]]
-            y_x_order = get_dimension_order(
+            expected_dim_values = [-17299990.048985746, 17213152.396759935]
+            y_x_order, dim_values = get_dimension_order_and_dim_values(
                 self.lat_arr, self.lon_arr, col_indices, crs, is_row=False
             )
             self.assertEqual(y_x_order, True)
-
-        with self.subTest('Get y_x order when longitude is changing across row'):
+            self.assertListEqual(dim_values, expected_dim_values)
+        with self.subTest('Get x_y order when projected_dim is changing across row'):
             row_indices = [[0, 0], [4, 0]]
-            y_x_order = get_dimension_order(
+            expected_dim_values = [-17299990.048985746, 17213152.396759935]
+            y_x_order, dim_values = get_dimension_order_and_dim_values(
                 self.lat_arr_reversed,
                 self.lon_arr_reversed,
                 row_indices,
@@ -998,10 +873,11 @@ class TestCoordinateUtilities(TestCase):
                 is_row=True,
             )
             self.assertEqual(y_x_order, False)
-
-        with self.subTest('Get y_x order when latitude is changing across column'):
+            self.assertListEqual(dim_values, expected_dim_values)
+        with self.subTest('Get x_y order when projected_dim is changing across column'):
             col_indices = [[0, 0], [0, 9]]
-            y_x_order = get_dimension_order(
+            expected_dim_values = [7341677.255608977, -7341677.255608977]
+            y_x_order, dim_values = get_dimension_order_and_dim_values(
                 self.lat_arr_reversed,
                 self.lon_arr_reversed,
                 col_indices,
@@ -1009,8 +885,8 @@ class TestCoordinateUtilities(TestCase):
                 is_row=False,
             )
             self.assertEqual(y_x_order, False)
-
-        with self.subTest('Get y_x order when latitude and longitude are not varying'):
+            self.assertListEqual(dim_values, expected_dim_values)
+        with self.subTest('Get y_x order when projected_dims are not varying'):
             lat_arr = np.array(
                 [
                     [89.1, 89.1, 89.1],
@@ -1031,7 +907,7 @@ class TestCoordinateUtilities(TestCase):
             )
             row_indices = [[0, 0], [4, 0]]
             with self.assertRaises(InvalidCoordinateData) as context:
-                y_x_order = get_dimension_order(
+                get_dimension_order_and_dim_values(
                     lat_arr, lon_arr, row_indices, crs, is_row=True
                 )
                 self.assertEqual(

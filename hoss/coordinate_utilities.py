@@ -130,12 +130,12 @@ def get_row_col_sizes_from_coordinate_datasets(
     This function returns the row and column sizes of the coordinate datasets
 
     """
-    # ToDo - if the coordinates are 3D
-    if lat_arr.ndim == 2 and lon_arr.shape == lat_arr.shape:
-        col_size = lat_arr.shape[1]
-        row_size = lat_arr.shape[0]
-    elif lat_arr.ndim > 2 and lon_arr.shape == lat_arr.shape:
-        raise InvalidCoordinateData("Greater than 2D is not supported yet")
+    # ToDo - if there is an override configuration
+    if lat_arr.ndim >= 2 and lon_arr.shape == lat_arr.shape:
+        col_size = lat_arr.shape[-1]
+        row_size = lat_arr.shape[-2]
+    # elif lat_arr.ndim > 2 and lon_arr.shape == lat_arr.shape:
+    #    raise InvalidCoordinateData("Greater than 2D is not supported yet")
     elif (
         lat_arr.ndim == 1
         and lon_arr.ndim == 1
@@ -350,8 +350,10 @@ def create_dimension_arrays_from_coordinates(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
 
-    dim_order_is_y_x = get_dimension_order(lat_arr, lon_arr, row_indices, is_row=True)
-    dim_order = get_dimension_order(lat_arr, lon_arr, col_indices, is_row=False)
+    dim_order_is_y_x = get_dimension_order(
+        lat_arr, lon_arr, row_indices, crs, is_row=True
+    )
+    dim_order = get_dimension_order(lat_arr, lon_arr, col_indices, crs, is_row=False)
     if dim_order_is_y_x != dim_order:
         raise InvalidCoordinateData("the order of dimensions do not match")
 
@@ -434,30 +436,37 @@ def get_dimension_order(
     lat_array_points: np.ndarray,
     lon_array_points: np.ndarray,
     dimension_indices: list,
+    crs: CRS,
     is_row: bool,
 ) -> bool:
     """Determines the order of dimensions based on whether the
-    latitude and longitude are varying across row or column
+    projected y or projected_x values are varying across row or column
     """
-
     # if lat/lon array is 2D and variables are also 2D
     lat_arr_values = [lat_array_points[i][j] for i, j in dimension_indices]
     lon_arr_values = [lon_array_points[i][j] for i, j in dimension_indices]
 
-    # if it is row and lat is changing y_x order is true
-    if (is_row is True) and (np.allclose(lat_arr_values, lat_arr_values[0]) is False):
-        return True
+    from_geo_transformer = Transformer.from_crs(4326, crs)
+    x_values, y_values = (  # pylint: disable=unpacking-non-sequence
+        from_geo_transformer.transform(lat_arr_values, lon_arr_values)
+    )
+    y_variance = np.abs(np.diff(y_values))
+    x_variance = np.abs(np.diff(x_values))
 
-    # if it is row and lon is changing return y_x order is false
-    if (is_row is True) and (np.allclose(lon_arr_values, lon_arr_values[0]) is False):
-        return False
+    # if it is row and projected_y is varying more than projected_x
+    # y_x order is true
+    if is_row is True:
+        if y_variance > x_variance:
+            return True
+        if x_variance > y_variance:
+            return False
 
-    # if it is col and lat is changing y_x order is false
-    if (is_row is False) and (np.allclose(lat_arr_values, lat_arr_values[0]) is False):
-        return False
+    # if it is col and projected_y is changing more than
+    # projected_x. it is x_y_order which means y_x order is false
+    if is_row is False:
+        if y_variance > x_variance:
+            return False
+        if x_variance > y_variance:
+            return True
 
-    # if it is col and lon is changing y_x order is true
-    if (is_row is False) and (np.allclose(lon_arr_values, lon_arr_values[0]) is False):
-        return True
-
-    raise InvalidCoordinateData("lat/lon values are constant")
+    raise InvalidCoordinateData("x/y values are constant")

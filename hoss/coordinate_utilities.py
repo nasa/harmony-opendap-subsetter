@@ -94,8 +94,8 @@ def any_absent_dimension_variables(varinfo: VarInfoFromDmr, variable: str) -> bo
 
 def get_coordinate_variables(
     varinfo: VarInfoFromDmr,
-    requested_variables: list,
-) -> tuple[list, list]:
+    requested_variables: list[str],
+) -> tuple[list[str], list[str]]:
     """This function returns latitude and longitude variable names from
     latitude and longitude variables listed in the CF-Convention coordinates
     metadata attribute. It returns them in a specific
@@ -128,14 +128,14 @@ def get_row_col_sizes_from_coordinate_datasets(
 ) -> tuple[int, int]:
     """
     This function returns the row and column sizes of the coordinate datasets
-
+    The last two dimensions of the array correspond to the spatial dimensions.
+    which is the recommendations from CF-Conventions, but exception configuration
+    may need to be added when it is not adhered to.
     """
     # ToDo - if there is an override configuration
     if lat_arr.ndim >= 2 and lon_arr.shape == lat_arr.shape:
         col_size = lat_arr.shape[-1]
         row_size = lat_arr.shape[-2]
-    # elif lat_arr.ndim > 2 and lon_arr.shape == lat_arr.shape:
-    #    raise InvalidCoordinateData("Greater than 2D is not supported yet")
     elif (
         lat_arr.ndim == 1
         and lon_arr.ndim == 1
@@ -170,8 +170,8 @@ def get_coordinate_array(
 
 
 def get_1d_dim_array_data_from_dimvalues(
-    dim_values: list,  # np.ndarray,
-    dim_indices: list,  # np.ndarray,
+    dim_values: list[float],
+    dim_indices: list[int],
     dim_size: int,
 ) -> np.ndarray:
     """
@@ -309,7 +309,7 @@ def create_dimension_arrays_from_coordinates(
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
     crs: CRS,
-    projected_dimension_names: list,
+    projected_dimension_names: list[str],
 ) -> dict[str, np.ndarray]:
     """Generate artificial 1D dimensions scales for each
     2D dimension or coordinate variable.
@@ -362,17 +362,17 @@ def create_dimension_arrays_from_coordinates(
 def get_dimension_order_and_dim_values(
     lat_array_points: np.ndarray,
     lon_array_points: np.ndarray,
-    dimension_indices: list,
+    grid_dimension_indices: list[tuple[int, int]],
     crs: CRS,
     is_row: bool,
-) -> bool:
+) -> tuple[bool, np.ndarray]:
     """Determines the order of dimensions based on whether the
     projected y or projected_x values are varying across row or column
     Also returns the varying projected dimension values
     """
     # if lat/lon array is 2D and variables are also 2D
-    lat_arr_values = [lat_array_points[i][j] for i, j in dimension_indices]
-    lon_arr_values = [lon_array_points[i][j] for i, j in dimension_indices]
+    lat_arr_values = [lat_array_points[i][j] for i, j in grid_dimension_indices]
+    lon_arr_values = [lon_array_points[i][j] for i, j in grid_dimension_indices]
 
     from_geo_transformer = Transformer.from_crs(4326, crs)
     x_values, y_values = (  # pylint: disable=unpacking-non-sequence
@@ -381,20 +381,14 @@ def get_dimension_order_and_dim_values(
     y_variance = np.abs(np.diff(y_values))
     x_variance = np.abs(np.diff(x_values))
 
-    # if it is row and projected_y is varying more than projected_x
+    # If it is row and projected_y is varying more than projected_x
     # y_x order is true
-    if is_row is True:
-        if y_variance > x_variance:
-            return True, y_values
-        if x_variance > y_variance:
-            return False, x_values
+    # If it is col and projected_y is changing more than
+    # projected_x, it is x_y_order which means y_x order is false
 
-    # if it is col and projected_y is changing more than
-    # projected_x. it is x_y_order which means y_x order is false
-    if is_row is False:
-        if y_variance > x_variance:
-            return False, y_values
-        if x_variance > y_variance:
-            return True, x_values
+    if y_variance > x_variance:
+        return is_row, y_values
+    if x_variance > y_variance:
+        return not is_row, x_values
 
     raise InvalidCoordinateData("x/y values are constant")

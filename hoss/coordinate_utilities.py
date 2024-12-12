@@ -277,11 +277,17 @@ def get_max_spread_pts(
     """
     # fill a sample array with index values, arr_ind[i, j] = j
     arr_indices = np.indices(
-        (valid_geospatial_mask.shape[0], valid_geospatial_mask.shape[1])
+        (valid_geospatial_mask.shape[-2], valid_geospatial_mask.shape[-1])
     )[1]
-
-    # mask arr_ind to hide the invalid data points
-    valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask)
+    if valid_geospatial_mask.ndim == 2:
+        # mask arr_ind to hide the invalid data points
+        valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask)
+    elif valid_geospatial_mask.ndim == 3:
+        # use just 2 of the dimensions
+        # mask arr_ind to hide the invalid data points
+        valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask[0, :, :])
+    else:
+        raise NotImplementedError
 
     if valid_indices.count() == 0:
         raise InvalidCoordinateData("No valid coordinate data")

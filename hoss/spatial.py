@@ -38,7 +38,7 @@ from hoss.bbox_utilities import (
 from hoss.coordinate_utilities import (
     create_dimension_arrays_from_coordinates,
     get_coordinate_variables,
-    get_projected_dimension_names_from_coordinate_variables,
+    get_dimension_array_names_from_coordinate_variables,
     get_variables_with_anonymous_dims,
 )
 from hoss.dimension_utilities import (
@@ -247,7 +247,7 @@ def get_x_y_index_ranges_from_coordinates(
 
     crs = get_variable_crs(non_spatial_variable, varinfo)
 
-    projected_dimension_names = get_projected_dimension_names_from_coordinate_variables(
+    projected_dimension_names = get_dimension_array_names_from_coordinate_variables(
         varinfo, non_spatial_variable
     )
 

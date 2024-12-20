@@ -79,10 +79,10 @@ class TestSpatial(TestCase):
             '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
         }
         expected_index_ranges = {
-            '/Soil_Moisture_Retrieval_Data_AM/projected_x': (487, 594),
-            '/Soil_Moisture_Retrieval_Data_AM/projected_y': (9, 38),
-            '/Soil_Moisture_Retrieval_Data_PM/projected_x': (487, 594),
-            '/Soil_Moisture_Retrieval_Data_PM/projected_y': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_AM/dim_x': (487, 594),
+            '/Soil_Moisture_Retrieval_Data_AM/dim_y': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_PM/dim_x': (487, 594),
+            '/Soil_Moisture_Retrieval_Data_PM/dim_y': (9, 38),
         }
 
         self.assertDictEqual(
@@ -245,8 +245,8 @@ class TestSpatial(TestCase):
         )
         smap_file_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
         expected_index_ranges = {
-            '/Soil_Moisture_Retrieval_Data_AM/projected_x': (487, 595),
-            '/Soil_Moisture_Retrieval_Data_AM/projected_y': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_AM/dim_x': (487, 595),
+            '/Soil_Moisture_Retrieval_Data_AM/dim_y': (9, 38),
         }
         bbox = BBox(2, 54, 42, 72)
 

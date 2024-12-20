@@ -24,7 +24,7 @@ from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
     get_coordinate_variables,
-    get_projected_dimension_names_from_coordinate_variables,
+    get_dimension_array_names_from_coordinate_variables,
 )
 from hoss.exceptions import (
     InvalidIndexSubsetRequest,
@@ -442,7 +442,7 @@ def add_index_range(
         variable_dimensions = variable.dimensions
     else:
         # Anonymous dimensions, so check for dimension derived from coordinates:
-        variable_dimensions = get_projected_dimension_names_from_coordinate_variables(
+        variable_dimensions = get_dimension_array_names_from_coordinate_variables(
             varinfo, variable_name
         )
 

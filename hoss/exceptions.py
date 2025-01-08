@@ -208,6 +208,19 @@ class InvalidCoordinateDataset(CustomError):
         )
 
 
+class UnsupportedDimensionOrder(CustomError):
+    """This exception is raised when the granule file included in the input
+    request is not the nominal dimension order which is 'y,x'.
+
+    """
+
+    def __init__(self, dimension_order: str):
+        super().__init__(
+            'UnsupportedDimensionOrder',
+            f'Dimension Order "{dimension_order}" not ' 'supported.',
+        )
+
+
 class UnsupportedShapeFileFormat(CustomError):
     """This exception is raised when the shape file included in the input
     Harmony message is not GeoJSON.

@@ -14,6 +14,7 @@ from hoss.exceptions import (
     InvalidCoordinateDataset,
     MissingCoordinateVariable,
     MissingVariable,
+    UnsupportedDimensionOrder,
 )
 
 
@@ -175,7 +176,9 @@ def create_dimension_arrays_from_coordinates(
 
     if dim_order_is_y_x:
         return {projected_y: y_dim, projected_x: x_dim}
-    return {projected_x: x_dim, projected_y: y_dim}
+    raise UnsupportedDimensionOrder('x,y')
+    # this is not currently supported in the calling function in spatial.py
+    # return {projected_x: x_dim, projected_y: y_dim}
 
 
 def get_2d_coordinate_array(

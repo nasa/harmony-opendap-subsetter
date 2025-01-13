@@ -14,55 +14,39 @@ from hoss.exceptions import (
     InvalidCoordinateDataset,
     MissingCoordinateVariable,
     MissingVariable,
+    UnsupportedDimensionOrder,
 )
 
 
-def get_projected_dimension_names(varinfo: VarInfoFromDmr, variable_name: str) -> str:
-    """returns the x-y projection variable names that would
-    match the group of the input variable. The 'projected_y' dimension
-    and 'projected_x' names are returned with the group pathname
-
-    """
-    variable = varinfo.get_variable(variable_name)
-
-    if variable is not None:
-        projected_dimension_names = [
-            f'{variable.group_path}/projected_y',
-            f'{variable.group_path}/projected_x',
-        ]
-    else:
-        raise MissingVariable(variable_name)
-
-    return projected_dimension_names
-
-
-def get_projected_dimension_names_from_coordinate_variables(
+def get_coordinate_variables(
     varinfo: VarInfoFromDmr,
-    variable_name: str,
-) -> list[str]:
+    requested_variables: list[str],
+) -> tuple[list[str], list[str]]:
+    """This function returns latitude and longitude variable names from
+    latitude and longitude variables listed in the CF-Convention coordinates
+    metadata attribute. It returns them in a specific
+    order [latitude_name, longitude_name]"
     """
-    Returns the projected dimensions names from coordinate variables
-    """
-    latitude_coordinates, longitude_coordinates = get_coordinate_variables(
-        varinfo, [variable_name]
+
+    coordinate_variables = varinfo.get_references_for_attribute(
+        requested_variables, 'coordinates'
     )
 
-    if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
-        projected_dimension_names = get_projected_dimension_names(
-            varinfo, latitude_coordinates[0]
-        )
+    latitude_coordinate_variables = [
+        coordinate
+        for coordinate in coordinate_variables
+        if varinfo.get_variable(coordinate) is not None
+        and varinfo.get_variable(coordinate).is_latitude()
+    ]
 
-    # if the override is the variable
-    elif (
-        varinfo.get_variable(variable_name).is_latitude()
-        or varinfo.get_variable(variable_name).is_longitude()
-    ):
-        projected_dimension_names = get_projected_dimension_names(
-            varinfo, variable_name
-        )
-    else:
-        projected_dimension_names = []
-    return projected_dimension_names
+    longitude_coordinate_variables = [
+        coordinate
+        for coordinate in coordinate_variables
+        if varinfo.get_variable(coordinate) is not None
+        and varinfo.get_variable(coordinate).is_longitude()
+    ]
+
+    return latitude_coordinate_variables, longitude_coordinate_variables
 
 
 def get_variables_with_anonymous_dims(
@@ -92,64 +76,112 @@ def any_absent_dimension_variables(varinfo: VarInfoFromDmr, variable: str) -> bo
     )
 
 
-def get_coordinate_variables(
+def get_dimension_array_names_from_coordinate_variables(
     varinfo: VarInfoFromDmr,
-    requested_variables: list,
-) -> tuple[list, list]:
-    """This function returns latitude and longitude variable names from
-    latitude and longitude variables listed in the CF-Convention coordinates
-    metadata attribute. It returns them in a specific
-    order [latitude_name, longitude_name]"
+    variable_name: str,
+) -> list[str]:
+    """
+    Returns the dimensions names from coordinate variables
     """
 
-    coordinate_variables = varinfo.get_references_for_attribute(
-        requested_variables, 'coordinates'
+    latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+        varinfo, [variable_name]
     )
 
-    latitude_coordinate_variables = [
-        coordinate
-        for coordinate in coordinate_variables
-        if varinfo.get_variable(coordinate) is not None
-        and varinfo.get_variable(coordinate).is_latitude()
-    ]
-
-    longitude_coordinate_variables = [
-        coordinate
-        for coordinate in coordinate_variables
-        if varinfo.get_variable(coordinate) is not None
-        and varinfo.get_variable(coordinate).is_longitude()
-    ]
-
-    return latitude_coordinate_variables, longitude_coordinate_variables
-
-
-def get_row_col_sizes_from_coordinate_datasets(
-    lat_arr: np.ndarray,
-    lon_arr: np.ndarray,
-) -> tuple[int, int]:
-    """
-    This function returns the row and column sizes of the coordinate datasets
-
-    """
-    # ToDo - if the coordinates are 3D
-    if lat_arr.ndim > 1 and lon_arr.shape == lat_arr.shape:
-        col_size = lat_arr.shape[1]
-        row_size = lat_arr.shape[0]
+    # for one variable, the coordinate array length will always be 1 or 0
+    if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
+        dimension_array_names = get_dimension_array_names(
+            varinfo, latitude_coordinates[0]
+        )
+    # if variable does not have coordinates (len = 0)
     elif (
-        lat_arr.ndim == 1
-        and lon_arr.ndim == 1
-        and lat_arr.size > 0
-        and lon_arr.size > 0
+        varinfo.get_variable(variable_name).is_latitude()
+        or varinfo.get_variable(variable_name).is_longitude()
     ):
-        # Todo: The ordering needs to be checked
-        col_size = lon_arr.size
-        row_size = lat_arr.size
+        dimension_array_names = get_dimension_array_names(varinfo, variable_name)
     else:
-        raise IncompatibleCoordinateVariables(lon_arr.shape, lat_arr.shape)
-    return row_size, col_size
+        dimension_array_names = []
+
+    return dimension_array_names
 
 
-def get_coordinate_array(
+def get_dimension_array_names(varinfo: VarInfoFromDmr, variable_name: str) -> str:
+    """returns the x-y variable names that would
+    match the group of the input variable. The 'dim_y' dimension
+    and 'dim_x' names are returned with the group pathname
+
+    """
+    variable = varinfo.get_variable(variable_name)
+
+    if variable is not None:
+        dimension_array_names = [
+            f'{variable.group_path}/dim_y',
+            f'{variable.group_path}/dim_x',
+        ]
+    else:
+        raise MissingVariable(variable_name)
+
+    return dimension_array_names
+
+
+def create_dimension_arrays_from_coordinates(
+    prefetch_dataset: Dataset,
+    latitude_coordinate: VariableFromDmr,
+    longitude_coordinate: VariableFromDmr,
+    crs: CRS,
+    projected_dimension_names: list[str],
+) -> dict[str, np.ndarray]:
+    """Generate artificial 1D dimensions scales for each
+    2D dimension or coordinate variable.
+    1) Get 2 valid geo grid points
+    2) convert them to a projected x-y extent
+    3) Generate the x-y dimscale array and return to the calling method
+
+    """
+    lat_arr = get_2d_coordinate_array(
+        prefetch_dataset,
+        latitude_coordinate.full_name_path,
+    )
+    lon_arr = get_2d_coordinate_array(
+        prefetch_dataset,
+        longitude_coordinate.full_name_path,
+    )
+
+    row_indices, col_indices = get_valid_sample_pts(
+        lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
+    )
+
+    dim_order_is_y_x, row_dim_values = get_dimension_order_and_dim_values(
+        lat_arr, lon_arr, row_indices, crs, is_row=True
+    )
+    dim_order, col_dim_values = get_dimension_order_and_dim_values(
+        lat_arr, lon_arr, col_indices, crs, is_row=False
+    )
+    if dim_order_is_y_x != dim_order:
+        raise InvalidCoordinateData("the order of dimensions do not match")
+
+    row_size, col_size = get_row_col_sizes_from_coordinates(
+        lat_arr, lon_arr, dim_order_is_y_x
+    )
+
+    y_dim = interpolate_dim_values_from_sample_pts(
+        row_dim_values, np.transpose(row_indices)[0], row_size
+    )
+
+    x_dim = interpolate_dim_values_from_sample_pts(
+        col_dim_values, np.transpose(col_indices)[1], col_size
+    )
+
+    projected_y, projected_x = tuple(projected_dimension_names)
+
+    if dim_order_is_y_x:
+        return {projected_y: y_dim, projected_x: x_dim}
+    raise UnsupportedDimensionOrder('x,y')
+    # this is not currently supported in the calling function in spatial.py
+    # return {projected_x: x_dim, projected_y: y_dim}
+
+
+def get_2d_coordinate_array(
     prefetch_dataset: Dataset,
     coordinate_name: str,
 ) -> np.ndarray:
@@ -165,33 +197,36 @@ def get_coordinate_array(
     return coordinate_array
 
 
-def get_1d_dim_array_data_from_dimvalues(
-    dim_values: np.ndarray,
-    dim_indices: np.ndarray,
-    dim_size: int,
-) -> np.ndarray:
+def get_valid_sample_pts(
+    lat_arr: np.ndarray,
+    lon_arr: np.ndarray,
+    lat_coordinate: VariableFromDmr,
+    lon_coordinate: VariableFromDmr,
+) -> tuple[list, list]:
     """
-    Return a full dimension data array based upon 2 valid projected values
-    given in dim_values and located by dim_indices. The dim_indices need
-    to be between 0 and dim_size. Returns a 1D array of size = dim_size
-    with proper dimension array values, with linear interpolation between
-    the given dim_values.
+    This function finds a set of indices maximally spread across
+    a row, and the set maximally spread across a column, with the
+    indices being valid in both the latitude and longitude datasets.
+    When interpolating between these points, the maximal spread
+    ensures the greatest interpolation accuracy.
     """
+    valid_lat_lon_mask = np.logical_and(
+        get_valid_indices(lat_arr, lat_coordinate),
+        get_valid_indices(lon_arr, lon_coordinate),
+    )
 
-    if (dim_indices[1] != dim_indices[0]) and (dim_values[1] != dim_values[0]):
-        dim_resolution = (dim_values[1] - dim_values[0]) / (
-            dim_indices[1] - dim_indices[0]
-        )
-    else:
-        raise InvalidCoordinateData(
-            'No distinct valid coordinate points - '
-            f'dim_index={dim_indices[0]}, dim_value={dim_values[0]}'
-        )
+    # get maximally spread points within rows
+    max_x_spread_pts = get_max_spread_pts(~valid_lat_lon_mask)
 
-    dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
-    dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
+    # Doing the same for the columns is done by transposing the valid_mask
+    # and then fixing the results from [x, y] to [y, x].
+    max_y_spread_trsp = get_max_spread_pts(np.transpose(~valid_lat_lon_mask))
+    max_y_spread_pts = [
+        list(np.flip(max_y_spread_trsp[0])),
+        list(np.flip(max_y_spread_trsp[1])),
+    ]
 
-    return np.linspace(dim_min, dim_max, dim_size)
+    return max_y_spread_pts, max_x_spread_pts
 
 
 def get_valid_indices(
@@ -227,57 +262,6 @@ def get_valid_indices(
     return valid_indices
 
 
-def get_x_y_values_from_geographic_points(
-    points: list[tuple],
-    crs: CRS,
-) -> list[tuple]:
-    """Takes an input list of (longitude, latitude) coordinates and CRS object
-    from PyProj and projects those points to the target grid. Then returns
-    the list of x-y points as tuple in (x,y) order
-
-    """
-    point_longitudes, point_latitudes = zip(*list(points))
-
-    from_geo_transformer = Transformer.from_crs(4326, crs)
-    points_x, points_y = (  # pylint: disable=unpacking-non-sequence
-        from_geo_transformer.transform(point_latitudes, point_longitudes)
-    )
-
-    return list(zip(points_x, points_y))
-
-
-def get_valid_row_col_pairs(
-    lat_arr: np.ndarray,
-    lon_arr: np.ndarray,
-    lat_coordinate: VariableFromDmr,
-    lon_coordinate: VariableFromDmr,
-) -> tuple[list, list]:
-    """
-    This function finds a set of indices maximally spread across
-    a row, and the set maximally spread across a column, with the
-    indices being valid in both the latitude and longitude datasets.
-    When interpolating between these points, the maximal spread
-    ensures the greatest interpolation accuracy.
-    """
-    valid_lat_lon_mask = np.logical_and(
-        get_valid_indices(lat_arr, lat_coordinate),
-        get_valid_indices(lon_arr, lon_coordinate),
-    )
-
-    # get maximally spread points within rows
-    max_x_spread_pts = get_max_spread_pts(~valid_lat_lon_mask)
-
-    # Doing the same for the columns is done by transposing the valid_mask
-    # and then fixing the results from [x, y] to [y, x].
-    max_y_spread_trsp = get_max_spread_pts(np.transpose(~valid_lat_lon_mask))
-    max_y_spread_pts = [
-        list(np.flip(max_y_spread_trsp[0])),
-        list(np.flip(max_y_spread_trsp[1])),
-    ]
-
-    return max_y_spread_pts, max_x_spread_pts
-
-
 def get_max_spread_pts(
     valid_geospatial_mask: np.ndarray,
 ) -> list[list]:
@@ -292,11 +276,17 @@ def get_max_spread_pts(
     """
     # fill a sample array with index values, arr_ind[i, j] = j
     arr_indices = np.indices(
-        (valid_geospatial_mask.shape[0], valid_geospatial_mask.shape[1])
+        (valid_geospatial_mask.shape[-2], valid_geospatial_mask.shape[-1])
     )[1]
-
-    # mask arr_ind to hide the invalid data points
-    valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask)
+    if valid_geospatial_mask.ndim == 2:
+        # mask arr_ind to hide the invalid data points
+        valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask)
+    elif valid_geospatial_mask.ndim == 3:
+        # use just 2 of the dimensions
+        # mask arr_ind to hide the invalid data points
+        valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask[0, :, :])
+    else:
+        raise NotImplementedError
 
     if valid_indices.count() == 0:
         raise InvalidCoordinateData("No valid coordinate data")
@@ -319,76 +309,99 @@ def get_max_spread_pts(
     return [[max_spread, min_index], [max_spread, max_index]]
 
 
-def create_dimension_arrays_from_coordinates(
-    prefetch_dataset: Dataset,
-    latitude_coordinate: VariableFromDmr,
-    longitude_coordinate: VariableFromDmr,
+def get_dimension_order_and_dim_values(
+    lat_array_points: np.ndarray,
+    lon_array_points: np.ndarray,
+    grid_dimension_indices: list[tuple[int, int]],
     crs: CRS,
-    projected_dimension_names: list,
-) -> dict[str, np.ndarray]:
-    """Generate artificial 1D dimensions scales for each
-    2D dimension or coordinate variable.
-    1) Get 2 valid geo grid points
-    2) convert them to a projected x-y extent
-    3) Generate the x-y dimscale array and return to the calling method
-
+    is_row: bool,
+) -> tuple[bool, np.ndarray]:
+    """Determines the order of dimensions based on whether the
+    projected y or projected_x values are varying across row or column.
+    Also returns a 1-D array of dimension values for the requested
+    projected spatial dimension. The input lat lon arrays and dimension
+    indices are assumed to be 2D in this implementation of the function.
     """
-    lat_arr = get_coordinate_array(
-        prefetch_dataset,
-        latitude_coordinate.full_name_path,
+    lat_arr_values = [lat_array_points[i][j] for i, j in grid_dimension_indices]
+    lon_arr_values = [lon_array_points[i][j] for i, j in grid_dimension_indices]
+
+    from_geo_transformer = Transformer.from_crs(4326, crs)
+    x_values, y_values = (  # pylint: disable=unpacking-non-sequence
+        from_geo_transformer.transform(lat_arr_values, lon_arr_values)
     )
-    lon_arr = get_coordinate_array(
-        prefetch_dataset,
-        longitude_coordinate.full_name_path,
-    )
-    row_size, col_size = get_row_col_sizes_from_coordinate_datasets(
-        lat_arr,
-        lon_arr,
-    )
+    y_variance = np.abs(np.diff(y_values))
+    x_variance = np.abs(np.diff(x_values))
 
-    row_indices, col_indices = get_valid_row_col_pairs(
-        lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
-    )
+    # If input lat/lon array is row and projected y_values is varying more
+    # than projected x_values, then the dimensions are ordered (y,x)
+    # If input lat/lon array is col and projected y_values is changing more
+    # than projected x_values, then the dimensions are ordered (x,y)
 
-    y_dim = get_dimension_array_from_geo_points(
-        lat_arr, lon_arr, crs, row_indices, row_size, True
-    )
-
-    x_dim = get_dimension_array_from_geo_points(
-        lat_arr, lon_arr, crs, col_indices, col_size, False
-    )
-
-    projected_y, projected_x = tuple(projected_dimension_names)
-    return {projected_y: y_dim, projected_x: x_dim}
-
-
-def get_dimension_array_from_geo_points(
-    lat_arr: np.ndarray,
-    lon_arr: np.ndarray,
-    crs: CRS,
-    dimension_indices: list,
-    dimension_size: int,
-    is_row=True,
-) -> np.ndarray:
-    """This function uses the list of lat/lon points corresponding
-    to a list of array indices and reprojects it with the CRS
-    provided and scales the x/y values to a dimension array with the dimension
-    size provided
-
-    """
-    if is_row:
-        index_for_dimension = 0
-        x_or_y_index = 1
+    if y_variance > x_variance:
+        is_y_x_order = is_row
+        dimension_values = y_values
+    elif x_variance > y_variance:
+        is_y_x_order = not is_row
+        dimension_values = x_values
     else:
-        index_for_dimension = 1
-        x_or_y_index = 0
+        raise InvalidCoordinateData("x/y values are varying by the same amount")
 
-    geo_grid_points = [
-        (lon_arr[row, col], lat_arr[row, col]) for row, col in dimension_indices
-    ]
-    x_y_values = get_x_y_values_from_geographic_points(geo_grid_points, crs)
-    indices_for_dimension = np.transpose(dimension_indices)[index_for_dimension]
-    dimension_values = np.transpose(x_y_values)[x_or_y_index]
-    return get_1d_dim_array_data_from_dimvalues(
-        dimension_values, indices_for_dimension, dimension_size
-    )
+    return is_y_x_order, dimension_values
+
+
+def get_row_col_sizes_from_coordinates(
+    lat_arr: np.ndarray, lon_arr: np.ndarray, dim_order_is_y_x: bool
+) -> tuple[int, int]:
+    """
+    This function returns the row and column sizes of the coordinate datasets
+    The last two dimensions of the array correspond to the spatial dimensions.
+    which is the recommendation from CF-Conventions.
+    """
+
+    if lat_arr.ndim >= 2 and lon_arr.shape == lat_arr.shape:
+        col_size = lat_arr.shape[-1]
+        row_size = lat_arr.shape[-2]
+    elif (
+        lat_arr.ndim == 1
+        and lon_arr.ndim == 1
+        and lat_arr.size > 0
+        and lon_arr.size > 0
+    ):
+        if dim_order_is_y_x:
+            col_size = lon_arr.size
+            row_size = lat_arr.size
+        else:
+            col_size = lat_arr.size
+            row_size = lon_arr.size
+    else:
+        raise IncompatibleCoordinateVariables(lon_arr.shape, lat_arr.shape)
+    return row_size, col_size
+
+
+def interpolate_dim_values_from_sample_pts(
+    dim_values: np.ndarray,
+    dim_indices: list[int],
+    dim_size: int,
+) -> np.ndarray:
+    """
+    Return a full dimension data array based upon 2 valid projected values
+    given in dim_values and located by dim_indices. The dim_indices need
+    to be between 0 and dim_size. Returns a 1D array of size = dim_size
+    with proper dimension array values, with linear interpolation between
+    the given dim_values.
+    """
+
+    if (dim_indices[1] != dim_indices[0]) and (dim_values[1] != dim_values[0]):
+        dim_resolution = (dim_values[1] - dim_values[0]) / (
+            dim_indices[1] - dim_indices[0]
+        )
+    else:
+        raise InvalidCoordinateData(
+            'No distinct valid coordinate points - '
+            f'dim_index={dim_indices[0]}, dim_value={dim_values[0]}'
+        )
+
+    dim_min = dim_values[0] - (dim_resolution * dim_indices[0])
+    dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
+
+    return np.linspace(dim_min, dim_max, dim_size)

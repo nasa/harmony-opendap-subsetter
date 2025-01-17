@@ -1,10 +1,10 @@
 ## v1.1.1
 ### 2025-01-14
 
-This version of HOSS releases the HOSS codebase from a feature branch that contain V1.1.0 to the main branch.
-Additional updates included code quality improvements with additional unit tests, revised methodology in functions
-that selected the data points from the coordinate datasets and calculation of the dimension arrays.
-Functions were added to determine the dimension order for 2D variables.
+This version of HOSS merges the feature branch that contains V1.1.0 to the main branch.
+Additional updates included code quality improvements with additional unit tests, revised methodology
+in functions that selected the data points from the coordinate datasets and calculation of the dimension
+arrays. Functions were added to determine the dimension order for 2D variables.
 
 
 ## v1.1.0

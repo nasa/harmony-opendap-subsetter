@@ -1,6 +1,6 @@
 # This file should contain requirements to be installed via Pip.
 # Open source packages available from PyPI
-earthdata-varinfo ~= 1.0.0
+earthdata-varinfo ~= 2.3.0
 harmony-service-lib ~= 1.0.25
 netCDF4 ~= 1.6.4
 numpy ~= 1.24.2

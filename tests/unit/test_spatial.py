@@ -17,6 +17,7 @@ from hoss.spatial import (
     get_longitude_in_grid,
     get_projected_x_y_index_ranges,
     get_spatial_index_ranges,
+    get_x_y_index_ranges_from_coordinates,
 )
 
 
@@ -54,6 +55,44 @@ class TestSpatial(TestCase):
                 harmony_message,
             ),
             {'/x': (37, 56), '/y': (7, 26)},
+        )
+
+    def test_get_spatial_index_ranges_projected_from_coordinates(self):
+        """Ensure that correct index ranges can be calculated for a SMAP L3
+        granule. This granule has variables that do no have dimensions, but
+        they have coordinate attributes.
+
+        """
+        harmony_message = Message({'subset': {'bbox': [2, 54, 42, 72]}})
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            'hoss/hoss_config.json',
+        )
+        prefetch_path = 'tests/data/SC_SPL3SMP_009_prefetch.nc4'
+        required_variables = {
+            '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+            '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
+            '/Soil_Moisture_Retrieval_Data_AM/latitude',
+            '/Soil_Moisture_Retrieval_Data_AM/longitude',
+            '/Soil_Moisture_Retrieval_Data_PM/latitude_pm',
+            '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
+        }
+        expected_index_ranges = {
+            '/Soil_Moisture_Retrieval_Data_AM/dim_x': (487, 594),
+            '/Soil_Moisture_Retrieval_Data_AM/dim_y': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_PM/dim_x': (487, 594),
+            '/Soil_Moisture_Retrieval_Data_PM/dim_y': (9, 38),
+        }
+
+        self.assertDictEqual(
+            get_spatial_index_ranges(
+                required_variables,
+                smap_varinfo,
+                prefetch_path,
+                harmony_message,
+            ),
+            expected_index_ranges,
         )
 
     def test_get_spatial_index_ranges_geographic(self):
@@ -181,6 +220,126 @@ class TestSpatial(TestCase):
                 ),
                 {'/latitude': (5, 44), '/longitude': (160, 199)},
             )
+
+    @patch('hoss.spatial.get_dimension_index_range')
+    @patch('hoss.spatial.get_projected_x_y_extents')
+    def test_get_x_y_index_ranges_from_coordinates(
+        self,
+        mock_get_x_y_extents,
+        mock_get_dimension_index_range,
+    ):
+        """Ensure that x and y index ranges are only requested only when there are
+        no projected dimensions and when there are coordinate datasets,
+        and the values have not already been calculated.
+
+        The example used in this test is for the SMAP SPL3SMP collection,
+        (SMAP L3 Radiometer Global Daily 36 km EASE-Grid Soil Moisture)
+        which has a Equal-Area Scalable Earth Grid (EASE-Grid 2.0) CRS for
+        a projected grid which is lambert_cylindrical_equal_area projection
+
+        """
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            'hoss/hoss_config.json',
+        )
+        smap_file_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
+        expected_index_ranges = {
+            '/Soil_Moisture_Retrieval_Data_AM/dim_x': (487, 595),
+            '/Soil_Moisture_Retrieval_Data_AM/dim_y': (9, 38),
+        }
+        bbox = BBox(2, 54, 42, 72)
+
+        latitude_coordinate = smap_varinfo.get_variable(
+            '/Soil_Moisture_Retrieval_Data_AM/latitude'
+        )
+        longitude_coordinate = smap_varinfo.get_variable(
+            '/Soil_Moisture_Retrieval_Data_AM/longitude'
+        )
+
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+
+        x_y_extents = {
+            'x_min': 192972.56050179302,
+            'x_max': 4052423.7705376535,
+            'y_min': 5930779.396449475,
+            'y_max': 6979878.9118312765,
+        }
+
+        mock_get_x_y_extents.return_value = x_y_extents
+
+        # When ranges are derived, they are first calculated for x, then y:
+        mock_get_dimension_index_range.side_effect = [(487, 595), (9, 38)]
+
+        with self.subTest(
+            'Projected grid from coordinates gets expected dimension ranges'
+        ):
+            with Dataset(smap_file_path, 'r') as smap_prefetch:
+                self.assertDictEqual(
+                    get_x_y_index_ranges_from_coordinates(
+                        '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+                        smap_varinfo,
+                        smap_prefetch,
+                        latitude_coordinate,
+                        longitude_coordinate,
+                        {},
+                        bounding_box=bbox,
+                        shape_file_path=None,
+                    ),
+                    expected_index_ranges,
+                )
+
+                mock_get_x_y_extents.assert_called_once_with(
+                    ANY, ANY, crs, shape_file=None, bounding_box=bbox
+                )
+
+                self.assertEqual(mock_get_dimension_index_range.call_count, 2)
+                mock_get_dimension_index_range.assert_has_calls(
+                    [
+                        call(
+                            ANY,
+                            x_y_extents['x_min'],
+                            x_y_extents['x_max'],
+                            bounds_values=None,
+                        ),
+                        call(
+                            ANY,
+                            x_y_extents['y_min'],
+                            x_y_extents['y_max'],
+                            bounds_values=None,
+                        ),
+                    ]
+                )
+
+        mock_get_x_y_extents.reset_mock()
+        mock_get_dimension_index_range.reset_mock()
+
+        with self.subTest('Function does not rederive known index ranges'):
+            with Dataset(smap_file_path, 'r') as smap_prefetch:
+                self.assertDictEqual(
+                    get_x_y_index_ranges_from_coordinates(
+                        '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+                        smap_varinfo,
+                        smap_prefetch,
+                        latitude_coordinate,
+                        longitude_coordinate,
+                        expected_index_ranges,
+                        bounding_box=bbox,
+                        shape_file_path=None,
+                    ),
+                    {},
+                )
+
+            mock_get_x_y_extents.assert_not_called()
+            mock_get_dimension_index_range.assert_not_called()
 
     @patch('hoss.spatial.get_dimension_index_range')
     @patch('hoss.spatial.get_projected_x_y_extents')

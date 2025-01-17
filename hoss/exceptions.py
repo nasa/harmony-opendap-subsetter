@@ -57,7 +57,7 @@ class InvalidRequestedRange(CustomError):
     def __init__(self):
         super().__init__(
             'InvalidRequestedRange',
-            'Input request specified range outside supported ' 'dimension range',
+            'Input request specified range outside supported dimension range',
         )
 
 
@@ -105,6 +105,119 @@ class MissingSpatialSubsetInformation(CustomError):
             'MissingSpatialSubsetInformation',
             'Either a bounding box or shape file must be '
             'specified when performing spatial subsetting.',
+        )
+
+
+class MissingVariable(CustomError):
+    """This exception is raised when HOSS tries to get variables and
+    they are missing or empty.
+
+    """
+
+    def __init__(self, referring_variable):
+        super().__init__(
+            'MissingVariable',
+            f'"{referring_variable}" is ' 'not present in source granule file.',
+        )
+
+
+class MissingCoordinateVariable(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    variables and they are missing or empty. These variables are referred to
+    in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, referring_variable):
+        super().__init__(
+            'MissingCoordinateVariable',
+            f'Coordinate: "{referring_variable}" is '
+            'not present in source granule file.',
+        )
+
+
+class InvalidIndexSubsetRequest(CustomError):
+    """This exception is raised when HOSS tries to get dimensions or
+    coordinate variables as part of a prefetch from opendap when there is
+    a spatial or temporal request, and there are no prefetch variables
+    returned.
+
+    """
+
+    def __init__(self, custom_msg):
+        super().__init__(
+            'InvalidIndexSubsetRequest',
+            custom_msg,
+        )
+
+
+class InvalidCoordinateVariable(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    variables and they have fill values to the extent that it cannot be used.
+    These variables are referred in the science variables with coordinate attributes.
+
+    """
+
+    def __init__(self, referring_variable):
+        super().__init__(
+            'InvalidCoordinateVariable',
+            f'Coordinate: "{referring_variable}" is '
+            'not valid in source granule file.',
+        )
+
+
+class IncompatibleCoordinateVariables(CustomError):
+    """This exception is raised when HOSS tries to get latitude and longitude
+    coordinate variable and they do not match in shape or have a size of 0.
+
+    """
+
+    def __init__(self, longitude_shape, latitude_shape):
+        super().__init__(
+            'IncompatibleCoordinateVariables',
+            f'Longitude coordinate shape: "{longitude_shape}"'
+            f'does not match the latitude coordinate shape: "{latitude_shape}"',
+        )
+
+
+class InvalidCoordinateData(CustomError):
+    """This exception is raised when the data does not contain at least.
+    two valid points. This could occur when there are too many fill values and distinct valid
+    indices could not be obtained
+
+    """
+
+    def __init__(self, custom_msg):
+        super().__init__(
+            'InvalidCoordinateData',
+            f'{custom_msg}',
+        )
+
+
+class InvalidCoordinateDataset(CustomError):
+    """This exception is raised when there are too
+    many fill values and two distinct valid indices
+    could not be obtained
+
+    """
+
+    def __init__(self, coordinate_name):
+        super().__init__(
+            'InvalidCoordinateDataset',
+            f'Cannot get valid indices for {coordinate_name}',
+        )
+
+
+class UnsupportedDimensionOrder(CustomError):
+    """This exception is raised when the granule file included in the input
+    request is not the nominal dimension order which is 'y,x'.
+
+    """
+
+    def __init__(self, dimension_order: str):
+        super().__init__(
+            'UnsupportedDimensionOrder',
+            f'Dimension Order "{dimension_order}" not ' 'supported.',
         )
 
 

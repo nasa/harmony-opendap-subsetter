@@ -227,19 +227,19 @@
         },
         {
           "Name": "longitude_of_projection_origin",
-          "Value": 0
+          "Value": 0.0
         },
         {
           "Name": "latitude_of_projection_origin",
-          "Value": 90
+          "Value": 90.0
         },
         {
           "Name": "false_easting",
-          "Value": 0
+          "Value": 0.0
         },
         {
           "Name": "false_northing",
-          "Value": 0
+          "Value": 0.0
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
@@ -389,8 +389,8 @@
         {
           "Name": "valid_range",
           "Value": [
-            -90,
-            90
+            -90.0,
+            90.0
           ]
         },
         {

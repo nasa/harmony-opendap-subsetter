@@ -1,10 +1,10 @@
 ## v1.1.2
 ### 2025-01-20
 
-- [[DAS-2287](https://bugs.earthdata.nasa.gov/browse/DAS-2287)]
-  HOSS has been updated to use `earthdata-varinfo` version 3.0.0.
+- [[DAS-2256](https://bugs.earthdata.nasa.gov/browse/DAS-2256)]
+  HOSS has been updated to use `earthdata-varinfo` version 3.0.1.
   Please see the
-  [earthdata-varinfo release notes](https://github.com/nasa/earthdata-varinfo/releases/tag/3.0.0)
+  [earthdata-varinfo release notes](https://github.com/nasa/earthdata-varinfo/releases/tag/3.0.1)
   for more information.
 
 ## v1.1.1

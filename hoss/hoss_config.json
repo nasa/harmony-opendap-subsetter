@@ -257,7 +257,7 @@
         },
         {
           "Name": "master_geotransform",
-          "Value": [-9000000.0, 3000, 0, 9000000.0, 0, 3000]
+          "Value": [-9000000, 3000, 0, 9000000, 0, 3000]
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
@@ -291,7 +291,7 @@
         },
         {
           "Name": "master_geotransform",
-          "Value": [-9000000.0, 9000,0, 9000000.0, 0, 9000]
+          "Value": [-9000000, 9000, 0, 9000000, 0, 9000]
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
@@ -325,7 +325,7 @@
         },
         {
           "Name": "master_geotransform",
-          "Value": [-9000000.0, 36000, 0, 9000000.0, 0, 36000]
+          "Value": [-9000000, 36000, 0, 9000000, 0, 36000]
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."

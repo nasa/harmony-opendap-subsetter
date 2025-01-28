@@ -405,3 +405,42 @@ def interpolate_dim_values_from_sample_pts(
     dim_max = dim_values[1] + (dim_resolution * (dim_size - 1 - dim_indices[1]))
 
     return np.linspace(dim_min, dim_max, dim_size)
+
+
+def create_dimension_arrays_from_geotransform(
+    prefetch_dataset: Dataset,
+    latitude_coordinate: VariableFromDmr,
+    projected_dimension_names: list[str],
+    geotranform,
+) -> dict[str, np.ndarray]:
+    """Generate artificial 1D dimensions scales from geotransform"""
+    lat_arr = get_2d_coordinate_array(
+        prefetch_dataset,
+        latitude_coordinate.full_name_path,
+    )
+
+    # compute the x,y locations along a column and row
+    column_dimensions = [
+        col_row_to_xy(geotranform, i, 0) for i in range(lat_arr.shape[1])
+    ]
+    row_dimensions = [col_row_to_xy(geotranform, 0, i) for i in range(lat_arr.shape[0])]
+
+    # pull out dimension values
+    x_values = np.array([x for x, y in column_dimensions], dtype=np.float64)
+    y_values = np.array([y for x, y in row_dimensions], dtype=np.float64)
+    projected_y, projected_x = tuple(projected_dimension_names)
+
+    return {projected_y: y_values, projected_x: x_values}
+
+
+def col_row_to_xy(geotransform, col: int, row: int) -> tuple[np.float64, np.float64]:
+    """Convert grid cell location to x,y coordinate."""
+    # Geotransform is defined from upper left corner as (0,0), so adjust
+    # input value to the center of grid at (.5, .5)
+    adj_col = col + 0.5
+    adj_row = row + 0.5
+
+    x = geotransform[0] + adj_col * geotransform[1] + adj_row * geotransform[2]
+    y = geotransform[3] + adj_col * geotransform[4] + adj_row * geotransform[5]
+
+    return x, y

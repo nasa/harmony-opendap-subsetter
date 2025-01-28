@@ -40,10 +40,17 @@ MultiShape = Union[GeometryCollection, MultiLineString, MultiPoint, MultiPolygon
 Shape = Union[LineString, Point, Polygon, MultiShape]
 
 
-def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
+def get_variable_crs(cf_attributes: str) -> CRS:
+    """Create a `pyproj.CRS` object from the grid mapping variable metadata
+    attributes.
+
+    """
+    return CRS.from_cf(cf_attributes)
+
+
+def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     """Check the metadata attributes for the variable to find the associated
-    grid mapping variable. Create a `pyproj.CRS` object from the grid
-    mapping variable metadata attributes.
+    grid mapping variable.
 
     All metadata attributes that contain references from one variable to
     another are stored in the `Variable.references` dictionary attribute
@@ -70,7 +77,7 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
                 cf_attributes = varinfo.get_missing_variable_attributes(grid_mapping)
 
             if cf_attributes:
-                crs = CRS.from_cf(cf_attributes)
+                return cf_attributes
             else:
                 raise MissingGridMappingVariable(grid_mapping, variable)
 
@@ -79,8 +86,6 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
 
     else:
         raise MissingGridMappingMetadata(variable)
-
-    return crs
 
 
 def get_projected_x_y_variables(

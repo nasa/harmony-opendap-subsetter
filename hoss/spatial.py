@@ -37,6 +37,7 @@ from hoss.bbox_utilities import (
 )
 from hoss.coordinate_utilities import (
     create_dimension_arrays_from_coordinates,
+    create_dimension_arrays_from_geotransform,
     get_coordinate_variables,
     get_dimension_array_names_from_coordinate_variables,
     get_variables_with_anonymous_dims,
@@ -49,6 +50,7 @@ from hoss.dimension_utilities import (
     get_dimension_index_range,
 )
 from hoss.projection_utilities import (
+    get_grid_mapping_attributes,
     get_projected_x_y_extents,
     get_projected_x_y_variables,
     get_variable_crs,
@@ -183,7 +185,10 @@ def get_projected_x_y_index_ranges(
         and projected_y is not None
         and not set((projected_x, projected_y)).issubset(set(index_ranges.keys()))
     ):
-        crs = get_variable_crs(non_spatial_variable, varinfo)
+        grid_mapping_attributes = get_grid_mapping_attributes(
+            non_spatial_variable, varinfo
+        )
+        crs = get_variable_crs(grid_mapping_attributes)
 
         x_y_extents = get_projected_x_y_extents(
             dimensions_file[projected_x][:],
@@ -245,19 +250,27 @@ def get_x_y_index_ranges_from_coordinates(
 
     """
 
-    crs = get_variable_crs(non_spatial_variable, varinfo)
+    grid_mapping_attributes = get_grid_mapping_attributes(non_spatial_variable, varinfo)
+    crs = get_variable_crs(grid_mapping_attributes)
 
     projected_dimension_names = get_dimension_array_names_from_coordinate_variables(
         varinfo, non_spatial_variable
     )
-
-    dimension_arrays = create_dimension_arrays_from_coordinates(
-        prefetch_coordinate_datasets,
-        latitude_coordinate,
-        longitude_coordinate,
-        crs,
-        projected_dimension_names,
-    )
+    if 'master_geotransform' in grid_mapping_attributes:
+        dimension_arrays = create_dimension_arrays_from_geotransform(
+            prefetch_coordinate_datasets,
+            latitude_coordinate,
+            projected_dimension_names,
+            grid_mapping_attributes['master_geotransform'],
+        )
+    else:
+        dimension_arrays = create_dimension_arrays_from_coordinates(
+            prefetch_coordinate_datasets,
+            latitude_coordinate,
+            longitude_coordinate,
+            crs,
+            projected_dimension_names,
+        )
 
     projected_y, projected_x = dimension_arrays.keys()
 

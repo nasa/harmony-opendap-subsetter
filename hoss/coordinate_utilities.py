@@ -60,8 +60,13 @@ def get_variables_with_anonymous_dims(
     return set(
         variable
         for variable in variables
-        if (len(varinfo.get_variable(variable).dimensions) == 0)
-        or (any_absent_dimension_variables(varinfo, variable))
+        if (
+            varinfo.get_variable(variable)
+            and (
+                (len(varinfo.get_variable(variable).dimensions) == 0)
+                or (any_absent_dimension_variables(varinfo, variable))
+            )
+        )
     )
 
 
@@ -70,19 +75,29 @@ def any_absent_dimension_variables(varinfo: VarInfoFromDmr, variable: str) -> bo
     that have been created by opendap, but are not really
     dimension variables
     """
+
     return any(
         varinfo.get_variable(dimension) is None
         for dimension in varinfo.get_variable(variable).dimensions
     )
 
 
-def get_dimension_array_names_from_coordinate_variables(
+def get_dimension_array_names(
     varinfo: VarInfoFromDmr,
     variable_name: str,
 ) -> list[str]:
     """
-    Returns the dimensions names from coordinate variables
+    Returns the dimensions names from coordinate variables or from
+    configuration
     """
+    variable = varinfo.get_variable(variable_name)
+    dimension_names = varinfo.get_variable(variable_name).dimensions
+
+    if len(dimension_names) >= 2:
+        # if the dimension is not a variable, was added as a
+        # configuration entry,
+        if variable is not None:
+            return dimension_names
 
     latitude_coordinates, longitude_coordinates = get_coordinate_variables(
         varinfo, [variable_name]
@@ -90,7 +105,7 @@ def get_dimension_array_names_from_coordinate_variables(
 
     # for one variable, the coordinate array length will always be 1 or 0
     if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
-        dimension_array_names = get_dimension_array_names(
+        dimension_array_names = get_dimension_array_names_from_coordinates(
             varinfo, latitude_coordinates[0]
         )
     # if variable does not have coordinates (len = 0)
@@ -98,14 +113,18 @@ def get_dimension_array_names_from_coordinate_variables(
         varinfo.get_variable(variable_name).is_latitude()
         or varinfo.get_variable(variable_name).is_longitude()
     ):
-        dimension_array_names = get_dimension_array_names(varinfo, variable_name)
+        dimension_array_names = get_dimension_array_names_from_coordinates(
+            varinfo, variable_name
+        )
     else:
         dimension_array_names = []
 
     return dimension_array_names
 
 
-def get_dimension_array_names(varinfo: VarInfoFromDmr, variable_name: str) -> str:
+def get_dimension_array_names_from_coordinates(
+    varinfo: VarInfoFromDmr, variable_name: str
+) -> str:
     """returns the x-y variable names that would
     match the group of the input variable. The 'dim_y' dimension
     and 'dim_x' names are returned with the group pathname
@@ -172,13 +191,19 @@ def create_dimension_arrays_from_coordinates(
         col_dim_values, np.transpose(col_indices)[1], col_size
     )
 
-    projected_y, projected_x = tuple(projected_dimension_names)
+    if len(projected_dimension_names) >= 2:
+        projected_y, projected_x = (
+            projected_dimension_names[-2],
+            projected_dimension_names[-1],
+        )
 
-    if dim_order_is_y_x:
-        return {projected_y: y_dim, projected_x: x_dim}
-    raise UnsupportedDimensionOrder('x,y')
-    # this is not currently supported in the calling function in spatial.py
-    # return {projected_x: x_dim, projected_y: y_dim}
+        if dim_order_is_y_x:
+            return {projected_y: y_dim, projected_x: x_dim}
+        raise UnsupportedDimensionOrder('x,y')
+        # this is not currently supported in the calling function in spatial.py
+        # return {projected_x: x_dim, projected_y: y_dim}
+
+    raise UnsupportedDimensionOrder(projected_dimension_names)
 
 
 def get_2d_coordinate_array(
@@ -322,8 +347,16 @@ def get_dimension_order_and_dim_values(
     projected spatial dimension. The input lat lon arrays and dimension
     indices are assumed to be 2D in this implementation of the function.
     """
-    lat_arr_values = [lat_array_points[i][j] for i, j in grid_dimension_indices]
-    lon_arr_values = [lon_array_points[i][j] for i, j in grid_dimension_indices]
+    if lat_array_points.ndim == 1 and lon_array_points.ndim == 1:
+        lat_arr_values = lat_array_points
+        lon_arr_values = lon_array_points
+    elif lat_array_points.ndim == 2 and lon_array_points.ndim == 2:
+        lat_arr_values = [lat_array_points[i][j] for i, j in grid_dimension_indices]
+        lon_arr_values = [lon_array_points[i][j] for i, j in grid_dimension_indices]
+    else:
+        # assuming a nominal z,y,x order
+        lat_arr_values = [lat_array_points[0][i][j] for i, j in grid_dimension_indices]
+        lon_arr_values = [lon_array_points[0][i][j] for i, j in grid_dimension_indices]
 
     from_geo_transformer = Transformer.from_crs(4326, crs)
     x_values, y_values = (  # pylint: disable=unpacking-non-sequence

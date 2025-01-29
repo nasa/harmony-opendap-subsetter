@@ -63,37 +63,65 @@ class TestSpatial(TestCase):
         they have coordinate attributes.
 
         """
-        harmony_message = Message({'subset': {'bbox': [2, 54, 42, 72]}})
-        smap_varinfo = VarInfoFromDmr(
-            'tests/data/SC_SPL3SMP_008.dmr',
-            'SPL3SMP',
-            'hoss/hoss_config.json',
-        )
-        prefetch_path = 'tests/data/SC_SPL3SMP_009_prefetch.nc4'
-        required_variables = {
-            '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
-            '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
-            '/Soil_Moisture_Retrieval_Data_AM/latitude',
-            '/Soil_Moisture_Retrieval_Data_AM/longitude',
-            '/Soil_Moisture_Retrieval_Data_PM/latitude_pm',
-            '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
-        }
-        expected_index_ranges = {
-            '/Soil_Moisture_Retrieval_Data_AM/dim_x': (487, 594),
-            '/Soil_Moisture_Retrieval_Data_AM/dim_y': (9, 38),
-            '/Soil_Moisture_Retrieval_Data_PM/dim_x': (487, 594),
-            '/Soil_Moisture_Retrieval_Data_PM/dim_y': (9, 38),
-        }
-
-        self.assertDictEqual(
-            get_spatial_index_ranges(
+        with self.subTest('Subset 2d SMAP L3'):
+            harmony_message = Message({'subset': {'bbox': [2, 54, 42, 72]}})
+            smap_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3SMP_008.dmr',
+                'SPL3SMP',
+                'hoss/hoss_config.json',
+            )
+            prefetch_path = 'tests/data/SC_SPL3SMP_009_prefetch.nc4'
+            required_variables = {
+                '/Soil_Moisture_Retrieval_Data_AM/surface_flag',
+                '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm',
+                '/Soil_Moisture_Retrieval_Data_AM/latitude',
+                '/Soil_Moisture_Retrieval_Data_AM/longitude',
+                '/Soil_Moisture_Retrieval_Data_PM/latitude_pm',
+                '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
+            }
+            expected_index_ranges = {
+                '/Soil_Moisture_Retrieval_Data_AM/dim_x': (487, 594),
+                '/Soil_Moisture_Retrieval_Data_AM/dim_y': (9, 38),
+                '/Soil_Moisture_Retrieval_Data_PM/dim_x': (487, 594),
+                '/Soil_Moisture_Retrieval_Data_PM/dim_y': (9, 38),
+            }
+            index_ranges = get_spatial_index_ranges(
                 required_variables,
                 smap_varinfo,
                 prefetch_path,
                 harmony_message,
-            ),
-            expected_index_ranges,
-        )
+            )
+            self.assertDictEqual(
+                index_ranges,
+                expected_index_ranges,
+            )
+        with self.subTest('Subset 3d SMAP L3'):
+            harmony_message = Message({'subset': {'bbox': [2, 54, 42, 72]}})
+            smap_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3FTP_004.dmr',
+                'SPL3FTP',
+                'hoss/hoss_config.json',
+            )
+            prefetch_path = 'tests/data/SC_SPL3FTP_004_prefetch.nc4'
+            required_variables = {
+                '/Freeze_Thaw_Retrieval_Data_Global/surface_flag',
+                '/Freeze_Thaw_Retrieval_Data_Global/latitude',
+                '/Freeze_Thaw_Retrieval_Data/longitude',
+            }
+            expected_index_ranges = {
+                '/Freeze_Thaw_Retrieval_Data_Global/x_dim': (487, 594),
+                '/Freeze_Thaw_Retrieval_Data_Global/y_dim': (9, 38),
+            }
+
+            self.assertDictEqual(
+                get_spatial_index_ranges(
+                    required_variables,
+                    smap_varinfo,
+                    prefetch_path,
+                    harmony_message,
+                ),
+                expected_index_ranges,
+            )
 
     def test_get_spatial_index_ranges_geographic(self):
         """Ensure that correct index ranges can be calculated for:

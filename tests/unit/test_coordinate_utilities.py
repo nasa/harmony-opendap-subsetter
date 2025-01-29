@@ -16,7 +16,7 @@ from hoss.coordinate_utilities import (
     get_2d_coordinate_array,
     get_coordinate_variables,
     get_dimension_array_names,
-    get_dimension_array_names_from_coordinate_variables,
+    get_dimension_array_names_from_coordinates,
     get_dimension_order_and_dim_values,
     get_max_spread_pts,
     get_row_col_sizes_from_coordinates,
@@ -31,6 +31,7 @@ from hoss.exceptions import (
     InvalidCoordinateVariable,
     MissingCoordinateVariable,
     MissingVariable,
+    UnsupportedDimensionOrder,
 )
 
 
@@ -76,6 +77,175 @@ class TestCoordinateUtilities(TestCase):
                 [1.3, 1.3, 1.3, 1.3, 1.3, 1.3, -9999, -9999, 1.3, 1.3],
                 [-9999, -60.2, -60.2, -99, -9999, -9999, -60.2, -60.2, -60.2, -60.2],
                 [-88.1, -88.1, -88.1, 99, -9999, -9999, -88.1, -88.1, -88.1, -88.1],
+            ]
+        )
+        cls.lon_arr_3d = np.array(
+            [
+                [
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -999,
+                        999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                ],
+                [
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -999,
+                        999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                    [
+                        -179.3,
+                        -120.2,
+                        -60.6,
+                        -9999,
+                        -9999,
+                        -9999,
+                        80.2,
+                        120.6,
+                        150.5,
+                        178.4,
+                    ],
+                ],
+            ]
+        )
+
+        cls.lat_arr_3d = np.array(
+            [
+                [
+                    [89.3, 89.3, -9999, 89.3, 89.3, 89.3, -9999, 89.3, 89.3, 89.3],
+                    [50.3, 50.3, 50.3, 50.3, 50.3, 50.3, -9999, 50.3, 50.3, 50.3],
+                    [1.3, 1.3, 1.3, 1.3, 1.3, 1.3, -9999, -9999, 1.3, 1.3],
+                    [
+                        -9999,
+                        -60.2,
+                        -60.2,
+                        -99,
+                        -9999,
+                        -9999,
+                        -60.2,
+                        -60.2,
+                        -60.2,
+                        -60.2,
+                    ],
+                    [-88.1, -88.1, -88.1, 99, -9999, -9999, -88.1, -88.1, -88.1, -88.1],
+                ],
+                [
+                    [89.3, 89.3, -9999, 89.3, 89.3, 89.3, -9999, 89.3, 89.3, 89.3],
+                    [50.3, 50.3, 50.3, 50.3, 50.3, 50.3, -9999, 50.3, 50.3, 50.3],
+                    [1.3, 1.3, 1.3, 1.3, 1.3, 1.3, -9999, -9999, 1.3, 1.3],
+                    [
+                        -9999,
+                        -60.2,
+                        -60.2,
+                        -99,
+                        -9999,
+                        -9999,
+                        -60.2,
+                        -60.2,
+                        -60.2,
+                        -60.2,
+                    ],
+                    [-88.1, -88.1, -88.1, 99, -9999, -9999, -88.1, -88.1, -88.1, -88.1],
+                ],
             ]
         )
 
@@ -163,6 +333,12 @@ class TestCoordinateUtilities(TestCase):
                 ],
             ]
         )
+        cls.smap_ftp_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3FTP_004.dmr',
+            'SPL3FTP',
+            'hoss/hoss_config.json',
+        )
+        cls.smap_ftp_file_path = 'tests/data/SC_SPL3FTP_004_prefetch.nc4'
 
     def setUp(self):
         """Create fixtures that should be unique per test."""
@@ -344,7 +520,7 @@ class TestCoordinateUtilities(TestCase):
                         'not present in coordinate prefetch file.',
                     )
 
-    def test_get_dimension_array_names(self):
+    def test_get_dimension_array_names_from_coordinates(self):
         """Ensure that the expected projected dimension name
         is returned for the coordinate variables
         """
@@ -358,7 +534,7 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected projected dimension names for a science variable'
         ):
             self.assertListEqual(
-                get_dimension_array_names(self.varinfo, self.latitude),
+                get_dimension_array_names_from_coordinates(self.varinfo, self.latitude),
                 expected_dimension_names,
             )
 
@@ -366,13 +542,15 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected dimension names for the longitude variable'
         ):
             self.assertEqual(
-                get_dimension_array_names(self.varinfo, self.longitude),
+                get_dimension_array_names_from_coordinates(
+                    self.varinfo, self.longitude
+                ),
                 expected_dimension_names,
             )
 
         with self.subTest('Raises exception for missing coordinate variable'):
             with self.assertRaises(MissingVariable) as context:
-                get_dimension_array_names(
+                get_dimension_array_names_from_coordinates(
                     self.varinfo, '/Soil_Moisture_Retrieval_Data_AM/random_variable'
                 )
             self.assertEqual(
@@ -381,7 +559,7 @@ class TestCoordinateUtilities(TestCase):
                 'not present in source granule file.',
             )
 
-    def test_get_dimension_array_names_from_coordinate_variables(self):
+    def test_get_dimension_array_names(self):
         """Ensure that the expected projected dimension name
         is returned for the coordinate variables
         """
@@ -399,7 +577,7 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected override dimensions for the science variable'
         ):
             self.assertListEqual(
-                get_dimension_array_names_from_coordinate_variables(
+                get_dimension_array_names(
                     self.varinfo, '/Soil_Moisture_Retrieval_Data_AM/surface_flag'
                 ),
                 expected_override_dimensions_AM,
@@ -409,9 +587,7 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected override dimensions for the longitude variable'
         ):
             self.assertListEqual(
-                get_dimension_array_names_from_coordinate_variables(
-                    self.varinfo, self.longitude
-                ),
+                get_dimension_array_names(self.varinfo, self.longitude),
                 expected_override_dimensions_AM,
             )
 
@@ -419,9 +595,7 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected override dimensions for the latitude variable'
         ):
             self.assertListEqual(
-                get_dimension_array_names_from_coordinate_variables(
-                    self.varinfo, self.latitude
-                ),
+                get_dimension_array_names(self.varinfo, self.latitude),
                 expected_override_dimensions_AM,
             )
 
@@ -429,7 +603,7 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected override dimensions science variable with a different grid'
         ):
             self.assertListEqual(
-                get_dimension_array_names_from_coordinate_variables(
+                get_dimension_array_names(
                     self.varinfo, '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm'
                 ),
                 expected_override_dimensions_PM,
@@ -438,10 +612,24 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves empty dimensions list when science variable has no coordinates'
         ):
             self.assertListEqual(
-                get_dimension_array_names_from_coordinate_variables(
+                get_dimension_array_names(
                     self.varinfo, '/Soil_Moisture_Retrieval_Data_PM/surface_flag_pm'
                 ),
                 expected_override_dimensions_PM,
+            )
+        with self.subTest(
+            'Retrieves expected dimension names for the 3D json configured dimensions'
+        ):
+            dimension_names_3d = get_dimension_array_names(
+                self.smap_ftp_varinfo, '/Freeze_Thaw_Retrieval_Data_Global/surface_flag'
+            )
+            self.assertEqual(
+                dimension_names_3d,
+                [
+                    '/Freeze_Thaw_Retrieval_Data_Global/am_pm',
+                    '/Freeze_Thaw_Retrieval_Data_Global/y_dim',
+                    '/Freeze_Thaw_Retrieval_Data_Global/x_dim',
+                ],
             )
 
     def test_get_row_col_sizes_from_coordinates(self):
@@ -915,6 +1103,16 @@ class TestCoordinateUtilities(TestCase):
                     context.exception.message,
                     'lat/lon values are constant',
                 )
+        with self.subTest(
+            'Get y_x order with 3 dimensions and values changing across row'
+        ):
+            row_indices = [[0, 0], [4, 0]]
+            expected_dim_values = [7341677.255608977, -7338157.219843731]
+            y_x_order, dim_values = get_dimension_order_and_dim_values(
+                self.lat_arr_3d, self.lon_arr_3d, row_indices, crs, is_row=True
+            )
+            self.assertEqual(y_x_order, True)
+            self.assertListEqual(dim_values, expected_dim_values)
 
     def test_create_dimension_arrays_from_coordinates(
         self,
@@ -1068,4 +1266,80 @@ class TestCoordinateUtilities(TestCase):
                 self.assertEqual(
                     context.exception.message,
                     'lat/lon values are constant',
+                )
+        with self.subTest('Projected x-y dim arrays from coordinate datasets'):
+            prefetch_x_y = {
+                '/Soil_Moisture_Retrieval_Data_AM/latitude': self.lat_arr_reversed,
+                '/Soil_Moisture_Retrieval_Data_AM/longitude': self.lon_arr_reversed,
+            }
+            with self.assertRaises(UnsupportedDimensionOrder) as context:
+                x_y_dim_am = create_dimension_arrays_from_coordinates(
+                    prefetch_x_y,
+                    latitude_coordinate,
+                    longitude_coordinate,
+                    crs,
+                    projected_dimension_names_am,
+                )
+
+    def test_create_dimension_arrays_from_3d_coordinates(
+        self,
+    ):
+        """Ensure that the correct x and y dim arrays
+        are returned from a lat/lon prefetch dataset and
+        crs provided.
+        """
+
+        latitude_coordinate = self.smap_ftp_varinfo.get_variable(
+            '/Freeze_Thaw_Retrieval_Data_Global/latitude'
+        )
+        longitude_coordinate = self.smap_ftp_varinfo.get_variable(
+            '/Freeze_Thaw_Retrieval_Data_Global/longitude'
+        )
+        dimension_names_global = [
+            '/Freeze_Thaw_Retrieval_Data_Global/am_pm',
+            '/Freeze_Thaw_Retrieval_Data_Global/y_dim',
+            '/Freeze_Thaw_Retrieval_Data_Global/x_dim',
+        ]
+
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+        expected_xdim = np.array([-17349514.353068016, 17349514.353068016])
+        expected_ydim = np.array([7296524.6913595535, -7296509.222123815])
+
+        with self.subTest('Projected x-y dim arrays from coordinate datasets'):
+            with Dataset(self.smap_ftp_file_path, 'r') as smap_prefetch:
+                x_y_dim_global = create_dimension_arrays_from_coordinates(
+                    smap_prefetch,
+                    latitude_coordinate,
+                    longitude_coordinate,
+                    crs,
+                    dimension_names_global,
+                )
+
+                self.assertListEqual(
+                    list(x_y_dim_global.keys()),
+                    [dimension_names_global[1], dimension_names_global[2]],
+                )
+                self.assertEqual(
+                    x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/y_dim'][0],
+                    expected_ydim[0],
+                )
+                self.assertEqual(
+                    x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/y_dim'][-1],
+                    expected_ydim[-1],
+                )
+                self.assertEqual(
+                    x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/x_dim'][0],
+                    expected_xdim[0],
+                )
+                self.assertEqual(
+                    x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/x_dim'][-1],
+                    expected_xdim[-1],
                 )

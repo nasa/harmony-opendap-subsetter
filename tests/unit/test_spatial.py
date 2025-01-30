@@ -106,7 +106,7 @@ class TestSpatial(TestCase):
             required_variables = {
                 '/Freeze_Thaw_Retrieval_Data_Global/surface_flag',
                 '/Freeze_Thaw_Retrieval_Data_Global/latitude',
-                '/Freeze_Thaw_Retrieval_Data/longitude',
+                '/Freeze_Thaw_Retrieval_Data_Global/longitude',
             }
             expected_index_ranges = {
                 '/Freeze_Thaw_Retrieval_Data_Global/x_dim': (487, 594),

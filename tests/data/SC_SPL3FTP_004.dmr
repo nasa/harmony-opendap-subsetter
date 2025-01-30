@@ -3357,7 +3357,7 @@ H5.EnableCheckNameClashing=true
                     &lt;/gmd:purpose&gt;
                     &lt;gmd:credit&gt;
                         &lt;!-- This field can name individuals or organizations for credit. For now, it specifies NASA. --&gt;
-                        &lt;gco:CharacterString&gt;The software that generates the Level 3 Freeze/Thaw product and the data system that automates its production were designed and implemented 
+                        &lt;gco:CharacterString&gt;The software that generates the Level 3 Freeze/Thaw product and the data system that automates its production were designed and implemented
                             at the Jet Propulsion Laboratory, California Institute of Technology in Pasadena, California.&lt;/gco:CharacterString&gt;
                     &lt;/gmd:credit&gt;
                     &lt;gmd:status&gt;
@@ -3478,8 +3478,8 @@ H5.EnableCheckNameClashing=true
                             &lt;/gmd:thesaurusName&gt;
                         &lt;/gmd:MD_Keywords&gt;
                     &lt;/gmd:descriptiveKeywords&gt;
-                    &lt;gmd:aggregationInfo&gt;  
-                        &lt;gmd:MD_AggregateInformation&gt; 
+                    &lt;gmd:aggregationInfo&gt;
+                        &lt;gmd:MD_AggregateInformation&gt;
                             &lt;gmd:aggregateDataSetIdentifier&gt;
                                 &lt;gmd:MD_Identifier&gt;
                                     &lt;gmd:code&gt;
@@ -3520,11 +3520,11 @@ H5.EnableCheckNameClashing=true
                     &lt;gmd:extent&gt;
                         &lt;gmd:EX_Extent&gt;
                             &lt;gmd:description&gt;
-                                &lt;gco:CharacterString&gt;Freeze-thaw binary state is retrieved from radiometer brightness temperature data on both descending (AM, fore/aft) 
+                                &lt;gco:CharacterString&gt;Freeze-thaw binary state is retrieved from radiometer brightness temperature data on both descending (AM, fore/aft)
                                 and ascending (PM, fore-only) SMAP half-orbits.  The L3_FT_P product includes only data northward of 45N latitude.
-                                Freeze-thaw state retrieval is inhibited for areas with permanent snow/ice and excessive static or transient open water in the cell, 
-                                and when there is excessive RFI in the sensor data. Retrievals may be flagged as questionable for urban areas, 
-                                mountainous areas with high elevation variability, and for cells in which the seasonal (thawed-frozen) reference 
+                                Freeze-thaw state retrieval is inhibited for areas with permanent snow/ice and excessive static or transient open water in the cell,
+                                and when there is excessive RFI in the sensor data. Retrievals may be flagged as questionable for urban areas,
+                                mountainous areas with high elevation variability, and for cells in which the seasonal (thawed-frozen) reference
                                 difference is much smaller than the radiometer measurement error.&lt;/gco:CharacterString&gt;
                             &lt;/gmd:description&gt;
                             &lt;gmd:geographicElement&gt;
@@ -3552,7 +3552,7 @@ H5.EnableCheckNameClashing=true
                                     &lt;!-- Mimics use in GHRSST. See no evidence of conformance to standard --&gt;
                                     &lt;gmd:extent&gt;
                                         &lt;gml:TimePeriod gml:id=&quot;swathTemporalExtent&quot;&gt;
-                                            &lt;!-- This defines the time period covered by all SMAP Level 3 Freeze/Thaw data products. 
+                                            &lt;!-- This defines the time period covered by all SMAP Level 3 Freeze/Thaw data products.
                                             ECS indicates that they will automatically extend the final time based on receipt of data products. --&gt;
                                             &lt;gml:beginPosition&gt;2015-03-31T00:00:00.000Z&lt;/gml:beginPosition&gt;
                                             &lt;gml:endPosition&gt;2020-12-31T00:00:00.000Z&lt;/gml:endPosition&gt;
@@ -3757,7 +3757,7 @@ H5.EnableCheckNameClashing=true
                 <Value>2023-08-31</Value>
             </Attribute>
             <Attribute name="credit" type="String">
-                <Value>The software that generates the Level 3 Freeze/Thaw product and the data system that automates its production were designed and implemented 
+                <Value>The software that generates the Level 3 Freeze/Thaw product and the data system that automates its production were designed and implemented
                             at the Jet Propulsion Laboratory, California Institute of Technology in Pasadena, California.</Value>
             </Attribute>
             <Attribute name="topicCategory" type="String">

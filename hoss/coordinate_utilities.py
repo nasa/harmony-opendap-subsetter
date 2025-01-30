@@ -98,8 +98,6 @@ def get_dimension_array_names(
     dimension_names = variable.dimensions
 
     if len(dimension_names) >= 2:
-        # if the dimension is not a variable, was added as a
-        # configuration entry,
         return dimension_names
 
     # getting dimension names from coordinates

@@ -208,6 +208,19 @@ class InvalidCoordinateDataset(CustomError):
         )
 
 
+class InvalidDimensionNames(CustomError):
+    """This exception is raised when the granule file included in the input
+    request is not the nominal dimension order which is 'y,x'.
+
+    """
+
+    def __init__(self, dimension_names: str):
+        super().__init__(
+            'InvalidDimensionNames',
+            f'Dimension Names "{dimension_names}" not valid.',
+        )
+
+
 class UnsupportedDimensionOrder(CustomError):
     """This exception is raised when the granule file included in the input
     request is not the nominal dimension order which is 'y,x'.

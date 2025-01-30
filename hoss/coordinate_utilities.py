@@ -12,6 +12,7 @@ from hoss.exceptions import (
     IncompatibleCoordinateVariables,
     InvalidCoordinateData,
     InvalidCoordinateDataset,
+    InvalidDimensionNames,
     MissingCoordinateVariable,
     MissingVariable,
     UnsupportedDimensionOrder,
@@ -91,14 +92,17 @@ def get_dimension_array_names(
     configuration
     """
     variable = varinfo.get_variable(variable_name)
-    dimension_names = varinfo.get_variable(variable_name).dimensions
+    if variable is None:
+        return []
+
+    dimension_names = variable.dimensions
 
     if len(dimension_names) >= 2:
         # if the dimension is not a variable, was added as a
         # configuration entry,
-        if variable is not None:
-            return dimension_names
+        return dimension_names
 
+    # getting dimension names from coordinates
     latitude_coordinates, longitude_coordinates = get_coordinate_variables(
         varinfo, [variable_name]
     )
@@ -108,11 +112,8 @@ def get_dimension_array_names(
         dimension_array_names = get_dimension_array_names_from_coordinates(
             varinfo, latitude_coordinates[0]
         )
-    # if variable does not have coordinates (len = 0)
-    elif (
-        varinfo.get_variable(variable_name).is_latitude()
-        or varinfo.get_variable(variable_name).is_longitude()
-    ):
+    # if variable is a coordinate
+    elif variable.is_latitude() or variable.is_longitude():
         dimension_array_names = get_dimension_array_names_from_coordinates(
             varinfo, variable_name
         )
@@ -157,6 +158,9 @@ def create_dimension_arrays_from_coordinates(
     3) Generate the x-y dimscale array and return to the calling method
 
     """
+    if len(projected_dimension_names) < 2:
+        raise InvalidDimensionNames(projected_dimension_names)
+
     lat_arr = get_2d_coordinate_array(
         prefetch_dataset,
         latitude_coordinate.full_name_path,
@@ -191,19 +195,16 @@ def create_dimension_arrays_from_coordinates(
         col_dim_values, np.transpose(col_indices)[1], col_size
     )
 
-    if len(projected_dimension_names) >= 2:
-        projected_y, projected_x = (
-            projected_dimension_names[-2],
-            projected_dimension_names[-1],
-        )
+    projected_y, projected_x = (
+        projected_dimension_names[-2],
+        projected_dimension_names[-1],
+    )
 
-        if dim_order_is_y_x:
-            return {projected_y: y_dim, projected_x: x_dim}
-        raise UnsupportedDimensionOrder('x,y')
-        # this is not currently supported in the calling function in spatial.py
-        # return {projected_x: x_dim, projected_y: y_dim}
-
-    raise UnsupportedDimensionOrder(projected_dimension_names)
+    if dim_order_is_y_x:
+        return {projected_y: y_dim, projected_x: x_dim}
+    raise UnsupportedDimensionOrder('x,y')
+    # this is not currently supported in the calling function in spatial.py
+    # return {projected_x: x_dim, projected_y: y_dim}
 
 
 def get_2d_coordinate_array(

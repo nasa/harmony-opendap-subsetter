@@ -24,7 +24,7 @@ from varinfo import VariableFromDmr, VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
     get_coordinate_variables,
-    get_dimension_array_names_from_coordinate_variables,
+    get_dimension_array_names,
 )
 from hoss.exceptions import (
     InvalidIndexSubsetRequest,
@@ -441,10 +441,9 @@ def add_index_range(
     if variable.dimensions:
         variable_dimensions = variable.dimensions
     else:
-        # Anonymous dimensions, so check for dimension derived from coordinates:
-        variable_dimensions = get_dimension_array_names_from_coordinate_variables(
-            varinfo, variable_name
-        )
+        # Anonymous dimensions, so check for dimension derived from coordinates
+        # or from configuration
+        variable_dimensions = get_dimension_array_names(varinfo, variable_name)
 
     range_strings = get_range_strings(variable_dimensions, index_ranges)
 
@@ -452,6 +451,7 @@ def add_index_range(
         indices_string = ''
     else:
         indices_string = ''.join(range_strings)
+
     return f'{variable_name}{indices_string}'
 
 

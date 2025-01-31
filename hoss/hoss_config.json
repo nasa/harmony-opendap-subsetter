@@ -1,6 +1,6 @@
 {
   "Identification": "hoss_config",
-  "Version": 19,
+  "Version": 20,
   "CollectionShortNamePath": [
     "/HDF5_GLOBAL/short_name",
     "/NC_GLOBAL/short_name",
@@ -313,6 +313,48 @@
         }
       ],
       "_Description": "Ensure variables in /Soil_Moisture_Retrieval_Data_Polar_PM group point to correct coordinate variables."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FT(A|P|P_E)",
+        "VariablePattern": "^/Freeze_Thaw_Retrieval_Data(?:_(Global|Polar))/(transition_direction$|transition_state_flag$)"
+      },
+      "Attributes": [
+        {
+          "Name": "dimensions",
+          "Value": "y_dim x_dim"
+        }
+      ],
+      "_Description": "Only these fully referenced variables are 2D, with this rule overriding the 3D rule defined broadly for all variables"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FT(A|P|P_E)",
+        "VariablePattern": "^/Freeze_Thaw_Retrieval_Data(?:_(Global|Polar))/((?!transition_state_flag$)(?!transition_direction$).)*$|/Radar_Data/.*"
+      },
+      "Attributes": [
+        {
+          "Name": "dimensions",
+          "Value": "am_pm y_dim x_dim"
+        }
+      ],
+      "_Description": "SMAP L3 data are HDF5 and without dimension settings. Overrides here define the dimensions, a useful reference name, and critically, the dimension order."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP",
+        "VariablePattern": ".*landcover.*"
+      },
+      "Attributes": [
+        {
+          "Name": "dimensions",
+          "Value": "y_dim x_dim lc_type"
+        }
+      ],
+      "_Description": "SMAP L3 data are HDF5 and without dimension settings. Overrides here define the dimensions, a useful reference name, and critically, the dimension order."
     },
     {
       "Applicability": {

@@ -107,7 +107,7 @@ def get_dimension_array_names(
     # Given variable has coordinates: use latitude coordinate
     # to define variable spatial dimensions.
     if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
-        dimension_array_names = get_dimension_array_names_from_coordinates(
+        dimension_array_names = create_spatial_dimension_names_from_coordinates(
             varinfo, latitude_coordinates[0]
         )
 
@@ -115,7 +115,7 @@ def get_dimension_array_names(
     # but is itself a coordinate (latitude or longitude):
     # use as a coordinate to define spatial dimensions
     elif variable.is_latitude() or variable.is_longitude():
-        dimension_array_names = get_dimension_array_names_from_coordinates(
+        dimension_array_names = create_spatial_dimension_names_from_coordinates(
             varinfo, variable_name
         )
     else:
@@ -124,7 +124,7 @@ def get_dimension_array_names(
     return dimension_array_names
 
 
-def get_dimension_array_names_from_coordinates(
+def create_spatial_dimension_names_from_coordinates(
     varinfo: VarInfoFromDmr, variable_name: str
 ) -> str:
     """returns the x-y variable names that would

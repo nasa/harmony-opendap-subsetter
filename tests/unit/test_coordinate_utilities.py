@@ -13,10 +13,10 @@ from varinfo import VarInfoFromDmr
 from hoss.coordinate_utilities import (
     any_absent_dimension_variables,
     create_dimension_arrays_from_coordinates,
+    create_spatial_dimension_names_from_coordinates,
     get_2d_coordinate_array,
     get_coordinate_variables,
     get_dimension_array_names,
-    get_dimension_array_names_from_coordinates,
     get_dimension_order_and_dim_values,
     get_max_spread_pts,
     get_row_col_sizes_from_coordinates,
@@ -520,7 +520,7 @@ class TestCoordinateUtilities(TestCase):
                         'not present in coordinate prefetch file.',
                     )
 
-    def test_get_dimension_array_names_from_coordinates(self):
+    def test_create_spatial_dimension_names_from_coordinates(self):
         """Ensure that the expected projected dimension name
         is returned for the coordinate variables
         """
@@ -534,7 +534,9 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected projected dimension names for a science variable'
         ):
             self.assertListEqual(
-                get_dimension_array_names_from_coordinates(self.varinfo, self.latitude),
+                create_spatial_dimension_names_from_coordinates(
+                    self.varinfo, self.latitude
+                ),
                 expected_dimension_names,
             )
 
@@ -542,7 +544,7 @@ class TestCoordinateUtilities(TestCase):
             'Retrieves expected dimension names for the longitude variable'
         ):
             self.assertEqual(
-                get_dimension_array_names_from_coordinates(
+                create_spatial_dimension_names_from_coordinates(
                     self.varinfo, self.longitude
                 ),
                 expected_dimension_names,
@@ -550,7 +552,7 @@ class TestCoordinateUtilities(TestCase):
 
         with self.subTest('Raises exception for missing coordinate variable'):
             with self.assertRaises(MissingVariable) as context:
-                get_dimension_array_names_from_coordinates(
+                create_spatial_dimension_names_from_coordinates(
                     self.varinfo, '/Soil_Moisture_Retrieval_Data_AM/random_variable'
                 )
             self.assertEqual(

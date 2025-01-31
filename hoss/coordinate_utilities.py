@@ -100,17 +100,20 @@ def get_dimension_array_names(
     if len(dimension_names) >= 2:
         return dimension_names
 
-    # getting dimension names from coordinates
+    # creating dimension names from coordinates
     latitude_coordinates, longitude_coordinates = get_coordinate_variables(
         varinfo, [variable_name]
     )
-
-    # for one variable, the coordinate array length will always be 1 or 0
+    # Given variable has coordinates: use latitude coordinate 
+    # to define variable spatial dimensions.
     if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
         dimension_array_names = get_dimension_array_names_from_coordinates(
             varinfo, latitude_coordinates[0]
         )
-    # if variable is a coordinate
+
+    # Given variable variable has no coordinate attribute itself, 
+    # but is itself a coordinate (latitude or longitude): 
+    # use as a coordinate to define spatial dimensions
     elif variable.is_latitude() or variable.is_longitude():
         dimension_array_names = get_dimension_array_names_from_coordinates(
             varinfo, variable_name

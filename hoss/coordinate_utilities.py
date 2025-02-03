@@ -456,14 +456,16 @@ def create_dimension_arrays_from_geotransform(
 
     # compute the x,y locations along a column and row
     column_dimensions = [
-        col_row_to_xy(geotranform, i, 0) for i in range(lat_arr.shape[1])
+        col_row_to_xy(geotranform, col, 0) for col in range(lat_arr.shape[1])
     ]
-    row_dimensions = [col_row_to_xy(geotranform, 0, i) for i in range(lat_arr.shape[0])]
+    row_dimensions = [
+        col_row_to_xy(geotranform, 0, row) for row in range(lat_arr.shape[0])
+    ]
 
     # pull out dimension values
     x_values = np.array([x for x, y in column_dimensions], dtype=np.float64)
     y_values = np.array([y for x, y in row_dimensions], dtype=np.float64)
-    projected_y, projected_x = tuple(projected_dimension_names)
+    projected_y, projected_x = projected_dimension_names
 
     return {projected_y: y_values, projected_x: x_values}
 

@@ -120,7 +120,7 @@
       "Applicability": {
         "Mission": "SMAP",
         "ShortNamePath": "SPL3FTP",
-        "VariablePattern": "(?i).*polar.*"
+        "VariablePattern": "/Freeze_Thaw_Retrieval_Data_Polar/.*"
       },
       "Attributes": [
         {
@@ -134,7 +134,7 @@
       "Applicability": {
         "Mission": "SMAP",
         "ShortNamePath": "SPL3FTP_E",
-        "VariablePattern": "(?i).*polar.*"
+        "VariablePattern": "/Freeze_Thaw_Retrieval_Data_Polar/.*"
       },
       "Attributes": [
         {

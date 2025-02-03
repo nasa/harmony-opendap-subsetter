@@ -1,3 +1,11 @@
+## v1.1.3
+### 2025-01-29
+
+This version of HOSS supports configuration updates to hoss_config.json to
+add dimension configurations for 3D variables. Functions were updated to provide the
+ability to spatial subset 3D variables for products like SMAP L3 which did
+not have dimension arrays.
+
 ## v1.1.2
 ### 2025-01-20
 
@@ -13,8 +21,10 @@
 This version of HOSS merges the feature branch that contains V1.1.0 to the main branch.
 Additional updates included code quality improvements with additional unit tests, revised methodology
 in functions that selected the data points from the coordinate datasets and calculation of the dimension
-arrays. Functions were added to determine the dimension order for 2D variables.
-
+arrays. Functions were added to determine the dimension order for 2D variables. These updates,
+V1.1.1 and V1.1.0 are entirely to support SMAP L3 data - in particular SPL2SMAP_S, SPL3SMAP, SPL3SMA -
+all of which have “anonymous” dimensions (without dimension names and dimension variables).  No functional
+updates are present, nor changes that effect existing collection support.
 
 ## v1.1.0
 ### 2024-11-25

@@ -1572,3 +1572,116 @@ class TestSubset(TestCase):
             self.access_token,
             self.config,
         )
+
+    @patch('hoss.subset.get_opendap_nc4')
+    @patch('hoss.subset.get_spatial_index_ranges')
+    @patch('hoss.subset.get_prefetch_variables')
+    @patch('hoss.subset.get_varinfo')
+    def test_subset_granule_with_configured_dimensions(
+        self,
+        mock_get_varinfo,
+        mock_get_prefetch_variables,
+        mock_get_spatial_index_ranges,
+        mock_get_opendap_nc4,
+    ):
+        """Ensure a request to extract both a variable and spatial subset for
+        a granule with json configured dimensions but with valid coordinate attributes
+        without error. Because a bounding box is specified in this request,
+        the prefetch functionality and the HOSS spatial_index
+        functionality in `hoss.spatial.py` should be called. The index_ranges
+        should match what is expected for 2d and 3d variables.
+
+        """
+        harmony_message = Message(
+            {'accessToken': self.access_token, 'subset': {'bbox': [2, 54, 42, 72]}}
+        )
+        harmony_source = Source(
+            {
+                'collection': 'C1268617120-EEDTEST',
+                'shortName': 'SPL3FTP',
+                'variables': [
+                    {
+                        'id': 'V1247777461-EEDTEST',
+                        'name': 'surface_flag',
+                        'fullPath': '/Freeze_Thaw_Retrieval_Data_Global/surface_flag',
+                    },
+                    {
+                        'id': 'V1247777445-EEDTEST',
+                        'name': 'transition_direction',
+                        'fullPath': '/Freeze_Thaw_Retrieval_Data_Global/transition_direction',
+                    },
+                ],
+            }
+        )
+        granule_url = 'https://harmony.earthdata.nasa.gov/bucket/spl3ftp'
+        collection_short_name = 'SPL3FTP'
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3FTP_004.dmr',
+            'SPL3FTP',
+            'hoss/hoss_config.json',
+        )
+        prefetch_path = 'tests/data/SC_SPL3FTP_004_prefetch.nc4'
+        subset_output_path = 'SC_SPL3FTP_004_output.nc4'
+        required_variables = {
+            '/Freeze_Thaw_Retrieval_Data_Global/surface_flag',
+            '/Freeze_Thaw_Retrieval_Data_Global/transition_direction',
+            '/Freeze_Thaw_Retrieval_Data_Global/latitude',
+            '/Freeze_Thaw_Retrieval_Data_Global/longitude',
+        }
+
+        variables_with_ranges = {
+            '/Freeze_Thaw_Retrieval_Data_Global/longitude[][9:38][487:595]',
+            '/Freeze_Thaw_Retrieval_Data_Global/latitude[][9:38][487:595]',
+            '/Freeze_Thaw_Retrieval_Data_Global/surface_flag[][9:38][487:595]',
+            '/Freeze_Thaw_Retrieval_Data_Global/transition_direction[9:38][487:595]',
+        }
+        expected_index_ranges = {
+            '/Freeze_Thaw_Retrieval_Data_Global/x_dim': (487, 595),
+            '/Freeze_Thaw_Retrieval_Data_Global/y_dim': (9, 38),
+        }
+
+        mock_get_varinfo.return_value = smap_varinfo
+        mock_get_prefetch_variables.return_value = prefetch_path
+        mock_get_spatial_index_ranges.return_value = expected_index_ranges
+        mock_get_opendap_nc4.return_value = subset_output_path
+
+        output_path = subset_granule(
+            granule_url,
+            harmony_source,
+            self.output_dir,
+            harmony_message,
+            self.logger,
+            self.config,
+        )
+
+        self.assertEqual(output_path, subset_output_path)
+        mock_get_varinfo.assert_called_once_with(
+            granule_url,
+            self.output_dir,
+            self.logger,
+            collection_short_name,
+            self.access_token,
+            self.config,
+        )
+
+        mock_get_prefetch_variables.assert_called_once_with(
+            granule_url,
+            smap_varinfo,
+            required_variables,
+            self.output_dir,
+            self.logger,
+            self.access_token,
+            self.config,
+        )
+        mock_get_spatial_index_ranges.assert_called_once_with(
+            required_variables, smap_varinfo, prefetch_path, harmony_message, None
+        )
+
+        mock_get_opendap_nc4.assert_called_once_with(
+            granule_url,
+            variables_with_ranges,
+            self.output_dir,
+            self.logger,
+            self.access_token,
+            self.config,
+        )

@@ -1,3 +1,11 @@
+## v1.1.4
+### 2025-02-05
+
+This version of HOSS adds support for SMAP L3 variables that have all fill data in their corresponding
+lat/lon variables. A 'master geotransform' attribute has been added to the grid mapping reference variable
+for the affected collections and function updates were made to create the dimension arrays from the
+master geotransform when it is present.
+
 ## v1.1.3
 ### 2025-01-29
 

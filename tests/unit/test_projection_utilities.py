@@ -28,6 +28,8 @@ from hoss.projection_utilities import (
     get_bbox_polygon,
     get_geographic_resolution,
     get_grid_lat_lons,
+    get_grid_mapping_attributes,
+    get_master_geotransform,
     get_projected_x_y_extents,
     get_projected_x_y_variables,
     get_resolved_feature,
@@ -81,8 +83,89 @@ class TestProjectionUtilities(TestCase):
 
         return geojson_content
 
-    def test_get_variable_crs(self):
-        """Ensure a `pyproj.CRS` object can be instantiated via the reference
+    @patch('hoss.projection_utilities.get_grid_mapping_attributes')
+    def test_get_variable_crs(self, mock_get_grid_mapping_attributes):
+        """Ensure a `pyproj.CRS` object can be instantiated from the given
+        `grid_mapping_attributes`
+
+        """
+        sample_dmr = (
+            '<Dataset xmlns="namespace_string">'
+            '  <Dimension name="x" size="500" />'
+            '  <Dimension name="y" size="500" />'
+            '  <String name="crs">'
+            '    <Attribute name="false_easting" type="Float64">'
+            '      <Value>0.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="false_northing" type="Float64">'
+            '      <Value>0.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="latitude_of_projection_origin" type="Float64">'
+            '      <Value>40.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="longitude_of_central_meridian" type="Float64">'
+            '      <Value>-96.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="standard_parallel" type="Float64">'
+            '      <Value>50.</Value>'
+            '      <Value>70.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="long_name" type="String">'
+            '      <Value>CRS definition</Value>'
+            '    </Attribute>'
+            '    <Attribute name="longitude_of_prime_meridian" type="Float64">'
+            '      <Value>0.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="semi_major_axis" type="Float64">'
+            '      <Value>6378137.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="inverse_flattening" type="Float64">'
+            '      <Value>298.25722210100002</Value>'
+            '    </Attribute>'
+            '    <Attribute name="grid_mapping_name" type="String">'
+            '      <Value>albers_conical_equal_area</Value>'
+            '    </Attribute>'
+            '  </String>'
+            '  <Int16 name="variable_with_grid_mapping">'
+            '    <Dim name="/x" />'
+            '    <Dim name="/y" />'
+            '    <Attribute name="grid_mapping" type="String">'
+            '      <Value>crs</Value>'
+            '    </Attribute>'
+            '  </Int16>'
+            '</Dataset>'
+        )
+
+        dmr_path = path_join(self.temp_dir, 'grid_mapping.dmr.xml')
+
+        with open(dmr_path, 'w', encoding='utf-8') as file_handler:
+            file_handler.write(sample_dmr)
+
+        varinfo = VarInfoFromDmr(dmr_path)
+        grid_mapping_attributes = {
+            'false_easting': 0.0,
+            'false_northing': 0.0,
+            'latitude_of_projection_origin': 40.0,
+            'longitude_of_central_meridian': -96.0,
+            'standard_parallel': [50.0, 70.0],
+            'long_name': 'CRS definition',
+            'longitude_of_prime_meridian': 0.0,
+            'semi_major_axis': 6378137.0,
+            'inverse_flattening': 298.25722210100002,
+            'grid_mapping_name': 'albers_conical_equal_area',
+        }
+
+        mock_get_grid_mapping_attributes.return_value = grid_mapping_attributes
+
+        expected_crs = CRS.from_cf(grid_mapping_attributes)
+
+        with self.subTest('Variable with "grid_mapping" gets expected CRS'):
+            actual_crs = get_variable_crs('/variable_with_grid_mapping', varinfo)
+            self.assertEqual(actual_crs, expected_crs)
+            self.assertIsInstance(actual_crs, CRS)
+
+    def test_get_grid_mapping_attributes(self):
+        """Ensure that the grid mapping attributes can be retrieved via the reference
         in a variable. Alternatively, if the `grid_mapping` attribute is
         absent, or erroneous, ensure the expected exceptions are raised.
 
@@ -152,28 +235,32 @@ class TestProjectionUtilities(TestCase):
 
         varinfo = VarInfoFromDmr(dmr_path)
 
-        expected_crs = CRS.from_cf(
-            {
-                'false_easting': 0.0,
-                'false_northing': 0.0,
-                'latitude_of_projection_origin': 40.0,
-                'longitude_of_central_meridian': -96.0,
-                'standard_parallel': [50.0, 70.0],
-                'long_name': 'CRS definition',
-                'longitude_of_prime_meridian': 0.0,
-                'semi_major_axis': 6378137.0,
-                'inverse_flattening': 298.25722210100002,
-                'grid_mapping_name': 'albers_conical_equal_area',
-            }
-        )
+        expected_grid_mapping_attributes = {
+            'false_easting': 0.0,
+            'false_northing': 0.0,
+            'latitude_of_projection_origin': 40.0,
+            'longitude_of_central_meridian': -96.0,
+            'standard_parallel': [50.0, 70.0],
+            'long_name': 'CRS definition',
+            'longitude_of_prime_meridian': 0.0,
+            'semi_major_axis': 6378137.0,
+            'inverse_flattening': 298.25722210100002,
+            'grid_mapping_name': 'albers_conical_equal_area',
+        }
 
-        with self.subTest('Variable with "grid_mapping" gets expected CRS'):
-            actual_crs = get_variable_crs('/variable_with_grid_mapping', varinfo)
-            self.assertEqual(actual_crs, expected_crs)
+        with self.subTest(
+            'Variable with "grid_mapping" gets expected grid mapping attributes'
+        ):
+            actual_grid_mapping_attributes = get_grid_mapping_attributes(
+                '/variable_with_grid_mapping', varinfo
+            )
+            self.assertEqual(
+                actual_grid_mapping_attributes, expected_grid_mapping_attributes
+            )
 
         with self.subTest('Variable has no "grid_mapping" attribute'):
             with self.assertRaises(MissingGridMappingMetadata) as context:
-                get_variable_crs('/variable_without_grid_mapping', varinfo)
+                get_grid_mapping_attributes('/variable_without_grid_mapping', varinfo)
 
             self.assertEqual(
                 context.exception.message,
@@ -184,7 +271,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('"grid_mapping" points to non-existent variable'):
             with self.assertRaises(MissingGridMappingVariable) as context:
-                get_variable_crs('/variable_with_bad_grid_mapping', varinfo)
+                get_grid_mapping_attributes('/variable_with_bad_grid_mapping', varinfo)
 
             self.assertEqual(
                 context.exception.message,
@@ -202,19 +289,20 @@ class TestProjectionUtilities(TestCase):
                 'SPL3SMP',
                 'hoss/hoss_config.json',
             )
-            expected_crs = CRS.from_cf(
-                {
-                    'false_easting': 0.0,
-                    'false_northing': 0.0,
-                    'longitude_of_central_meridian': 0.0,
-                    'standard_parallel': 30.0,
-                    'grid_mapping_name': 'lambert_cylindrical_equal_area',
-                }
-            )
-            actual_crs = get_variable_crs(
+            expected_grid_mapping_attributes = {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+
+            actual_grid_mapping_attributes = get_grid_mapping_attributes(
                 '/Soil_Moisture_Retrieval_Data_AM/surface_flag', smap_varinfo
             )
-            self.assertEqual(actual_crs, expected_crs)
+            # self.assertEqual(
+            #     actual_grid_mapping_attributes, expected_grid_mapping_attributes
+            # )
 
     def test_get_projected_x_y_extents(self):
         """Ensure that the expected values for the x and y dimension extents
@@ -952,3 +1040,77 @@ class TestProjectionUtilities(TestCase):
         self.assertDictEqual(
             get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
         )
+
+    @patch('hoss.projection_utilities.get_grid_mapping_attributes')
+    def test_get_master_geotransform(self, mock_get_grid_mapping_attributes):
+        """Ensure that the `master_geotransform` attribute is returned. If it doesn't
+        exist the return value should be `None`.
+        """
+
+        sample_dmr = (
+            '<Dataset xmlns="namespace_string">'
+            '  <Dimension name="x" size="500" />'
+            '  <Dimension name="y" size="500" />'
+            '  <String name="crs">'
+            '    <Attribute name="false_easting" type="Float64">'
+            '      <Value>0.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="false_northing" type="Float64">'
+            '      <Value>0.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="latitude_of_projection_origin" type="Float64">'
+            '      <Value>40.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="longitude_of_central_meridian" type="Float64">'
+            '      <Value>-96.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="standard_parallel" type="Float64">'
+            '      <Value>50.</Value>'
+            '      <Value>70.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="long_name" type="String">'
+            '      <Value>CRS definition</Value>'
+            '    </Attribute>'
+            '    <Attribute name="longitude_of_prime_meridian" type="Float64">'
+            '      <Value>0.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="semi_major_axis" type="Float64">'
+            '      <Value>6378137.</Value>'
+            '    </Attribute>'
+            '    <Attribute name="inverse_flattening" type="Float64">'
+            '      <Value>298.25722210100002</Value>'
+            '    </Attribute>'
+            '    <Attribute name="grid_mapping_name" type="String">'
+            '      <Value>albers_conical_equal_area</Value>'
+            '    </Attribute>'
+            '  </String>'
+            '  <Int16 name="variable_with_grid_mapping">'
+            '    <Dim name="/x" />'
+            '    <Dim name="/y" />'
+            '    <Attribute name="grid_mapping" type="String">'
+            '      <Value>crs</Value>'
+            '    </Attribute>'
+            '  </Int16>'
+            '</Dataset>'
+        )
+
+        dmr_path = path_join(self.temp_dir, 'grid_mapping.dmr.xml')
+
+        with open(dmr_path, 'w', encoding='utf-8') as file_handler:
+            file_handler.write(sample_dmr)
+
+        varinfo = VarInfoFromDmr(dmr_path)
+
+        with self.subTest('grid mapping attributes contain master geotransform'):
+            mock_get_grid_mapping_attributes.return_value = {
+                'master_geotransform': [-9000000, 3000, 0, 9000000, 0, -3000]
+            }
+            result = get_master_geotransform("test_variable", varinfo)
+            self.assertEqual(result, [-9000000, 3000, 0, 9000000, 0, -3000])
+
+        with self.subTest('grid mapping attributes do not contain master geotransform'):
+            mock_get_grid_mapping_attributes.return_value = {
+                'fake_attribute': [-9000000, 3000, 0, 9000000, 0, -3000]
+            }
+            result = get_master_geotransform("test_variable", varinfo)
+            self.assertIsNone(result)

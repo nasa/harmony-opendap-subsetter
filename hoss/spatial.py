@@ -50,7 +50,7 @@ from hoss.dimension_utilities import (
     get_dimension_index_range,
 )
 from hoss.projection_utilities import (
-    get_grid_mapping_attributes,
+    get_master_geotransform,
     get_projected_x_y_extents,
     get_projected_x_y_variables,
     get_variable_crs,
@@ -185,10 +185,7 @@ def get_projected_x_y_index_ranges(
         and projected_y is not None
         and not set((projected_x, projected_y)).issubset(set(index_ranges.keys()))
     ):
-        grid_mapping_attributes = get_grid_mapping_attributes(
-            non_spatial_variable, varinfo
-        )
-        crs = get_variable_crs(grid_mapping_attributes)
+        crs = get_variable_crs(non_spatial_variable, varinfo)
 
         x_y_extents = get_projected_x_y_extents(
             dimensions_file[projected_x][:],
@@ -250,16 +247,16 @@ def get_x_y_index_ranges_from_coordinates(
 
     """
 
-    grid_mapping_attributes = get_grid_mapping_attributes(non_spatial_variable, varinfo)
-    crs = get_variable_crs(grid_mapping_attributes)
+    crs = get_variable_crs(non_spatial_variable, varinfo)
 
     projected_dimension_names = get_dimension_array_names(varinfo, non_spatial_variable)
-    if 'master_geotransform' in grid_mapping_attributes:
+    master_geotransform = get_master_geotransform(non_spatial_variable, varinfo)
+    if master_geotransform:
         dimension_arrays = create_dimension_arrays_from_geotransform(
             prefetch_coordinate_datasets,
             latitude_coordinate,
             projected_dimension_names,
-            grid_mapping_attributes['master_geotransform'],
+            master_geotransform,
         )
     else:
         dimension_arrays = create_dimension_arrays_from_coordinates(

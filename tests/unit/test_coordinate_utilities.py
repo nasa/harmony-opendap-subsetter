@@ -12,7 +12,9 @@ from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
     any_absent_dimension_variables,
+    col_row_to_xy,
     create_dimension_arrays_from_coordinates,
+    create_dimension_arrays_from_geotransform,
     create_spatial_dimension_names_from_coordinates,
     get_2d_coordinate_array,
     get_coordinate_variables,
@@ -1344,4 +1346,70 @@ class TestCoordinateUtilities(TestCase):
                 self.assertEqual(
                     x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/x_dim'][-1],
                     expected_xdim[-1],
+                )
+
+    def test_col_row_to_xy(
+        self,
+    ):
+        """Ensure the correct (x, y) points are returned for a given row,
+        column, and geotranform
+        """
+        geotransform = [-9000000, 3000, 0, 9000000, 0, -3000]
+        with self.subTest('Basic conversions of row and col to projected x and y'):
+            x, y = col_row_to_xy(geotransform, 0, 0)
+            self.assertEqual(x, -8998500.0)
+            self.assertEqual(y, 8998500.0)
+
+            x, y = col_row_to_xy(geotransform, 1, 1)
+            self.assertEqual(x, -8995500.0)
+            self.assertEqual(y, 8995500.0)
+
+    def test_create_dimension_arrays_from_geotransform(
+        self,
+    ):
+        """Ensure that the correct x and y dim arrays
+        are returned from a lat/lon prefetch dataset and
+        provided geotransform.
+        """
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3SMP_008.dmr',
+            'SPL3SMP',
+            'hoss/hoss_config.json',
+        )
+        smap_file_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
+
+        latitude_coordinate = smap_varinfo.get_variable(
+            '/Soil_Moisture_Retrieval_Data_AM/latitude'
+        )
+        projected_dimension_names = [
+            '/Soil_Moisture_Retrieval_Data_AM/dim_y',
+            '/Soil_Moisture_Retrieval_Data_AM/dim_x',
+        ]
+        geotransform = [-9000000, 3000, 0, 9000000, 0, -3000]
+        expected_xdim = np.array([-8998500.0, -6109500.0])
+        expected_ydim = np.array([8998500.0, 7783500.0])
+
+        with self.subTest('Projected x-y dim arrays from geotransform'):
+            with Dataset(smap_file_path, 'r') as smap_prefetch:
+                x_y_dim = create_dimension_arrays_from_geotransform(
+                    smap_prefetch,
+                    latitude_coordinate,
+                    projected_dimension_names,
+                    geotransform,
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/dim_x'][0],
+                    expected_xdim[0],
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/dim_x'][-1],
+                    expected_xdim[-1],
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/dim_y'][0],
+                    expected_ydim[0],
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/dim_y'][-1],
+                    expected_ydim[-1],
                 )

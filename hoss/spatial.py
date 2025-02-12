@@ -37,6 +37,7 @@ from hoss.bbox_utilities import (
 )
 from hoss.coordinate_utilities import (
     create_dimension_arrays_from_coordinates,
+    create_dimension_arrays_from_geotransform,
     get_coordinate_variables,
     get_dimension_array_names,
     get_variables_with_anonymous_dims,
@@ -49,6 +50,7 @@ from hoss.dimension_utilities import (
     get_dimension_index_range,
 )
 from hoss.projection_utilities import (
+    get_master_geotransform,
     get_projected_x_y_extents,
     get_projected_x_y_variables,
     get_variable_crs,
@@ -248,14 +250,22 @@ def get_x_y_index_ranges_from_coordinates(
     crs = get_variable_crs(non_spatial_variable, varinfo)
 
     projected_dimension_names = get_dimension_array_names(varinfo, non_spatial_variable)
-
-    dimension_arrays = create_dimension_arrays_from_coordinates(
-        prefetch_coordinate_datasets,
-        latitude_coordinate,
-        longitude_coordinate,
-        crs,
-        projected_dimension_names,
-    )
+    master_geotransform = get_master_geotransform(non_spatial_variable, varinfo)
+    if master_geotransform:
+        dimension_arrays = create_dimension_arrays_from_geotransform(
+            prefetch_coordinate_datasets,
+            latitude_coordinate,
+            projected_dimension_names,
+            master_geotransform,
+        )
+    else:
+        dimension_arrays = create_dimension_arrays_from_coordinates(
+            prefetch_coordinate_datasets,
+            latitude_coordinate,
+            longitude_coordinate,
+            crs,
+            projected_dimension_names,
+        )
 
     projected_y, projected_x = dimension_arrays.keys()
 

@@ -41,9 +41,16 @@ Shape = Union[LineString, Point, Polygon, MultiShape]
 
 
 def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
+    """Retrieves the grid mapping variable metadata attributes for a given
+    variable and creates a `pyproj.CRS` object from the grid mapping attributes.
+
+    """
+    return CRS.from_cf(get_grid_mapping_attributes(variable, varinfo))
+
+
+def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
     """Check the metadata attributes for the variable to find the associated
-    grid mapping variable. Create a `pyproj.CRS` object from the grid
-    mapping variable metadata attributes.
+    grid mapping variable.
 
     All metadata attributes that contain references from one variable to
     another are stored in the `Variable.references` dictionary attribute
@@ -66,11 +73,11 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
             if grid_mapping_variable is not None:
                 cf_attributes = grid_mapping_variable.attributes
             else:
-                # check for any overrides
+                # check for configuration provided attributes
                 cf_attributes = varinfo.get_missing_variable_attributes(grid_mapping)
 
             if cf_attributes:
-                crs = CRS.from_cf(cf_attributes)
+                return cf_attributes
             else:
                 raise MissingGridMappingVariable(grid_mapping, variable)
 
@@ -80,7 +87,18 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     else:
         raise MissingGridMappingMetadata(variable)
 
-    return crs
+
+def get_master_geotransform(
+    variable: str, varinfo: VarInfoFromDmr
+) -> Optional[List[int]]:
+    """Retrieves the `master_geotransform` attribute from the grid mapping
+    attributes of the given variable. If the `master_geotransform` attribute
+    doesn't exist, a `None` value will be returned.
+
+    """
+    return get_grid_mapping_attributes(variable, varinfo).get(
+        "master_geotransform", None
+    )
 
 
 def get_projected_x_y_variables(

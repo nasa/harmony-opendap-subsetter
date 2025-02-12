@@ -11,15 +11,20 @@ from pyproj import CRS
 from varinfo import VarInfoFromDmr
 
 from hoss.coordinate_utilities import (
+    add_to_unique_list,
     any_absent_dimension_variables,
     create_dimension_arrays_from_coordinates,
     create_spatial_dimension_names_from_coordinates,
     get_2d_coordinate_array,
+    get_configured_dimension_order,
     get_coordinate_variables,
     get_dimension_array_names,
     get_dimension_order_and_dim_values,
+    get_lat_coordinates,
+    get_lon_coordinates,
     get_max_spread_pts,
     get_row_col_sizes_from_coordinates,
+    get_the_other_coordinates,
     get_valid_indices,
     get_valid_sample_pts,
     get_variables_with_anonymous_dims,
@@ -387,7 +392,7 @@ class TestCoordinateUtilities(TestCase):
                 self.assertIn(expected_variable, actual_coordinate_variables[1])
 
         with self.subTest('No lat coordinate variables for the requested variables'):
-            # should return one valid list and an empty list
+            # should return an empty list
             actual_coordinate_variables = get_coordinate_variables(
                 self.test_varinfo,
                 ['/Soil_Moisture_Retrieval_Data_AM/no_lat_coordinate_variable'],
@@ -397,7 +402,7 @@ class TestCoordinateUtilities(TestCase):
                 ([], ['/Soil_Moisture_Retrieval_Data_AM/longitude']),
             )
         with self.subTest('No lon coordinate variables for the requested variables'):
-            # should return one valid list and an empty list
+            # should return an empty list
             actual_coordinate_variables = get_coordinate_variables(
                 self.test_varinfo,
                 ['/Soil_Moisture_Retrieval_Data_AM/no_lon_coordinate_variable'],
@@ -427,6 +432,39 @@ class TestCoordinateUtilities(TestCase):
                 ['/Soil_Moisture_Retrieval_Data_AM/variable_with_fake_coordinates'],
             )
             self.assertTupleEqual(fake_coordinate_variables, ([], []))
+
+    def test_get_the_other_coordinates(self):
+        """Ensure that the correct corresponding coordinates
+        are returned when the requested variable is a coordinate variable
+        """
+        requested_coordinate_variables = [
+            '/Soil_Moisture_Retrieval_Data_AM/latitude',
+            '/Soil_Moisture_Retrieval_Data_PM/latitude_pm',
+        ]
+        expected_coordinate_variables = [
+            '/Soil_Moisture_Retrieval_Data_AM/longitude',
+            '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
+        ]
+        with self.subTest(
+            'Retrieves expected coordinates for the requested coordinate variables'
+        ):
+            actual_coordinate_variables = get_the_other_coordinates(
+                self.varinfo, requested_coordinate_variables
+            )
+            self.assertEqual(
+                len(expected_coordinate_variables), len(actual_coordinate_variables)
+            )
+            self.assertCountEqual(
+                expected_coordinate_variables[0], actual_coordinate_variables[0]
+            )
+            self.assertCountEqual(
+                expected_coordinate_variables[0], actual_coordinate_variables[0]
+            )
+            for expected_variable in expected_coordinate_variables[0]:
+                self.assertIn(expected_variable, actual_coordinate_variables[0])
+
+            for expected_variable in expected_coordinate_variables[1]:
+                self.assertIn(expected_variable, actual_coordinate_variables[1])
 
     def test_interpolate_dim_values_from_sample_pts(self):
         """Ensure that the dimension scale generated from the
@@ -632,6 +670,60 @@ class TestCoordinateUtilities(TestCase):
                     '/Freeze_Thaw_Retrieval_Data_Global/y_dim',
                     '/Freeze_Thaw_Retrieval_Data_Global/x_dim',
                 ],
+            )
+
+    def test_get_configured_dimension_order(self):
+        """Ensure that the expected x-y dimension name
+        order is returned correctly if configured in
+        hoss_config.json file
+        """
+        with self.subTest(
+            'Retrieves expected dimension order configured for not nominal order'
+        ):
+            configured_dimension_names_not_nominal = [
+                '/Soil_Moisture_Retrieval_Data_AM/y_dim',
+                '/Soil_Moisture_Retrieval_Data_AM/x_dim',
+                '/Soil_Moisture_Retrieval_Data_AM/lc_type',
+            ]
+            expected_dimension_order = {
+                'projection_y_coordinate': '/Soil_Moisture_Retrieval_Data_AM/y_dim',
+                'projection_x_coordinate': '/Soil_Moisture_Retrieval_Data_AM/x_dim',
+            }
+            self.assertDictEqual(
+                get_configured_dimension_order(
+                    self.varinfo, configured_dimension_names_not_nominal
+                ),
+                expected_dimension_order,
+            )
+
+        with self.subTest('Retrieves empty dictionary for not configured order'):
+            not_configured_dimension_names = [
+                '/Soil_Moisture_Retrieval_Data_AM/dim_y',
+                '/Soil_Moisture_Retrieval_Data_AM/dim_x',
+            ]
+            expected_dimension_order = {}
+            self.assertDictEqual(
+                get_configured_dimension_order(
+                    self.varinfo,
+                    not_configured_dimension_names,
+                ),
+                expected_dimension_order,
+            )
+        with self.subTest(
+            'Retrieves expected dimension order configured for nominal order'
+        ):
+            configured_dimension_names_nominal = [
+                '/Soil_Moisture_Retrieval_Data_AM/am_pm',
+                '/Soil_Moisture_Retrieval_Data_AM/y_dim',
+                '/Soil_Moisture_Retrieval_Data_AM/x_dim',
+            ]
+            expected_dimension_order = {}
+
+            self.assertDictEqual(
+                get_configured_dimension_order(
+                    self.smap_ftp_varinfo, configured_dimension_names_nominal
+                ),
+                expected_dimension_order,
             )
 
     def test_get_row_col_sizes_from_coordinates(self):
@@ -1163,14 +1255,16 @@ class TestCoordinateUtilities(TestCase):
                     latitude_coordinate,
                     longitude_coordinate,
                     crs,
-                    projected_dimension_names_am,
+                    '/Soil_Moisture_Retrieval_Data_AM/albedo',
+                    smap_varinfo,
                 )
                 x_y_dim_pm = create_dimension_arrays_from_coordinates(
                     smap_prefetch,
                     latitude_coordinate,
                     longitude_coordinate,
                     crs,
-                    projected_dimension_names_pm,
+                    '/Soil_Moisture_Retrieval_Data_PM/albedo_pm',
+                    smap_varinfo,
                 )
 
                 self.assertListEqual(
@@ -1234,7 +1328,8 @@ class TestCoordinateUtilities(TestCase):
                     latitude_coordinate,
                     longitude_coordinate,
                     crs,
-                    projected_dimension_names_am,
+                    '/Soil_Moisture_Retrieval_Data_AM/albedo',
+                    smap_varinfo,
                 )
                 self.assertEqual(
                     context.exception.message,
@@ -1263,7 +1358,8 @@ class TestCoordinateUtilities(TestCase):
                     latitude_coordinate,
                     longitude_coordinate,
                     crs,
-                    projected_dimension_names_am,
+                    '/Soil_Moisture_Retrieval_Data_AM/albedo',
+                    smap_varinfo,
                 )
                 self.assertEqual(
                     context.exception.message,
@@ -1280,15 +1376,16 @@ class TestCoordinateUtilities(TestCase):
                     latitude_coordinate,
                     longitude_coordinate,
                     crs,
-                    projected_dimension_names_am,
+                    '/Soil_Moisture_Retrieval_Data_AM/albedo',
+                    smap_varinfo,
                 )
 
-    def test_create_dimension_arrays_from_3d_coordinates(
+    def test_create_dimension_arrays_from_nominal_3d_coordinates(
         self,
     ):
         """Ensure that the correct x and y dim arrays
         are returned from a lat/lon prefetch dataset and
-        crs provided.
+        crs provided for a nominal (z,y,x) order 3D variable
         """
 
         latitude_coordinate = self.smap_ftp_varinfo.get_variable(
@@ -1322,7 +1419,8 @@ class TestCoordinateUtilities(TestCase):
                     latitude_coordinate,
                     longitude_coordinate,
                     crs,
-                    dimension_names_global,
+                    '/Freeze_Thaw_Retrieval_Data_Global/landcover_class',
+                    self.smap_ftp_varinfo,
                 )
 
                 self.assertListEqual(
@@ -1343,5 +1441,67 @@ class TestCoordinateUtilities(TestCase):
                 )
                 self.assertEqual(
                     x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/x_dim'][-1],
+                    expected_xdim[-1],
+                )
+
+    def test_create_dimension_arrays_from_not_nominal_3d_coordinates(self):
+        """Ensure that the correct x and y dim arrays
+        are returned from a lat/lon prefetch dataset and
+        crs provided for a 3D variable that is (y,x,z) order and
+        not the nominal (z,y,x) order
+        """
+
+        latitude_coordinate = self.varinfo.get_variable(
+            '/Soil_Moisture_Retrieval_Data_AM/latitude'
+        )
+        longitude_coordinate = self.varinfo.get_variable(
+            '/Soil_Moisture_Retrieval_Data_AM/longitude'
+        )
+        dimension_names = [
+            '/Soil_Moisture_Retrieval_Data_AM/y_dim',
+            '/Soil_Moisture_Retrieval_Data_AM/x_dim',
+            '/Soil_Moisture_Retrieval_Data_AM/lc_type',
+        ]
+
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'standard_parallel': 30.0,
+                'grid_mapping_name': 'lambert_cylindrical_equal_area',
+            }
+        )
+        expected_xdim = np.array([-17349514.353068016, 17349514.353068016])
+        expected_ydim = np.array([7296524.6913595535, -7296524.691359556])
+        with self.subTest('Projected x-y dim arrays from coordinate datasets'):
+            with Dataset(self.nc4file, 'r') as smap_prefetch:
+                x_y_dim = create_dimension_arrays_from_coordinates(
+                    smap_prefetch,
+                    latitude_coordinate,
+                    longitude_coordinate,
+                    crs,
+                    '/Soil_Moisture_Retrieval_Data_AM/landcover_class',
+                    self.varinfo,
+                )
+
+                self.assertListEqual(
+                    list(x_y_dim.keys()),
+                    [dimension_names[0], dimension_names[1]],
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/y_dim'][0],
+                    expected_ydim[0],
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/y_dim'][-1],
+                    expected_ydim[-1],
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/x_dim'][0],
+                    expected_xdim[0],
+                )
+                self.assertEqual(
+                    x_y_dim['/Soil_Moisture_Retrieval_Data_AM/x_dim'][-1],
                     expected_xdim[-1],
                 )

@@ -33,21 +33,97 @@ def get_coordinate_variables(
         requested_variables, 'coordinates'
     )
 
+    latitude_coordinate_variables = get_lat_coordinates(varinfo, coordinate_variables)
+    longitude_coordinate_variables = get_lon_coordinates(varinfo, coordinate_variables)
+
+    # check if the request variables include coordinates
+    lat_coords = get_lat_coordinates(varinfo, requested_variables)
+    lon_coords = get_lon_coordinates(varinfo, requested_variables)
+
+    if lat_coords:
+        add_to_unique_list(latitude_coordinate_variables, lat_coords)
+        the_other_lon_coords = get_the_other_coordinates(varinfo, lat_coords)
+        if the_other_lon_coords:
+            add_to_unique_list(longitude_coordinate_variables, the_other_lon_coords)
+
+    if lon_coords:
+        add_to_unique_list(longitude_coordinate_variables, lon_coords)
+        the_other_lat_coords = get_the_other_coordinates(varinfo, lon_coords)
+        if the_other_lat_coords:
+            add_to_unique_list(latitude_coordinate_variables, the_other_lat_coords)
+
+    return latitude_coordinate_variables, longitude_coordinate_variables
+
+
+def get_lat_coordinates(
+    varinfo: VarInfoFromDmr, coordinate_variables: list[str]
+) -> list[str]:
+    """Returns variables that are latitude coordinates"""
     latitude_coordinate_variables = [
         coordinate
         for coordinate in coordinate_variables
         if varinfo.get_variable(coordinate) is not None
         and varinfo.get_variable(coordinate).is_latitude()
     ]
+    return latitude_coordinate_variables
 
+
+def get_lon_coordinates(
+    varinfo: VarInfoFromDmr, coordinate_variables: list[str]
+) -> list[str]:
+    """Returns variables that are longitude coordinates"""
     longitude_coordinate_variables = [
         coordinate
         for coordinate in coordinate_variables
         if varinfo.get_variable(coordinate) is not None
         and varinfo.get_variable(coordinate).is_longitude()
     ]
+    return longitude_coordinate_variables
 
-    return latitude_coordinate_variables, longitude_coordinate_variables
+
+def get_the_other_coordinates(
+    varinfo: VarInfoFromDmr, requested_coords: list[str]
+) -> list[str]:
+    """
+    Returns the other coordinates for a coordinate variable
+    """
+    variable_with_coordinates = varinfo.get_variables_with_coordinates()
+    the_other_coords = []
+
+    for requested_coord in requested_coords:
+        requested_coord_variable = varinfo.get_variable(requested_coord)
+
+        for variable in variable_with_coordinates:
+            lat_coord = ''
+            lon_coord = ''
+            lat_lon_coords = varinfo.get_variable(variable).references.get(
+                "coordinates"
+            )
+            for reference in lat_lon_coords:
+                if varinfo.get_variable(reference) is not None:
+                    if varinfo.get_variable(reference).is_latitude():
+                        lat_coord = reference
+                    elif varinfo.get_variable(reference).is_longitude():
+                        lon_coord = reference
+
+            if lat_coord and lon_coord:
+                if requested_coord_variable.is_latitude():
+                    if requested_coord_variable.full_name_path == lat_coord:
+                        the_other_coords.append(lon_coord)
+                        break
+                elif requested_coord_variable.is_longitude():
+                    if requested_coord_variable.full_name_path == lon_coord:
+                        the_other_coords.append(lat_coord)
+                        break
+    return the_other_coords
+
+
+def add_to_unique_list(first_list: list[str], second_list: list[str]) -> list[str]:
+    """Re_summary_turns an updated unique list of strings"""
+    list_ret = [
+        first_list.append(item) for item in second_list if item not in first_list
+    ]
+    return first_list
 
 
 def get_variables_with_anonymous_dims(
@@ -145,12 +221,31 @@ def create_spatial_dimension_names_from_coordinates(
     return dimension_array_names
 
 
+def get_configured_dimension_order(
+    varinfo: VarInfoFromDmr, dimension_names: list[str]
+) -> dict[str, str]:
+    """This function returns the dimension order in a dictionary
+    with standard_names that is used to define the dimensions e.g.
+    'projection_x_coordinate' and 'projection_y_coordinate' if they
+    are configured in hoss_config.json
+
+    """
+    dimension_name_order = {}
+    for dimension_name in dimension_names:
+        attrs = varinfo.get_missing_variable_attributes(dimension_name)
+        if 'standard_name' in attrs.keys():
+            dimension_name_order[attrs['standard_name']] = dimension_name
+    return dimension_name_order
+
+
 def create_dimension_arrays_from_coordinates(
     prefetch_dataset: Dataset,
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
     crs: CRS,
-    projected_dimension_names: list[str],
+    # projected_dimension_names: list[str],
+    variable_name: str,
+    varinfo: VarInfoFromDmr,
 ) -> dict[str, np.ndarray]:
     """Generate artificial 1D dimensions scales for each
     2D dimension or coordinate variable.
@@ -159,8 +254,12 @@ def create_dimension_arrays_from_coordinates(
     3) Generate the x-y dimscale array and return to the calling method
 
     """
-    if len(projected_dimension_names) < 2:
-        raise InvalidDimensionNames(projected_dimension_names)
+    dimension_names = get_dimension_array_names(varinfo, variable_name)
+    # check if the dimension names are configured in hoss_config
+    dimension_name_order = get_configured_dimension_order(varinfo, dimension_names)
+
+    if len(dimension_names) < 2:
+        raise InvalidDimensionNames(dimension_names)
 
     lat_arr = get_2d_coordinate_array(
         prefetch_dataset,
@@ -170,11 +269,12 @@ def create_dimension_arrays_from_coordinates(
         prefetch_dataset,
         longitude_coordinate.full_name_path,
     )
-
+    # get the max spread x and y indices
     row_indices, col_indices = get_valid_sample_pts(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
 
+    # get the dimension order from the coordinate data
     dim_order_is_y_x, row_dim_values = get_dimension_order_and_dim_values(
         lat_arr, lon_arr, row_indices, crs, is_row=True
     )
@@ -191,15 +291,20 @@ def create_dimension_arrays_from_coordinates(
     y_dim = interpolate_dim_values_from_sample_pts(
         row_dim_values, np.transpose(row_indices)[0], row_size
     )
-
     x_dim = interpolate_dim_values_from_sample_pts(
         col_dim_values, np.transpose(col_indices)[1], col_size
     )
 
-    projected_y, projected_x = (
-        projected_dimension_names[-2],
-        projected_dimension_names[-1],
-    )
+    # if it is not configured in the hoss_config.json
+    # assume it is nominal order [z,y,x]
+    if not dimension_name_order:
+        projected_y, projected_x = (
+            dimension_names[-2],
+            dimension_names[-1],
+        )
+    else:
+        projected_x = dimension_name_order['projection_x_coordinate']
+        projected_y = dimension_name_order['projection_y_coordinate']
 
     if dim_order_is_y_x:
         return {projected_y: y_dim, projected_x: x_dim}

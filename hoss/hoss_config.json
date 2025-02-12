@@ -1,6 +1,6 @@
 {
   "Identification": "hoss_config",
-  "Version": 20,
+  "Version": 22,
   "CollectionShortNamePath": [
     "/HDF5_GLOBAL/short_name",
     "/NC_GLOBAL/short_name",
@@ -355,6 +355,68 @@
         }
       ],
       "_Description": "SMAP L3 data are HDF5 and without dimension settings. Overrides here define the dimensions, a useful reference name, and critically, the dimension order."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP",
+        "VariablePattern": ".*/x_dim"
+      },
+      "Attributes": [
+        {
+          "Name": "dimensions",
+          "Value": "x_dim"
+        },
+        {
+          "Name": "Units",
+          "Value": "m"
+        },
+        {
+          "Name": "standard_name",
+          "Value": "projection_x_coordinate"
+        }
+      ],
+      "_Description": "The pseudo-dimension variable is here supplemented with variable attributes (as if it was a dimension variables) to fully specify the X dimension."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP",
+        "VariablePattern": ".*/y_dim"
+      },
+      "Attributes": [
+        {
+          "Name": "dimensions",
+          "Value": "y_dim"
+        },
+        {
+          "Name": "Units",
+          "Value": "m"
+        },
+        {
+          "Name": "standard_name",
+          "Value": "projection_y_coordinate"
+        }
+      ],
+      "_Description": "The pseudo-dimension variable is here supplemented with variable attributes (as if it was a dimension variables) to fully specify the Y dimension."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP",
+        "VariablePattern": ".*/am_pm"
+      },
+      "Attributes": [
+        {
+          "Name": "dimensions",
+          "Value": "am_pm"
+        },
+        {
+          "Name": "long_name",
+          "Value": "AM-PM dimension of size 2, 0 => AM, 1=> PM"
+        }
+      ],
+      "_Description": "The pseudo-dimension variable is here supplemented with variable attributes (as if it was a dimension variables) to clarify the dimension name"
     },
     {
       "Applicability": {

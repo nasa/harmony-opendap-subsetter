@@ -73,7 +73,7 @@ def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
             if grid_mapping_variable is not None:
                 cf_attributes = grid_mapping_variable.attributes
             else:
-                # check for any overrides
+                # check for configuration provided attributes
                 cf_attributes = varinfo.get_missing_variable_attributes(grid_mapping)
 
             if cf_attributes:

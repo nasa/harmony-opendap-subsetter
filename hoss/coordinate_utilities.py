@@ -136,8 +136,8 @@ def create_spatial_dimension_names_from_coordinates(
 
     if variable is not None:
         dimension_array_names = [
-            f'{variable.group_path}/dim_y',
-            f'{variable.group_path}/dim_x',
+            f'{variable.group_path}/y_dim',
+            f'{variable.group_path}/x_dim',
         ]
     else:
         raise MissingVariable(variable_name)
@@ -150,7 +150,8 @@ def create_dimension_arrays_from_coordinates(
     latitude_coordinate: VariableFromDmr,
     longitude_coordinate: VariableFromDmr,
     crs: CRS,
-    projected_dimension_names: list[str],
+    variable_name: str,
+    varinfo: VarInfoFromDmr,
 ) -> dict[str, np.ndarray]:
     """Generate artificial 1D dimensions scales for each
     2D dimension or coordinate variable.
@@ -159,8 +160,12 @@ def create_dimension_arrays_from_coordinates(
     3) Generate the x-y dimscale array and return to the calling method
 
     """
-    if len(projected_dimension_names) < 2:
-        raise InvalidDimensionNames(projected_dimension_names)
+    dimension_names = get_dimension_array_names(varinfo, variable_name)
+    if len(dimension_names) < 2:
+        raise InvalidDimensionNames(dimension_names)
+
+    # check if the dimension names are configured in hoss_config
+    dimension_name_order = get_configured_dimension_order(varinfo, dimension_names)
 
     lat_arr = get_2d_coordinate_array(
         prefetch_dataset,
@@ -171,10 +176,12 @@ def create_dimension_arrays_from_coordinates(
         longitude_coordinate.full_name_path,
     )
 
+    # get the max spread x and y indices
     row_indices, col_indices = get_valid_sample_pts(
         lat_arr, lon_arr, latitude_coordinate, longitude_coordinate
     )
 
+    # get the dimension order from the coordinate data
     dim_order_is_y_x, row_dim_values = get_dimension_order_and_dim_values(
         lat_arr, lon_arr, row_indices, crs, is_row=True
     )
@@ -188,24 +195,47 @@ def create_dimension_arrays_from_coordinates(
         lat_arr, lon_arr, dim_order_is_y_x
     )
 
+    # calculate the dimension values
     y_dim = interpolate_dim_values_from_sample_pts(
         row_dim_values, np.transpose(row_indices)[0], row_size
     )
-
     x_dim = interpolate_dim_values_from_sample_pts(
         col_dim_values, np.transpose(col_indices)[1], col_size
     )
 
-    projected_y, projected_x = (
-        projected_dimension_names[-2],
-        projected_dimension_names[-1],
-    )
+    # if it is not configured in the hoss_config.json
+    # assume it is nominal order [z,y,x]
+    if not dimension_name_order:
+        projected_y, projected_x = (
+            dimension_names[-2],
+            dimension_names[-1],
+        )
+    else:
+        projected_x = dimension_name_order['projection_x_coordinate']
+        projected_y = dimension_name_order['projection_y_coordinate']
 
     if dim_order_is_y_x:
         return {projected_y: y_dim, projected_x: x_dim}
     raise UnsupportedDimensionOrder('x,y')
     # this is not currently supported in the calling function in spatial.py
     # return {projected_x: x_dim, projected_y: y_dim}
+
+
+def get_configured_dimension_order(
+    varinfo: VarInfoFromDmr, dimension_names: list[str]
+) -> dict[str, str]:
+    """This function returns the dimension order in a dictionary
+    with standard_names that is used to define the dimensions e.g.
+    'projection_x_coordinate' and 'projection_y_coordinate' if they
+    are configured in hoss_config.json
+
+    """
+    dimension_name_order = {}
+    for dimension_name in dimension_names:
+        attrs = varinfo.get_missing_variable_attributes(dimension_name)
+        if 'standard_name' in attrs.keys():
+            dimension_name_order[attrs['standard_name']] = dimension_name
+    return dimension_name_order
 
 
 def get_2d_coordinate_array(
@@ -445,10 +475,14 @@ def interpolate_dim_values_from_sample_pts(
 def create_dimension_arrays_from_geotransform(
     prefetch_dataset: Dataset,
     latitude_coordinate: VariableFromDmr,
-    projected_dimension_names: list[str],
+    variable_name: str,
+    varinfo: VarInfoFromDmr,
     geotranform,
 ) -> dict[str, np.ndarray]:
     """Generate artificial 1D dimensions scales from geotransform"""
+
+    projected_dimension_names = get_dimension_array_names(varinfo, variable_name)
+
     lat_arr = get_2d_coordinate_array(
         prefetch_dataset,
         latitude_coordinate.full_name_path,

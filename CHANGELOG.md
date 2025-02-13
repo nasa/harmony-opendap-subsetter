@@ -1,3 +1,11 @@
+## v1.1.5
+### 2025-02-14
+
+This version of HOSS adds support for 3D variables which
+do not have the nominal order. This would provide support
+for the 3D variables in SMAP - SPL3SMP with dimension order
+information provided in the configurations file.
+
 ## v1.1.4
 ### 2025-02-12
 

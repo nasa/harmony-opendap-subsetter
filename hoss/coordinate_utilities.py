@@ -204,16 +204,15 @@ def create_dimension_arrays_from_coordinates(
     )
 
     # if it is not configured in the hoss_config.json
-    # assume it is nominal order [z,y,x]
+    # assume it is nominal order [z,y,x],
     if not dimension_name_order:
-        projected_y, projected_x = (
-            dimension_names[-2],
-            dimension_names[-1],
-        )
+        projected_y, projected_x = dimension_names[-2:]
     else:
-        projected_x = dimension_name_order['projection_x_coordinate']
-        projected_y = dimension_name_order['projection_y_coordinate']
-
+        # if it is confgured e.g. [y,x,z] order
+        projected_y, projected_x = (
+            dimension_name_order['projection_y_coordinate'],
+            dimension_name_order['projection_x_coordinate'],
+        )
     if dim_order_is_y_x:
         return {projected_y: y_dim, projected_x: x_dim}
     raise UnsupportedDimensionOrder('x,y')

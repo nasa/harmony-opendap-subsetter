@@ -246,6 +246,7 @@ def get_x_y_index_ranges_from_coordinates(
     points.
 
     """
+    projected_dimension_names = get_dimension_array_names(varinfo, non_spatial_variable)
 
     crs = get_variable_crs(non_spatial_variable, varinfo)
     master_geotransform = get_master_geotransform(non_spatial_variable, varinfo)
@@ -253,8 +254,7 @@ def get_x_y_index_ranges_from_coordinates(
         dimension_arrays = create_dimension_arrays_from_geotransform(
             prefetch_coordinate_datasets,
             latitude_coordinate,
-            non_spatial_variable,
-            varinfo,
+            projected_dimension_names,
             master_geotransform,
         )
     else:
@@ -263,9 +263,7 @@ def get_x_y_index_ranges_from_coordinates(
             latitude_coordinate,
             longitude_coordinate,
             crs,
-            # projected_dimension_names,
-            non_spatial_variable,
-            varinfo,
+            projected_dimension_names,
         )
 
     projected_y, projected_x = dimension_arrays.keys()

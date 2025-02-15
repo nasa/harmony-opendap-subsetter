@@ -95,11 +95,11 @@ def get_dimension_array_names(
     if variable is None:
         return {}
 
-    dimension_names = variable.dimensions
-    configured_dimensions = get_configured_dimension_order(varinfo, dimension_names)
+    configured_dimensions = variable.dimensions
+    dimension_names = get_configured_dimension_order(varinfo, configured_dimensions)
 
-    if len(configured_dimensions) >= 2:
-        return configured_dimensions
+    if len(dimension_names) >= 2:
+        return dimension_names
 
     # creating dimension names from coordinates
     latitude_coordinates, longitude_coordinates = get_coordinate_variables(
@@ -119,7 +119,8 @@ def get_dimension_array_names(
         dimension_names = create_spatial_dimension_names_from_coordinates(
             varinfo, variable_name
         )
-
+    else:
+        dimension_names = {}
     return dimension_names
 
 
@@ -162,8 +163,6 @@ def create_dimension_arrays_from_coordinates(
         raise InvalidDimensionNames(dimension_names)
 
     # check if the dimension names are configured in hoss_config
-    # dimension_name_order = get_configured_dimension_order(varinfo, dimension_names)
-
     lat_arr = get_2d_coordinate_array(
         prefetch_dataset,
         latitude_coordinate.full_name_path,
@@ -200,12 +199,6 @@ def create_dimension_arrays_from_coordinates(
         col_dim_values, np.transpose(col_indices)[1], col_size
     )
 
-    # if it is not configured in the hoss_config.json
-    # assume it is nominal order [z,y,x],
-    # if not dimension_name_order:
-    #     projected_y, projected_x = dimension_names[-2:]
-    # else:
-    # if it is confgured e.g. [y,x,z] order
     projected_y = dimension_names['projection_y_coordinate']
     projected_x = dimension_names['projection_x_coordinate']
 
@@ -475,8 +468,6 @@ def create_dimension_arrays_from_geotransform(
 ) -> dict[str, np.ndarray]:
     """Generate artificial 1D dimensions scales from geotransform"""
 
-    # projected_dimension_names = get_dimension_array_names(varinfo, variable_name)
-
     lat_arr = get_2d_coordinate_array(
         prefetch_dataset,
         latitude_coordinate.full_name_path,
@@ -493,7 +484,6 @@ def create_dimension_arrays_from_geotransform(
     # pull out dimension values
     x_values = np.array([x for x, y in column_dimensions], dtype=np.float64)
     y_values = np.array([y for x, y in row_dimensions], dtype=np.float64)
-    # projected_y, projected_x = projected_dimension_names[-2:]
 
     projected_y = projected_dimension_names['projection_y_coordinate']
     projected_x = projected_dimension_names['projection_x_coordinate']

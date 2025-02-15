@@ -443,7 +443,11 @@ def add_index_range(
     else:
         # Anonymous dimensions, so check for dimension derived from coordinates
         # or from configuration
-        variable_dimensions = get_dimension_array_names(varinfo, variable_name)
+        variable_dimensions_dict = get_dimension_array_names(varinfo, variable_name)
+        if variable_dimensions_dict:
+            variable_dimensions = list(variable_dimensions_dict.values())
+        else:
+            variable_dimensions = []
 
     range_strings = get_range_strings(variable_dimensions, index_ranges)
 

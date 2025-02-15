@@ -1521,10 +1521,10 @@ class TestSubset(TestCase):
             '/Soil_Moisture_Retrieval_Data_PM/latitude_pm[9:38][487:595]',
         }
         expected_index_ranges = {
-            '/Soil_Moisture_Retrieval_Data_AM/dim_x': (487, 595),
-            '/Soil_Moisture_Retrieval_Data_AM/dim_y': (9, 38),
-            '/Soil_Moisture_Retrieval_Data_PM/dim_x': (487, 595),
-            '/Soil_Moisture_Retrieval_Data_PM/dim_y': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_AM/x_dim': (487, 595),
+            '/Soil_Moisture_Retrieval_Data_AM/y_dim': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_PM/x_dim': (487, 595),
+            '/Soil_Moisture_Retrieval_Data_PM/y_dim': (9, 38),
         }
 
         mock_get_varinfo.return_value = smap_varinfo

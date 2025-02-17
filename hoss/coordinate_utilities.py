@@ -25,8 +25,8 @@ def get_coordinate_variables(
 ) -> tuple[list[str], list[str]]:
     """This function returns latitude and longitude variable names from
     latitude and longitude variables listed in the CF-Convention coordinates
-    metadata attribute. It returns them in a specific
-    order [latitude_name, longitude_name]"
+    metadata attribute. It checks that the variables exist in the file and then
+    returns the lists in a specific order: [latitude_names], [longitude_names]
     """
 
     coordinate_variables = varinfo.get_references_for_attribute(
@@ -88,8 +88,9 @@ def get_dimension_array_names(
     variable_name: str,
 ) -> dict[str:str]:
     """
-    Returns the dimensions names from coordinate variables or from
-    configuration
+    Returns the dimension names from coordinate variables or from configuration.
+    VarInfo implements pulling dimension names from configuration, which is
+    used for some collections with anonymous dimensions.
     """
     variable = varinfo.get_variable(variable_name)
     if variable is None:
@@ -328,7 +329,9 @@ def get_max_spread_pts(
         valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask)
     elif valid_geospatial_mask.ndim == 3:
         # use just 2 of the dimensions
-        # mask arr_ind to hide the invalid data points
+        # This assumes that the first dimension is the "extra" non-spatial dimension,
+        # Currently we define the dimensions and their order in the configuration file,
+        # ToDo When the configuration entry is dropped, this needs to be reconsidered.
         valid_indices = np.ma.array(arr_indices, mask=valid_geospatial_mask[0, :, :])
     else:
         raise NotImplementedError
@@ -365,7 +368,7 @@ def get_dimension_order_and_dim_values(
     projected y or projected_x values are varying across row or column.
     Also returns a 1-D array of dimension values for the requested
     projected spatial dimension. The input lat lon arrays and dimension
-    indices are assumed to be 2D in this implementation of the function.
+    indices are assumed to be 1D or 2D in this implementation of the function.
     """
     if lat_array_points.ndim == 1 and lon_array_points.ndim == 1:
         lat_arr_values = lat_array_points

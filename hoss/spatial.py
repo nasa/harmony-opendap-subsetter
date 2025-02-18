@@ -246,10 +246,9 @@ def get_x_y_index_ranges_from_coordinates(
     points.
 
     """
+    projected_dimension_names = get_dimension_array_names(varinfo, non_spatial_variable)
 
     crs = get_variable_crs(non_spatial_variable, varinfo)
-
-    projected_dimension_names = get_dimension_array_names(varinfo, non_spatial_variable)
     master_geotransform = get_master_geotransform(non_spatial_variable, varinfo)
     if master_geotransform:
         dimension_arrays = create_dimension_arrays_from_geotransform(

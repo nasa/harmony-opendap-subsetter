@@ -80,10 +80,22 @@ class TestSpatial(TestCase):
                 '/Soil_Moisture_Retrieval_Data_PM/longitude_pm',
             }
             expected_index_ranges = {
-                '/Soil_Moisture_Retrieval_Data_AM/x_dim': (487, 594),
-                '/Soil_Moisture_Retrieval_Data_AM/y_dim': (9, 38),
-                '/Soil_Moisture_Retrieval_Data_PM/x_dim': (487, 594),
-                '/Soil_Moisture_Retrieval_Data_PM/y_dim': (9, 38),
+                '/Soil_Moisture_Retrieval_Data_AM/latitude_/Soil_Moisture_Retrieval_Data_AM/longitude/x_dim': (
+                    487,
+                    594,
+                ),
+                '/Soil_Moisture_Retrieval_Data_AM/latitude_/Soil_Moisture_Retrieval_Data_AM/longitude/y_dim': (
+                    9,
+                    38,
+                ),
+                '/Soil_Moisture_Retrieval_Data_PM/latitude_pm_/Soil_Moisture_Retrieval_Data_PM/longitude_pm/x_dim': (
+                    487,
+                    594,
+                ),
+                '/Soil_Moisture_Retrieval_Data_PM/latitude_pm_/Soil_Moisture_Retrieval_Data_PM/longitude_pm/y_dim': (
+                    9,
+                    38,
+                ),
             }
             index_ranges = get_spatial_index_ranges(
                 required_variables,
@@ -273,8 +285,14 @@ class TestSpatial(TestCase):
         )
         smap_file_path = 'tests/data/SC_SPL3SMP_008_prefetch.nc4'
         expected_index_ranges = {
-            '/Soil_Moisture_Retrieval_Data_AM/x_dim': (487, 595),
-            '/Soil_Moisture_Retrieval_Data_AM/y_dim': (9, 38),
+            '/Soil_Moisture_Retrieval_Data_AM/latitude_/Soil_Moisture_Retrieval_Data_AM/longitude/x_dim': (
+                487,
+                595,
+            ),
+            '/Soil_Moisture_Retrieval_Data_AM/latitude_/Soil_Moisture_Retrieval_Data_AM/longitude/y_dim': (
+                9,
+                38,
+            ),
         }
         bbox = BBox(2, 54, 42, 72)
 

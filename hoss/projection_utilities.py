@@ -78,8 +78,7 @@ def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
 
             if cf_attributes:
                 return cf_attributes
-            else:
-                raise MissingGridMappingVariable(grid_mapping, variable)
+            raise MissingGridMappingVariable(grid_mapping, variable)
 
         except AttributeError as exception:
             raise MissingGridMappingVariable(grid_mapping, variable) from exception

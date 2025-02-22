@@ -110,15 +110,7 @@ def get_dimension_array_names(
     # to define variable spatial dimensions.
     if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
         dimension_names = create_spatial_dimension_names_from_coordinates(
-            varinfo, latitude_coordinates[0]
-        )
-
-    # Given variable variable has no coordinate attribute itself,
-    # but is itself a coordinate (latitude or longitude):
-    # use as a coordinate to define spatial dimensions
-    elif variable.is_latitude() or variable.is_longitude():
-        dimension_names = create_spatial_dimension_names_from_coordinates(
-            varinfo, variable_name
+            varinfo, latitude_coordinates[0], longitude_coordinates[0]
         )
     else:
         dimension_names = {}
@@ -126,22 +118,25 @@ def get_dimension_array_names(
 
 
 def create_spatial_dimension_names_from_coordinates(
-    varinfo: VarInfoFromDmr, variable_name: str
+    varinfo: VarInfoFromDmr, lat_coord_name: str, lon_coord_name: str
 ) -> dict[str:str]:
-    """returns the x-y variable names that would
-    match the group of the input variable. The 'dim_y' dimension
-    and 'dim_x' names are returned with the group pathname
+    """returns the x-y dimension names concatenated with full path names
+    of the latitude and longitude coordinate variable names. The names are
+    returned as a dictionary with y_coordinate, x_coordinate order.
 
     """
-    variable = varinfo.get_variable(variable_name)
+    lat_coord_variable = varinfo.get_variable(lat_coord_name)
+    lon_coord_variable = varinfo.get_variable(lon_coord_name)
 
-    if variable is not None:
+    if lat_coord_variable is not None and lon_coord_variable is not None:
         dimension_names = {
-            'projection_y_coordinate': f'{variable.group_path}/y_dim',
-            'projection_x_coordinate': f'{variable.group_path}/x_dim',
+            'projection_y_coordinate': f'{lat_coord_variable.full_name_path}_'
+            '{lon_coord_variable.full_name_path}/y_dim',
+            'projection_x_coordinate': f'{lat_coord_variable.full_name_path}_'
+            '{lon_coord_variable.full_name_path}/x_dim',
         }
     else:
-        raise MissingVariable(variable_name)
+        raise MissingVariable(f'{lat_coord_name},{lon_coord_name}')
     return dimension_names
 
 

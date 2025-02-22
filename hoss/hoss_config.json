@@ -403,6 +403,132 @@
     {
       "Applicability": {
         "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_AM/(lat|long)itude"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data_AM/latitude, /Soil_Moisture_Retrieval_Data_AM/longitude"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Data_AM group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP_E",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_AM/(lat|long)itude"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data_AM/latitude, /Soil_Moisture_Retrieval_Data_AM/longitude"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Data_AM group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP_E",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_Polar_AM/(lat|long)itude"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data_Polar_AM/latitude, /Soil_Moisture_Retrieval_Data_Polar_AM/longitude"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Polar_Data_AM group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SM(A|AP)",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data/(lat|long)itude"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data/latitude, /Soil_Moisture_Retrieval_Data/longitude"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Data group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_1km/(lat|long)itude_1km"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data_1km/latitude_1km, /Soil_Moisture_Retrieval_Data_1km/longitude_1km"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Data_1km group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_3km/(lat|long)itude_3km"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data_3km/latitude_3km, /Soil_Moisture_Retrieval_Data_3km/longitude_3km"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Data_3km group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTA",
+        "VariablePattern": "/Freeze_Thaw_Retrieval_Data/(lat|long)itude"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Freeze_Thaw_Retrieval_Data/latitude, /Freeze_Thaw_Retrieval_Data/longitude"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Freeze_Thaw_Retrieval_Data group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FT(P|P_E)",
+        "VariablePattern": "/Freeze_Thaw_Retrieval_Data_Global/(lat|long)itude"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Freeze_Thaw_Retrieval_Data_Global/latitude, /Freeze_Thaw_Retrieval_Data_Global/longitude"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Freeze_Thaw_Retrieval_Data_Global group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FT(P|P_E)",
+        "VariablePattern": "/Freeze_Thaw_Retrieval_Data_Polar/(latitude|longitude)"
+      },
+      "Attributes": [
+        {
+          "Name": "coordinates",
+          "Value": "/Soil_Moisture_Retrieval_Data_Polar/latitude, /Soil_Moisture_Retrieval_Data_Polar/longitude"
+        }
+      ],
+      "_Description": "Ensure coordinate variables in /Freeze_Thaw_Retrieval_Data_Polar group have coordinate attributes."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
         "ShortNamePath": "SPL3FT(A|P|P_E)",
         "VariablePattern": "^/Freeze_Thaw_Retrieval_Data(?:_(Global|Polar))?/(transition_direction$|transition_state_flag$)"
       },
@@ -445,7 +571,7 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3SMP",
+        "ShortNamePath": "SPL3SMP|SPL3FT(A|P|P_E)",
         "VariablePattern": ".*/x_dim"
       },
       "Attributes": [
@@ -467,7 +593,7 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3SMP",
+        "ShortNamePath": "SPL3SMP|SPL3FT(A|P|P_E)",
         "VariablePattern": ".*/y_dim"
       },
       "Attributes": [
@@ -489,7 +615,7 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3SMP",
+        "ShortNamePath": "SPL3FT(A|P|P_E)",
         "VariablePattern": ".*/am_pm"
       },
       "Attributes": [
@@ -500,6 +626,24 @@
         {
           "Name": "long_name",
           "Value": "AM-PM dimension of size 2, 0 => AM, 1=> PM"
+        }
+      ],
+      "_Description": "The pseudo-dimension variable is here supplemented with variable attributes (as if it was a dimension variables) to clarify the dimension name"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMP",
+        "VariablePattern": ".*/lc_type"
+      },
+      "Attributes": [
+        {
+          "Name": "dimensions",
+          "Value": "lc_type"
+        },
+        {
+          "Name": "long_name",
+          "Value": "land cover type"
         }
       ],
       "_Description": "The pseudo-dimension variable is here supplemented with variable attributes (as if it was a dimension variables) to clarify the dimension name"

@@ -131,9 +131,9 @@ def create_spatial_dimension_names_from_coordinates(
     if lat_coord_variable is not None and lon_coord_variable is not None:
         dimension_names = {
             'projection_y_coordinate': f'{lat_coord_variable.full_name_path}_'
-            '{lon_coord_variable.full_name_path}/y_dim',
+            f'{lon_coord_variable.full_name_path}/y_dim',
             'projection_x_coordinate': f'{lat_coord_variable.full_name_path}_'
-            '{lon_coord_variable.full_name_path}/x_dim',
+            f'{lon_coord_variable.full_name_path}/x_dim',
         }
     else:
         raise MissingVariable(f'{lat_coord_name},{lon_coord_name}')

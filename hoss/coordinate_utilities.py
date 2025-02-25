@@ -106,7 +106,7 @@ def get_dimension_array_names(
     latitude_coordinates, longitude_coordinates = get_coordinate_variables(
         varinfo, [variable_name]
     )
-    # Given variable has coordinates: use latitude coordinate
+    # Given variable has coordinates: use latitude and longitude coordinate
     # to define variable spatial dimensions.
     if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
         dimension_names = create_spatial_dimension_names_from_coordinates(

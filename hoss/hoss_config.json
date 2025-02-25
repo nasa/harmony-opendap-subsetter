@@ -440,7 +440,7 @@
           "Value": "/Soil_Moisture_Retrieval_Data_Polar_AM/latitude, /Soil_Moisture_Retrieval_Data_Polar_AM/longitude"
         }
       ],
-      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Polar_Data_AM group have coordinate attributes."
+      "_Description": "Ensure coordinate variables in /Soil_Moisture_Retrieval_Data_Polar_AM group have coordinate attributes."
     },
     {
       "Applicability": {
@@ -521,7 +521,7 @@
       "Attributes": [
         {
           "Name": "coordinates",
-          "Value": "/Soil_Moisture_Retrieval_Data_Polar/latitude, /Soil_Moisture_Retrieval_Data_Polar/longitude"
+          "Value": "/Freeze_Thaw_Retrieval_Data_Polar/latitude, /Freeze_Thaw_Retrieval_Data_Polar/longitude"
         }
       ],
       "_Description": "Ensure coordinate variables in /Freeze_Thaw_Retrieval_Data_Polar group have coordinate attributes."
@@ -646,7 +646,7 @@
           "Value": "land cover type"
         }
       ],
-      "_Description": "The pseudo-dimension variable is here supplemented with variable attributes (as if it was a dimension variables) to clarify the dimension name"
+      "_Description": "The pseudo-dimension variable is here supplemented with variable attributes (as if it was a dimension variable) to clarify the dimension name"
     },
     {
       "Applicability": {

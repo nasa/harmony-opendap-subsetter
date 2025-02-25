@@ -154,7 +154,6 @@ def create_dimension_arrays_from_coordinates(
     3) Generate the x-y dimscale array and return to the calling method
 
     """
-    # dimension_names = get_dimension_array_names(varinfo, variable_name)
     if len(dimension_names) < 2:
         raise InvalidDimensionNames(dimension_names)
 
@@ -258,10 +257,17 @@ def get_valid_sample_pts(
 
     # get maximally spread points within rows
     max_x_spread_pts = get_max_spread_pts(~valid_lat_lon_mask)
+    if valid_lat_lon_mask.ndim == 2:
+        transpose_mask = np.transpose(~valid_lat_lon_mask)
+    elif valid_lat_lon_mask.ndim == 3:
+        # this is for nominal order (z,y,x)
+        transpose_mask = np.transpose(~valid_lat_lon_mask, (0, 2, 1))
+    else:
+        raise NotImplementedError
 
     # Doing the same for the columns is done by transposing the valid_mask
     # and then fixing the results from [x, y] to [y, x].
-    max_y_spread_trsp = get_max_spread_pts(np.transpose(~valid_lat_lon_mask))
+    max_y_spread_trsp = get_max_spread_pts(transpose_mask)
     max_y_spread_pts = [
         list(np.flip(max_y_spread_trsp[0])),
         list(np.flip(max_y_spread_trsp[1])),

@@ -1102,6 +1102,22 @@ class TestCoordinateUtilities(TestCase):
                     context.exception.message,
                     'No valid coordinate data',
                 )
+        with self.subTest('Get two sets of valid indices from 3d coordinates dataset'):
+            expected_grid_indices = (
+                [[0, 0], [4, 0]],
+                [[0, 0], [0, 9]],
+            )
+            actual_row_indices, actual_col_indices = get_valid_sample_pts(
+                self.lat_arr_3d,
+                self.lon_arr_3d,
+                self.varinfo.get_variable(self.latitude),
+                self.varinfo.get_variable(self.longitude),
+            )
+            self.assertListEqual(actual_row_indices, expected_grid_indices[0])
+            self.assertListEqual(actual_col_indices, expected_grid_indices[1])
+            self.assertTupleEqual(
+                (actual_row_indices, actual_col_indices), expected_grid_indices
+            )
 
     def test_get_dimension_order_and_dim_values(self):
         """Ensure that the correct dimension order index
@@ -1391,7 +1407,7 @@ class TestCoordinateUtilities(TestCase):
             }
         )
         expected_xdim = np.array([-17349514.353068016, 17349514.353068016])
-        expected_ydim = np.array([7296524.6913595535, -7296509.222123815])
+        expected_ydim = np.array([7296524.6913595535, -7296524.691359556])
 
         with self.subTest('Projected x-y dim arrays from coordinate datasets'):
             with Dataset(self.smap_ftp_file_path, 'r') as smap_prefetch:

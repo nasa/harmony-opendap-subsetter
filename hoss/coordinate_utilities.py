@@ -106,19 +106,11 @@ def get_dimension_array_names(
     latitude_coordinates, longitude_coordinates = get_coordinate_variables(
         varinfo, [variable_name]
     )
-    # Given variable has coordinates: use latitude coordinate
+    # Given variable has coordinates: use latitude and longitude coordinate
     # to define variable spatial dimensions.
     if len(latitude_coordinates) == 1 and len(longitude_coordinates) == 1:
         dimension_names = create_spatial_dimension_names_from_coordinates(
-            varinfo, latitude_coordinates[0]
-        )
-
-    # Given variable variable has no coordinate attribute itself,
-    # but is itself a coordinate (latitude or longitude):
-    # use as a coordinate to define spatial dimensions
-    elif variable.is_latitude() or variable.is_longitude():
-        dimension_names = create_spatial_dimension_names_from_coordinates(
-            varinfo, variable_name
+            varinfo, latitude_coordinates[0], longitude_coordinates[0]
         )
     else:
         dimension_names = {}
@@ -126,22 +118,25 @@ def get_dimension_array_names(
 
 
 def create_spatial_dimension_names_from_coordinates(
-    varinfo: VarInfoFromDmr, variable_name: str
+    varinfo: VarInfoFromDmr, lat_coord_name: str, lon_coord_name: str
 ) -> dict[str:str]:
-    """returns the x-y variable names that would
-    match the group of the input variable. The 'dim_y' dimension
-    and 'dim_x' names are returned with the group pathname
+    """returns the x-y dimension names concatenated with full path names
+    of the latitude and longitude coordinate variable names. The names are
+    returned as a dictionary with y_coordinate, x_coordinate order.
 
     """
-    variable = varinfo.get_variable(variable_name)
+    lat_coord_variable = varinfo.get_variable(lat_coord_name)
+    lon_coord_variable = varinfo.get_variable(lon_coord_name)
 
-    if variable is not None:
+    if lat_coord_variable is not None and lon_coord_variable is not None:
         dimension_names = {
-            'projection_y_coordinate': f'{variable.group_path}/y_dim',
-            'projection_x_coordinate': f'{variable.group_path}/x_dim',
+            'projection_y_coordinate': f'{lat_coord_variable.full_name_path}_'
+            f'{lon_coord_variable.full_name_path}/y_dim',
+            'projection_x_coordinate': f'{lat_coord_variable.full_name_path}_'
+            f'{lon_coord_variable.full_name_path}/x_dim',
         }
     else:
-        raise MissingVariable(variable_name)
+        raise MissingVariable(f'{lat_coord_name},{lon_coord_name}')
     return dimension_names
 
 
@@ -159,7 +154,6 @@ def create_dimension_arrays_from_coordinates(
     3) Generate the x-y dimscale array and return to the calling method
 
     """
-    # dimension_names = get_dimension_array_names(varinfo, variable_name)
     if len(dimension_names) < 2:
         raise InvalidDimensionNames(dimension_names)
 
@@ -263,10 +257,17 @@ def get_valid_sample_pts(
 
     # get maximally spread points within rows
     max_x_spread_pts = get_max_spread_pts(~valid_lat_lon_mask)
+    if valid_lat_lon_mask.ndim == 2:
+        transpose_mask = np.transpose(~valid_lat_lon_mask)
+    elif valid_lat_lon_mask.ndim == 3:
+        # this is for nominal order (z,y,x)
+        transpose_mask = np.transpose(~valid_lat_lon_mask, (0, 2, 1))
+    else:
+        raise NotImplementedError
 
     # Doing the same for the columns is done by transposing the valid_mask
     # and then fixing the results from [x, y] to [y, x].
-    max_y_spread_trsp = get_max_spread_pts(np.transpose(~valid_lat_lon_mask))
+    max_y_spread_trsp = get_max_spread_pts(transpose_mask)
     max_y_spread_pts = [
         list(np.flip(max_y_spread_trsp[0])),
         list(np.flip(max_y_spread_trsp[1])),

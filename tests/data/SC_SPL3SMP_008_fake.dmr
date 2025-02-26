@@ -111,6 +111,90 @@
                 <Value>Y</Value>
             </Attribute>
         </Float64>
+        <Float32 name="same_folder_longitude1">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="same_folder_latitude1">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="same_folder_longitude2">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="same_folder_latitude2">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name ="variable1_with_same_folder_coordinates">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative SCA-V soil moisture measurement for the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/same_folder_latitude1 /Soil_Moisture_Retrieval_Data_AM/same_folder_longitude1</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.01999999955</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name ="variable2_with_same_folder_coordinates">
+            <Dim size="406"/>
+            <Dim size="964"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative SCA-V soil moisture measurement for the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_AM/same_folder_latitude2 /Soil_Moisture_Retrieval_Data_AM/same_folder_longitude2</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.01999999955</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
         <Byte name="landcover_class">
             <Dim size="406"/>
             <Dim size="964"/>

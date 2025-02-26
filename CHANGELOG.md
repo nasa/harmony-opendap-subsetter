@@ -1,3 +1,11 @@
+## v1.1.6
+### 2025-02-24
+
+This version of HOSS adds support for multiple coordinate variables that
+are in the same group for cases where coordinates are used in place of
+dimensions. This also supports exclusive requests of coordinate
+datasets that do not have coordinate attributes or dimensions.
+
 ## v1.1.5
 ### 2025-02-14
 

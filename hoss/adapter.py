@@ -1,27 +1,27 @@
-""" Harmony OPeNDAP SubSetter (HOSS).
+"""Harmony OPeNDAP SubSetter (HOSS).
 
-    This service uses the `HarmonyBaseAdapter.process_item` method to subset a
-    single image at a time. Requests for multiple granules will invoke the
-    service once per image, performing the subset on each granule in separate
-    calls to HOSS.
+This service uses the `HarmonyBaseAdapter.process_item` method to subset a
+single image at a time. Requests for multiple granules will invoke the
+service once per image, performing the subset on each granule in separate
+calls to HOSS.
 
-    An invocation of HOSS provides several sources of information:
+An invocation of HOSS provides several sources of information:
 
-    * `pystac.Item` - direct input to the `process_item` method. This contains
-      `pystac.Asset` objects for the specific granule being processed.
-    * `harmony.message.Source` - direct input to the `process_item` method.
-      This contains information on the collection to which the granule being
-      processed belongs.
-    * `harmony.message.Message` - input when instantiating the `HossAdapter`.
-      This contains the subset request information, such as bounding box,
-      GeoJSON shape file path, temporal range or variables list where needed.
-    * `harmony.util.Config` - input when instantiating the `HossAdapter`. This
-      `namedtuple` contains necessary configuration information, such as OAUTH
-      information for the Harmony EDL application being used, and AWS staging
-      location information.
-    * `pystac.Catalog` - input when instantiating the `HossAdapter`. This
-      contains all requested granules, and is iterated through with individual
-      calls to `process_item` for each granule.
+* `pystac.Item` - direct input to the `process_item` method. This contains
+  `pystac.Asset` objects for the specific granule being processed.
+* `harmony.message.Source` - direct input to the `process_item` method.
+  This contains information on the collection to which the granule being
+  processed belongs.
+* `harmony.message.Message` - input when instantiating the `HossAdapter`.
+  This contains the subset request information, such as bounding box,
+  GeoJSON shape file path, temporal range or variables list where needed.
+* `harmony.util.Config` - input when instantiating the `HossAdapter`. This
+  `namedtuple` contains necessary configuration information, such as OAUTH
+  information for the Harmony EDL application being used, and AWS staging
+  location information.
+* `pystac.Catalog` - input when instantiating the `HossAdapter`. This
+  contains all requested granules, and is iterated through with individual
+  calls to `process_item` for each granule.
 
 """
 

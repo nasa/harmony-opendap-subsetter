@@ -1,10 +1,10 @@
-""" This module includes functions that support temporal subsets.
+"""This module includes functions that support temporal subsets.
 
-    Using prefetched dimension variables, in full, from the OPeNDAP
-    server, and the index ranges that correspond to the regions of these
-    variables within the specified temporal range are identified. These index
-    ranges are then returned to the `hoss.subset.subset_granule` function to
-    be combined with any other index ranges (e.g., spatial).
+Using prefetched dimension variables, in full, from the OPeNDAP
+server, and the index ranges that correspond to the regions of these
+variables within the specified temporal range are identified. These index
+ranges are then returned to the `hoss.subset.subset_granule` function to
+be combined with any other index ranges (e.g., spatial).
 
 """
 

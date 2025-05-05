@@ -1,6 +1,6 @@
-""" This module contains lower-level functionality that can be abstracted into
-    functions. Primarily this improves readability of the source code, and
-    allows finer-grained unit testing of each smaller part of functionality.
+"""This module contains lower-level functionality that can be abstracted into
+functions. Primarily this improves readability of the source code, and
+allows finer-grained unit testing of each smaller part of functionality.
 
 """
 

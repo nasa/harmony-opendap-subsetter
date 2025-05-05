@@ -1,7 +1,7 @@
-""" This module tests the functions included in the
-    `hoss/projection_utilities.py` module. Those functions focus on using the
-    spatial constraint information from an input Harmony message with
-    collections that have projected grids.
+"""This module tests the functions included in the
+`hoss/projection_utilities.py` module. Those functions focus on using the
+spatial constraint information from an input Harmony message with
+collections that have projected grids.
 
 """
 

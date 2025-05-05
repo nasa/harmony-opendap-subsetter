@@ -1,24 +1,24 @@
-""" This module includes functions that support bounding box spatial subsets.
-    This includes both geographically gridded data and projected grids.
+"""This module includes functions that support bounding box spatial subsets.
+This includes both geographically gridded data and projected grids.
 
-    Using prefetched dimension variables, in full, from the OPeNDAP
-    server, and the index ranges that correspond to the regions of these
-    variables within the specified bounding box are identified. These index
-    ranges are then returned to the `hoss.subset.subset_granule` function to
-    be combined with any other index ranges (e.g., temporal).
+Using prefetched dimension variables, in full, from the OPeNDAP
+server, and the index ranges that correspond to the regions of these
+variables within the specified bounding box are identified. These index
+ranges are then returned to the `hoss.subset.subset_granule` function to
+be combined with any other index ranges (e.g., temporal).
 
-    If the bounding box crosses the longitudinal edge of the grid for a
-    geographically gridded granule, the full longitudinal range of each
-    variable is retrieved. The ranges of data for each variable outside of the
-    bounding box are set to the variable fill value.
+If the bounding box crosses the longitudinal edge of the grid for a
+geographically gridded granule, the full longitudinal range of each
+variable is retrieved. The ranges of data for each variable outside of the
+bounding box are set to the variable fill value.
 
-    An example of this would be for the RSSMIF16D data which have a
-    grid with 0 ≤ longitude (degrees) < 360. The Harmony message will specify
-    a bounding box within -180 ≤ longitude (degrees) < 180. If the western edge
-    is west of the Prime Meridian and the eastern edge is east of it, then the
-    box will cross the RSSMIF16D grid edge.
+An example of this would be for the RSSMIF16D data which have a
+grid with 0 ≤ longitude (degrees) < 360. The Harmony message will specify
+a bounding box within -180 ≤ longitude (degrees) < 180. If the western edge
+is west of the Prime Meridian and the eastern edge is east of it, then the
+box will cross the RSSMIF16D grid edge.
 
-    For example: [W, S, E, N] = [-20, -90, 20, 90]
+For example: [W, S, E, N] = [-20, -90, 20, 90]
 
 """
 

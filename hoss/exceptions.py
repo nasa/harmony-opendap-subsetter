@@ -1,7 +1,7 @@
-""" This module contains custom exceptions specific to the Harmony OPeNDAP
-    SubSetter (HOSS). These exceptions are intended to allow for easier
-    debugging of the expected errors that may occur during an invocation of the
-    HOSS.
+"""This module contains custom exceptions specific to the Harmony OPeNDAP
+SubSetter (HOSS). These exceptions are intended to allow for easier
+debugging of the expected errors that may occur during an invocation of the
+HOSS.
 
 """
 

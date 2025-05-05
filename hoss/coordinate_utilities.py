@@ -1,6 +1,6 @@
-""" This module contains utility functions used for
-    coordinate variables and functions to convert the
-    coordinate variable data to projected x/y dimension values
+"""This module contains utility functions used for
+coordinate variables and functions to convert the
+coordinate variable data to projected x/y dimension values
 """
 
 import numpy as np

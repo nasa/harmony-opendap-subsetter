@@ -1,8 +1,8 @@
-""" These end-to-end tests simulate a full invocation of the Harmony
-    service, instantiating a HossAdapter using a message and STAC.
-    Each test mocks calls to OPeNDAP, and has an extensive set of
-    assertions to ensure the output is as expected, and the expected
-    requests were made to OPeNDAP.
+"""These end-to-end tests simulate a full invocation of the Harmony
+service, instantiating a HossAdapter using a message and STAC.
+Each test mocks calls to OPeNDAP, and has an extensive set of
+assertions to ensure the output is as expected, and the expected
+requests were made to OPeNDAP.
 
 """
 

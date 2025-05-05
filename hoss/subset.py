@@ -1,7 +1,7 @@
-""" The module contains the main functions to perform variable, spatial,
-    temporal and named-dimension subsetting on a single granule file. This is
-    wrapped by the `subset_granule` function, which is called from the
-    `hoss.adapter.HossAdapter` class.
+"""The module contains the main functions to perform variable, spatial,
+temporal and named-dimension subsetting on a single granule file. This is
+wrapped by the `subset_granule` function, which is called from the
+`hoss.adapter.HossAdapter` class.
 
 """
 

@@ -1,12 +1,12 @@
-""" This module contains utility functionality relating to projected grids.
-    Primarily, these functions will determine the minimum horizontal spatial
-    resolution in geographic coordinates of an input grid from the x and y
-    dimension variables. With this resolution in hand, further functionality
-    will ensure that any specified GeoJSON shape is populated with points at
-    that resolution. These points can then be projected to the target grid in
-    order to determine the full extent of the GeoJSON input in the target grid.
-    This extent will then determine the index ranges requested from OPeNDAP for
-    projected grids.
+"""This module contains utility functionality relating to projected grids.
+Primarily, these functions will determine the minimum horizontal spatial
+resolution in geographic coordinates of an input grid from the x and y
+dimension variables. With this resolution in hand, further functionality
+will ensure that any specified GeoJSON shape is populated with points at
+that resolution. These points can then be projected to the target grid in
+order to determine the full extent of the GeoJSON input in the target grid.
+This extent will then determine the index ranges requested from OPeNDAP for
+projected grids.
 
 """
 

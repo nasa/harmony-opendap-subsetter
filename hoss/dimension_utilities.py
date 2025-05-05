@@ -1,12 +1,12 @@
-""" This module contains utility functions for dimension variables, including
-    the conversion from user-defined extents to array indices, and filling of
-    variables if the requested range crosses a grid edge.
+"""This module contains utility functions for dimension variables, including
+the conversion from user-defined extents to array indices, and filling of
+variables if the requested range crosses a grid edge.
 
-    These utilities are compatible with any type of dimension. If specific
-    handling is required for the extents or dimension values themselves, that
-    handling should occur prior to calling functions from this module. For
-    example, ensuring requested bounding box longitudes are wrapped or
-    unwrapped in accordance with the longitude dimension values.
+These utilities are compatible with any type of dimension. If specific
+handling is required for the extents or dimension values themselves, that
+handling should occur prior to calling functions from this module. For
+example, ensuring requested bounding box longitudes are wrapped or
+unwrapped in accordance with the longitude dimension values.
 
 """
 

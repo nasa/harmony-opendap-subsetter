@@ -1,16 +1,16 @@
-""" This module contains utility functions relating to bounding box
-    calculations. This includes deriving a bounding box from an input GeoJSON
-    shape file.
+"""This module contains utility functions relating to bounding box
+calculations. This includes deriving a bounding box from an input GeoJSON
+shape file.
 
-    Some of the functions in this module were written instead of using
-    [the shapely Python package](https://shapely.readthedocs.io/en/latest/),
-    as `shapely` does not handle antimeridian crossing when determining an
-    encompassing bounding box of a GeoJSON input. The
-    [GeoJSON specification](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.3)
-    encourages users to split GeoJSON at the antimeridian, however, this is not
-    enforced. When a user specifies a GeoJSON shape that crosses the
-    antimeridian, HOSS will use an encompassing bounding box that also crosses
-    the antimeridian.
+Some of the functions in this module were written instead of using
+[the shapely Python package](https://shapely.readthedocs.io/en/latest/),
+as `shapely` does not handle antimeridian crossing when determining an
+encompassing bounding box of a GeoJSON input. The
+[GeoJSON specification](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.3)
+encourages users to split GeoJSON at the antimeridian, however, this is not
+enforced. When a user specifies a GeoJSON shape that crosses the
+antimeridian, HOSS will use an encompassing bounding box that also crosses
+the antimeridian.
 
 """
 

@@ -1,9 +1,9 @@
-""" This module tests the functions included in the `hoss/bbox_utilities.py`
-    module. Those functions focus on retrieving bounding box information from
-    a Harmony message, either from the `Message.subset.bbox` attribute or the
-    `Message.subset.shape` attribute. In the case of a shape file, the module
-    has code to convert a GeoJSON shape into a bounding box that minimally
-    encloses the shape.
+"""This module tests the functions included in the `hoss/bbox_utilities.py`
+module. Those functions focus on retrieving bounding box information from
+a Harmony message, either from the `Message.subset.bbox` attribute or the
+`Message.subset.shape` attribute. In the case of a shape file, the module
+has code to convert a GeoJSON shape into a bounding box that minimally
+encloses the shape.
 
 """
 

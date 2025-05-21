@@ -1,0 +1,2302 @@
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xmlns:dmrpp="http://xml.opendap.org/dap/dmrpp/1.0.0#" dapVersion="4.0" dmrVersion="1.0" name="SMAP_L2_SM_SP_1AIWDV_20150331T170640_20150401T054620_003E34N_R18290_001.h5" dmrpp:href="OPeNDAP_DMRpp_DATA_ACCESS_URL" dmrpp:version="3.21.0-428">
+    <Attribute name="build_dmrpp_metadata" type="Container">
+        <Attribute name="build_dmrpp" type="String">
+            <Value>3.21.0-428</Value>
+        </Attribute>
+        <Attribute name="bes" type="String">
+            <Value>3.21.0-428</Value>
+        </Attribute>
+        <Attribute name="libdap" type="String">
+            <Value>libdap-3.21.0-103</Value>
+        </Attribute>
+        <Attribute name="invocation" type="String">
+            <Value>build_dmrpp -c /tmp/bes_conf_MUF7 -f /usr/share/hyrax/DATA/SMAP_L2_SM_SP_1AIWDV_20150331T170640_20150401T054620_003E34N_R18290_001.h5 -r /tmp/dmr__1R9gQc -u OPeNDAP_DMRpp_DATA_ACCESS_URL -M</Value>
+        </Attribute>
+    </Attribute>
+    <Group name="Soil_Moisture_Retrieval_Data_3km">
+        <Float32 name="latitude_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="longitude_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="longitude_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-180.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>179.9989929</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="sigma0_incidence_angle_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km incidence angle of radar backscatter measurements into a 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="latitude_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-90.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float64 name="spacecraft_overpass_time_seconds_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>-999999.90000000002</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Number of seconds since a specified epoch that represents the spacecraft overpass relative to the 9 km EASE grid cell that contains each 3 km EASE grid cell represented in this data product.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>940000000.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float64">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float64>
+        <Byte name="landcover_class_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>An enumerated type that specifies the predominant surface vegetation found in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Byte>
+        <UInt16 name="EASE_column_index_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>The column index of the 3 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float32 name="sigma0_incidence_angle_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km incidence angle of radar backscatter measurements into a 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="surface_temperature_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Temperature at land surface based on GEOS5 GMAO.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>200.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>350.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="disagg_soil_moisture_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 3 km Earth based grid cell obtained from disaggregating the coarse resolution soil moisture.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <UInt16 name="EASE_row_index_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>The row index of the 3 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float64 name="spacecraft_overpass_time_seconds_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>-999999.90000000002</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Number of seconds since a specified epoch that represents the spacecraft overpass relative to the 9 km EASE grid cell that contains each 3 km EASE grid cell represented in this data product.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>940000000.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float64">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float64>
+        <Float32 name="bare_soil_roughness_retrieved_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>soil roughness provided by the lookup table at 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>meters</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>2.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="sigma0_vh_aggregated_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km cross-polarized radar backscatter measurements into a 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="vegetation_water_content_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative measure of water in the vegetation within the 3 km grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>kg/m**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>30.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="sigma0_vh_aggregated_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km cross-polarized radar backscatter measurements into a 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="tb_v_disaggregated_std_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of the vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 3 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>100.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="water_body_fraction_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Fraction of the area of 3 km grid cell that is a permanent or transient water body.  Derived from the DEM and radar processing.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <UInt16 name="surface_flag_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record ambient surface conditions for the grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>3_km_static_water_body_flag 3_km_radar_water_body_detection_flag 3_km_coastal_proximity_flag 3_km_urban_area_flag 3_km_precipitation_flag 3_km_snow_or_ice_flag 3_km_permanent_snow_or_ice_flag 3_km_radar_frozen_ground_flag 3_km_model_frozen_ground_flag 3_km_mountainous_terrain_flag 3_km_dense_vegetation_flag 3_km_scene_edge_flag 3_km_anomalous_sigma0_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float32 name="SMAP_Sentinel_overpass_timediff_hr_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Number of hours difference between the SMAP overpass and the Sentinel overpass.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-999999.875</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>999999.875</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="bare_soil_roughness_retrieved_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>soil roughness provided by the lookup table at 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>meters</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>2.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="soil_moisture_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 3 km Earth based grid cell for option 1.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="sigma0_vv_aggregated_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km vertical polarization radar backscatter measurements into a 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="tb_v_disaggregated_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 3 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>330.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="vegetation_opacity_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>The measured opacity of the vegetation in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="sigma0_vv_aggregated_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km vertical polarization radar backscatter measurements into a 3 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="beta_tbv_vv_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin/dB</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-35.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Beta parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using time series Tbv and sigma0_vv </Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="soil_moisture_std_dev_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of soil moisture measure for the 3km Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <UInt16 name="retrieval_qual_flag_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the retrieval algorithms that generate soil moisture for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Retrieval_recommended_flag Retrieval_attempted_flag Retrieval_success_flag Radar_water_body_detection_success_flag Freeze-thaw_retrieval_success_flag Radar_vegetation_index_retrieval_success_flag Disagreggated_brightness_temperature_quality Soil_moisture_retrieval_upper_threshold_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <UInt16 name="disaggregated_tb_v_qual_flag_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the disaggregated vertical polarization brightness temperature for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s, 8192s, 16384s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Disagreggated_brightness_temperature_v-pol_quality Sigma0_vv_quality_flag Sigma0_xpol_quality_flag Brightness_temperature_v-pol_quality_flag Brightness_temperature_v-pol_RFI_detected_flag Brightness_temperature_v-pol_RFI_corrected_flag Sigma0_vv_RFI_detected_flag Sigma0_vv_RFI_corrected_flag Sigma0_xpol_RFI_detected_flag Sigma0_xpol_RFI_corrected_flag Negative_sigma0_vv_flag Negative_sigma0_xpol_flag Brightness_temperature_v-pol_water_correction_flag Ascending_or_Descending_flag SMAP-Sentinel_Overlap_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float32 name="surface_temperature_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Temperature at land surface based on GEOS5 GMAO.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>200.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>350.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="vegetation_opacity_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>The measured opacity of the vegetation in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="water_body_fraction_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Fraction of the area of 3 km grid cell that is a permanent or transient water body.  Derived from the DEM and radar processing.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <UInt16 name="EASE_row_index_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>The row index of the 3 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <UInt16 name="disaggregated_tb_v_qual_flag_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the disaggregated vertical polarization brightness temperature for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s, 8192s, 16384s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Disagreggated_brightness_temperature_v-pol_quality Sigma0_vv_quality_flag Sigma0_xpol_quality_flag Brightness_temperature_v-pol_quality_flag Brightness_temperature_v-pol_RFI_detected_flag Brightness_temperature_v-pol_RFI_corrected_flag Sigma0_vv_RFI_detected_flag Sigma0_vv_RFI_corrected_flag Sigma0_xpol_RFI_detected_flag Sigma0_xpol_RFI_corrected_flag Negative_sigma0_vv_flag Negative_sigma0_xpol_flag Brightness_temperature_v-pol_water_correction_flag Ascending_or_Descending_flag SMAP-Sentinel_Overlap_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float32 name="SMAP_Sentinel_overpass_timediff_hr_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Number of hours difference between the SMAP overpass and the Sentinel overpass.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-999999.875</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>999999.875</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <UInt16 name="surface_flag_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record ambient surface conditions for the grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>3_km_static_water_body_flag 3_km_radar_water_body_detection_flag 3_km_coastal_proximity_flag 3_km_urban_area_flag 3_km_precipitation_flag 3_km_snow_or_ice_flag 3_km_permanent_snow_or_ice_flag 3_km_radar_frozen_ground_flag 3_km_model_frozen_ground_flag 3_km_mountainous_terrain_flag 3_km_dense_vegetation_flag 3_km_scene_edge_flag 3_km_anomalous_sigma0_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float32 name="tb_v_disaggregated_std_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of the vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 3 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>100.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="soil_moisture_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 3 km Earth based grid cell for option 1.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="albedo_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Diffuse reflecting power of the Earth&amp;apos;s surface within the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <UInt16 name="retrieval_qual_flag_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the retrieval algorithms that generate soil moisture for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Retrieval_recommended_flag Retrieval_attempted_flag Retrieval_success_flag Radar_water_body_detection_success_flag Freeze-thaw_retrieval_success_flag Radar_vegetation_index_retrieval_success_flag Disagreggated_brightness_temperature_quality Soil_moisture_retrieval_upper_threshold_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float32 name="gamma_vv_xpol_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Gamma parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using high resolution sigma0_vv and sigma0_xpol</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="gamma_vv_xpol_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Gamma parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using high resolution sigma0_vv and sigma0_xpol</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="vegetation_water_content_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative measure of water in the vegetation within the 3 km grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>kg/m**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>30.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <UInt16 name="EASE_column_index_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>The column index of the 3 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </UInt16>
+        <Float32 name="soil_moisture_std_dev_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of soil moisture measure for the 3km Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="tb_v_disaggregated_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 3 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>330.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="albedo_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>Diffuse reflecting power of the Earth&amp;apos;s surface within the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Float32 name="beta_tbv_vv_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin/dB</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-35.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Beta parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using time series Tbv and sigma0_vv </Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+        <Byte name="landcover_class_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="long_name" type="String">
+                <Value>An enumerated type that specifies the predominant surface vegetation found in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Byte>
+        <Float32 name="disagg_soil_moisture_apm_3km">
+            <Dim size="72"/>
+            <Dim size="102"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 3 km Earth based grid cell obtained from disaggregating the coarse resolution soil moisture.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_3km/latitude_3km /Soil_Moisture_Retrieval_Data_3km/longitude_3km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/latitude_3km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_3km/longitude_3km"/>
+        </Float32>
+    </Group>
+    <Group name="a">
+        <String name="LogFileName">
+            <dmrpp:chunks fillValue="">
+                <dmrpp:chunk offset="3558281" nBytes="71"/>
+            </dmrpp:chunks>
+        </String>
+        <String name="rangeBeginningDateTime">
+            <dmrpp:chunks fillValue="">
+                <dmrpp:chunk offset="3558352" nBytes="24"/>
+            </dmrpp:chunks>
+        </String>
+        <String name="orbitDirection">
+            <dmrpp:chunks fillValue="">
+                <dmrpp:chunk offset="1237903" nBytes="10"/>
+            </dmrpp:chunks>
+        </String>
+        <String name="rangeEndingDateTime">
+            <dmrpp:chunks fillValue="">
+                <dmrpp:chunk offset="3558376" nBytes="24"/>
+            </dmrpp:chunks>
+        </String>
+    </Group>
+    <Group name="Soil_Moisture_Retrieval_Data_1km">
+        <Float32 name="longitude_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="latitude_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="water_body_fraction_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Fraction of the area of 1 km grid cell that is a permanent or transient water body.  Derived from the DEM and radar processing.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="surface_flag_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record ambient surface conditions for the grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>1_km_static_water_body_flag 1_km_radar_water_body_detection_flag 1_km_coastal_proximity_flag 1_km_urban_area_flag 1_km_precipitation_flag 1_km_snow_or_ice_flag 1_km_permanent_snow_or_ice_flag 1_km_radar_frozen_ground_flag 1_km_model_frozen_ground_flag 1_km_mountainous_terrain_flag 1_km_dense_vegetation_flag 1_km_scene_edge_flag 1_km_anomalous_sigma0_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <UInt16 name="disaggregated_tb_v_qual_flag_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the disaggregated vertical polarization brightness temperature for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s, 8192s, 16384s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Disagreggated_brightness_temperature_v-pol_quality Sigma0_vv_quality_flag Sigma0_xpol_quality_flag Brightness_temperature_v-pol_quality_flag Brightness_temperature_v-pol_RFI_detected_flag Brightness_temperature_v-pol_RFI_corrected_flag Sigma0_vv_RFI_detected_flag Sigma0_vv_RFI_corrected_flag Sigma0_xpol_RFI_detected_flag Sigma0_xpol_RFI_corrected_flag Negative_sigma0_vv_flag Negative_sigma0_xpol_flag Brightness_temperature_v-pol_water_correction_flag Ascending_or_Descending_flag SMAP-Sentinel_Overlap_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Float32 name="beta_tbv_vv_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin/dB</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-35.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Beta parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using time series Tbv and sigma0_vv </Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="soil_moisture_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 1 km Earth based grid cell for option 1.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="EASE_column_index_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>The column index of the 1 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Float32 name="tb_v_disaggregated_std_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of the vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 1 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>100.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="vegetation_water_content_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative measure of water in the vegetation within the 1 km grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>kg/m**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>30.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="sigma0_incidence_angle_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km incidence angle of radar backscatter measurements into a 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="beta_tbv_vv_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin/dB</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-35.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Beta parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using time series Tbv and sigma0_vv </Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="water_body_fraction_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Fraction of the area of 1 km grid cell that is a permanent or transient water body.  Derived from the DEM and radar processing.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="soil_moisture_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 1 km Earth based grid cell for option 1.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="tb_v_disaggregated_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 1 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>330.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="surface_temperature_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Temperature at land surface based on GEOS5 GMAO.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>200.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>350.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="sigma0_vv_aggregated_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km vertical polarization radar backscatter measurements 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="disagg_soil_moisture_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 1 km Earth based grid cell obtained from disaggregating the coarse resolution soil moisture.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="gamma_vv_xpol_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Gamma parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using high resolution sigma0_vv and sigma0_xpol</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="vegetation_water_content_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Representative measure of water in the vegetation within the 1 km grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>kg/m**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>30.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Byte name="landcover_class_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>An enumerated type that specifies the predominant surface vegetation found in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Byte>
+        <Float32 name="bare_soil_roughness_retrieved_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>soil roughness provided by the lookup table at 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>meters</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>2.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="SMAP_Sentinel_overpass_timediff_hr_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Number of hours difference between the SMAP overpass and the Sentinel overpass.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-999999.875</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>999999.875</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="EASE_row_index_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>The row index of the 1 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Float32 name="albedo_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Diffuse reflecting power of the Earth&amp;apos;s surface within the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="sigma0_vh_aggregated_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km cross-polarized radar backscatter measurements into a 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="soil_moisture_std_dev_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of soil moisture measure for the 1km Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="bare_soil_roughness_retrieved_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>soil roughness provided by the lookup table at 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>meters</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>2.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="latitude_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-90.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="retrieval_qual_flag_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the retrieval algorithms that generate soil moisture for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Retrieval_recommended_flag Retrieval_attempted_flag Retrieval_success_flag Radar_water_body_detection_success_flag Freeze-thaw_retrieval_success_flag Radar_vegetation_index_retrieval_success_flag Disagreggated_brightness_temperature_quality Soil_moisture_retrieval_upper_threshold_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Float32 name="surface_temperature_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Temperature at land surface based on GEOS5 GMAO.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>200.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>350.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="sigma0_incidence_angle_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km incidence angle of radar backscatter measurements into a 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>90.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="albedo_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Diffuse reflecting power of the Earth&amp;apos;s surface within the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="longitude_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-180.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>179.9989929</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="sigma0_vv_aggregated_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km vertical polarization radar backscatter measurements into a 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="disagg_soil_moisture_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative soil moisture measurement for the 1 km Earth based grid cell obtained from disaggregating the coarse resolution soil moisture.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.75</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="surface_flag_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record ambient surface conditions for the grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>1_km_static_water_body_flag 1_km_radar_water_body_detection_flag 1_km_coastal_proximity_flag 1_km_urban_area_flag 1_km_precipitation_flag 1_km_snow_or_ice_flag 1_km_permanent_snow_or_ice_flag 1_km_radar_frozen_ground_flag 1_km_model_frozen_ground_flag 1_km_mountainous_terrain_flag 1_km_dense_vegetation_flag 1_km_scene_edge_flag 1_km_anomalous_sigma0_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <UInt16 name="retrieval_qual_flag_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the retrieval algorithms that generate soil moisture for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Retrieval_recommended_flag Retrieval_attempted_flag Retrieval_success_flag Radar_water_body_detection_success_flag Freeze-thaw_retrieval_success_flag Radar_vegetation_index_retrieval_success_flag Disagreggated_brightness_temperature_quality Soil_moisture_retrieval_upper_threshold_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Float32 name="soil_moisture_std_dev_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of soil moisture measure for the 1km Earth based grid cell.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>cm**3/cm**3</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>0.5</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float64 name="spacecraft_overpass_time_seconds_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>-999999.90000000002</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Number of seconds since a specified epoch that represents the spacecraft overpass relative to the 9 km EASE grid cell that contains each 1 km EASE grid cell represented in this data product.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>940000000.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float64">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float64>
+        <Float64 name="spacecraft_overpass_time_seconds_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>-999999.90000000002</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Number of seconds since a specified epoch that represents the spacecraft overpass relative to the 9 km EASE grid cell that contains each 1 km EASE grid cell represented in this data product.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>940000000.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float64">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float64>
+        <Float32 name="gamma_vv_xpol_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Gamma parameter used in the Active/Passive retrieval algorithm for the corresponding EASE  grid cell, derived using high resolution sigma0_vv and sigma0_xpol</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="SMAP_Sentinel_overpass_timediff_hr_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>Number of hours difference between the SMAP overpass and the Sentinel overpass.</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-999999.875</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>999999.875</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="sigma0_vh_aggregated_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The outcome of aggretating a set of 1 km cross-polarized radar backscatter measurements into a 1 km EASE grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="EASE_column_index_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>The column index of the 1 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Byte name="landcover_class_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>An enumerated type that specifies the predominant surface vegetation found in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Byte>
+        <Float32 name="tb_v_disaggregated_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 1 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>330.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="EASE_row_index_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>The row index of the 1 km EASE grid cell that contains the associated data.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Float32 name="vegetation_opacity_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>The measured opacity of the vegetation in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <UInt16 name="disaggregated_tb_v_qual_flag_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record the conditions and the quality of the disaggregated vertical polarization brightness temperature for option1 generated for the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s, 4096s, 8192s, 16384s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Disagreggated_brightness_temperature_v-pol_quality Sigma0_vv_quality_flag Sigma0_xpol_quality_flag Brightness_temperature_v-pol_quality_flag Brightness_temperature_v-pol_RFI_detected_flag Brightness_temperature_v-pol_RFI_corrected_flag Sigma0_vv_RFI_detected_flag Sigma0_vv_RFI_corrected_flag Sigma0_xpol_RFI_detected_flag Sigma0_xpol_RFI_corrected_flag Negative_sigma0_vv_flag Negative_sigma0_xpol_flag Brightness_temperature_v-pol_water_correction_flag Ascending_or_Descending_flag SMAP-Sentinel_Overlap_flag</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </UInt16>
+        <Float32 name="tb_v_disaggregated_std_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="units" type="String">
+                <Value>Kelvin</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Standard deviation of the vertical polarization brightness temperature adjusted for the presence of water bodies and disaggregated from the 9 km EASE grid cells into 1 km EASE grid cells.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>100.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+        <Float32 name="vegetation_opacity_apm_1km">
+            <Dim size="216"/>
+            <Dim size="306"/>
+            <Attribute name="long_name" type="String">
+                <Value>The measured opacity of the vegetation in the grid cell.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Soil_Moisture_Retrieval_Data_1km/latitude_1km /Soil_Moisture_Retrieval_Data_1km/longitude_1km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/latitude_1km"/>
+            <Map name="/Soil_Moisture_Retrieval_Data_1km/longitude_1km"/>
+        </Float32>
+    </Group>
+</Dataset>

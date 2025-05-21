@@ -43,6 +43,28 @@
       "VariablePattern": [
         ".*shot_number"
       ]
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_1km/.*"
+
+      },
+      "VariablePattern": [
+        "/Soil_Moisture_Retrieval_Data_1km/EASE_(column|row)_index_1km"
+      ]
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_3km/.*"
+
+      },
+      "VariablePattern": [
+        "/Soil_Moisture_Retrieval_Data_3km/EASE_(column|row)_index_3km"
+      ]
     }
   ],
   "MetadataOverrides": [

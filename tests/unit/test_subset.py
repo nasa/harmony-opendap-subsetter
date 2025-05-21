@@ -1242,6 +1242,8 @@ class TestSubset(TestCase):
                        subset) - the return value should include all
                        non-dimension variables from the `VarInfoFromDmr`
                        instance.
+        * Test case 6: variables not in message, but configured as required
+                       in the json file.
 
         """
         all_variables = {
@@ -1315,6 +1317,43 @@ class TestSubset(TestCase):
             self.assertSetEqual(
                 get_required_variables(self.varinfo, [], True, self.logger),
                 all_variables,
+            )
+        with self.subTest('Variable configured as required in json file'):
+            spl2smap_s_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
+            )
+            harmony_variables = [
+                HarmonyVariable(
+                    {
+                        'fullPath': '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                        'id': 'V1234-PROVIDER',
+                        'name': 'albedo_1km',
+                    }
+                ),
+                HarmonyVariable(
+                    {
+                        'fullPath': '/Soil_Moisture_Retrieval_Data_3km/soil_moisture_3km',
+                        'id': 'V1234-PROVIDER',
+                        'name': 'soil_moisture_3km',
+                    }
+                ),
+            ]
+            self.assertSetEqual(
+                get_required_variables(
+                    spl2smap_s_varinfo, harmony_variables, False, self.logger
+                ),
+                {
+                    '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                    '/Soil_Moisture_Retrieval_Data_3km/soil_moisture_3km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_3km/EASE_row_index_3km',
+                    '/Soil_Moisture_Retrieval_Data_3km/EASE_column_index_3km',
+                    '/Soil_Moisture_Retrieval_Data_1km/latitude_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/longitude_1km',
+                    '/Soil_Moisture_Retrieval_Data_3km/latitude_3km',
+                    '/Soil_Moisture_Retrieval_Data_3km/longitude_3km',
+                },
             )
 
     def test_fill_variables(self):

@@ -1318,7 +1318,32 @@ class TestSubset(TestCase):
                 get_required_variables(self.varinfo, [], True, self.logger),
                 all_variables,
             )
-        with self.subTest('Variable configured as required in json file'):
+        with self.subTest('Variables configured as ancillary for a single group'):
+            spl2smap_s_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
+            )
+            harmony_variables = [
+                HarmonyVariable(
+                    {
+                        'fullPath': '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                        'id': 'V1234-PROVIDER',
+                        'name': 'albedo_1km',
+                    }
+                ),
+            ]
+            self.assertSetEqual(
+                get_required_variables(
+                    spl2smap_s_varinfo, harmony_variables, False, self.logger
+                ),
+                {
+                    '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/latitude_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/longitude_1km',
+                },
+            )
+        with self.subTest('Variables configured as ancillary in multiple groups'):
             spl2smap_s_varinfo = VarInfoFromDmr(
                 'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
             )

@@ -43,30 +43,8 @@
       "VariablePattern": [
         ".*shot_number"
       ]
-    },
-    {
-      "Applicability": {
-        "Mission": "SMAP",
-        "ShortNamePath": "SPL2SMAP_S",
-        "VariablePattern": "/Soil_Moisture_Retrieval_Data_1km/(.*)_1km$"
-
-      },
-      "VariablePattern": [
-        "/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km",
-        "/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km"
-      ]
-    },
-    {
-      "Applicability": {
-        "Mission": "SMAP",
-        "ShortNamePath": "SPL2SMAP_S",
-        "VariablePattern": "/Soil_Moisture_Retrieval_Data_3km/(.*)_3km$"
-      },
-      "VariablePattern": [
-        "/Soil_Moisture_Retrieval_Data_3km/EASE_column_index_3km",
-        "/Soil_Moisture_Retrieval_Data_3km/EASE_row_index_3km"
-      ]
     }
+
   ],
   "MetadataOverrides": [
     {
@@ -712,6 +690,33 @@
         }
       ],
       "_Description": "Include /delta_time_beg and /delta_time_end as ancillary variables."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_1km/(.*)_1km$"
+
+      },
+      "Attributes": [
+        {
+          "Name": "ancillary_variables",
+          "Value": "/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km,/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km"
+        }
+      ]
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_3km/(.*)_3km$"
+      },
+      "Attributes": [
+        {
+          "Name": "ancillary_variables",
+          "Value": "/Soil_Moisture_Retrieval_Data_3km/EASE_column_index_3km,/Soil_Moisture_Retrieval_Data_3km/EASE_row_index_3km"
+        }
+      ]
     },
     {
       "Applicability": {

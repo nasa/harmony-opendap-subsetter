@@ -1,3 +1,10 @@
+## v1.1.7
+### 2025-05-21
+
+This version of HOSS updates the hoss configuration file to include
+EASE_column_index and EASE_row_index as ancillary variables for SPL2SMAP_S
+collection.
+
 ## v1.1.6
 ### 2025-02-24
 

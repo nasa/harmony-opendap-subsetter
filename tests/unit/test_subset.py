@@ -1242,8 +1242,12 @@ class TestSubset(TestCase):
                        subset) - the return value should include all
                        non-dimension variables from the `VarInfoFromDmr`
                        instance.
-        * Test case 6: variables not in message, but configured as required
-                       in the json file.
+        * Test case 6: variables not in message, but configured as ancillary
+                       variables in the json file. The output should include the
+                       only the ancillary variables associated with the requested variable.
+        * Test case 7: variables in multiple groups not in message, but configured as ancillary
+                       variables in the json file. The output should include the
+                       ancillary variables associated with all the requested variables.
 
         """
         all_variables = {
@@ -1318,7 +1322,7 @@ class TestSubset(TestCase):
                 get_required_variables(self.varinfo, [], True, self.logger),
                 all_variables,
             )
-            
+
         # Tests for ancillary variables
         spl2smap_s_varinfo = VarInfoFromDmr(
             'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'

@@ -1318,6 +1318,7 @@ class TestSubset(TestCase):
                 get_required_variables(self.varinfo, [], True, self.logger),
                 all_variables,
             )
+            
         # Tests for ancillary variables
         spl2smap_s_varinfo = VarInfoFromDmr(
             'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'

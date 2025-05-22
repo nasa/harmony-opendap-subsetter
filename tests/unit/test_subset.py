@@ -1318,22 +1318,30 @@ class TestSubset(TestCase):
                 get_required_variables(self.varinfo, [], True, self.logger),
                 all_variables,
             )
+        # Tests for ancillary variables
+        spl2smap_s_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
+        )
+        harmony_variables = [
+            HarmonyVariable(
+                {
+                    'fullPath': '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                    'id': 'V1234-PROVIDER',
+                    'name': 'albedo_1km',
+                }
+            ),
+            HarmonyVariable(
+                {
+                    'fullPath': '/Soil_Moisture_Retrieval_Data_3km/soil_moisture_3km',
+                    'id': 'V1234-PROVIDER',
+                    'name': 'soil_moisture_3km',
+                }
+            ),
+        ]
         with self.subTest('Variables configured as ancillary for a single group'):
-            spl2smap_s_varinfo = VarInfoFromDmr(
-                'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
-            )
-            harmony_variables = [
-                HarmonyVariable(
-                    {
-                        'fullPath': '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
-                        'id': 'V1234-PROVIDER',
-                        'name': 'albedo_1km',
-                    }
-                ),
-            ]
             self.assertSetEqual(
                 get_required_variables(
-                    spl2smap_s_varinfo, harmony_variables, False, self.logger
+                    spl2smap_s_varinfo, [harmony_variables[0]], False, self.logger
                 ),
                 {
                     '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
@@ -1344,25 +1352,6 @@ class TestSubset(TestCase):
                 },
             )
         with self.subTest('Variables configured as ancillary in multiple groups'):
-            spl2smap_s_varinfo = VarInfoFromDmr(
-                'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
-            )
-            harmony_variables = [
-                HarmonyVariable(
-                    {
-                        'fullPath': '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
-                        'id': 'V1234-PROVIDER',
-                        'name': 'albedo_1km',
-                    }
-                ),
-                HarmonyVariable(
-                    {
-                        'fullPath': '/Soil_Moisture_Retrieval_Data_3km/soil_moisture_3km',
-                        'id': 'V1234-PROVIDER',
-                        'name': 'soil_moisture_3km',
-                    }
-                ),
-            ]
             self.assertSetEqual(
                 get_required_variables(
                     spl2smap_s_varinfo, harmony_variables, False, self.logger

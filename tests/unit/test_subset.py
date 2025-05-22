@@ -1242,6 +1242,12 @@ class TestSubset(TestCase):
                        subset) - the return value should include all
                        non-dimension variables from the `VarInfoFromDmr`
                        instance.
+        * Test case 6: variables not in message, but configured as ancillary
+                       variables in the json file. The output should include the
+                       only the ancillary variables associated with the requested variable.
+        * Test case 7: variables in multiple groups not in message, but configured as ancillary
+                       variables in the json file. The output should include the
+                       ancillary variables associated with all the requested variables.
 
         """
         all_variables = {
@@ -1315,6 +1321,58 @@ class TestSubset(TestCase):
             self.assertSetEqual(
                 get_required_variables(self.varinfo, [], True, self.logger),
                 all_variables,
+            )
+
+        # Tests for ancillary variables
+        spl2smap_s_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
+        )
+        harmony_variables = [
+            HarmonyVariable(
+                {
+                    'fullPath': '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                    'id': 'V1234-PROVIDER',
+                    'name': 'albedo_1km',
+                }
+            ),
+            HarmonyVariable(
+                {
+                    'fullPath': '/Soil_Moisture_Retrieval_Data_3km/soil_moisture_3km',
+                    'id': 'V1234-PROVIDER',
+                    'name': 'soil_moisture_3km',
+                }
+            ),
+        ]
+        with self.subTest('Variables configured as ancillary for a single group'):
+            self.assertSetEqual(
+                get_required_variables(
+                    spl2smap_s_varinfo, [harmony_variables[0]], False, self.logger
+                ),
+                {
+                    '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/latitude_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/longitude_1km',
+                },
+            )
+        with self.subTest('Variables configured as ancillary in multiple groups'):
+            self.assertSetEqual(
+                get_required_variables(
+                    spl2smap_s_varinfo, harmony_variables, False, self.logger
+                ),
+                {
+                    '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                    '/Soil_Moisture_Retrieval_Data_3km/soil_moisture_3km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_3km/EASE_row_index_3km',
+                    '/Soil_Moisture_Retrieval_Data_3km/EASE_column_index_3km',
+                    '/Soil_Moisture_Retrieval_Data_1km/latitude_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/longitude_1km',
+                    '/Soil_Moisture_Retrieval_Data_3km/latitude_3km',
+                    '/Soil_Moisture_Retrieval_Data_3km/longitude_3km',
+                },
             )
 
     def test_fill_variables(self):

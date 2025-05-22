@@ -692,6 +692,35 @@
     },
     {
       "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_1km/(.*)_1km$"
+
+      },
+      "Attributes": [
+        {
+          "Name": "ancillary_variables",
+          "Value": "/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km,/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km"
+        }
+      ],
+      "_Description": "Include EASE_column_index_1km and EASE_row_index_1km as ancillary variables."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_3km/(.*)_3km$"
+      },
+      "Attributes": [
+        {
+          "Name": "ancillary_variables",
+          "Value": "/Soil_Moisture_Retrieval_Data_3km/EASE_column_index_3km,/Soil_Moisture_Retrieval_Data_3km/EASE_row_index_3km"
+        }
+      ],
+      "_Description": "Include EASE_column_index_3km and EASE_row_index_3km as ancillary variables."
+    },
+    {
+      "Applicability": {
         "Mission": "MERRA-2",
         "VariablePattern": "/lon"
       },

@@ -544,7 +544,7 @@
       "Applicability": {
         "Mission": "SMAP",
         "ShortNamePath": "SPL3FT(A|P|P_E)",
-        "VariablePattern": "^/Freeze_Thaw_Retrieval_Data(?:_(Global|Polar))?/((?!transition_state_flag$)(?!transition_direction$).)*$|/Radar_Data/.*"
+        "VariablePattern": "^/Freeze_Thaw_Retrieval_Data(?:_(Global|Polar))?/((?!transition_state_flag$)(?!transition_direction$).)*$|/Radar_Data/.*|/Ancillary_Data/.*"
       },
       "Attributes": [
         {

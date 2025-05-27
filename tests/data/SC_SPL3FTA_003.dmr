@@ -1,0 +1,421 @@
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xmlns:dmrpp="http://xml.opendap.org/dap/dmrpp/1.0.0#" dapVersion="4.0" dmrVersion="1.0" name="SMAP_L3_FT_A_20150413_R13080_001.h5" dmrpp:href="OPeNDAP_DMRpp_DATA_ACCESS_URL" dmrpp:version="3.21.0-428">
+    <Attribute name="build_dmrpp_metadata" type="Container">
+        <Attribute name="build_dmrpp" type="String">
+            <Value>3.21.0-428</Value>
+        </Attribute>
+        <Attribute name="bes" type="String">
+            <Value>3.21.0-428</Value>
+        </Attribute>
+        <Attribute name="libdap" type="String">
+            <Value>libdap-3.21.0-103</Value>
+        </Attribute>
+        <Attribute name="invocation" type="String">
+            <Value>build_dmrpp -c /tmp/bes_conf_XAUE -f /usr/share/hyrax/DATA/SMAP_L3_FT_A_20150413_R13080_001.h5 -r /tmp/dmr__Z8q4wC -u OPeNDAP_DMRpp_DATA_ACCESS_URL -M</Value>
+        </Attribute>
+    </Attribute>
+    <Group name="Ancillary_Data">
+        <Byte name="landcover_class">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>An enumerated type that specifies the predominant surface vegetation found in the grid cell. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+        </Byte>
+        <Float32 name="altitude_dem">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="units" type="String">
+                <Value>meters</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The Earth surface elevation within the 3km cell. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-1000.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10000.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+    </Group>
+    <Group name="Freeze_Thaw_Retrieval_Data">
+        <Float32 name="longitude">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Longitude of the center of the Earth based grid cell. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="latitude">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="units" type="String">
+                <Value>degrees_north</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Latitude of the center of the Earth based grid cell. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+        </Float32>
+        <UInt16 name="EASE_row_index">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The row index of the 3 km EASE grid cell that contains the associated data. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </UInt16>
+        <String name="freeze_thaw_time_utc">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="long_name" type="String">
+                <Value>Time of the freeze-thaw determination for this particular element in UTC. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+         </String>
+        <Float32 name="thaw_reference">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="units" type="String">
+                <Value>dB</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Reference sigma0 value used as a basis to indicate thawed conditions. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-50.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+            <dmrpp:chunks compressionType="deflate" deflateLevel="2" fillValue="0" byteOrder="LE">
+                <dmrpp:chunkDimensionSizes>1 6000 6000</dmrpp:chunkDimensionSizes>
+                <dmrpp:chunk offset="51288032" nBytes="3756517" chunkPositionInArray="[0,0,0]"/>
+                <dmrpp:chunk offset="55044549" nBytes="2504136" chunkPositionInArray="[1,0,0]"/>
+            </dmrpp:chunks>
+        </Float32>
+        <Byte name="transition_state_flag">
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="valid_min" type="Byte">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Byte">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Boolean that indicates whether soil is in transitional state from AM to PM on the same day.  0 indicates state is not in transition, 1 indicates state is in transition.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </Byte>
+        <String name="freeze_reference_date">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="long_name" type="String">
+                <Value>Date of the data used to determine the reference freeze condition. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+            <dmrpp:chunks compressionType="deflate" deflateLevel="2" fillValue="">
+                <dmrpp:chunkDimensionSizes>1 6000 6000</dmrpp:chunkDimensionSizes>
+                <dmrpp:chunk offset="101257227" nBytes="2192014" chunkPositionInArray="[0,0,0]"/>
+                <dmrpp:chunk offset="103449241" nBytes="1950534" chunkPositionInArray="[1,0,0]"/>
+            </dmrpp:chunks>
+            <dmrpp:FixedLengthStringArray string_length="10" pad="null_term"/>
+        </String>
+        <Byte name="transition_direction">
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="long_name" type="String">
+                <Value>Boolean that indicates transitional direction.  0 indicates AM frozen, PM thawed, 1 indicates AM thawed, PM frozen. Value is always zero if not in transition state.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Byte">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Byte">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </Byte>
+        <Byte name="freeze_thaw">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="valid_min" type="Byte">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Byte">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Boolean that indicates whether soil within cell is frozen or thawed.  A value of zero value implies thawed conditions, a value of 1 implies frozen. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Byte">
+                <Value>254</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </Byte>
+        <Float32 name="data_sampling_density">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="units" type="String">
+                <Value>km</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Average distance between data samples in a window that surrounds the grid cell.  Window size is TBD. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>2.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </Float32>
+        <String name="thaw_reference_date">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="long_name" type="String">
+                <Value>Date of the data used to determine the reference thawed conditon. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </String>
+        <UInt16 name="EASE_column_index">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65535</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>The column index of the 3 km EASE grid cell that contains the associated data. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </UInt16>
+        <Float64 name="freeze_thaw_time_seconds">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="units" type="String">
+                <Value>seconds</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Time of the freeze-thaw determination for this particular element in seconds from the standard epoch. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>-999999.90000000002</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>999999.90000000002</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float64">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </Float64>
+        <UInt16 name="surface_flag">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="long_name" type="String">
+                <Value>Bit flags that record ambient surface conditions for the grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="UInt16">
+                <Value>65534</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 2048s</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>3_km_static_water_body_flag 3_km_radar_water_body_detection_flag 3_km_coastal_proximity_flag 3_km_urban_area_flag 3_km_precipitation_flag 3_km_snow_or_ice_flag 3_km_permanent_snow_or_ice_flag 3_km_radar_frozen_ground_flag 3_km_model_frozen_ground_flag 3_km_mountainous_terrain_flag 3_km_dense_vegetation_flag 3_km_nadir_region_flag</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </UInt16>
+        <Float32 name="freeze_reference">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="units" type="String">
+                <Value>dB</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Reference sigma0 value used as a basis to indicate frozen conditions. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-50.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>10.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+            <Map name="/Freeze_Thaw_Retrieval_Data/latitude"/>
+            <Map name="/Freeze_Thaw_Retrieval_Data/longitude"/>
+        </Float32>
+    </Group>
+    <Group name="Radar_Data">
+        <Float32 name="kp_vv">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-0.009999999776</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Overall error measure for VV-pol Sigma0 within the grid cell, includes calibration, RFI and contamination effects. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+        <UInt32 name="sigma0_qual_flag_hh">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="_FillValue" type="UInt32">
+                <Value>4294967294</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Representative quality flags of horizontal polarization sigma0 measures in the grid cell. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="flag_masks" type="String">
+                <Value>1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>Mean_horizontal_polarization_quality_flag Forward_looking_horizontal_polarization_quality_flag Aft_looking_horizontal_polarization_quality_flag Mean_horizontal_polarization_range_flag Forward_looking_horizontal_polarization_range_flag Aft_looking_horizontal_polarization_range_flag Mean_horizontal_polarization_RFI_clean_flag Mean_horizontal_polarization_RFI_repair_flag Forward_looking_horizontal_polarization_RFI_clean_flag Forward_looking_horizontal_polarization_RFI_repair_flag Aft_looking_horizontal_polarization_RFI_clean_flag Aft_looking_horizontal_polarization_RFI_repair_flag Mean_horizontal_polarization_Faraday_Rotation_Flag Forward_looking_horizontal_polarization_Faraday_Rotation_Flag Aft_looking_horizontal_polarization_Faraday_Rotation_Flag Mean_horizontal_polarization_Kp_flag Forward_looking_horizontal_polarization_Kp_flag Aft_looking_horizontal_polarization_Kp_flag</Value>
+            </Attribute>
+        </UInt32>
+        <Float32 name="kp_hh">
+            <Dim size="2"/>
+            <Dim size="6000"/>
+            <Dim size="6000"/>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-0.009999999776</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Overall error measure for HH-pol Sigma0 within the grid cell, includes calibration, RFI and contamination effects. The AM (dimension AMPM=0) and PM (AMPM=1) observations are stored separately in the array.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>/Freeze_Thaw_Retrieval_Data/latitude /Freeze_Thaw_Retrieval_Data/longitude</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>1.</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-9999.</Value>
+            </Attribute>
+        </Float32>
+    </Group>
+</Dataset>

@@ -655,6 +655,32 @@ class TestCoordinateUtilities(TestCase):
                     'projection_x_coordinate': '/Soil_Moisture_Retrieval_Data_AM/same_folder_latitude2_/Soil_Moisture_Retrieval_Data_AM/same_folder_longitude2/x_dim',
                 },
             )
+        with self.subTest('Retrieves configured dimensions in multiple groups'):
+            spl3fta_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3FTA_003.dmr',
+                'SPL3FTA',
+                config_file='hoss/hoss_config.json',
+            )
+            self.assertEqual(
+                get_dimension_array_names(
+                    spl3fta_varinfo,
+                    '/Ancillary_Data/altitude_dem',
+                ),
+                {
+                    'projection_y_coordinate': '/Ancillary_Data/y_dim',
+                    'projection_x_coordinate': '/Ancillary_Data/x_dim',
+                },
+            )
+            self.assertEqual(
+                get_dimension_array_names(
+                    spl3fta_varinfo,
+                    '/Freeze_Thaw_Retrieval_Data/transition_direction',
+                ),
+                {
+                    'projection_y_coordinate': '/Freeze_Thaw_Retrieval_Data/y_dim',
+                    'projection_x_coordinate': '/Freeze_Thaw_Retrieval_Data/x_dim',
+                },
+            )
 
     def test_get_configured_dimension_order(self):
         """Ensure that the expected x-y dimension name

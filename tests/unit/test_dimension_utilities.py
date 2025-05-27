@@ -318,6 +318,47 @@ class TestDimensionUtilities(TestCase):
                 '/sst_dtime[][12:34][]',
             )
 
+        with self.subTest('With multiple groups'):
+            spl3fta_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3FTA_003.dmr',
+                'SPL3FTA',
+                config_file='hoss/hoss_config.json',
+            )
+            index_ranges = {
+                '/Ancillary_Data/y_dim': [2824, 3410],
+                '/Ancillary_Data/x_dim': [1549, 2180],
+                '/Radar_Data/y_dim': [2824, 3410],
+                '/Radar_Data/x_dim': [1549, 2180],
+                '/Freeze_Thaw_Retrieval_Data/y_dim': [2824, 3410],
+                '/Freeze_Thaw_Retrieval_Data/x_dim': [1549, 2180],
+            }
+            self.assertEqual(
+                add_index_range(
+                    '/Ancillary_Data/altitude_dem', spl3fta_varinfo, index_ranges
+                ),
+                '/Ancillary_Data/altitude_dem[][2824:3410][1549:2180]',
+            )
+            self.assertEqual(
+                add_index_range('/Radar_Data/kp_hh', spl3fta_varinfo, index_ranges),
+                '/Radar_Data/kp_hh[][2824:3410][1549:2180]',
+            )
+            self.assertEqual(
+                add_index_range(
+                    '/Freeze_Thaw_Retrieval_Data/data_sampling_density',
+                    spl3fta_varinfo,
+                    index_ranges,
+                ),
+                '/Freeze_Thaw_Retrieval_Data/data_sampling_density[][2824:3410][1549:2180]',
+            )
+            self.assertEqual(
+                add_index_range(
+                    '/Freeze_Thaw_Retrieval_Data/transition_direction',
+                    spl3fta_varinfo,
+                    index_ranges,
+                ),
+                '/Freeze_Thaw_Retrieval_Data/transition_direction[2824:3410][1549:2180]',
+            )
+
     def test_get_range_strings(self):
         """Ensure the correct combinations of range_strings are added as
         suffixes to the input variable based upon that variable's dimensions.

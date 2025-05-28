@@ -1,3 +1,10 @@
+## v1.1.8
+### 2025-05-23
+
+This version of HOSS updates the hoss configuration file to include
+Ancillary_Data group in SPL3FTA collection metadata overrides for dimension
+variables in that group.
+
 ## v1.1.7
 ### 2025-05-21
 

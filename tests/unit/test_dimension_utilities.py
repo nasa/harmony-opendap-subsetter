@@ -6,8 +6,8 @@ from unittest import TestCase
 from unittest.mock import ANY, patch
 
 import numpy as np
-from harmony.message import Message
-from harmony.util import config
+from harmony_service_lib.message import Message
+from harmony_service_lib.util import config
 from netCDF4 import Dataset
 from numpy.ma import masked_array
 from numpy.testing import assert_array_equal
@@ -148,7 +148,7 @@ class TestDimensionUtilities(TestCase):
             get_dimension_index_range(
                 self.ascending_dimension, requested_min_value, requested_max_value
             )
-            mock_get_indices_from_values.called_once_with(
+            mock_get_indices_from_values.assert_called_once_with(
                 self.ascending_dimension, requested_min_value, requested_max_value
             )
             mock_get_indices_from_values.reset_mock()
@@ -157,7 +157,7 @@ class TestDimensionUtilities(TestCase):
             get_dimension_index_range(
                 self.ascending_dimension, requested_min_value, None
             )
-            mock_get_indices_from_values.called_once_with(
+            mock_get_indices_from_values.assert_called_once_with(
                 self.ascending_dimension,
                 requested_min_value,
                 self.ascending_dimension[:][-1],
@@ -168,7 +168,7 @@ class TestDimensionUtilities(TestCase):
             get_dimension_index_range(
                 self.ascending_dimension, None, requested_max_value
             )
-            mock_get_indices_from_values.called_once_with(
+            mock_get_indices_from_values.assert_called_once_with(
                 self.ascending_dimension,
                 self.ascending_dimension[:][0],
                 requested_max_value,
@@ -179,7 +179,7 @@ class TestDimensionUtilities(TestCase):
             get_dimension_index_range(
                 self.descending_dimension, requested_min_value, requested_max_value
             )
-            mock_get_indices_from_values.called_once_with(
+            mock_get_indices_from_values.assert_called_once_with(
                 self.descending_dimension, requested_max_value, requested_min_value
             )
             mock_get_indices_from_values.reset_mock()
@@ -188,7 +188,7 @@ class TestDimensionUtilities(TestCase):
             get_dimension_index_range(
                 self.descending_dimension, requested_min_value, None
             )
-            mock_get_indices_from_values.called_once_with(
+            mock_get_indices_from_values.assert_called_once_with(
                 self.descending_dimension,
                 self.descending_dimension[:][0],
                 requested_min_value,
@@ -199,7 +199,7 @@ class TestDimensionUtilities(TestCase):
             get_dimension_index_range(
                 self.descending_dimension, None, requested_max_value
             )
-            mock_get_indices_from_values.called_once_with(
+            mock_get_indices_from_values.assert_called_once_with(
                 self.descending_dimension,
                 requested_max_value,
                 self.descending_dimension[:][-1],

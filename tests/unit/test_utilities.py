@@ -2,8 +2,8 @@ from logging import getLogger
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from harmony.exceptions import ForbiddenException, ServerException
-from harmony.util import config
+from harmony_service_lib.exceptions import ForbiddenException, ServerException
+from harmony_service_lib.util import config
 
 from hoss.exceptions import UrlAccessFailed
 from hoss.utilities import (

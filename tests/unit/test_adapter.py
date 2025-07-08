@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 from unittest import TestCase
 from unittest.mock import ANY, patch
 
-from harmony.message import Message
-from harmony.util import config
+from harmony_service_lib.message import Message
+from harmony_service_lib.util import config
 
 from hoss.adapter import HossAdapter
 from hoss.bbox_utilities import BBox

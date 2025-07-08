@@ -1,2 +1,2 @@
 # This file should contain any requirements installed via Conda
-hdf5==1.12.0
+hdf5==1.14.6

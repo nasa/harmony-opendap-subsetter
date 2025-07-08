@@ -13,8 +13,8 @@ from os.path import join as path_join
 from unittest import TestCase
 from unittest.mock import patch
 
-from harmony.message import Message
-from harmony.util import config
+from harmony_service_lib.message import Message
+from harmony_service_lib.util import config
 
 from hoss.bbox_utilities import (
     BBox,

@@ -15,9 +15,9 @@ from pathlib import PurePosixPath
 from typing import Dict, Set, Tuple
 
 import numpy as np
-from harmony.message import Message
-from harmony.message_utility import rgetattr
-from harmony.util import Config
+from harmony_service_lib.message import Message
+from harmony_service_lib.message_utility import rgetattr
+from harmony_service_lib.util import Config
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 from varinfo import VariableFromDmr, VarInfoFromDmr

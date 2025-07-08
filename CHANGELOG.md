@@ -1,3 +1,9 @@
+## v1.1.9
+### 2025-07-09
+
+This version of HOSS updates the hoss conda environment to not include defaults.
+This also updates the dependent packages to their latest supportable versions.
+
 ## v1.1.8
 ### 2025-05-23
 

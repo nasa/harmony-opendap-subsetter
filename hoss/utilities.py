@@ -13,9 +13,9 @@ from typing import Dict, Optional, Set, Tuple
 from urllib.parse import quote
 from uuid import uuid4
 
-from harmony.exceptions import ForbiddenException, ServerException
-from harmony.util import Config
-from harmony.util import download as util_download
+from harmony_service_lib.exceptions import ForbiddenException, ServerException
+from harmony_service_lib.util import Config
+from harmony_service_lib.util import download as util_download
 
 from hoss.exceptions import UrlAccessFailed
 

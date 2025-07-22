@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Set
 
 from dateutil.parser import parse as parse_datetime
-from harmony.message import Message
+from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 

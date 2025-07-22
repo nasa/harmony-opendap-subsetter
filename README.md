@@ -11,7 +11,7 @@ Kubernetes pods upon deployment. To ensure this occurs, HOSS is defined in the
 main [services.yml](https://github.com/nasa/harmony/blob/main/config/services.yml)
 configuration file for Harmony, and with different UMM-S records.
 
-HOSS require data to be ingested such that the granules can be accessed via
+HOSS requires data to be ingested such that the granules can be accessed via
 OPeNDAP in the Cloud (Hyrax). This means:
 
 * Generating a sidecar `.dmrpp` file. The file should then be placed in the
@@ -179,8 +179,8 @@ a Docker container using the following scripts:
 ./bin/run-test
 ```
 
-Coverage reports are being generate for each build in Bamboo, and saved as
-artefacts.
+Coverage reports are generated for each execution of the CI/CD pipeline in
+GitHub and saved as artefacts.
 
 ### Versioning
 

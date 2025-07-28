@@ -20,8 +20,8 @@ from logging import Logger
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from harmony.message import Message
-from harmony.util import Config, download
+from harmony_service_lib.message import Message
+from harmony_service_lib.util import Config, download
 
 from hoss.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
 

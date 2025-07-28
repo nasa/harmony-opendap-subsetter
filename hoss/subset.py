@@ -8,10 +8,10 @@ wrapped by the `subset_granule` function, which is called from the
 from logging import Logger
 from typing import List, Set
 
-from harmony.message import Message, Source
-from harmony.message import Variable as HarmonyVariable
-from harmony.message_utility import rgetattr
-from harmony.util import Config
+from harmony_service_lib.message import Message, Source
+from harmony_service_lib.message import Variable as HarmonyVariable
+from harmony_service_lib.message_utility import rgetattr
+from harmony_service_lib.util import Config
 from netCDF4 import Dataset
 from numpy.ma import masked
 from varinfo import VarInfoFromDmr

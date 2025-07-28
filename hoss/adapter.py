@@ -28,9 +28,9 @@ An invocation of HOSS provides several sources of information:
 import shutil
 from tempfile import mkdtemp
 
-from harmony import BaseHarmonyAdapter
-from harmony.message import Source
-from harmony.util import HarmonyException, generate_output_filename, stage
+from harmony_service_lib import BaseHarmonyAdapter
+from harmony_service_lib.message import Source
+from harmony_service_lib.util import HarmonyException, generate_output_filename, stage
 from pystac import Asset, Item
 
 from hoss.dimension_utilities import is_index_subset

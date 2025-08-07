@@ -1,3 +1,9 @@
+## v1.1.9
+### 2025-08-07
+
+This version of HOSS updates fixes invalid output extents for whole earth 
+spatial subset requests on Polar grids.
+
 ## v1.1.8
 ### 2025-05-23
 

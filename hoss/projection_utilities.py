@@ -203,13 +203,20 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+
     geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
 
-    resolved_geojson = get_resolved_geojson(
+    resolved_points = get_resolved_geojson(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
-
-    return get_x_y_extents_from_geographic_points(resolved_geojson, crs)
+    filtered_points = [
+        (
+            max(min(lon, np.nanmax(grid_lons)), np.nanmin(grid_lons)),
+            max(min(lat, np.nanmax(grid_lats)), np.nanmin(grid_lats)),
+        )
+        for lon, lat in resolved_points
+    ]
+    return get_x_y_extents_from_geographic_points(filtered_points, crs)
 
 
 def get_grid_lat_lons(
@@ -222,7 +229,9 @@ def get_grid_lat_lons(
     """
     projected_x = np.repeat(x_values.reshape(1, len(x_values)), len(y_values), axis=0)
     projected_y = np.repeat(y_values.reshape(len(y_values), 1), len(x_values), axis=1)
+
     to_geo_transformer = Transformer.from_crs(crs, 4326)
+
     return to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
         projected_x, projected_y
     )
@@ -443,10 +452,15 @@ def get_x_y_extents_from_geographic_points(
     points_x, points_y = (  # pylint: disable=unpacking-non-sequence
         from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
+    # isfinite checks for NaN and infinty values returned for certain projections
+    points_x = np.asarray(points_x)
+    points_y = np.asarray(points_y)
 
+    finite_x = points_x[np.isfinite(points_x)]
+    finite_y = points_y[np.isfinite(points_y)]
     return {
-        'x_min': np.nanmin(points_x),
-        'x_max': np.nanmax(points_x),
-        'y_min': np.nanmin(points_y),
-        'y_max': np.nanmax(points_y),
+        'x_min': np.min(finite_x),
+        'x_max': np.max(finite_x),
+        'y_min': np.min(finite_y),
+        'y_max': np.max(finite_y),
     }

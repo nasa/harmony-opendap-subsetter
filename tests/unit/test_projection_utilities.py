@@ -6,6 +6,7 @@ collections that have projected grids.
 """
 
 import json
+import math
 from os.path import join as path_join
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -370,6 +371,58 @@ class TestProjectionUtilities(TestCase):
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
                 expected_output,
+            )
+
+    def test_get_projected_x_y_extents_whole_earth(self):
+        """Ensure that the expected values for the x and y dimension extents
+        are recovered for a polar projected grid and when a whole earth
+        bounding box or shape is requested.
+
+        """
+        whole_earth_bbox = BBox(-180.0, -90.0, 180.0, 90.0)
+        polygon_path = 'tests/geojson_examples/polygon_whole_earth.geo.json'
+
+        x_values = np.linspace(-8982000, 8982000, 500)
+        y_values = np.linspace(8982000, -8982000, 500)
+
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'latitude_of_projection_origin': 90.0,
+                'grid_mapping_name': 'lambert_azimuthal_equal_area',
+            }
+        )
+        expected_output1 = {
+            'x_min': -12702459.818865139,
+            'x_max': 12702459.818865139,
+            'y_min': -12702440.623773243,
+            'y_max': 12702440.710450241,
+        }
+        with self.subTest('Whole Earth LAEA - Bounding box input'):
+            x_y_extents1 = get_projected_x_y_extents(
+                x_values, y_values, crs, bounding_box=whole_earth_bbox
+            )
+            self.assertDictEqual(x_y_extents1, expected_output1)
+            self.assertDictEqual(
+                x_y_extents1,
+                get_projected_x_y_extents(
+                    x_values, y_values, crs, bounding_box=whole_earth_bbox
+                ),
+                expected_output1,
+            )
+
+        with self.subTest('Whole Earth LAEA - Shape file input'):
+            x_y_extents2 = get_projected_x_y_extents(
+                x_values, y_values, crs, shape_file=polygon_path
+            )
+            self.assertDictEqual(
+                x_y_extents2,
+                get_projected_x_y_extents(
+                    x_values, y_values, crs, shape_file=polygon_path
+                ),
+                expected_output1,
             )
 
     def test_get_projected_x_y_variables(self):
@@ -1040,6 +1093,27 @@ class TestProjectionUtilities(TestCase):
         self.assertDictEqual(
             get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
         )
+
+    def test_get_x_y_extents_from_geographic_points_full_earth_laea(self):
+        """Ensure that a list of coordinates is transformed to the specified
+        laea projection, and valid values in the projected x and y
+        dimensions are returned even for edge cases like whole earth.
+
+        """
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'latitude_of_projection_origin': 90.0,
+                'grid_mapping_name': 'lambert_azimuthal_equal_area',
+            }
+        )
+
+        points1 = [(-180, -90), (-180, 90), (180, 90), (180, -90)]
+        x_y_extents = get_x_y_extents_from_geographic_points(points1, crs)
+
+        self.assertTrue(all(not math.isinf(value) for value in x_y_extents.values()))
 
     @patch('hoss.projection_utilities.get_grid_mapping_attributes')
     def test_get_master_geotransform(self, mock_get_grid_mapping_attributes):

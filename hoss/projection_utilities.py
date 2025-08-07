@@ -203,19 +203,35 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+    max_grid_lon = np.max(grid_lons)
+    min_grid_lon = np.min(grid_lons)
+    max_grid_lat = np.max(grid_lats)
+    min_grid_lat = np.min(grid_lats)
 
     geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
-
     resolved_points = get_resolved_geojson(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
-    filtered_points = [
-        (
-            max(min(lon, np.nanmax(grid_lons)), np.nanmin(grid_lons)),
-            max(min(lat, np.nanmax(grid_lats)), np.nanmin(grid_lats)),
-        )
-        for lon, lat in resolved_points
-    ]
+    req_lons, req_lats = zip(*resolved_points)
+    min_req_lon = np.min(req_lons)
+    max_req_lon = np.max(req_lons)
+    min_req_lat = np.min(req_lats)
+    max_req_lat = np.max(req_lats)
+    # check if all bbox points are outside the granule.
+    if (
+        min_req_lon > max_grid_lon
+        or max_req_lon < min_grid_lon
+        or min_req_lat > max_grid_lat
+        or max_req_lat < min_grid_lat
+    ):
+        # do not crop. it is outside spatial area
+        filtered_points = resolved_points
+    else:
+        clipped_lons = np.clip(req_lons, min_grid_lon, max_grid_lon)
+        clipped_lats = np.clip(req_lats, min_grid_lat, max_grid_lat)
+        clipped_points = list(zip(clipped_lons, clipped_lats))
+        # print(f'clipped_points={clipped_points}')
+        filtered_points = clipped_points
     return get_x_y_extents_from_geographic_points(filtered_points, crs)
 
 

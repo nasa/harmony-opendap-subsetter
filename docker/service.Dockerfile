@@ -26,7 +26,7 @@ COPY ./conda_requirements.txt conda_requirements.txt
 # Create Conda environment
 RUN conda create -y --name hoss --file conda_requirements.txt python=3.11 -q \
 	--channel conda-forge \
-	--channel defaults
+	--override-channels
 
 # Copy additional Pip dependencies into the container
 COPY ./pip_requirements.txt pip_requirements.txt

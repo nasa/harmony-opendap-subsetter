@@ -203,6 +203,7 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+    # this gets the extent of the granule
     max_grid_lon = np.max(grid_lons)
     min_grid_lon = np.min(grid_lons)
     max_grid_lat = np.max(grid_lats)
@@ -213,25 +214,32 @@ def get_projected_x_y_extents(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
     req_lons, req_lats = zip(*resolved_points)
-    min_req_lon = np.min(req_lons)
-    max_req_lon = np.max(req_lons)
-    min_req_lat = np.min(req_lats)
-    max_req_lat = np.max(req_lats)
+
+    # Todo in DAS-2326
+    # this gets the extent of the bbox or shapefile
+    # min_req_lon = np.min(req_lons)
+    # max_req_lon = np.max(req_lons)
+    # min_req_lat = np.min(req_lats)
+    # max_req_lat = np.max(req_lats)
+
     # check if all bbox points are outside the granule.
-    if (
-        min_req_lon > max_grid_lon
-        or max_req_lon < min_grid_lon
-        or min_req_lat > max_grid_lat
-        or max_req_lat < min_grid_lat
-    ):
-        # do not crop. it is outside spatial area
-        filtered_points = resolved_points
-    else:
-        clipped_lons = np.clip(req_lons, min_grid_lon, max_grid_lon)
-        clipped_lats = np.clip(req_lats, min_grid_lat, max_grid_lat)
-        clipped_points = list(zip(clipped_lons, clipped_lats))
-        filtered_points = clipped_points
-    return get_x_y_extents_from_geographic_points(filtered_points, crs)
+    # if (
+    #     min_req_lon > max_grid_lon
+    #     or max_req_lon < min_grid_lon
+    #     or min_req_lat > max_grid_lat
+    #     or max_req_lat < min_grid_lat
+    # ):
+    #     # do not crop. it is outside spatial area
+    #     # should return empty box and null
+    # else:
+    # all lon values are clipped within the granule lon extent
+    clipped_lons = np.clip(req_lons, min_grid_lon, max_grid_lon)
+
+    # all lat values are clipped to granule lat extent
+    clipped_lats = np.clip(req_lats, min_grid_lat, max_grid_lat)
+
+    clipped_points = list(zip(clipped_lons, clipped_lats))
+    return get_x_y_extents_from_geographic_points(clipped_points, crs)
 
 
 def get_grid_lat_lons(

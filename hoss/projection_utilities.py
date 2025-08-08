@@ -230,7 +230,6 @@ def get_projected_x_y_extents(
         clipped_lons = np.clip(req_lons, min_grid_lon, max_grid_lon)
         clipped_lats = np.clip(req_lats, min_grid_lat, max_grid_lat)
         clipped_points = list(zip(clipped_lons, clipped_lats))
-        # print(f'clipped_points={clipped_points}')
         filtered_points = clipped_points
     return get_x_y_extents_from_geographic_points(filtered_points, crs)
 

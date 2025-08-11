@@ -215,23 +215,6 @@ def get_projected_x_y_extents(
     )
     req_lons, req_lats = zip(*resolved_points)
 
-    # Todo in DAS-2326
-    # this gets the extent of the bbox or shapefile
-    # min_req_lon = np.min(req_lons)
-    # max_req_lon = np.max(req_lons)
-    # min_req_lat = np.min(req_lats)
-    # max_req_lat = np.max(req_lats)
-
-    # check if all bbox points are outside the granule.
-    # if (
-    #     min_req_lon > max_grid_lon
-    #     or max_req_lon < min_grid_lon
-    #     or min_req_lat > max_grid_lat
-    #     or max_req_lat < min_grid_lat
-    # ):
-    #     # do not crop. it is outside spatial area
-    #     # should return empty box and null
-    # else:
     # all lon values are clipped within the granule lon extent
     clipped_lons = np.clip(req_lons, min_grid_lon, max_grid_lon)
 

@@ -416,40 +416,6 @@ class TestProjectionUtilities(TestCase):
                 expected_output,
             )
 
-    # ToDo part of DAS-2326
-    # def test_get_projected_x_y_extents_invalid_bbox(self):
-    #     """Ensure that the an empty extent is returned when the bbox is totally
-    #     outside the granule extent.
-
-    #     """
-    #     bbox_outside_granule = BBox(-180.0, -89.0, -180.0, -85.0)
-    #     # The granule min latitude is -81.0
-    #     x_values = np.linspace(-8982000, 8982000, 500)
-    #     y_values = np.linspace(8982000, -8982000, 500)
-
-    #     crs = CRS.from_cf(
-    #         {
-    #             'false_easting': 0.0,
-    #             'false_northing': 0.0,
-    #             'longitude_of_central_meridian': 0.0,
-    #             'latitude_of_projection_origin': 90.0,
-    #             'grid_mapping_name': 'lambert_azimuthal_equal_area',
-    #         }
-    #     )
-    #     expected_output = {
-    #         'x_min': -12741518.404149672,
-    #         'x_max': 12741518.404149672,
-    #         'y_min': -12741499.150035104,
-    #         'y_max': 12741524.822190018
-    #     }
-    #     with self.subTest('Spatial area outside granule LAEA - Bounding box input'):
-    #         x_y_extents = get_projected_x_y_extents(
-    #             x_values, y_values, crs, bounding_box=bbox_outside_granule
-    #         )
-    #         print(f'x_y_extents={x_y_extents}')
-
-    #         self.assertDictEqual(x_y_extents, expected_output)
-
     def test_get_projected_x_y_variables(self):
         """Ensure that the `standard_name` metadata attribute can be parsed
         via `VarInfoFromDmr` for all dimenions of a specifed variable. If

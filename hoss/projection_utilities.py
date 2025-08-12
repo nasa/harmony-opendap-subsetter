@@ -203,26 +203,35 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
-    # this gets the extent of the granule
-    max_grid_lon = np.max(grid_lons)
-    min_grid_lon = np.min(grid_lons)
-    max_grid_lat = np.max(grid_lats)
-    min_grid_lat = np.min(grid_lats)
 
     geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
-    resolved_points = get_resolved_geojson(
+    points_in_requested_extent = get_resolved_geojson(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
-    req_lons, req_lats = zip(*resolved_points)
+
+    # get the extent of the granule.
+    granule_extent = BBox(
+        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
+    )
+
+    clipped_points = get_filtered_points(points_in_requested_extent, granule_extent)
+
+    return get_x_y_extents_from_geographic_points(clipped_points, crs)
+
+
+def get_filtered_points(
+    points_in_requested_extent: List[Coordinates], granule_extent: BBox
+) -> List[Coordinates]:
+    """Returns lat/lon values cropped to the extent of the granule"""
+    requested_lons, requested_lats = zip(*points_in_requested_extent)
 
     # all lon values are clipped within the granule lon extent
-    clipped_lons = np.clip(req_lons, min_grid_lon, max_grid_lon)
+    clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
 
     # all lat values are clipped to granule lat extent
-    clipped_lats = np.clip(req_lats, min_grid_lat, max_grid_lat)
+    clipped_lats = np.clip(requested_lats, granule_extent.south, granule_extent.north)
 
-    clipped_points = list(zip(clipped_lons, clipped_lats))
-    return get_x_y_extents_from_geographic_points(clipped_points, crs)
+    return list(zip(clipped_lons, clipped_lats))
 
 
 def get_grid_lat_lons(

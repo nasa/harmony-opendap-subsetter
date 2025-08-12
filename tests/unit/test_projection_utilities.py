@@ -27,6 +27,7 @@ from hoss.exceptions import (
 )
 from hoss.projection_utilities import (
     get_bbox_polygon,
+    get_filtered_points,
     get_geographic_resolution,
     get_grid_lat_lons,
     get_grid_mapping_attributes,
@@ -380,6 +381,7 @@ class TestProjectionUtilities(TestCase):
 
         """
         whole_earth_bbox = BBox(-180.0, -90.0, 180.0, 90.0)
+
         polygon_path = 'tests/geojson_examples/polygon_whole_earth.geo.json'
 
         x_values = np.linspace(-8982000, 8982000, 500)
@@ -414,6 +416,81 @@ class TestProjectionUtilities(TestCase):
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
                 expected_output,
+            )
+
+    def test_get_filtered_points(self):
+        """Ensure that the coordinates returned are clipped to the granule extent or
+        the bbox extent whichever is the smaller of the two.
+
+        """
+        granule_extent = BBox(-120.0, -80.0, 120.0, 80.0)
+        granule_extent_points = [
+            (-120.0, -80.0),
+            (120.0, -80.0),
+            (120.0, 80.0),
+            (-120.0, 80.0),
+            (-120.0, -80.0),
+        ]
+        all_points_larger_than_granule = [
+            (-170.0, -85.0),
+            (170.0, -85.0),
+            (170.0, 85.0),
+            (-170.0, 85.0),
+            (-170.0, -85.0),
+        ]
+
+        all_points_smaller_than_granule = [
+            (-70.0, -70.0),
+            (70.0, -70.0),
+            (70.0, 70.0),
+            (-70.0, 70.0),
+            (-70.0, -70.0),
+        ]
+
+        all_points_outside_granule = [
+            (-179.98, -87.0),
+            (179.89, -87.0),
+            (179.89, 88.0),
+            (-179.98, 88.0),
+            (-179.98, -87.0),
+        ]
+
+        some_points_outside_granule = [
+            (-100.0, -60.0),
+            (100, -60.0),
+            (179.91, 88.0),
+            (-100, 80.0),
+            (-100.0, -60.0),
+        ]
+
+        with self.subTest('Bounding box input is larger than granule extent'):
+            self.assertListEqual(
+                get_filtered_points(all_points_larger_than_granule, granule_extent),
+                granule_extent_points,
+            )
+
+        with self.subTest('Bounding box input smaller than granule extent'):
+            self.assertListEqual(
+                get_filtered_points(all_points_smaller_than_granule, granule_extent),
+                all_points_smaller_than_granule,
+            )
+
+        with self.subTest('Bounding box input with all points outside granule'):
+            self.assertListEqual(
+                get_filtered_points(all_points_outside_granule, granule_extent),
+                granule_extent_points,
+            )
+
+        with self.subTest('Bounding box input with some points outside granule extent'):
+            self.assertListEqual(
+                get_filtered_points(some_points_outside_granule, granule_extent),
+                [
+                    (-100.0, -60.0),
+                    (100.0, -60.0),
+                    (120.0, 80.0),
+                    (-100.0, 80.0),
+                    (-100.0, -60.0),
+                ],
             )
 
     def test_get_projected_x_y_variables(self):

@@ -27,6 +27,7 @@ from hoss.exceptions import (
 )
 from hoss.projection_utilities import (
     get_bbox_polygon,
+    get_densified_perimeter,
     get_filtered_points,
     get_geographic_resolution,
     get_grid_lat_lons,
@@ -36,7 +37,6 @@ from hoss.projection_utilities import (
     get_projected_x_y_variables,
     get_resolved_feature,
     get_resolved_features,
-    get_resolved_geojson,
     get_resolved_geometry,
     get_resolved_line,
     get_variable_crs,
@@ -718,7 +718,7 @@ class TestProjectionUtilities(TestCase):
     @patch('hoss.projection_utilities.get_bbox_polygon')
     @patch('hoss.projection_utilities.get_resolved_feature')
     @patch('hoss.projection_utilities.get_resolved_features')
-    def test_get_resolved_geojson(
+    def test_get_densified_perimeter(
         self,
         mock_get_resolved_features,
         mock_get_resolved_feature,
@@ -747,7 +747,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Shape file is specified and used'):
             self.assertListEqual(
-                get_resolved_geojson(resolution, shape_file=shape_file),
+                get_densified_perimeter(resolution, shape_file=shape_file),
                 resolved_features,
             )
             mock_get_resolved_features.assert_called_once_with(
@@ -760,7 +760,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Bounding box is specified and used'):
             self.assertListEqual(
-                get_resolved_geojson(resolution, bounding_box=bounding_box),
+                get_densified_perimeter(resolution, bounding_box=bounding_box),
                 resolved_feature,
             )
             mock_get_resolved_features.assert_not_called()
@@ -774,7 +774,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Bounding box is used when both are specified'):
             self.assertListEqual(
-                get_resolved_geojson(
+                get_densified_perimeter(
                     resolution, shape_file=shape_file, bounding_box=bounding_box
                 ),
                 resolved_feature,
@@ -789,7 +789,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Neither shape file nor bbox, raises exception'):
             with self.assertRaises(MissingSpatialSubsetInformation):
-                get_resolved_geojson(resolution, None, None)
+                get_densified_perimeter(resolution, None, None)
                 mock_get_resolved_features.assert_not_called()
                 mock_get_bbox_polygon.assert_not_called()
                 mock_get_resolved_feature.assert_not_called()

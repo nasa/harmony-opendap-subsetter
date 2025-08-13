@@ -1,8 +1,10 @@
 ## v1.1.9
-### 2025-08-07
+### 2025-08-013
 
-This version of HOSS updates fixes invalid output extents for whole earth
-spatial subset requests on Polar grids.
+This version of HOSS updates fixes invalid output extents in cases where the
+requested bounding area (bbox, shape) extends beyond valid locations for the native
+projection of the data. E.g., EASE-GRID-2 North Polar (LAEA) projection becomes INF
+at latitude -90°.
 
 ## v1.1.8
 ### 2025-05-23

@@ -431,7 +431,7 @@ class TestProjectionUtilities(TestCase):
             (-120.0, 80.0),
             (-120.0, -80.0),
         ]
-        all_points_larger_than_granule = [
+        bounding_points_contains_granule = [
             (-170.0, -85.0),
             (170.0, -85.0),
             (170.0, 85.0),
@@ -439,7 +439,7 @@ class TestProjectionUtilities(TestCase):
             (-170.0, -85.0),
         ]
 
-        all_points_smaller_than_granule = [
+        bounding_points_within_granule = [
             (-70.0, -70.0),
             (70.0, -70.0),
             (70.0, 70.0),
@@ -447,7 +447,7 @@ class TestProjectionUtilities(TestCase):
             (-70.0, -70.0),
         ]
 
-        all_points_outside_granule = [
+        bounding_points_not_overlapping_granule = [
             (-179.98, -87.0),
             (179.89, -87.0),
             (179.89, 88.0),
@@ -455,7 +455,7 @@ class TestProjectionUtilities(TestCase):
             (-179.98, -87.0),
         ]
 
-        some_points_outside_granule = [
+        some_points_overlapping_granule = [
             (-100.0, -60.0),
             (100, -60.0),
             (179.91, 88.0),
@@ -463,27 +463,29 @@ class TestProjectionUtilities(TestCase):
             (-100.0, -60.0),
         ]
 
-        with self.subTest('Bounding box input is larger than granule extent'):
+        with self.subTest('Bounding box completely contains granule extent'):
             self.assertListEqual(
-                get_filtered_points(all_points_larger_than_granule, granule_extent),
+                get_filtered_points(bounding_points_contains_granule, granule_extent),
                 granule_extent_points,
             )
 
-        with self.subTest('Bounding box input smaller than granule extent'):
+        with self.subTest('Bounding box entirely within the granule extent'):
             self.assertListEqual(
-                get_filtered_points(all_points_smaller_than_granule, granule_extent),
-                all_points_smaller_than_granule,
+                get_filtered_points(bounding_points_within_granule, granule_extent),
+                bounding_points_within_granule,
             )
 
-        with self.subTest('Bounding box input with all points outside granule'):
+        with self.subTest('Bounding box and granule do not overlap'):
             self.assertListEqual(
-                get_filtered_points(all_points_outside_granule, granule_extent),
+                get_filtered_points(
+                    bounding_points_not_overlapping_granule, granule_extent
+                ),
                 granule_extent_points,
             )
 
-        with self.subTest('Bounding box input with some points outside granule extent'):
+        with self.subTest('Bounding box input with some points overlapping granule'):
             self.assertListEqual(
-                get_filtered_points(some_points_outside_granule, granule_extent),
+                get_filtered_points(some_points_overlapping_granule, granule_extent),
                 [
                     (-100.0, -60.0),
                     (100.0, -60.0),

@@ -6,6 +6,7 @@ collections that have projected grids.
 """
 
 import json
+import math
 from os.path import join as path_join
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -26,6 +27,8 @@ from hoss.exceptions import (
 )
 from hoss.projection_utilities import (
     get_bbox_polygon,
+    get_densified_perimeter,
+    get_filtered_points,
     get_geographic_resolution,
     get_grid_lat_lons,
     get_grid_mapping_attributes,
@@ -34,7 +37,6 @@ from hoss.projection_utilities import (
     get_projected_x_y_variables,
     get_resolved_feature,
     get_resolved_features,
-    get_resolved_geojson,
     get_resolved_geometry,
     get_resolved_line,
     get_variable_crs,
@@ -372,6 +374,127 @@ class TestProjectionUtilities(TestCase):
                 expected_output,
             )
 
+    def test_get_projected_x_y_extents_whole_earth(self):
+        """Ensure that the expected values for the x and y dimension extents
+        are recovered for a polar projected grid and when a whole earth
+        bounding box or shape is requested.
+
+        """
+        whole_earth_bbox = BBox(-180.0, -90.0, 180.0, 90.0)
+
+        polygon_path = 'tests/geojson_examples/polygon_whole_earth.geo.json'
+
+        x_values = np.linspace(-8982000, 8982000, 500)
+        y_values = np.linspace(8982000, -8982000, 500)
+
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'latitude_of_projection_origin': 90.0,
+                'grid_mapping_name': 'lambert_azimuthal_equal_area',
+            }
+        )
+        expected_output = {
+            'x_min': -12702459.818865139,
+            'x_max': 12702459.818865139,
+            'y_min': -12702440.623773243,
+            'y_max': 12702440.710450241,
+        }
+        with self.subTest('Whole Earth LAEA - Bounding box input'):
+            self.assertDictEqual(
+                get_projected_x_y_extents(
+                    x_values, y_values, crs, bounding_box=whole_earth_bbox
+                ),
+                expected_output,
+            )
+
+        with self.subTest('Whole Earth LAEA - Shape file input'):
+            self.assertDictEqual(
+                get_projected_x_y_extents(
+                    x_values, y_values, crs, shape_file=polygon_path
+                ),
+                expected_output,
+            )
+
+    def test_get_filtered_points(self):
+        """Ensure that the coordinates returned are clipped to the granule extent or
+        the bbox extent whichever is the smaller of the two.
+
+        """
+        granule_extent = BBox(-120.0, -80.0, 120.0, 80.0)
+        granule_extent_points = [
+            (-120.0, -80.0),
+            (120.0, -80.0),
+            (120.0, 80.0),
+            (-120.0, 80.0),
+            (-120.0, -80.0),
+        ]
+        bounding_points_contains_granule = [
+            (-170.0, -85.0),
+            (170.0, -85.0),
+            (170.0, 85.0),
+            (-170.0, 85.0),
+            (-170.0, -85.0),
+        ]
+
+        bounding_points_within_granule = [
+            (-70.0, -70.0),
+            (70.0, -70.0),
+            (70.0, 70.0),
+            (-70.0, 70.0),
+            (-70.0, -70.0),
+        ]
+
+        bounding_points_not_overlapping_granule = [
+            (-179.98, -87.0),
+            (179.89, -87.0),
+            (179.89, 88.0),
+            (-179.98, 88.0),
+            (-179.98, -87.0),
+        ]
+
+        some_points_overlapping_granule = [
+            (-100.0, -60.0),
+            (100, -60.0),
+            (179.91, 88.0),
+            (-100, 80.0),
+            (-100.0, -60.0),
+        ]
+
+        with self.subTest('Bounding box completely contains granule extent'):
+            self.assertListEqual(
+                get_filtered_points(bounding_points_contains_granule, granule_extent),
+                granule_extent_points,
+            )
+
+        with self.subTest('Bounding box entirely within the granule extent'):
+            self.assertListEqual(
+                get_filtered_points(bounding_points_within_granule, granule_extent),
+                bounding_points_within_granule,
+            )
+
+        with self.subTest('Bounding box and granule do not overlap'):
+            self.assertListEqual(
+                get_filtered_points(
+                    bounding_points_not_overlapping_granule, granule_extent
+                ),
+                granule_extent_points,
+            )
+
+        with self.subTest('Bounding box input with some points overlapping granule'):
+            self.assertListEqual(
+                get_filtered_points(some_points_overlapping_granule, granule_extent),
+                [
+                    (-100.0, -60.0),
+                    (100.0, -60.0),
+                    (120.0, 80.0),
+                    (-100.0, 80.0),
+                    (-100.0, -60.0),
+                ],
+            )
+
     def test_get_projected_x_y_variables(self):
         """Ensure that the `standard_name` metadata attribute can be parsed
         via `VarInfoFromDmr` for all dimenions of a specifed variable. If
@@ -595,7 +718,7 @@ class TestProjectionUtilities(TestCase):
     @patch('hoss.projection_utilities.get_bbox_polygon')
     @patch('hoss.projection_utilities.get_resolved_feature')
     @patch('hoss.projection_utilities.get_resolved_features')
-    def test_get_resolved_geojson(
+    def test_get_densified_perimeter(
         self,
         mock_get_resolved_features,
         mock_get_resolved_feature,
@@ -624,7 +747,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Shape file is specified and used'):
             self.assertListEqual(
-                get_resolved_geojson(resolution, shape_file=shape_file),
+                get_densified_perimeter(resolution, shape_file=shape_file),
                 resolved_features,
             )
             mock_get_resolved_features.assert_called_once_with(
@@ -637,7 +760,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Bounding box is specified and used'):
             self.assertListEqual(
-                get_resolved_geojson(resolution, bounding_box=bounding_box),
+                get_densified_perimeter(resolution, bounding_box=bounding_box),
                 resolved_feature,
             )
             mock_get_resolved_features.assert_not_called()
@@ -651,7 +774,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Bounding box is used when both are specified'):
             self.assertListEqual(
-                get_resolved_geojson(
+                get_densified_perimeter(
                     resolution, shape_file=shape_file, bounding_box=bounding_box
                 ),
                 resolved_feature,
@@ -666,7 +789,7 @@ class TestProjectionUtilities(TestCase):
 
         with self.subTest('Neither shape file nor bbox, raises exception'):
             with self.assertRaises(MissingSpatialSubsetInformation):
-                get_resolved_geojson(resolution, None, None)
+                get_densified_perimeter(resolution, None, None)
                 mock_get_resolved_features.assert_not_called()
                 mock_get_bbox_polygon.assert_not_called()
                 mock_get_resolved_feature.assert_not_called()
@@ -1040,6 +1163,27 @@ class TestProjectionUtilities(TestCase):
         self.assertDictEqual(
             get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
         )
+
+    def test_get_x_y_extents_from_geographic_points_full_earth_laea(self):
+        """Ensure that a list of coordinates is transformed to the specified
+        laea projection, and valid values in the projected x and y
+        dimensions are returned even for edge cases like whole earth.
+
+        """
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'latitude_of_projection_origin': 90.0,
+                'grid_mapping_name': 'lambert_azimuthal_equal_area',
+            }
+        )
+
+        points1 = [(-180, -90), (-180, 90), (180, 90), (180, -90)]
+        x_y_extents = get_x_y_extents_from_geographic_points(points1, crs)
+
+        self.assertTrue(all(not math.isinf(value) for value in x_y_extents.values()))
 
     @patch('hoss.projection_utilities.get_grid_mapping_attributes')
     def test_get_master_geotransform(self, mock_get_grid_mapping_attributes):

@@ -203,13 +203,40 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+    # When projected, the perimeter of a bounding box or polygon in geographic
+    # terms will become curved.  To determine the X, Y extent of the requested
+    # bounding area, we need a perimeter with a suitable density of points, such that
+    # we catch that curve when projected. The source file resolution is used to define
+    # the necessary number of points (density).
     geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
-
-    resolved_geojson = get_resolved_geojson(
+    densified_perimeter = get_densified_perimeter(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
 
-    return get_x_y_extents_from_geographic_points(resolved_geojson, crs)
+    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
+    # the source file's geographic extents
+    granule_extent = BBox(
+        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
+    )
+
+    clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
+
+    return get_x_y_extents_from_geographic_points(clipped_perimeter, crs)
+
+
+def get_filtered_points(
+    points_in_requested_extent: List[Coordinates], granule_extent: BBox
+) -> List[Coordinates]:
+    """Returns lat/lon values cropped to the extent of the granule"""
+    requested_lons, requested_lats = zip(*points_in_requested_extent)
+
+    # all lon values are clipped within the granule lon extent
+    clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
+
+    # all lat values are clipped to granule lat extent
+    clipped_lats = np.clip(requested_lats, granule_extent.south, granule_extent.north)
+
+    return list(zip(clipped_lons, clipped_lats))
 
 
 def get_grid_lat_lons(
@@ -222,7 +249,9 @@ def get_grid_lat_lons(
     """
     projected_x = np.repeat(x_values.reshape(1, len(x_values)), len(y_values), axis=0)
     projected_y = np.repeat(y_values.reshape(len(y_values), 1), len(x_values), axis=1)
+
     to_geo_transformer = Transformer.from_crs(crs, 4326)
+
     return to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
         projected_x, projected_y
     )
@@ -242,7 +271,7 @@ def get_geographic_resolution(longitudes: np.ndarray, latitudes: np.ndarray) -> 
     return np.nanmin(np.sqrt(np.add(lon_square_diffs, lat_square_diffs)))
 
 
-def get_resolved_geojson(
+def get_densified_perimeter(
     resolution: float, shape_file: str = None, bounding_box: BBox = None
 ) -> List[Coordinates]:
     """Take a shape file or bounding box, as defined by the input Harmony
@@ -443,10 +472,15 @@ def get_x_y_extents_from_geographic_points(
     points_x, points_y = (  # pylint: disable=unpacking-non-sequence
         from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
+    # isfinite checks for NaN and infinty values returned for certain projections
+    points_x = np.asarray(points_x)
+    points_y = np.asarray(points_y)
 
+    finite_x = points_x[np.isfinite(points_x)]
+    finite_y = points_y[np.isfinite(points_y)]
     return {
-        'x_min': np.nanmin(points_x),
-        'x_max': np.nanmax(points_x),
-        'y_min': np.nanmin(points_y),
-        'y_max': np.nanmax(points_y),
+        'x_min': np.min(finite_x),
+        'x_max': np.max(finite_x),
+        'y_min': np.min(finite_y),
+        'y_max': np.max(finite_y),
     }

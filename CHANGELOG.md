@@ -1,8 +1,8 @@
-## v1.2.0
+## v1.1.10
 ### 2025-08-21
 
-This version of HOSS updates the consa environment to support Python 3.12. This also updates the
-dependent packages to their latest supportable versions. Also updates harmony library version.
+This version of HOSS updates the conda environment to support Python 3.12. This also updates the
+dependent packages to their latest supportable versions and updates Harmony Service Library version.
 
 ## v1.1.9
 ### 2025-08-13

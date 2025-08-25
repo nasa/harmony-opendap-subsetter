@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List
 from unittest.mock import MagicMock
 
-from harmony.util import bbox_to_geometry
+from harmony_service_lib.util import bbox_to_geometry
 from pystac import Asset, Catalog, Item
 
 Granule = namedtuple('Granule', ['url', 'media_type', 'roles'])

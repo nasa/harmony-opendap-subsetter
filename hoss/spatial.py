@@ -24,7 +24,7 @@ For example: [W, S, E, N] = [-20, -90, 20, 90]
 
 from typing import List, Set
 
-from harmony.message import Message
+from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
 from varinfo import VariableFromDmr, VarInfoFromDmr

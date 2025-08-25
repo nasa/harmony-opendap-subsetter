@@ -5,9 +5,9 @@ from unittest import TestCase
 from unittest.mock import call, patch
 
 import numpy as np
-from harmony.message import Message, Source
-from harmony.message import Variable as HarmonyVariable
-from harmony.util import config
+from harmony_service_lib.message import Message, Source
+from harmony_service_lib.message import Variable as HarmonyVariable
+from harmony_service_lib.util import config
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 

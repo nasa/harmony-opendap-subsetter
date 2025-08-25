@@ -5,7 +5,7 @@ from unittest import TestCase
 from unittest.mock import ANY, patch
 
 import numpy as np
-from harmony.message import Message
+from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
 from varinfo import VarInfoFromDmr

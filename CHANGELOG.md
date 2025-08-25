@@ -1,5 +1,11 @@
+## v1.1.10
+### 2025-08-21
+
+This version of HOSS updates the conda environment to support Python 3.12. This also updates the
+dependent packages to their latest supportable versions and updates Harmony Service Library version.
+
 ## v1.1.9
-### 2025-08-013
+### 2025-08-13
 
 This version of HOSS updates fixes invalid output extents in cases where the
 requested bounding area (bbox, shape) extends beyond valid locations for the native

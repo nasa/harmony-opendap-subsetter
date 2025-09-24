@@ -1,49 +1,48 @@
-## v1.1.10
-### 2025-08-21
+## [vX.Y.Z] - Unreleased
+
+### Changed
+
+- Release notes for HOSS will now include the commit history for that release.
+
+## [v1.1.10] - 2025-08-21
 
 This version of HOSS updates the conda environment to support Python 3.12. This also updates the
 dependent packages to their latest supportable versions and updates Harmony Service Library version.
 
-## v1.1.9
-### 2025-08-13
+## [v1.1.9] - 2025-08-13
 
 This version of HOSS updates fixes invalid output extents in cases where the
 requested bounding area (bbox, shape) extends beyond valid locations for the native
 projection of the data. E.g., EASE-GRID-2 North Polar (LAEA) projection becomes INF
 at latitude -90°.
 
-## v1.1.8
-### 2025-05-23
+## [v1.1.8] - 2025-05-23
 
 This version of HOSS updates the hoss configuration file to include
 Ancillary_Data group in SPL3FTA collection metadata overrides for dimension
 variables in that group.
 
-## v1.1.7
-### 2025-05-21
+## [v1.1.7] - 2025-05-21
 
 This version of HOSS updates the hoss configuration file to include
 EASE_column_index and EASE_row_index as ancillary variables for the SPL2SMAP_S
 collection.
 
-## v1.1.6
-### 2025-02-24
+## [v1.1.6] - 2025-02-24
 
 This version of HOSS adds support for multiple coordinate variables that
 are in the same group for cases where coordinates are used in place of
 dimensions. This also supports exclusive requests of coordinate
 datasets that do not have coordinate attributes or dimensions.
 
-## v1.1.5
-### 2025-02-14
+## [v1.1.5] - 2025-02-14
 
 This version of HOSS adds support for 3D variables which
 do not have the nominal order. This would provide support
 for the 3D variables in SMAP - SPL3SMP with dimension order
 information provided in the configurations file.
 
-## v1.1.4
-### 2025-02-12
+## [v1.1.4] - 2025-02-12
 
 This version of HOSS adds support for SMAP L3 polar variables that are unable to have their
 dimension scale arrays created from their corresponding lat/lon variables. A 'master geotransform'
@@ -51,16 +50,14 @@ attribute has been added to the grid mapping reference variable for the affected
 and function updates were made to create the dimension arrays from the master geotransform
 when it is present.
 
-## v1.1.3
-### 2025-01-29
+## [v1.1.3] - 2025-01-29
 
 This version of HOSS supports configuration updates to hoss_config.json to
 add dimension configurations for 3D variables. Functions were updated to provide the
 ability to spatial subset 3D variables for products like SMAP L3 which did
 not have dimension arrays.
 
-## v1.1.2
-### 2025-01-20
+## [v1.1.2] - 2025-01-20
 
 - [[DAS-2256](https://bugs.earthdata.nasa.gov/browse/DAS-2256)]
   HOSS has been updated to use `earthdata-varinfo` version 3.0.1.
@@ -68,8 +65,7 @@ not have dimension arrays.
   [earthdata-varinfo release notes](https://github.com/nasa/earthdata-varinfo/releases/tag/3.0.1)
   for more information.
 
-## v1.1.1
-### 2025-01-14
+## [v1.1.1] - 2025-01-14
 
 This version of HOSS merges the feature branch that contains V1.1.0 to the main branch.
 Additional updates included code quality improvements with additional unit tests, revised methodology
@@ -79,8 +75,7 @@ V1.1.1 and V1.1.0 are entirely to support SMAP L3 data - in particular SPL2SMAP_
 all of which have “anonymous” dimensions (without dimension names and dimension variables).  No functional
 updates are present, nor changes that effect existing collection support.
 
-## v1.1.0
-### 2024-11-25
+## [v1.1.0] - 2024-11-25
 
 This version of HOSS provides support for gridded products that do not contain
 CF-Convention compliant grid mapping variables and 1-D dimension variables, such
@@ -96,8 +91,7 @@ the cache-name for coordinates already processed for dimension ranges.
 Several new functions related to this implementation have been added to
 a new module `coordinate_utilities.py`.
 
-## v1.0.5
-### 2024-08-19
+## [v1.0.5] - 2024-08-19
 
 This version of HOSS updates the `is_index_subset` method to check for empty list (in case of dimensions subset)
 as well as None (for the spatial, bbox and temporal subsets). This prevents 1-D dimension variables from being
@@ -105,22 +99,19 @@ unnecessarily requested from OPeNDAP for variable subsets which needs to be done
 subsetting requests. This also prevents a whole granule request when 1-D dimension variables were not present
 in the granule.
 
-## v1.0.4
-### 2024-04-05
+## [v1.0.4] - 2024-04-05
 
 This version of HOSS implements `black` code formatting across the repository.
 There should be no functional changes in the service.
 
-## v1.0.3
-### 2024-03-29
+## [v1.0.3] - 2024-03-29
 
 This version of HOSS handles the error in the crs_wkt attribute in ATL19 where the
 north polar crs variable has a leading iquotation mark escaped by back slash in the
 crs_wkt attribute. This causes errors when the projection is being interpreted from
 the crs variable attributes.
 
-## v1.0.2
-### 2024-02-26
+## [v1.0.2] - 2024-02-26
 
 This version of HOSS correctly handles edge-aligned geographic collections by
 adding the attribute `cell_alignment` with the value `edge` to `hoss_config.json`
@@ -135,15 +126,13 @@ issue with the ATL16 metadata for the variables `/spolar_asr_obs_grid` and
 to north polar variables instead of south polar variables. This CF Override
 can be removed if/when the metadata is corrected.
 
-## v1.0.1
-### 2023-12-19
+## [v1.0.1] - 2023-12-19
 
 This version of HOSS removes custom, redundant download retry logic. Instead
 retries are relied upon from `harmony-service-lib` and for each stage in a
 Harmony workflow.
 
-## v1.0.0
-### 2023-10-06
+## [v1.0.0] - 2023-10-06
 
 This version of the Harmony OPeNDAP SubSetter (HOSS) contains all functionality
 previously released internally to EOSDIS as `sds/variable-subsetter:0.3.6`.
@@ -161,3 +150,21 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+
+[v1.1.10]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.10
+[v1.1.9]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.9
+[v1.1.8]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.8
+[v1.1.7]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.7
+[v1.1.6]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.6
+[v1.1.5]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.5
+[v1.1.4]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.4
+[v1.1.3]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.3
+[v1.1.2]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.2
+[v1.1.1]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.1
+[v1.1.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.0
+[v1.0.5]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.0.5
+[v1.0.4]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.0.4
+[v1.0.3]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.0.3
+[v1.0.2]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.0.2
+[v1.0.1]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.0.1
+[v1.0.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.0.0

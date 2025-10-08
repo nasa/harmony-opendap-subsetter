@@ -32,6 +32,7 @@ from hoss.utilities import (
     format_variable_set_string,
     get_opendap_nc4,
 )
+from hoss.variable_utilities import get_processable_variables
 
 
 def subset_granule(
@@ -84,6 +85,12 @@ def subset_granule(
     )
     logger.info(
         'All required variables: ' f'{format_variable_set_string(required_variables)}'
+    )
+
+    # Remove unprocessable variables (e.g., excluded variables in the
+    # configuration file).
+    required_variables = get_processable_variables(
+        required_variables, harmony_source.variables, varinfo, logger
     )
 
     # Define a cache to store all dimension index ranges (spatial, temporal):

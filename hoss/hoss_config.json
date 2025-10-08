@@ -33,6 +33,23 @@
         "/orbit_info/.*",
         "/atlas_impulse_response/.*"
       ]
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP"
+      },
+      "VariablePattern": [
+          "/.*time_utc.*"
+      ]
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTA"
+      },
+      "VariablePattern": [
+          "/Freeze_Thaw_Retrieval_Data/(freeze_reference_date|thaw_reference_date)"
+      ]
     }
   ],
   "RequiredVariables": [

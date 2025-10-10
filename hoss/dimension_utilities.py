@@ -15,6 +15,7 @@ from pathlib import PurePosixPath
 from typing import Dict, Set, Tuple
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from harmony_service_lib.message_utility import rgetattr
 from harmony_service_lib.util import Config
@@ -399,7 +400,6 @@ def get_dimension_indices_from_bounds(
     """
     if min_value > np.nanmax(bounds) or max_value < np.nanmin(bounds):
         raise InvalidRequestedRange()
-
     if is_dimension_ascending(bounds.T[0]):
         # Lower bounds are the first row, upper bounds are the second:
         minimum_index = np.where(bounds.T[1] > min_value)[0][0]
@@ -435,6 +435,8 @@ def add_index_range(
     coordinates CF-Conventions metadata attribute.
 
     """
+    # If a variable requested is not present, this returns a None and throws an
+    # exception on line 443
     variable = varinfo.get_variable(variable_name)
     range_strings = []
 
@@ -548,32 +550,48 @@ def get_requested_index_ranges(
 
     """
     required_dimensions = varinfo.get_required_dimensions(required_variables)
+    dimensions_dict = get_dimensions_dict(
+        required_variables, varinfo, required_dimensions
+    )
 
     dim_index_ranges = {}
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dim in harmony_message.subset.dimensions:
-            if dim.name in required_dimensions:
-                dim_is_valid = True
-            elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
-                dim.name = f'/{dim.name}'
-                dim_is_valid = True
-            else:
-                dim_is_valid = False
+            try:
+                if dim.name in required_dimensions:
+                    dim_is_valid = True
+                elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
+                    dim.name = f'/{dim.name}'
+                    dim_is_valid = True
+                else:
+                    dim_is_valid = False
 
-            if dim_is_valid:
-                # Try to extract bounds metadata:
-                bounds_array = get_dimension_bounds(dim.name, varinfo, dimensions_file)
-                # Retrieve index ranges for the specifically named dimension:
-                dim_index_ranges[dim.name] = get_dimension_index_range(
-                    dimensions_file[dim.name][:],
-                    dim.min,
-                    dim.max,
-                    bounds_values=bounds_array,
+                if dim_is_valid:
+                    # Try to extract bounds metadata:
+                    bounds_array = get_dimension_bounds(
+                        dim.name, varinfo, dimensions_file
+                    )
+                    # Retrieve index ranges for the specifically named dimension:
+                    dim_index_ranges[dim.name] = get_dimension_index_range(
+                        dimensions_file[dim.name][:],
+                        dim.min,
+                        dim.max,
+                        bounds_values=bounds_array,
+                    )
+                else:
+                    # This requested dimension is not in the required dimension set
+                    raise InvalidNamedDimension(dim.name)
+
+            except InvalidRequestedRange as invalid_requested_range:
+                check_range_exception(
+                    required_variables,
+                    dimensions_dict,
+                    dim.name,
+                    invalid_requested_range,
                 )
-            else:
-                # This requested dimension is not in the required dimension set
-                raise InvalidNamedDimension(dim.name)
+
+        check_range_exception_all(dimensions_dict, dim_index_ranges)
 
     return dim_index_ranges
 
@@ -603,6 +621,88 @@ def get_dimension_bounds(
         bounds_data = None
 
     return bounds_data
+
+
+def get_dimensions_dict(
+    all_required_variables: set[str],
+    varinfo: VarInfoFromDmr,
+    required_dimensions: set[str],
+) -> dict[tuple, list]:
+    """Creates a dictionary of dimensions list and corresponding variables list"""
+    dimensions_dict = {}
+    for variable in all_required_variables:
+        if variable in required_dimensions:
+            continue
+        variable_required_dimensions = []
+        required_for_this_variable = varinfo.get_required_variables({variable})
+        for required_variable in required_for_this_variable:
+            if required_variable in required_dimensions:
+                variable_required_dimensions.append(required_variable)
+
+        if variable_required_dimensions:
+            dimensions_list = tuple(sorted(variable_required_dimensions))
+            if not dimensions_dict:
+                dimensions_dict[dimensions_list] = [variable]
+            elif dimensions_list not in dimensions_dict:
+                dimensions_dict[dimensions_list] = [variable]
+            else:
+                dimensions_dict[dimensions_list].append(variable)
+
+    return dimensions_dict
+
+
+def check_range_exception(
+    required_variables: set,
+    dimensions_dict: dict[tuple, list],
+    failed_dimension_name: str,
+    invalid_requested_range: Exception,
+):
+    """If a dimension is outside range, a NoDataException is raised if there is
+    only one set of dimensions. If there are multiple dimension lists, the failed
+    dimension is marked as failed in dictionary of dimensions and corresponding
+    dimensions variables are removed from the processing list.
+
+    """
+    # if there is just one set of dimensions
+    if len(dimensions_dict) == 1:
+        raise NoDataException(
+            "Input request specified range outside supported dimension range"
+        ) from invalid_requested_range
+
+    for required_dimensions in dimensions_dict:
+        if failed_dimension_name in required_dimensions:
+            # remove variables in the list that use that dimension.
+            for variable in dimensions_dict[required_dimensions]:
+                required_variables.remove(variable)
+            dimensions_dict[required_dimensions] = "Failed"
+
+            # if the failed dimension is a required variable
+            # remove from the variables list as well.
+            for required_dimension in required_dimensions:
+                if required_dimension in required_variables:
+                    required_variables.remove(required_dimension)
+
+
+def check_range_exception_all(
+    dimensions_dict: dict[tuple, list], index_ranges: IndexRanges
+):
+    """If all dimensions are failed, a NoDataException is raised.
+    Any IndexRanges for the failed dimensions are removed as well.
+
+    """
+
+    if dimensions_dict and all(value == 'Failed' for value in dimensions_dict.values()):
+        raise NoDataException(
+            "Input request specified range outside supported dimension range"
+        )
+    # check if any dimensions were invalid
+
+    if dimensions_dict:
+        for dimension_list in dimensions_dict:
+            if dimensions_dict[dimension_list] == 'Failed':
+                for dimension in dimension_list:
+                    if dimension in index_ranges:
+                        del index_ranges[dimension]
 
 
 def is_almost_in(value: float, array: np.ndarray) -> bool:

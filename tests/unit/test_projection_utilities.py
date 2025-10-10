@@ -450,8 +450,8 @@ class TestProjectionUtilities(TestCase):
         bounding_points_not_overlapping_granule = [
             (-179.98, -87.0),
             (179.89, -87.0),
-            (179.89, 88.0),
-            (-179.98, 88.0),
+            (179.89, -86.0),
+            (-179.98, -86.0),
             (-179.98, -87.0),
         ]
 
@@ -476,6 +476,10 @@ class TestProjectionUtilities(TestCase):
             )
 
         with self.subTest('Bounding box and granule do not overlap'):
+            points_returned = get_filtered_points(
+                bounding_points_not_overlapping_granule, granule_extent
+            )
+            print(f'filtered_points={points_returned}')
             self.assertListEqual(
                 get_filtered_points(
                     bounding_points_not_overlapping_granule, granule_extent

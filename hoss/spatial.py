@@ -45,10 +45,14 @@ from hoss.coordinate_utilities import (
 from hoss.dimension_utilities import (
     IndexRange,
     IndexRanges,
+    check_range_exception,
+    check_range_exception_all,
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
+    get_dimensions_dict,
 )
+from hoss.exceptions import InvalidRequestedRange
 from hoss.projection_utilities import (
     get_master_geotransform,
     get_projected_x_y_extents,
@@ -109,11 +113,13 @@ def get_spatial_index_ranges(
             if bounding_box is None and shape_file_path is not None:
                 geojson_content = get_shape_file_geojson(shape_file_path)
                 bounding_box = get_geographic_bbox(geojson_content)
-
-            for dimension in geographic_dimensions:
-                index_ranges[dimension] = get_geographic_index_range(
-                    dimension, varinfo, dimensions_file, bounding_box
-                )
+            index_ranges = get_geographic_index_ranges(
+                required_variables,
+                geographic_dimensions,
+                varinfo,
+                dimensions_file,
+                bounding_box,
+            )
 
         if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
@@ -295,6 +301,41 @@ def get_x_y_index_ranges_from_coordinates(
         x_y_index_ranges = {}
 
     return x_y_index_ranges
+
+
+def get_geographic_index_ranges(
+    required_variables: set[str],
+    geographic_dimensions: set[str],
+    varinfo: VarInfoFromDmr,
+    dimensions_file: Dataset,
+    bounding_box: BBox,
+) -> IndexRanges:
+    """Checks for any dimension extent exceptions to skip the corresponding variables
+    from being processed. Returns the index ranges for all the valid dimensions
+
+    """
+    geographic_index_ranges = {}
+
+    dimensions_dict = get_dimensions_dict(
+        required_variables, varinfo, geographic_dimensions
+    )
+
+    for dimension in geographic_dimensions:
+        try:
+            geographic_index_ranges[dimension] = get_geographic_index_range(
+                dimension, varinfo, dimensions_file, bounding_box
+            )
+        except InvalidRequestedRange as invalid_requested_range:
+            # if one of the dimensions fail, that set of dimensions should be marked fail
+            # and index ranges should not be updated.
+
+            check_range_exception(
+                required_variables, dimensions_dict, dimension, invalid_requested_range
+            )
+
+    check_range_exception_all(dimensions_dict, geographic_index_ranges)
+
+    return geographic_index_ranges
 
 
 def get_geographic_index_range(

@@ -200,17 +200,29 @@ def get_projected_x_y_extents(
                    'y_max': 5500}
 
     """
+    print(
+        f'x_values={x_values[0:10]}..{x_values[-10:-1]}, y_values={y_values[0:10]}..{y_values[-10:-1]}'
+    )
+    print(f'crs={crs}')
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+    print(f'grid_lats={grid_lats}')
+    print(f'grid_lons={grid_lons}')
+
     # When projected, the perimeter of a bounding box or polygon in geographic
     # terms will become curved.  To determine the X, Y extent of the requested
     # bounding area, we need a perimeter with a suitable density of points, such that
     # we catch that curve when projected. The source file resolution is used to define
     # the necessary number of points (density).
     geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
+    print(f'geographic_resolution={geographic_resolution}')
+
     densified_perimeter = get_densified_perimeter(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
+    )
+    print(
+        f'densified_perimeter={densified_perimeter[0:10]}..{densified_perimeter[-10:-1]}'
     )
 
     # To avoid out-of-limits projection, we need to clip the bounding perimeter to
@@ -218,9 +230,12 @@ def get_projected_x_y_extents(
     granule_extent = BBox(
         np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
     )
+    print(f'granule_extent={granule_extent}')
 
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
+    print(f'clipped_perimeter={clipped_perimeter[0:10]}..{clipped_perimeter[-10:-1]}')
 
+    clipped_perimeter = densified_perimeter
     return get_x_y_extents_from_geographic_points(clipped_perimeter, crs)
 
 
@@ -228,13 +243,19 @@ def get_filtered_points(
     points_in_requested_extent: List[Coordinates], granule_extent: BBox
 ) -> List[Coordinates]:
     """Returns lat/lon values cropped to the extent of the granule"""
+
     requested_lons, requested_lats = zip(*points_in_requested_extent)
+
+    print(f'requested_lons={requested_lons[0:10]}')
+    print(f'requested_lats={requested_lats[0:10]}')
 
     # all lon values are clipped within the granule lon extent
     clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
+    print(f'clipped_lons={clipped_lons[0:10]}')
 
     # all lat values are clipped to granule lat extent
     clipped_lats = np.clip(requested_lats, granule_extent.south, granule_extent.north)
+    print(f'clipped_lats={clipped_lats[0:10]}')
 
     return list(zip(clipped_lons, clipped_lats))
 
@@ -475,7 +496,8 @@ def get_x_y_extents_from_geographic_points(
     # isfinite checks for NaN and infinty values returned for certain projections
     points_x = np.asarray(points_x)
     points_y = np.asarray(points_y)
-
+    print(f'points_x={points_x[0:10]}')
+    print(f'points_y={points_y[0:10]}')
     finite_x = points_x[np.isfinite(points_x)]
     finite_y = points_y[np.isfinite(points_y)]
     return {

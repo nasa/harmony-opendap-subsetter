@@ -1,7 +1,10 @@
-## [vX.Y.Z] - Unreleased
+## [v1.1.11] - 2025-10-15
 
 ### Changed
 
+- The `harmony-service-lib` dependency has been updated to v2.8.1 to make use of
+  increased timeouts, mitigating timeout issues from OPeNDAP beginning to send
+  the first byte to HOSS.
 - Release notes for HOSS will now include the commit history for that release.
 
 ## [v1.1.11] - 2025-10-15
@@ -156,6 +159,7 @@ Repository structure changes include:
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
 
+[v1.1.11]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.11
 [v1.1.10]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.10
 [v1.1.9]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.9
 [v1.1.8]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.8

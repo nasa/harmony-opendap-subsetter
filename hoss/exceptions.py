@@ -269,7 +269,7 @@ class UrlAccessFailed(CustomError):
         super().__init__('UrlAccessFailed', f'{status_code} error retrieving: {url}')
 
 
-class OnlyInvalidVariableRequest(CustomError):
+class OnlyInvalidVariablesRequested(CustomError):
     """This exception is raised when only invalid variables are requested,
     e.g., excluded science variables listed in the varinfo configuration.
 

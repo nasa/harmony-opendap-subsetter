@@ -1,13 +1,12 @@
 """Set up fixtures for unit tests."""
 
 import os
-
-import h5py
-from logging import Logger
-import pytest
 import tempfile
+from logging import Logger
 from unittest.mock import Mock
 
+import h5py
+import pytest
 from varinfo import CFConfig, VarInfoFromNetCDF4
 
 
@@ -27,9 +26,7 @@ def mock_varinfo():
 def smap_varinfo(sample_hdf5_file):
     """VarInfo fixture for SMAP."""
     return VarInfoFromNetCDF4(
-        sample_hdf5_file,
-        config_file='hoss/hoss_config.json',
-        short_name='SPL3FTA'
+        sample_hdf5_file, config_file='hoss/hoss_config.json', short_name='SPL3FTA'
     )
 
 
@@ -41,8 +38,8 @@ def sample_hdf5_file():
 
     with h5py.File(temp_filename, 'w') as f:
         # Create basic HDF5 file with some test data
-        f.create_dataset('dataset1', data=[1,2,3])
-        f.create_dataset('dataset2', data=[4,5,6])
+        f.create_dataset('dataset1', data=[1, 2, 3])
+        f.create_dataset('dataset2', data=[4, 5, 6])
         f.attrs['attribute1'] = 'attribute_value1'
         f.attrs['attribute2'] = 'attribute_value2'
 

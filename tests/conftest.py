@@ -24,7 +24,15 @@ def mock_varinfo():
 
 @pytest.fixture
 def smap_varinfo(sample_hdf5_file):
-    """VarInfo fixture for SMAP."""
+    """VarInfo fixture for SMAP.
+
+    The SPL3FTA collection is used to create the varinfo object because it's
+    the only SMAP L3 collection that contains excluded string variables
+    that don't match the string variable pattern of all the other SMAP L3
+    strings. This way, when checking for the exclusions applied to SMAP,
+    all existing SMAP exclusion variable patterns will be checked.
+
+    """
     return VarInfoFromNetCDF4(
         sample_hdf5_file, config_file='hoss/hoss_config.json', short_name='SPL3FTA'
     )

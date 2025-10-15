@@ -5,8 +5,8 @@ varinfo.
 
 """
 
-from logging import Logger
 import re
+from logging import Logger
 from typing import Set
 
 from harmony_service_lib.message import Variable as HarmonyVariable
@@ -20,7 +20,7 @@ def get_processable_variables(
     required_variables: Set[str],
     requested_variables: Set[HarmonyVariable],
     varinfo: VarInfoFromNetCDF4,
-    logger: Logger
+    logger: Logger,
 ) -> Set[str]:
     """Return only variables that HOSS can process.
 
@@ -32,8 +32,10 @@ def get_processable_variables(
     unprocessable_variables = get_excluded_variables(varinfo, requested_variable_paths)
 
     # Throw an error when the request contains only excluded variables.
-    if (requested_variable_paths == unprocessable_variables):
-        raise OnlyInvalidVariablesRequested(format_variable_set_string(requested_variable_paths))
+    if requested_variable_paths and requested_variable_paths == unprocessable_variables:
+        raise OnlyInvalidVariablesRequested(
+            format_variable_set_string(requested_variable_paths)
+        )
 
     # Remove excluded variables.
     if unprocessable_variables.intersection(requested_variable_paths):
@@ -59,7 +61,9 @@ def get_excluded_variables(
     return excluded_vars
 
 
-def is_excluded_science_variable(var_info: VarInfoFromNetCDF4, variable_name: str) -> bool:
+def is_excluded_science_variable(
+    var_info: VarInfoFromNetCDF4, variable_name: str
+) -> bool:
     """Returns True if variable is explicitly excluded by varinfo configuration."""
     exclusions_pattern = re.compile(
         '|'.join(var_info.cf_config.excluded_science_variables)

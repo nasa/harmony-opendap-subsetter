@@ -87,8 +87,7 @@ def subset_granule(
         'All required variables: ' f'{format_variable_set_string(required_variables)}'
     )
 
-    # Remove unprocessable variables (e.g., excluded variables in the
-    # configuration file).
+    # Remove excluded variables.
     required_variables = get_processable_variables(
         required_variables, harmony_source.variables, varinfo, logger
     )

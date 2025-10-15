@@ -4,6 +4,11 @@
 
 - Release notes for HOSS will now include the commit history for that release.
 
+## [v1.1.11] - 2025-10-15
+
+This version of HOSS explicitly adds SMAP string variables to the list of
+exclusions in the earthdata-varinfo configuration file.
+
 ## [v1.1.10] - 2025-08-21
 
 This version of HOSS updates the conda environment to support Python 3.12. This also updates the

@@ -32,8 +32,7 @@ def get_processable_variables(
     unprocessable_variables = get_excluded_variables(varinfo, requested_variable_paths)
 
     # Throw an error when the request contains only excluded variables.
-    if (requested_variable_paths
-        and len(unprocessable_variables) == len(requested_variable_paths)):
+    if (requested_variable_paths == unprocessable_variables):
         raise OnlyInvalidVariablesRequested(format_variable_set_string(requested_variable_paths))
 
     # Remove excluded variables.

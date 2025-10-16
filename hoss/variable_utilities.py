@@ -12,37 +12,43 @@ from typing import Set
 from harmony_service_lib.message import Variable as HarmonyVariable
 from varinfo import VarInfoFromNetCDF4
 
-from hoss.exceptions import OnlyInvalidVariablesRequested
+from hoss.exceptions import InvalidVariableRequest
 from hoss.utilities import format_variable_set_string
 
 
-def get_processable_variables(
-    required_variables: Set[str],
+def check_invalid_variable_request(
     requested_variables: Set[HarmonyVariable],
     varinfo: VarInfoFromNetCDF4,
     logger: Logger,
-) -> Set[str]:
-    """Return only variables that HOSS can process.
-
-    This removes variables listed as excluded science variables in the varinfo
-    configuration file.
+) -> None:
+    """Check if explicitly requested variables are listed as excluded in
+    the varinfo configuration, and if so throw an exception listing the
+    invalid requested variables.
 
     """
-    requested_variable_paths = {f'/{v.fullPath}' for v in requested_variables}
+    requested_variable_paths = {f'{v.fullPath}' for v in requested_variables}
     unprocessable_variables = get_excluded_variables(varinfo, requested_variable_paths)
 
-    # Throw an error when the request contains only excluded variables.
-    if requested_variable_paths and requested_variable_paths == unprocessable_variables:
-        raise OnlyInvalidVariablesRequested(
-            format_variable_set_string(requested_variable_paths)
+    # If no variables are requested, all variables will be returned and the
+    # varinfo exclusions will automatically be applied.
+    if not requested_variables:
+        logger.info(
+            f'All variables are requested. The following variables will be excluded: {unprocessable_variables}'
+        )
+        return
+
+    # Check if any of the requested variables are unprocessable.
+    # If so, throw an error.
+    requested_unprocessable_variables = unprocessable_variables.intersection(
+        requested_variable_paths
+    )
+    if requested_unprocessable_variables:
+        raise InvalidVariableRequest(
+            format_variable_set_string(requested_unprocessable_variables)
         )
 
-    # Remove excluded variables.
-    if unprocessable_variables.intersection(requested_variable_paths):
-        logger.info(f'Dropping unprocessable variables: {unprocessable_variables}')
-        required_variables -= unprocessable_variables
-
-    return required_variables
+    logger.info('No invalid variables are requested.')
+    return
 
 
 def get_excluded_variables(

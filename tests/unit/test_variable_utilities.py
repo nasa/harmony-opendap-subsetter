@@ -1,26 +1,28 @@
 """This module contains unit tests for the variable_utilities.py"""
 
+import logging
+
 import pytest
 from harmony_service_lib.message import Variable as HarmonyVariable
 
-from hoss.exceptions import OnlyInvalidVariablesRequested
+from hoss.exceptions import InvalidVariableRequest
 from hoss.variable_utilities import (
+    check_invalid_variable_request,
     get_excluded_variables,
-    get_processable_variables,
     is_excluded_science_variable,
 )
 
 
-def test_get_processable_variables_contains_string_variables(
-    mocker, mock_varinfo, logger
-):
-    """This test checks that requested string variables that exist in the
-    exclusions listed in the varinfo configuration file are not returned.
+def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger):
+    """This test checks that an exception is thrown when an excluded science
+    variable in the varinfo config file is explicitly requested.
 
     """
+    excluded_string1 = 'string_variable_time_utc'
+    excluded_string2 = 'subgroup/nested_string_variable_time_utc'
     requested_variable_paths = {
-        'string_variable_time_utc',
-        'group1/nested_string_variable_time_utc',
+        excluded_string1,
+        excluded_string2,
         'non_string_variable',
     }
 
@@ -29,95 +31,90 @@ def test_get_processable_variables_contains_string_variables(
         for variable_path in requested_variable_paths
     ]
 
-    required_variables = {
-        '/string_variable_time_utc',
-        '/group1/nested_string_variable_time_utc',
-        '/non_string_variable',
-        '/coordinate1',  # Additional CF variable
-    }
-
     mock_get_excluded_variables = mocker.patch(
         'hoss.variable_utilities.get_excluded_variables',
-        return_value=set(
-            ['/string_variable_time_utc', '/group1/nested_string_variable_time_utc']
-        ),
+        return_value=set([excluded_string1, excluded_string2]),
     )
 
-    expected_output = {'/non_string_variable', '/coordinate1'}
-
-    actual_output = get_processable_variables(
-        required_variables, requested_harmony_variables, mock_varinfo, logger
-    )
-
-    mock_get_excluded_variables.assert_called_once()
-    assert expected_output == actual_output
-
-
-def test_get_processable_variables_contains_no_string_variables(
-    mocker, mock_varinfo, logger
-):
-    """This test checks that the output string set matches the input string set
-    when no string variables are included in the request.
-
-    """
-    requested_variable_paths = {'non_string_variable'}
-
-    requested_harmony_variables = [
-        HarmonyVariable({'fullPath': variable_path})
-        for variable_path in requested_variable_paths
-    ]
-
-    required_variables = {
-        '/non_string_variable',
-        '/coordinate1',  # Additional CF variable
-    }
-
-    mock_get_excluded_variables = mocker.patch(
-        'hoss.variable_utilities.get_excluded_variables', return_value=set()
-    )
-
-    expected_output = {'/non_string_variable', '/coordinate1'}
-
-    actual_output = get_processable_variables(
-        required_variables, requested_harmony_variables, mock_varinfo, logger
-    )
-
-    mock_get_excluded_variables.assert_called_once()
-    assert expected_output == actual_output
-
-
-def test_get_processable_variables_exception(mocker, mock_varinfo, logger):
-    """This test checks that the OnlyInvalidVariablesRequested exception is thrown
-    when only string variables are requested.
-
-    """
-    requested_variable_paths = {
-        'string_variable_time_utc',
-        'group1/nested_string_variable_time_utc',
-    }
-
-    requested_harmony_variables = [
-        HarmonyVariable({'fullPath': variable_path})
-        for variable_path in requested_variable_paths
-    ]
-
-    required_variables = {
-        '/string_variable_time_utc',
-        '/group1/nested_string_variable_time_utc',
-        '/coordinate1',  # Additional CF variable
-    }
-
-    mock_get_excluded_variables = mocker.patch(
-        'hoss.variable_utilities.get_excluded_variables',
-        return_value=set(
-            ['/string_variable_time_utc', '/group1/nested_string_variable_time_utc']
-        ),
-    )
-
-    with pytest.raises(OnlyInvalidVariablesRequested):
-        get_processable_variables(
-            required_variables, requested_harmony_variables, mock_varinfo, logger
+    with pytest.raises(InvalidVariableRequest) as excinfo:
+        check_invalid_variable_request(
+            requested_harmony_variables, mock_varinfo, logger
         )
+
+    # Check that the excluded variables are in the exception message.
+    # Since it's an unordered set converted to string, check individually.
+    error_msg = str(excinfo.value)
+    assert excluded_string1 in error_msg
+    assert excluded_string2 in error_msg
+    assert "Requested invalid variables:" in error_msg
+
+    mock_get_excluded_variables.assert_called_once()
+
+
+def test_check_invalid_variable_request_all(mocker, mock_varinfo, caplog):
+    """This test checks that no exception is thrown when there is not an
+    explicit variable request by checking the expected logger message.
+
+    """
+    logger = logging.getLogger("test_logger")
+    requested_harmony_variables = set()  # Empty set triggers "all variables" path
+
+    excluded_vars = {'excluded_var1', 'excluded_var2'}
+    mock_get_excluded_variables = mocker.patch(
+        'hoss.variable_utilities.get_excluded_variables',
+        return_value=excluded_vars,
+    )
+
+    # Set caplog to capture INFO level logs.
+    with caplog.at_level(logging.INFO):
+        check_invalid_variable_request(
+            requested_harmony_variables, mock_varinfo, logger
+        )
+
+    # Check the log message
+    assert (
+        'All variables are requested. The following variables will be excluded:'
+        in caplog.text
+    )
+
+    # Check that the excluded variables appear in the log.
+    # Since it's an unordered set converted to string, check individually.
+    assert 'excluded_var1' in caplog.text
+    assert 'excluded_var2' in caplog.text
+
+    mock_get_excluded_variables.assert_called_once()
+
+
+def test_check_invalid_variable_request_no_exclusions(mocker, mock_varinfo, caplog):
+    """This test checks that no exception is thrown when no excluded variables
+    are requested by checking the expected logger message.
+
+    """
+    logger = logging.getLogger("test_logger")
+    requested_variable_paths = {
+        'non_string_variable',
+        'subgroup/nested_non_string_variable',
+    }
+
+    requested_harmony_variables = [
+        HarmonyVariable({'fullPath': variable_path})
+        for variable_path in requested_variable_paths
+    ]
+
+    excluded_vars = {'excluded_var1', 'excluded_var2'}
+    mock_get_excluded_variables = mocker.patch(
+        'hoss.variable_utilities.get_excluded_variables',
+        return_value=excluded_vars,
+    )
+
+    # Set caplog to capture INFO level logs.
+    with caplog.at_level(logging.INFO):
+        check_invalid_variable_request(
+            requested_harmony_variables, mock_varinfo, logger
+        )
+
+    # Check the log message
+    assert 'No invalid variables are requested.' in caplog.text
 
     mock_get_excluded_variables.assert_called_once()
 

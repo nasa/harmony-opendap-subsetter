@@ -32,7 +32,7 @@ from hoss.utilities import (
     format_variable_set_string,
     get_opendap_nc4,
 )
-from hoss.variable_utilities import get_processable_variables
+from hoss.variable_utilities import check_invalid_variable_request
 
 
 def subset_granule(
@@ -78,6 +78,10 @@ def subset_granule(
         config,
     )
 
+    # Check if excluded variables are explicitly requested. An exception
+    # is thrown if so.
+    check_invalid_variable_request(harmony_source.variables, varinfo, logger)
+
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.
     required_variables = get_required_variables(
@@ -85,11 +89,6 @@ def subset_granule(
     )
     logger.info(
         'All required variables: ' f'{format_variable_set_string(required_variables)}'
-    )
-
-    # Remove excluded variables.
-    required_variables = get_processable_variables(
-        required_variables, harmony_source.variables, varinfo, logger
     )
 
     # Define a cache to store all dimension index ranges (spatial, temporal):

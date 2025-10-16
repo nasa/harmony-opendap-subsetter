@@ -31,9 +31,12 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger)
         for variable_path in requested_variable_paths
     ]
 
+    # Must add leading slashes since the excluded variables in the config
+    # file have leading slashes, whereas requested variables do not and
+    # must be added in the code.
+    excluded_vars = {f'/{excluded_string1}', f'/{excluded_string2}'}
     mock_get_excluded_variables = mocker.patch(
-        'hoss.variable_utilities.get_excluded_variables',
-        return_value=set([excluded_string1, excluded_string2]),
+        'hoss.variable_utilities.get_excluded_variables', return_value=excluded_vars
     )
 
     with pytest.raises(InvalidVariableRequest) as excinfo:
@@ -61,7 +64,7 @@ def test_check_invalid_variable_request_all(mocker, mock_varinfo, logger, caplog
     """
     requested_harmony_variables = set()  # Empty set triggers "all variables" path
 
-    excluded_vars = {'excluded_var1', 'excluded_var2'}
+    excluded_vars = {'/excluded_var1', '/excluded_var2'}
     mock_get_excluded_variables = mocker.patch(
         'hoss.variable_utilities.get_excluded_variables',
         return_value=excluded_vars,
@@ -94,7 +97,6 @@ def test_check_invalid_variable_request_no_exclusions(
     are requested by checking the expected logger message.
 
     """
-    logger = logging.getLogger("test_logger")
     requested_variable_paths = {
         'non_string_variable',
         'subgroup/nested_non_string_variable',
@@ -105,7 +107,7 @@ def test_check_invalid_variable_request_no_exclusions(
         for variable_path in requested_variable_paths
     ]
 
-    excluded_vars = {'excluded_var1', 'excluded_var2'}
+    excluded_vars = {'/excluded_var1', '/excluded_var2'}
     mock_get_excluded_variables = mocker.patch(
         'hoss.variable_utilities.get_excluded_variables',
         return_value=excluded_vars,

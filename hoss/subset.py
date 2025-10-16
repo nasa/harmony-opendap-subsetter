@@ -221,14 +221,9 @@ def get_required_variables(
     subsets can be specified in a DAP4 constraint expression.
 
     """
-    requested_variables = set(
-        (
-            variable.fullPath
-            if variable.fullPath.startswith('/')
-            else f'/{variable.fullPath}'
-        )
-        for variable in variables
-    )
+    requested_variables = {
+        f'/{variable.fullPath.lstrip("/")}' for variable in variables
+    }
 
     if request_is_index_subset and len(requested_variables) == 0:
         requested_variables = varinfo.get_science_variables().union(

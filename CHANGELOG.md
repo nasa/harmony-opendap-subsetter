@@ -1,16 +1,17 @@
-## [v1.1.12] - 2025-10-15
 
 ### Changed
+
+## [v1.1.12] - 2025-10-15
+
+This version of HOSS explicitly adds SMAP string variables to the list of
+exclusions in the earthdata-varinfo configuration file.
+
+## [v1.1.11] - 2025-10-15
 
 - The `harmony-service-lib` dependency has been updated to v2.8.1 to make use of
   increased timeouts, mitigating timeout issues from OPeNDAP beginning to send
   the first byte to HOSS.
 - Release notes for HOSS will now include the commit history for that release.
-
-## [v1.1.11] - 2025-10-15
-
-This version of HOSS explicitly adds SMAP string variables to the list of
-exclusions in the earthdata-varinfo configuration file.
 
 ## [v1.1.10] - 2025-08-21
 

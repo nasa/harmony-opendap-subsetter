@@ -120,7 +120,7 @@ def test_check_invalid_variable_request_no_exclusions(
     mock_get_excluded_variables.assert_called_once()
 
 
-def test_get_excluded_variables(smap_varinfo):
+def test_get_excluded_variables(SPL3FTA_varinfo):
     """This test checks that only variables listed in the varinfo configuration's
     ExcludedScienceVariables section are excluded.
 
@@ -140,22 +140,24 @@ def test_get_excluded_variables(smap_varinfo):
         '/Freeze_Thaw_Retrieval_Data/freeze_reference_date',
     }
 
-    actual_output = get_excluded_variables(smap_varinfo, variables)
+    actual_output = get_excluded_variables(SPL3FTA_varinfo, variables)
 
     assert expected_output == actual_output
 
 
-def test_is_excluded_science_variable(smap_varinfo):
+def test_is_excluded_science_variable(SPL3FTA_varinfo):
     """This test checks that the excluded science variables listed in
     configuration file are excluded when requested.
 
     """
-    assert is_excluded_science_variable(smap_varinfo, '/string_time_utc_seconds')
-    assert is_excluded_science_variable(smap_varinfo, '/group/nested_time_utc_string')
+    assert is_excluded_science_variable(SPL3FTA_varinfo, '/string_time_utc_seconds')
     assert is_excluded_science_variable(
-        smap_varinfo, '/Freeze_Thaw_Retrieval_Data/freeze_reference_date'
+        SPL3FTA_varinfo, '/group/nested_time_utc_string'
     )
-    assert not is_excluded_science_variable(smap_varinfo, '/string_variable')
+    assert is_excluded_science_variable(
+        SPL3FTA_varinfo, '/Freeze_Thaw_Retrieval_Data/freeze_reference_date'
+    )
+    assert not is_excluded_science_variable(SPL3FTA_varinfo, '/string_variable')
     assert not is_excluded_science_variable(
-        smap_varinfo, '/group/nested_string_variable'
+        SPL3FTA_varinfo, '/group/nested_string_variable'
     )

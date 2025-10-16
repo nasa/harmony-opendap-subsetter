@@ -21,7 +21,7 @@ def mock_varinfo():
 
 
 @pytest.fixture(scope='function')
-def smap_varinfo(sample_hdf5_file):
+def SPL3FTA_varinfo(sample_hdf5_file):
     """VarInfo fixture for SMAP.
 
     The SPL3FTA collection is used to create the varinfo object because it's

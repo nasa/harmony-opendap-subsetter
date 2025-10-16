@@ -46,7 +46,10 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger)
     error_msg = str(excinfo.value)
     assert excluded_string1 in error_msg
     assert excluded_string2 in error_msg
-    assert "Requested invalid variables:" in error_msg
+    assert (
+        "Some variables requested are not supported and could not be processed:"
+        in error_msg
+    )
 
     mock_get_excluded_variables.assert_called_once()
 

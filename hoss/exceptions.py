@@ -278,5 +278,5 @@ class InvalidVariableRequest(CustomError):
     def __init__(self, variable_names):
         super().__init__(
             'InvalidVariableRequest',
-            f'Requested invalid variables: "{variable_names}".',
+            f'Some variables requested are not supported and could not be processed: "{variable_names}".',
         )

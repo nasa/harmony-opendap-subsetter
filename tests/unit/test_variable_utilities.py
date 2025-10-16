@@ -17,8 +17,11 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger)
     """This test checks that an exception is thrown when an excluded science
     variable in the varinfo config file is explicitly requested.
 
+    It also checks that variable names are compared regardless of
+    whether or not they include leading slashes.
+
     """
-    excluded_string1 = 'string_variable_time_utc'
+    excluded_string1 = '/string_variable_time_utc'
     excluded_string2 = 'subgroup/nested_string_variable_time_utc'
     requested_variable_paths = {
         excluded_string1,
@@ -31,10 +34,11 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger)
         for variable_path in requested_variable_paths
     ]
 
-    # Must add leading slashes since the excluded variables in the config
-    # file have leading slashes, whereas requested variables do not and
-    # must be added in the code.
-    excluded_vars = {f'/{excluded_string1}', f'/{excluded_string2}'}
+    # Returned excluded variables should always have leading slashes.
+    excluded_vars = {
+        '/string_variable_time_utc',
+        '/subgroup/nested_string_variable_time_utc',
+    }
     mock_get_excluded_variables = mocker.patch(
         'hoss.variable_utilities.get_excluded_variables', return_value=excluded_vars
     )
@@ -96,9 +100,12 @@ def test_check_invalid_variable_request_no_exclusions(
     """This test checks that no exception is thrown when no excluded variables
     are requested by checking the expected logger message.
 
+    It also checks that variable names are compared regardless of
+    whether or not they include leading slashes.
+
     """
     requested_variable_paths = {
-        'non_string_variable',
+        '/non_string_variable',
         'subgroup/nested_non_string_variable',
     }
 

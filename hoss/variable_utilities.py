@@ -26,9 +26,9 @@ def check_invalid_variable_request(
     invalid requested variables.
 
     """
-    # A leading slash must be added to the requested variable paths since the
-    # excluded variables have leading slashes.
-    requested_variable_paths = {f'/{v.fullPath}' for v in requested_variables}
+    requested_variable_paths = {
+        f'/{v.fullPath.lstrip("/")}' for v in requested_variables
+    }
     unprocessable_variables = get_excluded_variables(varinfo)
 
     # If no variables are requested, all variables will be returned and the

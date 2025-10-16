@@ -125,7 +125,7 @@ def test_check_invalid_variable_request_no_exclusions(
     mock_get_excluded_variables.assert_called_once()
 
 
-def test_get_excluded_variables(SPL3FTA_varinfo):
+def test_get_excluded_variables(mocker, SPL3FTA_varinfo):
     """This test checks that only variables listed in the varinfo configuration's
     ExcludedScienceVariables section are excluded.
 
@@ -139,15 +139,22 @@ def test_get_excluded_variables(SPL3FTA_varinfo):
         '/group/nested_string_variable',
     }
 
+    mock_get_all_variables = mocker.patch.object(
+        SPL3FTA_varinfo,
+        'get_all_variables',
+        return_value=variables,
+    )
+
     expected_output = {
         '/string_time_utc_seconds',
         '/group/nested_time_utc_string',
         '/Freeze_Thaw_Retrieval_Data/freeze_reference_date',
     }
 
-    actual_output = get_excluded_variables(SPL3FTA_varinfo, variables)
+    actual_output = get_excluded_variables(SPL3FTA_varinfo)
 
     assert expected_output == actual_output
+    mock_get_all_variables.assert_called_once()
 
 
 def test_is_excluded_science_variable(SPL3FTA_varinfo):

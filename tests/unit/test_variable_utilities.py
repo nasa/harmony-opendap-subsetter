@@ -51,12 +51,11 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger)
     mock_get_excluded_variables.assert_called_once()
 
 
-def test_check_invalid_variable_request_all(mocker, mock_varinfo, caplog):
+def test_check_invalid_variable_request_all(mocker, mock_varinfo, logger, caplog):
     """This test checks that no exception is thrown when there is not an
     explicit variable request by checking the expected logger message.
 
     """
-    logger = logging.getLogger("test_logger")
     requested_harmony_variables = set()  # Empty set triggers "all variables" path
 
     excluded_vars = {'excluded_var1', 'excluded_var2'}
@@ -85,7 +84,9 @@ def test_check_invalid_variable_request_all(mocker, mock_varinfo, caplog):
     mock_get_excluded_variables.assert_called_once()
 
 
-def test_check_invalid_variable_request_no_exclusions(mocker, mock_varinfo, caplog):
+def test_check_invalid_variable_request_no_exclusions(
+    mocker, mock_varinfo, logger, caplog
+):
     """This test checks that no exception is thrown when no excluded variables
     are requested by checking the expected logger message.
 

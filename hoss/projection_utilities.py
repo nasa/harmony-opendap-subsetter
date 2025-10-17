@@ -224,7 +224,7 @@ def get_projected_x_y_extents(
 
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
-    return get_x_y_extents_from_geographic_points(
+    return get_x_y_extents_from_geographic_perimeter(
         clipped_perimeter, crs, x_values, y_values
     )
 
@@ -464,14 +464,15 @@ def get_resolved_line(
     return list(zip(new_x, new_y))
 
 
-def get_x_y_extents_from_geographic_points(
+def get_x_y_extents_from_geographic_perimeter(
     points: List[Coordinates], crs: CRS, x_values: np.ndarray, y_values: np.ndarray
 ) -> Dict[str, float]:
     """Take an input list of (longitude, latitude) coordinates that define the
     exterior of the input GeoJSON shape or bounding box, and project those
     points to the target grid. Then return the minimum and maximum values
-    of those projected coordinates. Remove any points that are outside the
-    granule extent.
+    of those projected coordinates. Check first for permiter exceeding grid on
+    all axes (whole grid extents returned). Then remove any points that are
+    outside the grid before finding the min and max extent.
 
     """
     point_longitudes, point_latitudes = zip(*points)
@@ -486,6 +487,11 @@ def get_x_y_extents_from_geographic_points(
     finite_x = points_x[np.isfinite(points_x)]
     finite_y = points_y[np.isfinite(points_y)]
 
+    # Check if perimeter exceeds the grid extents on all axes. If true, return
+    # whole grid extents. This handles the case where the perimeter wholly
+    # encloses the grid (e.g., whole-earth bbox, any lesser grid, polar
+    # use-cases in particular), and skips the code that follows (which fails in
+    # this case).
     if (
         np.min(finite_x) < np.min(x_values)
         and np.max(finite_x) > np.max(x_values)
@@ -499,7 +505,8 @@ def get_x_y_extents_from_geographic_points(
             'y_min': np.min(y_values),
             'y_max': np.max(y_values),
         }
-
+    # Remove any points that are outside the grid and are invalid before
+    # determining min/max extents of perimeter inside the grid.
     delete_x_min = np.where(finite_x < np.min(x_values))
     finite_x = np.delete(finite_x, delete_x_min)
     finite_y = np.delete(finite_y, delete_x_min)

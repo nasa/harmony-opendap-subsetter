@@ -41,7 +41,7 @@ from hoss.projection_utilities import (
     get_resolved_geometry,
     get_resolved_line,
     get_variable_crs,
-    get_x_y_extents_from_geographic_points,
+    get_x_y_extents_from_geographic_perimeter,
     is_projection_x_dimension,
     is_projection_y_dimension,
 )
@@ -1183,7 +1183,7 @@ class TestProjectionUtilities(TestCase):
                     get_resolved_line(point_one, point_two, resolution), expected_output
                 )
 
-    def test_get_x_y_extents_from_geographic_points(self):
+    def test_get_x_y_extents_from_geographic_perimeter(self):
         """Ensure that a list of coordinates is transformed to a specified
         projection, and that the expected extents in the projected x and y
         dimensions are returned.
@@ -1201,11 +1201,11 @@ class TestProjectionUtilities(TestCase):
         }
 
         self.assertDictEqual(
-            get_x_y_extents_from_geographic_points(points, crs, x_values, y_values),
+            get_x_y_extents_from_geographic_perimeter(points, crs, x_values, y_values),
             expected_x_y_extents,
         )
 
-    def test_get_x_y_extents_from_geographic_points_full_earth_laea(self):
+    def test_get_x_y_extents_from_geographic_perimeter_full_earth_laea(self):
         """Ensure that a list of coordinates is transformed to the specified
         laea projection, and valid values in the projected x and y
         dimensions are returned even for edge cases like whole earth.
@@ -1224,7 +1224,7 @@ class TestProjectionUtilities(TestCase):
         )
 
         points1 = [(-180, -90), (-180, 90), (180, 90), (180, -90)]
-        x_y_extents = get_x_y_extents_from_geographic_points(
+        x_y_extents = get_x_y_extents_from_geographic_perimeter(
             points1, crs, x_values, y_values
         )
 

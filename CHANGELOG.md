@@ -1,3 +1,11 @@
+## [v1.1.13] - 2025-10-16
+
+### Changed
+
+- Updates determination of projected min-max in the bounding box calculations to correct
+  edge cases where the area outside the granules gets included for lambert-azimuthal
+  grid projections. An exception is thrown for invalid spatial extent ranges.
+
 ## [v1.1.12] - 2025-10-15
 
 ### Added
@@ -162,6 +170,7 @@ Repository structure changes include:
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
 
+[v1.1.13]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.13
 [v1.1.12]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.12
 [v1.1.11]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.11
 [v1.1.10]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.10

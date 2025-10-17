@@ -32,6 +32,7 @@ from hoss.utilities import (
     format_variable_set_string,
     get_opendap_nc4,
 )
+from hoss.variable_utilities import check_invalid_variable_request
 
 
 def subset_granule(
@@ -76,6 +77,10 @@ def subset_granule(
         harmony_message.accessToken,
         config,
     )
+
+    # Check if excluded variables are explicitly requested. An exception
+    # is thrown if so.
+    check_invalid_variable_request(harmony_source.variables, varinfo, logger)
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.
@@ -216,14 +221,9 @@ def get_required_variables(
     subsets can be specified in a DAP4 constraint expression.
 
     """
-    requested_variables = set(
-        (
-            variable.fullPath
-            if variable.fullPath.startswith('/')
-            else f'/{variable.fullPath}'
-        )
-        for variable in variables
-    )
+    requested_variables = {
+        f'/{variable.fullPath.lstrip("/")}' for variable in variables
+    }
 
     if request_is_index_subset and len(requested_variables) == 0:
         requested_variables = varinfo.get_science_variables().union(

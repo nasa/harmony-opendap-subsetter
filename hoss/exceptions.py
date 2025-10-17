@@ -267,3 +267,16 @@ class UrlAccessFailed(CustomError):
 
     def __init__(self, url, status_code):
         super().__init__('UrlAccessFailed', f'{status_code} error retrieving: {url}')
+
+
+class InvalidVariableRequest(CustomError):
+    """This exception is raised when invalid variables are requested,
+    e.g., excluded science variables listed in the varinfo configuration.
+
+    """
+
+    def __init__(self, variable_names):
+        super().__init__(
+            'InvalidVariableRequest',
+            f'Some variables requested are not supported and could not be processed: "{variable_names}".',
+        )

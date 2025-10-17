@@ -16,13 +16,15 @@ STATUS=0
 
 export HDF5_DISABLE_VERSION_CHECK=1
 
-# Run the standard set of unit tests, producing JUnit compatible output
-coverage run -m xmlrunner discover tests -o tests/reports
+# Run all tests using pytest (will also run unittest tests), producing JUnit
+# compatible output
+echo "\nRunning tests..."
+coverage run -m pytest tests/ --junitxml=tests/reports/pytest-results.xml -v
 RESULT=$?
 
 if [ "$RESULT" -ne "0" ]; then
     STATUS=1
-    echo "ERROR: unittest generated errors"
+    echo "ERROR: tests generated errors"
 fi
 
 echo "\n"

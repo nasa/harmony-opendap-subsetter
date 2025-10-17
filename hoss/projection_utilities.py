@@ -30,6 +30,7 @@ from varinfo import VarInfoFromDmr
 from hoss.bbox_utilities import BBox, flatten_list
 from hoss.exceptions import (
     InvalidInputGeoJSON,
+    InvalidRequestedRange,
     MissingGridMappingMetadata,
     MissingGridMappingVariable,
     MissingSpatialSubsetInformation,
@@ -203,12 +204,14 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+
     # When projected, the perimeter of a bounding box or polygon in geographic
     # terms will become curved.  To determine the X, Y extent of the requested
     # bounding area, we need a perimeter with a suitable density of points, such that
     # we catch that curve when projected. The source file resolution is used to define
     # the necessary number of points (density).
     geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
+
     densified_perimeter = get_densified_perimeter(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
@@ -221,13 +224,16 @@ def get_projected_x_y_extents(
 
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
-    return get_x_y_extents_from_geographic_points(clipped_perimeter, crs)
+    return get_x_y_extents_from_geographic_points(
+        clipped_perimeter, crs, x_values, y_values
+    )
 
 
 def get_filtered_points(
     points_in_requested_extent: List[Coordinates], granule_extent: BBox
 ) -> List[Coordinates]:
-    """Returns lat/lon values cropped to the extent of the granule"""
+    """Returns lat/lon values clipped to the extent of the granule"""
+
     requested_lons, requested_lats = zip(*points_in_requested_extent)
 
     # all lon values are clipped within the granule lon extent
@@ -459,12 +465,13 @@ def get_resolved_line(
 
 
 def get_x_y_extents_from_geographic_points(
-    points: List[Coordinates], crs: CRS
+    points: List[Coordinates], crs: CRS, x_values: np.ndarray, y_values: np.ndarray
 ) -> Dict[str, float]:
     """Take an input list of (longitude, latitude) coordinates that define the
     exterior of the input GeoJSON shape or bounding box, and project those
     points to the target grid. Then return the minimum and maximum values
-    of those projected coordinates.
+    of those projected coordinates. Remove any points that are outside the
+    granule extent.
 
     """
     point_longitudes, point_latitudes = zip(*points)
@@ -478,6 +485,39 @@ def get_x_y_extents_from_geographic_points(
 
     finite_x = points_x[np.isfinite(points_x)]
     finite_y = points_y[np.isfinite(points_y)]
+
+    if (
+        np.min(finite_x) < np.min(x_values)
+        and np.max(finite_x) > np.max(x_values)
+        and np.min(finite_y) < np.min(y_values)
+        and np.max(finite_y) > np.max(y_values)
+    ):
+
+        return {
+            'x_min': np.min(x_values),
+            'x_max': np.max(x_values),
+            'y_min': np.min(y_values),
+            'y_max': np.max(y_values),
+        }
+
+    delete_x_min = np.where(finite_x < np.min(x_values))
+    finite_x = np.delete(finite_x, delete_x_min)
+    finite_y = np.delete(finite_y, delete_x_min)
+
+    delete_x_max = np.where(finite_x > np.max(x_values))
+    finite_x = np.delete(finite_x, delete_x_max)
+    finite_y = np.delete(finite_y, delete_x_max)
+
+    delete_y_min = np.where(finite_y < np.min(y_values))
+    finite_y = np.delete(finite_y, delete_y_min)
+    finite_x = np.delete(finite_x, delete_y_min)
+
+    delete_y_max = np.where(finite_y > np.max(y_values))
+    finite_y = np.delete(finite_y, delete_y_max)
+    finite_x = np.delete(finite_x, delete_y_max)
+    if finite_x.size == 0 or finite_y.size == 0:
+        raise InvalidRequestedRange
+
     return {
         'x_min': np.min(finite_x),
         'x_max': np.max(finite_x),

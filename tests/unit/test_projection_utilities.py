@@ -21,6 +21,7 @@ from varinfo import VarInfoFromDmr
 from hoss.bbox_utilities import BBox
 from hoss.exceptions import (
     InvalidInputGeoJSON,
+    InvalidRequestedRange,
     MissingGridMappingMetadata,
     MissingGridMappingVariable,
     MissingSpatialSubsetInformation,
@@ -397,10 +398,10 @@ class TestProjectionUtilities(TestCase):
             }
         )
         expected_output = {
-            'x_min': -12702459.818865139,
-            'x_max': 12702459.818865139,
-            'y_min': -12702440.623773243,
-            'y_max': 12702440.710450241,
+            'x_min': -8982000,
+            'x_max': 8982000,
+            'y_min': -8982000,
+            'y_max': 8982000,
         }
         with self.subTest('Whole Earth LAEA - Bounding box input'):
             self.assertDictEqual(
@@ -417,6 +418,43 @@ class TestProjectionUtilities(TestCase):
                 ),
                 expected_output,
             )
+
+    def test_get_projected_x_y_extents_edge_case(self):
+        """Ensure that the expected values for the x and y dimension extents
+        are recovered for a polar projected grid and when a bounding box
+        for an edge case is requested.
+
+        """
+        bbox = BBox(-89, -79, -40, -59)
+
+        x_values = np.linspace(-9000000, 9000000, 2000)
+        y_values = np.linspace(9000000, -9000000, 2000)
+
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'latitude_of_projection_origin': 90.0,
+                'grid_mapping_name': 'lambert_azimuthal_equal_area',
+            }
+        )
+
+        expected_output = {
+            'x_min': -8993061.78423412,
+            'x_max': -8350580.505440015,
+            'y_min': -8997181.591145469,
+            'y_max': -8354987.361637551,
+        }
+        with self.subTest('LAEA - Bounding box input - edge case 1'):
+            self.assertDictEqual(
+                get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox),
+                expected_output,
+            )
+
+        bbox = BBox(-89, -79, -40, -59)
+        with self.subTest('LAEA - Bounding box input - edge case 2'):
+            self.assertRaises(InvalidRequestedRange)
 
     def test_get_filtered_points(self):
         """Ensure that the coordinates returned are clipped to the granule extent or
@@ -1151,6 +1189,8 @@ class TestProjectionUtilities(TestCase):
         dimensions are returned.
 
         """
+        x_values = np.linspace(-9000000, 9000000, 2000)
+        y_values = np.linspace(9000000, -9000000, 2000)
         points = [(-180, 75), (-90, 75), (0, 75), (90, 75)]
         crs = CRS.from_epsg(6931)
         expected_x_y_extents = {
@@ -1161,7 +1201,8 @@ class TestProjectionUtilities(TestCase):
         }
 
         self.assertDictEqual(
-            get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
+            get_x_y_extents_from_geographic_points(points, crs, x_values, y_values),
+            expected_x_y_extents,
         )
 
     def test_get_x_y_extents_from_geographic_points_full_earth_laea(self):
@@ -1170,6 +1211,8 @@ class TestProjectionUtilities(TestCase):
         dimensions are returned even for edge cases like whole earth.
 
         """
+        x_values = np.linspace(-9000000, 9000000, 2000)
+        y_values = np.linspace(9000000, -9000000, 2000)
         crs = CRS.from_cf(
             {
                 'false_easting': 0.0,
@@ -1181,7 +1224,9 @@ class TestProjectionUtilities(TestCase):
         )
 
         points1 = [(-180, -90), (-180, 90), (180, 90), (180, -90)]
-        x_y_extents = get_x_y_extents_from_geographic_points(points1, crs)
+        x_y_extents = get_x_y_extents_from_geographic_points(
+            points1, crs, x_values, y_values
+        )
 
         self.assertTrue(all(not math.isinf(value) for value in x_y_extents.values()))
 

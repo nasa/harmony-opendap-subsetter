@@ -422,7 +422,7 @@ class TestProjectionUtilities(TestCase):
     def test_get_projected_x_y_extents_edge_case(self):
         """Ensure that the expected values for the x and y dimension extents
         are recovered for a polar projected grid and when a bounding box
-        for an edge case is requested.
+        for any edge cases are requested.
 
         """
         bbox = BBox(-89, -79, -40, -59)
@@ -446,14 +446,16 @@ class TestProjectionUtilities(TestCase):
             'y_min': -8997181.591145469,
             'y_max': -8354987.361637551,
         }
-        with self.subTest('LAEA - Bounding box input - edge case 1'):
+        with self.subTest(
+            'LAEA - Bounding box which is close to the edge of granule extent'
+        ):
             self.assertDictEqual(
                 get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox),
                 expected_output,
             )
 
         bbox = BBox(-90, -87, -75, -85)
-        with self.subTest('LAEA - Bounding box input - edge case 2'):
+        with self.subTest('LAEA - Bounding box which is outside the granule extent'):
             with self.assertRaises(InvalidRequestedRange):
                 get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox)
 

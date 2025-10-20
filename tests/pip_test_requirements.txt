@@ -1,7 +1,5 @@
-coverage~=7.9.2
-pre-commit~=4.2.0
-pycodestyle~=2.14.0
-pylint ~= 3.3.7
-pytest~=8.3.3
-pytest-mock==3.14.0
-unittest-xml-reporting~=3.2.0
+pycodestyle ~= 2.14.0
+pylint ~= 3.3.9
+pytest ~= 8.3.3
+pytest-mock == 3.14.0
+pytest-cov == 7.0.0

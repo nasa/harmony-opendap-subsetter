@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ####################################
 #
 # A script invoked by the test Dockerfile to run the Python `unittest` suite
@@ -14,12 +14,10 @@
 # Exit status used to report back to caller
 STATUS=0
 
-export HDF5_DISABLE_VERSION_CHECK=1
 
-# Run all tests using pytest (will also run unittest tests), producing JUnit
-# compatible output
-echo "\nRunning tests..."
-coverage run -m pytest tests/ --junitxml=tests/reports/pytest-results.xml -v
+echo -e "\nRunning tests..."
+pytest ./tests -s --cov=hoss --junitxml=test-reports/pytest-results.xml --cov-report=html:coverage --cov-report term
+
 RESULT=$?
 
 if [ "$RESULT" -ne "0" ]; then
@@ -27,10 +25,7 @@ if [ "$RESULT" -ne "0" ]; then
     echo "ERROR: tests generated errors"
 fi
 
-echo "\n"
-echo "Test Coverage Estimates"
-coverage report --omit="tests/*"
-coverage html --omit="tests/*" -d /home/tests/coverage
+echo -e "\n"
 
 # Run pylint
 # Ignored errors/warnings:

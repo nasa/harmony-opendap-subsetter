@@ -15,8 +15,9 @@
 STATUS=0
 
 
+
 echo -e "\nRunning tests..."
-pytest ./tests -s --cov=hoss --junitxml=test-reports/pytest-results.xml --cov-report=html:coverage --cov-report term
+pytest ./tests -s --cov=hoss --junitxml=./test-reports/pytest-results.xml --cov-report=html:./coverage --cov-report term
 
 RESULT=$?
 

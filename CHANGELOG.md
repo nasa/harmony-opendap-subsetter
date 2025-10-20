@@ -1,3 +1,13 @@
+## [unrleased] - 2025-10-20
+
+### Changed
+
+- Updated tests to be less dependent on architecture when comparing floats.
+- Fixed test that modified a source file fixture.
+- Changed infrastructure so that local and Docker runs of the tests produce output in same locations.
+- GitHub once again captures the artifacts from the tests and coverage.
+
+
 ## [v1.1.12] - 2025-10-15
 
 ### Added

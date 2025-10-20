@@ -1,10 +1,10 @@
-## [v1.1.13] - 2025-10-16
+## [v1.1.13] - 2025-10-20
 
 ### Changed
 
-- Updates determination of projected min-max in the bounding box calculations to correct
-  edge cases where the area outside the granules gets included for lambert-azimuthal
-  grid projections. An exception is thrown for invalid spatial extent ranges.
+- Updates evaluation of bbox or polygon constraint to exclude areas outside the
+  projected target grid. An exception occurs if spatial constraint is entirely
+  outside grid.
 
 ## [v1.1.12] - 2025-10-15
 

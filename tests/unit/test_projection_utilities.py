@@ -452,9 +452,10 @@ class TestProjectionUtilities(TestCase):
                 expected_output,
             )
 
-        bbox = BBox(-89, -79, -40, -59)
+        bbox = BBox(-90, -87, -75, -85)
         with self.subTest('LAEA - Bounding box input - edge case 2'):
-            self.assertRaises(InvalidRequestedRange)
+            with self.assertRaises(InvalidRequestedRange):
+                get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox)
 
     def test_get_filtered_points(self):
         """Ensure that the coordinates returned are clipped to the granule extent or

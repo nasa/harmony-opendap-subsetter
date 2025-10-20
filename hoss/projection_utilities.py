@@ -470,7 +470,7 @@ def get_x_y_extents_from_geographic_perimeter(
     """Take an input list of (longitude, latitude) coordinates that define the
     exterior of the input GeoJSON shape or bounding box, and project those
     points to the target grid. Then return the minimum and maximum values
-    of those projected coordinates. Check first for permiter exceeding grid on
+    of those projected coordinates. Check first for perimeter exceeding grid on
     all axes (whole grid extents returned). Then remove any points that are
     outside the grid before finding the min and max extent.
 

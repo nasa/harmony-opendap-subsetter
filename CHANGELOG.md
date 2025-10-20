@@ -3,7 +3,7 @@
 ### Changed
 
 - Updates evaluation of bbox or polygon constraint to exclude areas outside the
-  projected target grid. An exception occurs if spatial constraint is entirely
+  projected target grid. An error exception occurs if spatial constraint is entirely
   outside grid.
 
 ## [v1.1.12] - 2025-10-15

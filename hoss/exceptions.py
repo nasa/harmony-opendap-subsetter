@@ -61,6 +61,19 @@ class InvalidRequestedRange(CustomError):
         )
 
 
+class InvalidGranuleDimensions(CustomError):
+    """This exception is raised when the granule dimensions are not valid for
+    the specific projection of the granule.
+
+    """
+
+    def __init__(self):
+        super().__init__(
+            'InvalidGranuleDimensions',
+            'The dimensions used for the granule appear to be invalid for the crs',
+        )
+
+
 class MissingGridMappingMetadata(CustomError):
     """This exception is raised when HOSS tries to obtain the `grid_mapping`
     metadata attribute for a projected variable and it is not present in

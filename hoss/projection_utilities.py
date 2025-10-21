@@ -29,6 +29,7 @@ from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import BBox, flatten_list
 from hoss.exceptions import (
+    InvalidGranuleDimensions,
     InvalidInputGeoJSON,
     InvalidRequestedRange,
     MissingGridMappingMetadata,
@@ -204,6 +205,8 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+    if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
+        raise InvalidGranuleDimensions
 
     # When projected, the perimeter of a bounding box or polygon in geographic
     # terms will become curved.  To determine the X, Y extent of the requested

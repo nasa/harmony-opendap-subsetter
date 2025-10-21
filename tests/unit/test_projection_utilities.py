@@ -20,6 +20,7 @@ from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import BBox
 from hoss.exceptions import (
+    InvalidGranuleDimensions,
     InvalidInputGeoJSON,
     InvalidRequestedRange,
     MissingGridMappingMetadata,
@@ -455,6 +456,11 @@ class TestProjectionUtilities(TestCase):
         with self.subTest(
             'LAEA - Bounding box which is close to the edge of granule extent'
         ):
+            outputs = get_projected_x_y_extents(
+                x_values, y_values, crs, bounding_box=bbox
+            )
+            print(f'outputs={outputs}')
+            print(f'expected_output={expected_output}')
             assert_float_dict_almost_equal(
                 get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox),
                 expected_output,
@@ -464,6 +470,12 @@ class TestProjectionUtilities(TestCase):
         with self.subTest('LAEA - Bounding box which is outside the granule extent'):
             with self.assertRaises(InvalidRequestedRange):
                 get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox)
+
+        with self.subTest('When the granule has invalid dimensions'):
+            with self.assertRaises(InvalidGranuleDimensions):
+                x_values1 = np.linspace(-9200000, 9200000, 500)
+                y_values1 = np.linspace(9200000, -9200000, 500)
+                get_projected_x_y_extents(x_values1, y_values1, crs, bounding_box=bbox)
 
     def test_get_filtered_points(self):
         """Ensure that the coordinates returned are clipped to the granule extent or

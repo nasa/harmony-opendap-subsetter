@@ -44,6 +44,8 @@ from hoss.projection_utilities import (
     is_projection_x_dimension,
     is_projection_y_dimension,
 )
+from tests import utilities
+from tests.utilities import assert_float_dict_almost_equal
 
 
 class TestProjectionUtilities(TestCase):
@@ -84,17 +86,6 @@ class TestProjectionUtilities(TestCase):
             geojson_content = json.load(file_handler)
 
         return geojson_content
-
-    def assertDictAlmostEqual(self, dict1, dict2, places=7):
-        """Test the float values of dictionaries as almost equal."""
-        self.assertEqual(dict1.keys(), dict2.keys())
-        for key in dict1:
-            self.assertAlmostEqual(
-                dict1[key],
-                dict2[key],
-                places=places,
-                msg=f'Mismatch in {key}',
-            )
 
     @patch('hoss.projection_utilities.get_grid_mapping_attributes')
     def test_get_variable_crs(self, mock_get_grid_mapping_attributes):
@@ -370,7 +361,8 @@ class TestProjectionUtilities(TestCase):
         }
 
         with self.subTest('Bounding box input'):
-            self.assertDictAlmostEqual(
+
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, bounding_box=bounding_box
                 ),
@@ -378,7 +370,7 @@ class TestProjectionUtilities(TestCase):
             )
 
         with self.subTest('Shape file input'):
-            self.assertDictAlmostEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
@@ -414,7 +406,7 @@ class TestProjectionUtilities(TestCase):
             'y_max': 12702440.710450241,
         }
         with self.subTest('Whole Earth LAEA - Bounding box input'):
-            self.assertDictAlmostEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, bounding_box=whole_earth_bbox
                 ),
@@ -422,7 +414,7 @@ class TestProjectionUtilities(TestCase):
             )
 
         with self.subTest('Whole Earth LAEA - Shape file input'):
-            self.assertDictAlmostEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
@@ -1171,7 +1163,7 @@ class TestProjectionUtilities(TestCase):
             'y_max': 1670250.0136418417,
         }
 
-        self.assertDictAlmostEqual(
+        assert_float_dict_almost_equal(
             get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
         )
 

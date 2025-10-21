@@ -20,7 +20,9 @@ from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import BBox
 from hoss.exceptions import (
+    InvalidGranuleDimensions,
     InvalidInputGeoJSON,
+    InvalidRequestedRange,
     MissingGridMappingMetadata,
     MissingGridMappingVariable,
     MissingSpatialSubsetInformation,
@@ -40,9 +42,12 @@ from hoss.projection_utilities import (
     get_resolved_geometry,
     get_resolved_line,
     get_variable_crs,
-    get_x_y_extents_from_geographic_points,
+    get_x_y_extents_from_geographic_perimeter,
     is_projection_x_dimension,
     is_projection_y_dimension,
+    perimeter_surrounds_grid,
+    remove_non_finite_projected_values,
+    remove_points_outside_grid_extents,
 )
 from tests import utilities
 from tests.utilities import assert_float_dict_almost_equal
@@ -400,10 +405,10 @@ class TestProjectionUtilities(TestCase):
             }
         )
         expected_output = {
-            'x_min': -12702459.818865139,
-            'x_max': 12702459.818865139,
-            'y_min': -12702440.623773243,
-            'y_max': 12702440.710450241,
+            'x_min': -8982000,
+            'x_max': 8982000,
+            'y_min': -8982000,
+            'y_max': 8982000,
         }
         with self.subTest('Whole Earth LAEA - Bounding box input'):
             assert_float_dict_almost_equal(
@@ -420,6 +425,52 @@ class TestProjectionUtilities(TestCase):
                 ),
                 expected_output,
             )
+
+    def test_get_projected_x_y_extents_edge_case(self):
+        """Ensure that the expected values for the x and y dimension extents
+        are recovered for a polar projected grid and when a bounding box
+        for any edge cases are requested.
+
+        """
+        bbox = BBox(-89, -79, -40, -59)
+
+        x_values = np.linspace(-9000000, 9000000, 2000)
+        y_values = np.linspace(9000000, -9000000, 2000)
+
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'longitude_of_central_meridian': 0.0,
+                'latitude_of_projection_origin': 90.0,
+                'grid_mapping_name': 'lambert_azimuthal_equal_area',
+            }
+        )
+
+        expected_output = {
+            'x_min': -8993061.78423412,
+            'x_max': -8350580.505440015,
+            'y_min': -8997181.591145469,
+            'y_max': -8354987.361637551,
+        }
+        with self.subTest(
+            'LAEA - Bounding box which is close to the edge of granule extent'
+        ):
+            assert_float_dict_almost_equal(
+                get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox),
+                expected_output,
+            )
+
+        bbox = BBox(-90, -87, -75, -85)
+        with self.subTest('LAEA - Bounding box which is outside the granule extent'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox)
+
+        with self.subTest('When the granule has invalid dimensions'):
+            with self.assertRaises(InvalidGranuleDimensions):
+                x_values1 = np.linspace(-9200000, 9200000, 500)
+                y_values1 = np.linspace(9200000, -9200000, 500)
+                get_projected_x_y_extents(x_values1, y_values1, crs, bounding_box=bbox)
 
     def test_get_filtered_points(self):
         """Ensure that the coordinates returned are clipped to the granule extent or
@@ -1148,12 +1199,19 @@ class TestProjectionUtilities(TestCase):
                     get_resolved_line(point_one, point_two, resolution), expected_output
                 )
 
-    def test_get_x_y_extents_from_geographic_points(self):
+    def test_get_x_y_extents_from_geographic_perimeter(self):
         """Ensure that a list of coordinates is transformed to a specified
         projection, and that the expected extents in the projected x and y
         dimensions are returned.
 
         """
+
+        granule_extent = {
+            "x_min": -9000000,
+            "x_max": 9000000,
+            "y_min": -9000000,
+            "y_max": 9000000,
+        }
         points = [(-180, 75), (-90, 75), (0, 75), (90, 75)]
         crs = CRS.from_epsg(6931)
         expected_x_y_extents = {
@@ -1164,15 +1222,22 @@ class TestProjectionUtilities(TestCase):
         }
 
         assert_float_dict_almost_equal(
-            get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
+            get_x_y_extents_from_geographic_perimeter(points, crs, granule_extent),
+            expected_x_y_extents,
         )
 
-    def test_get_x_y_extents_from_geographic_points_full_earth_laea(self):
+    def test_get_x_y_extents_from_geographic_perimeter_full_earth_laea(self):
         """Ensure that a list of coordinates is transformed to the specified
         laea projection, and valid values in the projected x and y
         dimensions are returned even for edge cases like whole earth.
 
         """
+        granule_extent_projected_meters = {
+            "x_min": -9000000,
+            "x_max": 9000000,
+            "y_min": -9000000,
+            "y_max": 9000000,
+        }
         crs = CRS.from_cf(
             {
                 'false_easting': 0.0,
@@ -1184,9 +1249,143 @@ class TestProjectionUtilities(TestCase):
         )
 
         points1 = [(-180, -90), (-180, 90), (180, 90), (180, -90)]
-        x_y_extents = get_x_y_extents_from_geographic_points(points1, crs)
+        x_y_extents = get_x_y_extents_from_geographic_perimeter(
+            points1, crs, granule_extent_projected_meters
+        )
 
         self.assertTrue(all(not math.isinf(value) for value in x_y_extents.values()))
+
+    def test_remove_non_finite_projected_values(self):
+        """Ensure that only valid values in the x,y list are returned and any
+        NaN or inf values are removed.
+        """
+        points_x = [
+            float('-inf'),
+            -900.3,
+            -800.2,
+            -700.1,
+            float('nan'),
+            500.0,
+            600.9,
+            700.0,
+            800.0,
+        ]
+        points_y = [
+            89.0,
+            float('nan'),
+            69.1,
+            40.5,
+            -10.6,
+            50.9,
+            70.2,
+            80.4,
+            float('inf'),
+        ]
+        expected_x_values = np.array([-800.2, -700.1, 500.0, 600.9, 700.0])
+        expected_y_values = np.array([69.1, 40.5, 50.9, 70.2, 80.4])
+        valid_x, valid_y = remove_non_finite_projected_values(points_x, points_y)
+        np.array_equal(valid_x, expected_x_values)
+        np.array_equal(valid_y, expected_y_values)
+
+    def test_check_perimeter_exceeds_grid_extents(self):
+        """Ensure that True value is returned when the input perimeter array exceeds grid
+        extents and a False value is returned when the perimeter is within the grid extents
+
+        """
+        granule_extent = {
+            "x_min": -1000.0,
+            "x_max": 1000.0,
+            "y_min": -1000.0,
+            "y_max": 1000.0,
+        }
+        with self.subTest("Perimeter exceeds grid extents in all axes"):
+            self.assertTrue(
+                perimeter_surrounds_grid(
+                    np.array(
+                        [-2000.1, -1000.1, -900, -500, 200.3, 700.1, 800.1, 1200.5]
+                    ),
+                    np.array(
+                        [1100.1, 400.9, 200, -100.8, -300.3, -500.1, -600.1, -1000.5]
+                    ),
+                    granule_extent,
+                )
+            )
+        with self.subTest("Perimeter does not surround grid"):
+            self.assertFalse(
+                perimeter_surrounds_grid(
+                    np.array(
+                        [-2000.1, -1000.1, -900, -500, 200.3, 700.1, 800.1, 900.0]
+                    ),
+                    np.array(
+                        [400.1, 300.9, 200, -100.8, -300.3, -500.1, -600.1, -700.5]
+                    ),
+                    granule_extent,
+                )
+            )
+
+    def test_remove_points_outside_grid_extents(self):
+        """Ensure that any point outside the grid extents and removed and the grid returned
+        only has values within the grid extent.
+
+        """
+        points_x = np.array(
+            [
+                -1100.1,
+                -1000.0,
+                -800.3,
+                -700.4,
+                -700.5,
+                -700.6,
+                -700.7,
+                -800.8,
+                -900.9,
+                -1000.0,
+                -1100.1,
+            ]
+        )
+        points_y = np.array(
+            [
+                600.1,
+                700.2,
+                800.3,
+                900.4,
+                1000.0,
+                1100.6,
+                1000.0,
+                900.8,
+                800.9,
+                700.0,
+                600.1,
+            ]
+        )
+        expected_x = np.array(
+            [-1000.0, -800.3, -700.4, -700.5, -700.7, -800.8, -900.9, -1000.0]
+        )
+        expected_y = np.array(
+            [700.2, 800.3, 900.4, 1000.0, 1000.0, 900.8, 800.9, 700.0]
+        )
+
+        granule_extent = {
+            "x_min": -1000.0,
+            "x_max": 1000.0,
+            "y_min": -1000.0,
+            "y_max": 1000.0,
+        }
+
+        with self.subTest("Perimeter contains some valid points within grid extent"):
+            x, y = remove_points_outside_grid_extents(
+                points_x, points_y, granule_extent
+            )
+            np.array_equal(expected_x, x)
+            np.array_equal(expected_y, y)
+
+        with self.subTest("Perimeter has no valid points within the grid extent"):
+            with self.assertRaises(InvalidRequestedRange):
+                remove_points_outside_grid_extents(
+                    np.array([-2000.1, -1000.1, -900, -500, 200.3, 700.1, 1200.5]),
+                    np.array([600, 800.9, 1000.2, 1100.8, 1100.1, 1000.1, 900.5]),
+                    granule_extent,
+                )
 
     @patch('hoss.projection_utilities.get_grid_mapping_attributes')
     def test_get_master_geotransform(self, mock_get_grid_mapping_attributes):

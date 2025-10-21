@@ -29,7 +29,9 @@ from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import BBox, flatten_list
 from hoss.exceptions import (
+    InvalidGranuleDimensions,
     InvalidInputGeoJSON,
+    InvalidRequestedRange,
     MissingGridMappingMetadata,
     MissingGridMappingVariable,
     MissingSpatialSubsetInformation,
@@ -203,12 +205,16 @@ def get_projected_x_y_extents(
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
+    if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
+        raise InvalidGranuleDimensions
+
     # When projected, the perimeter of a bounding box or polygon in geographic
     # terms will become curved.  To determine the X, Y extent of the requested
     # bounding area, we need a perimeter with a suitable density of points, such that
     # we catch that curve when projected. The source file resolution is used to define
     # the necessary number of points (density).
     geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
+
     densified_perimeter = get_densified_perimeter(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
@@ -221,13 +227,22 @@ def get_projected_x_y_extents(
 
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
-    return get_x_y_extents_from_geographic_points(clipped_perimeter, crs)
+    granule_extent_projected_meters = {
+        "x_min": np.min(x_values),
+        "x_max": np.max(x_values),
+        "y_min": np.min(y_values),
+        "y_max": np.max(y_values),
+    }
+    return get_x_y_extents_from_geographic_perimeter(
+        clipped_perimeter, crs, granule_extent_projected_meters
+    )
 
 
 def get_filtered_points(
     points_in_requested_extent: List[Coordinates], granule_extent: BBox
 ) -> List[Coordinates]:
-    """Returns lat/lon values cropped to the extent of the granule"""
+    """Returns lat/lon values clipped to the extent of the granule"""
+
     requested_lons, requested_lats = zip(*points_in_requested_extent)
 
     # all lon values are clipped within the granule lon extent
@@ -458,29 +473,99 @@ def get_resolved_line(
     return list(zip(new_x, new_y))
 
 
-def get_x_y_extents_from_geographic_points(
-    points: List[Coordinates], crs: CRS
+def get_x_y_extents_from_geographic_perimeter(
+    points: List[Coordinates],
+    crs: CRS,
+    granule_extent_projected_meters: dict[str, float],
 ) -> Dict[str, float]:
     """Take an input list of (longitude, latitude) coordinates that define the
     exterior of the input GeoJSON shape or bounding box, and project those
     points to the target grid. Then return the minimum and maximum values
-    of those projected coordinates.
+    of those projected coordinates. Check first for perimeter exceeding grid on
+    all axes (whole grid extents returned). Then remove any points that are
+    outside the grid before finding the min and max extent.
 
     """
+    # get the x,y projected values from the geographic points
     point_longitudes, point_latitudes = zip(*points)
     from_geo_transformer = Transformer.from_crs(4326, crs)
     points_x, points_y = (  # pylint: disable=unpacking-non-sequence
         from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
-    # isfinite checks for NaN and infinty values returned for certain projections
-    points_x = np.asarray(points_x)
-    points_y = np.asarray(points_y)
 
-    finite_x = points_x[np.isfinite(points_x)]
-    finite_y = points_y[np.isfinite(points_y)]
+    finite_x, finite_y = remove_non_finite_projected_values(points_x, points_y)
+
+    # Check if perimeter exceeds the grid extents on all axes. If true, return
+    # whole grid extents and skips the code that follows (which fails in
+    # this case).
+    if perimeter_surrounds_grid(finite_x, finite_y, granule_extent_projected_meters):
+        return granule_extent_projected_meters
+
+    # Remove any points that are outside the grid
+    finite_x, finite_y = remove_points_outside_grid_extents(
+        finite_x, finite_y, granule_extent_projected_meters
+    )
+
     return {
         'x_min': np.min(finite_x),
         'x_max': np.max(finite_x),
         'y_min': np.min(finite_y),
         'y_max': np.max(finite_y),
     }
+
+
+def remove_non_finite_projected_values(
+    points_x: list[float], points_y: list[float]
+) -> tuple[np.ndarray, np.ndarray]:
+    """Removes any NaN and infinity values and returns the results as numpy arrays"""
+    # isfinite checks for NaN and infinty values returned for certain projections
+    points_x = np.asarray(points_x)
+    points_y = np.asarray(points_y)
+
+    finite_mask = np.isfinite(points_x) & np.isfinite(points_y)
+    finite_x = points_x[finite_mask]
+    finite_y = points_y[finite_mask]
+    return finite_x, finite_y
+
+
+def perimeter_surrounds_grid(
+    finite_x: np.ndarray, finite_y: np.ndarray, granule_extent: dict[str, float]
+) -> bool:
+    """Returns True if perimeter exceeds the grid extents on all axes.
+    Returns False if does not.
+
+    """
+
+    if (
+        np.min(finite_x) < granule_extent["x_min"]
+        and np.max(finite_x) > granule_extent["x_max"]
+        and np.min(finite_y) < granule_extent["y_min"]
+        and np.max(finite_y) > granule_extent["y_max"]
+    ):
+        return True
+
+    return False
+
+
+def remove_points_outside_grid_extents(
+    finite_x: np.ndarray, finite_y: np.ndarray, granule_extent: dict[str, float]
+) -> tuple[np.ndarray, np.ndarray]:
+    """Remove any points that are outside the grid and are invalid and raise an
+    exception if the resulting grid is empty.
+
+    """
+
+    mask = (
+        (finite_x >= granule_extent["x_min"])
+        & (finite_x <= granule_extent["x_max"])
+        & (finite_y >= granule_extent["y_min"])
+        & (finite_y <= granule_extent["y_max"])
+    )
+
+    finite_x = finite_x[mask]
+    finite_y = finite_y[mask]
+
+    if finite_x.size == 0 or finite_y.size == 0:
+        raise InvalidRequestedRange
+
+    return finite_x, finite_y

@@ -1,10 +1,12 @@
-## [unreleased] - 2025-10-20
+## [v1.1.13] - 2025-10-21
 
 ### Changed
 
-- Updated tests to be less dependent on architecture when comparing floats.
-- Fixed test that modified a source file fixture.
-- Changed infrastructure so that local and Docker runs of the tests produce output in same locations.
+- Updates evaluation of bbox or polygon constraint to exclude areas outside the
+  projected target grid. An error exception occurs if spatial constraint is entirely
+- Updates tests to be less dependent on architecture when comparing floats.
+- Fixes test that modified a source file fixture.
+- Changes infrastructure so that local and Docker runs of the tests produce output in same locations.
 - GitHub once again captures the artifacts from the tests and coverage.
 
 
@@ -172,6 +174,7 @@ Repository structure changes include:
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
 
+[v1.1.13]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.13
 [v1.1.12]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.12
 [v1.1.11]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.11
 [v1.1.10]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.10

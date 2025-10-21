@@ -224,8 +224,14 @@ def get_projected_x_y_extents(
 
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
+    granule_extent_projected_meters = {
+        "x_min": np.min(x_values),
+        "x_max": np.max(x_values),
+        "y_min": np.min(y_values),
+        "y_max": np.max(y_values),
+    }
     return get_x_y_extents_from_geographic_perimeter(
-        clipped_perimeter, crs, x_values, y_values
+        clipped_perimeter, crs, granule_extent_projected_meters
     )
 
 
@@ -465,7 +471,9 @@ def get_resolved_line(
 
 
 def get_x_y_extents_from_geographic_perimeter(
-    points: List[Coordinates], crs: CRS, x_values: np.ndarray, y_values: np.ndarray
+    points: List[Coordinates],
+    crs: CRS,
+    granule_extent_projected_meters: dict[str, float],
 ) -> Dict[str, float]:
     """Take an input list of (longitude, latitude) coordinates that define the
     exterior of the input GeoJSON shape or bounding box, and project those
@@ -475,55 +483,32 @@ def get_x_y_extents_from_geographic_perimeter(
     outside the grid before finding the min and max extent.
 
     """
+    # get the x,y projected values from the geographic points
     point_longitudes, point_latitudes = zip(*points)
     from_geo_transformer = Transformer.from_crs(4326, crs)
     points_x, points_y = (  # pylint: disable=unpacking-non-sequence
         from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
-    # isfinite checks for NaN and infinty values returned for certain projections
-    points_x = np.asarray(points_x)
-    points_y = np.asarray(points_y)
 
-    finite_x = points_x[np.isfinite(points_x)]
-    finite_y = points_y[np.isfinite(points_y)]
+    finite_x, finite_y = remove_any_invalid_projected_values(points_x, points_y)
 
     # Check if perimeter exceeds the grid extents on all axes. If true, return
-    # whole grid extents. This handles the case where the perimeter wholly
-    # encloses the grid (e.g., whole-earth bbox, any lesser grid, polar
-    # use-cases in particular), and skips the code that follows (which fails in
+    # whole grid extents and skips the code that follows (which fails in
     # this case).
-    if (
-        np.min(finite_x) < np.min(x_values)
-        and np.max(finite_x) > np.max(x_values)
-        and np.min(finite_y) < np.min(y_values)
-        and np.max(finite_y) > np.max(y_values)
+    if check_perimeter_exceeds_grid_extents(
+        finite_x, finite_y, granule_extent_projected_meters
     ):
-
         return {
-            'x_min': np.min(x_values),
-            'x_max': np.max(x_values),
-            'y_min': np.min(y_values),
-            'y_max': np.max(y_values),
+            'x_min': granule_extent_projected_meters["x_min"],
+            'x_max': granule_extent_projected_meters["x_max"],
+            'y_min': granule_extent_projected_meters["y_min"],
+            'y_max': granule_extent_projected_meters["y_max"],
         }
-    # Remove any points that are outside the grid and are invalid before
-    # determining min/max extents of perimeter inside the grid.
-    delete_x_min = np.where(finite_x < np.min(x_values))
-    finite_x = np.delete(finite_x, delete_x_min)
-    finite_y = np.delete(finite_y, delete_x_min)
 
-    delete_x_max = np.where(finite_x > np.max(x_values))
-    finite_x = np.delete(finite_x, delete_x_max)
-    finite_y = np.delete(finite_y, delete_x_max)
-
-    delete_y_min = np.where(finite_y < np.min(y_values))
-    finite_y = np.delete(finite_y, delete_y_min)
-    finite_x = np.delete(finite_x, delete_y_min)
-
-    delete_y_max = np.where(finite_y > np.max(y_values))
-    finite_y = np.delete(finite_y, delete_y_max)
-    finite_x = np.delete(finite_x, delete_y_max)
-    if finite_x.size == 0 or finite_y.size == 0:
-        raise InvalidRequestedRange
+    # Remove any points that are outside the grid
+    finite_x, finite_y = remove_points_outside_grid_extents(
+        finite_x, finite_y, granule_extent_projected_meters
+    )
 
     return {
         'x_min': np.min(finite_x),
@@ -531,3 +516,62 @@ def get_x_y_extents_from_geographic_perimeter(
         'y_min': np.min(finite_y),
         'y_max': np.max(finite_y),
     }
+
+
+def remove_any_invalid_projected_values(
+    points_x: list[float], points_y: list[float]
+) -> tuple[np.ndarray, np.ndarray]:
+    """Removes any NaN and infinity values and returns the results as numpy arrays"""
+    # isfinite checks for NaN and infinty values returned for certain projections
+    points_x = np.asarray(points_x)
+    points_y = np.asarray(points_y)
+
+    finite_mask = np.isfinite(points_x) & np.isfinite(points_y)
+    finite_x = points_x[finite_mask]
+    finite_y = points_y[finite_mask]
+    return finite_x, finite_y
+
+
+def check_perimeter_exceeds_grid_extents(
+    finite_x: np.ndarray, finite_y: np.ndarray, granule_extent: dict[str, float]
+) -> bool:
+    """Check if perimeter exceeds the grid extents on all axes. If true, return
+    whole grid extents. This handles the case where the perimeter wholly
+    encloses the grid (e.g., whole-earth bbox, any lesser grid, polar
+    use-cases in particular)
+
+    """
+
+    if (
+        np.min(finite_x) < granule_extent["x_min"]
+        and np.max(finite_x) > granule_extent["x_max"]
+        and np.min(finite_y) < granule_extent["y_min"]
+        and np.max(finite_y) > granule_extent["y_max"]
+    ):
+        return True
+
+    return False
+
+
+def remove_points_outside_grid_extents(
+    finite_x: np.ndarray, finite_y: np.ndarray, granule_extent: dict[str, float]
+) -> tuple[np.ndarray, np.ndarray]:
+    """Remove any points that are outside the grid and are invalid and raise an
+    exception if the resulting grid is empty.
+
+    """
+
+    mask = (
+        (finite_x >= granule_extent["x_min"])
+        & (finite_x <= granule_extent["x_max"])
+        & (finite_y >= granule_extent["y_min"])
+        & (finite_y <= granule_extent["y_max"])
+    )
+
+    finite_x = finite_x[mask]
+    finite_y = finite_y[mask]
+
+    if finite_x.size == 0 or finite_y.size == 0:
+        raise InvalidRequestedRange
+
+    return finite_x, finite_y

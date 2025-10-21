@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List
 from unittest.mock import MagicMock
 
+import numpy as np
 from harmony_service_lib.util import bbox_to_geometry
 from pystac import Asset, Catalog, Item
 
@@ -93,3 +94,22 @@ def create_stac(granules: List[Granule]) -> Catalog:
         catalog.add_item(item)
 
     return catalog
+
+
+def assert_float_dict_almost_equal(dict1, dict2, decimal=8):
+    """Assert two dicts are almost equal.
+
+    Two dictionaries that have only floating point values are compared for
+    almost equivalence.
+
+    """
+    assert (
+        dict1.keys() == dict2.keys()
+    ), f"Keys mismatch: {dict1.keys()} != {dict2.keys()}"
+    for key in dict1:
+        np.testing.assert_almost_equal(
+            dict1[key],
+            dict2[key],
+            decimal=decimal,
+            err_msg=f'Mismatch in {key}: {dict1[key]} != {dict2[key]}',
+        )

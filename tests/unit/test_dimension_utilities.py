@@ -1,5 +1,6 @@
 from logging import getLogger
 from os.path import exists
+from pathlib import Path
 from shutil import copy, rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
@@ -677,8 +678,12 @@ class TestDimensionUtilities(TestCase):
         and in a nested group.
 
         """
+
+        test_filename = Path(self.temp_dir) / 'ATL16_prefetch_group.nc4'
+        copy('tests/data/ATL16_prefetch_group.nc4', test_filename)
+
         varinfo_prefetch = VarInfoFromDmr('tests/data/ATL16_prefetch_group.dmr')
-        prefetch_dataset = Dataset('tests/data/ATL16_prefetch_group.nc4', 'r+')
+        prefetch_dataset = Dataset(test_filename, 'r+')
 
         # Expected variable contents in file.
         expected_bounds_data = self.bounds_array

@@ -14,3 +14,4 @@ A short description of the changes in this PR.
 * [ ] `docker/service_version.txt` updated if publishing a release.
 * [ ] Tests added/updated and passing.
 * [ ] Documentation updated (if needed).
+* [ ] Jira ticket updated with expected fixversion hoss-X.Y.Z

@@ -44,6 +44,8 @@ from hoss.projection_utilities import (
     is_projection_x_dimension,
     is_projection_y_dimension,
 )
+from tests import utilities
+from tests.utilities import assert_float_dict_almost_equal
 
 
 class TestProjectionUtilities(TestCase):
@@ -359,7 +361,8 @@ class TestProjectionUtilities(TestCase):
         }
 
         with self.subTest('Bounding box input'):
-            self.assertDictEqual(
+
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, bounding_box=bounding_box
                 ),
@@ -367,7 +370,7 @@ class TestProjectionUtilities(TestCase):
             )
 
         with self.subTest('Shape file input'):
-            self.assertDictEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
@@ -403,7 +406,7 @@ class TestProjectionUtilities(TestCase):
             'y_max': 12702440.710450241,
         }
         with self.subTest('Whole Earth LAEA - Bounding box input'):
-            self.assertDictEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, bounding_box=whole_earth_bbox
                 ),
@@ -411,7 +414,7 @@ class TestProjectionUtilities(TestCase):
             )
 
         with self.subTest('Whole Earth LAEA - Shape file input'):
-            self.assertDictEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
@@ -1160,7 +1163,7 @@ class TestProjectionUtilities(TestCase):
             'y_max': 1670250.0136418417,
         }
 
-        self.assertDictEqual(
+        assert_float_dict_almost_equal(
             get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
         )
 

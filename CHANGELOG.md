@@ -4,7 +4,11 @@
 
 - Updates evaluation of bbox or polygon constraint to exclude areas outside the
   projected target grid. An error exception occurs if spatial constraint is entirely
-  outside grid.
+- Updates tests to be less dependent on architecture when comparing floats.
+- Fixes test that modified a source file fixture.
+- Changes infrastructure so that local and Docker runs of the tests produce output in same locations.
+- GitHub once again captures the artifacts from the tests and coverage.
+
 
 ## [v1.1.12] - 2025-10-15
 

@@ -1165,7 +1165,7 @@ class TestCoordinateUtilities(TestCase):
                 self.lat_arr, self.lon_arr, row_indices, crs, is_row=True
             )
             self.assertEqual(y_x_order, True)
-            self.assertListEqual(dim_values, expected_dim_values)
+            np.testing.assert_allclose(dim_values, expected_dim_values, rtol=1e-7)
         with self.subTest('Get y_x order when projected_dim is changing across column'):
             col_indices = [[0, 0], [0, 9]]
             expected_dim_values = [-17299990.048985746, 17213152.396759935]
@@ -1173,7 +1173,7 @@ class TestCoordinateUtilities(TestCase):
                 self.lat_arr, self.lon_arr, col_indices, crs, is_row=False
             )
             self.assertEqual(y_x_order, True)
-            self.assertListEqual(dim_values, expected_dim_values)
+            np.testing.assert_allclose(dim_values, expected_dim_values, rtol=1e-7)
         with self.subTest('Get x_y order when projected_dim is changing across row'):
             row_indices = [[0, 0], [4, 0]]
             expected_dim_values = [-17299990.048985746, 17213152.396759935]
@@ -1185,7 +1185,7 @@ class TestCoordinateUtilities(TestCase):
                 is_row=True,
             )
             self.assertEqual(y_x_order, False)
-            self.assertListEqual(dim_values, expected_dim_values)
+            np.testing.assert_allclose(dim_values, expected_dim_values, rtol=1e-7)
         with self.subTest('Get x_y order when projected_dim is changing across column'):
             col_indices = [[0, 0], [0, 9]]
             expected_dim_values = [7341677.255608977, -7341677.255608977]
@@ -1197,7 +1197,7 @@ class TestCoordinateUtilities(TestCase):
                 is_row=False,
             )
             self.assertEqual(y_x_order, False)
-            self.assertListEqual(dim_values, expected_dim_values)
+            np.testing.assert_allclose(dim_values, expected_dim_values, rtol=1e-7)
         with self.subTest('Get y_x order when projected_dims are not varying'):
             lat_arr = np.array(
                 [
@@ -1235,7 +1235,7 @@ class TestCoordinateUtilities(TestCase):
                 self.lat_arr_3d, self.lon_arr_3d, row_indices, crs, is_row=True
             )
             self.assertEqual(y_x_order, True)
-            self.assertListEqual(dim_values, expected_dim_values)
+            np.testing.assert_allclose(dim_values, expected_dim_values, rtol=1e-7)
 
     def test_create_dimension_arrays_from_coordinates(
         self,

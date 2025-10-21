@@ -48,6 +48,8 @@ from hoss.projection_utilities import (
     remove_non_finite_projected_values,
     remove_points_outside_grid_extents,
 )
+from tests import utilities
+from tests.utilities import assert_float_dict_almost_equal
 
 
 class TestProjectionUtilities(TestCase):
@@ -363,7 +365,8 @@ class TestProjectionUtilities(TestCase):
         }
 
         with self.subTest('Bounding box input'):
-            self.assertDictEqual(
+
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, bounding_box=bounding_box
                 ),
@@ -371,7 +374,7 @@ class TestProjectionUtilities(TestCase):
             )
 
         with self.subTest('Shape file input'):
-            self.assertDictEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
@@ -407,7 +410,7 @@ class TestProjectionUtilities(TestCase):
             'y_max': 8982000,
         }
         with self.subTest('Whole Earth LAEA - Bounding box input'):
-            self.assertDictEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, bounding_box=whole_earth_bbox
                 ),
@@ -415,7 +418,7 @@ class TestProjectionUtilities(TestCase):
             )
 
         with self.subTest('Whole Earth LAEA - Shape file input'):
-            self.assertDictEqual(
+            assert_float_dict_almost_equal(
                 get_projected_x_y_extents(
                     x_values, y_values, crs, shape_file=polygon_path
                 ),
@@ -1211,9 +1214,8 @@ class TestProjectionUtilities(TestCase):
             'y_max': 1670250.0136418417,
         }
 
-        self.assertDictEqual(
-            get_x_y_extents_from_geographic_perimeter(points, crs, granule_extent),
-            expected_x_y_extents,
+        assert_float_dict_almost_equal(
+            get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
         )
 
     def test_get_x_y_extents_from_geographic_perimeter_full_earth_laea(self):

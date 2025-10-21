@@ -1,4 +1,4 @@
-## [unrleased] - 2025-10-20
+## [unreleased] - 2025-10-20
 
 ### Changed
 

@@ -1215,7 +1215,8 @@ class TestProjectionUtilities(TestCase):
         }
 
         assert_float_dict_almost_equal(
-            get_x_y_extents_from_geographic_points(points, crs), expected_x_y_extents
+            get_x_y_extents_from_geographic_perimeter(points, crs, granule_extent),
+            expected_x_y_extents,
         )
 
     def test_get_x_y_extents_from_geographic_perimeter_full_earth_laea(self):

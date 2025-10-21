@@ -490,20 +490,13 @@ def get_x_y_extents_from_geographic_perimeter(
         from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
 
-    finite_x, finite_y = remove_any_invalid_projected_values(points_x, points_y)
+    finite_x, finite_y = remove_non_finite_projected_values(points_x, points_y)
 
     # Check if perimeter exceeds the grid extents on all axes. If true, return
     # whole grid extents and skips the code that follows (which fails in
     # this case).
-    if check_perimeter_exceeds_grid_extents(
-        finite_x, finite_y, granule_extent_projected_meters
-    ):
-        return {
-            'x_min': granule_extent_projected_meters["x_min"],
-            'x_max': granule_extent_projected_meters["x_max"],
-            'y_min': granule_extent_projected_meters["y_min"],
-            'y_max': granule_extent_projected_meters["y_max"],
-        }
+    if perimeter_surrounds_grid(finite_x, finite_y, granule_extent_projected_meters):
+        return granule_extent_projected_meters
 
     # Remove any points that are outside the grid
     finite_x, finite_y = remove_points_outside_grid_extents(
@@ -518,7 +511,7 @@ def get_x_y_extents_from_geographic_perimeter(
     }
 
 
-def remove_any_invalid_projected_values(
+def remove_non_finite_projected_values(
     points_x: list[float], points_y: list[float]
 ) -> tuple[np.ndarray, np.ndarray]:
     """Removes any NaN and infinity values and returns the results as numpy arrays"""
@@ -532,13 +525,11 @@ def remove_any_invalid_projected_values(
     return finite_x, finite_y
 
 
-def check_perimeter_exceeds_grid_extents(
+def perimeter_surrounds_grid(
     finite_x: np.ndarray, finite_y: np.ndarray, granule_extent: dict[str, float]
 ) -> bool:
-    """Check if perimeter exceeds the grid extents on all axes. If true, return
-    whole grid extents. This handles the case where the perimeter wholly
-    encloses the grid (e.g., whole-earth bbox, any lesser grid, polar
-    use-cases in particular)
+    """Returns True if perimeter exceeds the grid extents on all axes.
+    Returns False if does not.
 
     """
 

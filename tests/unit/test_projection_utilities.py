@@ -27,7 +27,6 @@ from hoss.exceptions import (
     MissingSpatialSubsetInformation,
 )
 from hoss.projection_utilities import (
-    check_perimeter_exceeds_grid_extents,
     get_bbox_polygon,
     get_densified_perimeter,
     get_filtered_points,
@@ -45,7 +44,8 @@ from hoss.projection_utilities import (
     get_x_y_extents_from_geographic_perimeter,
     is_projection_x_dimension,
     is_projection_y_dimension,
-    remove_any_invalid_projected_values,
+    perimeter_surrounds_grid,
+    remove_non_finite_projected_values,
     remove_points_outside_grid_extents,
 )
 
@@ -1245,7 +1245,7 @@ class TestProjectionUtilities(TestCase):
 
         self.assertTrue(all(not math.isinf(value) for value in x_y_extents.values()))
 
-    def test_remove_any_invalid_projected_values(self):
+    def test_remove_non_finite_projected_values(self):
         """Ensure that only valid values in the x,y list are returned and any
         NaN or inf values are removed.
         """
@@ -1273,7 +1273,7 @@ class TestProjectionUtilities(TestCase):
         ]
         expected_x_values = np.array([-800.2, -700.1, 500.0, 600.9, 700.0])
         expected_y_values = np.array([69.1, 40.5, 50.9, 70.2, 80.4])
-        valid_x, valid_y = remove_any_invalid_projected_values(points_x, points_y)
+        valid_x, valid_y = remove_non_finite_projected_values(points_x, points_y)
         np.array_equal(valid_x, expected_x_values)
         np.array_equal(valid_y, expected_y_values)
 
@@ -1282,22 +1282,36 @@ class TestProjectionUtilities(TestCase):
         extents and a False value is returned when the perimeter is within the grid extents
 
         """
-        granule_extent = {"x_min": -1000, "x_max": 1000, "y_min": -1000, "y_max": 1000}
-        self.assertTrue(
-            check_perimeter_exceeds_grid_extents(
-                np.array([-2000.1, -1000.1, -900, -500, 200.3, 700.1, 800.1, 1200.5]),
-                np.array([1100.1, 400.9, 200, -100.8, -300.3, -500.1, -600.1, -1000.5]),
-                granule_extent,
+        granule_extent = {
+            "x_min": -1000.0,
+            "x_max": 1000.0,
+            "y_min": -1000.0,
+            "y_max": 1000.0,
+        }
+        with self.subTest("Perimeter exceeds grid extents in all axes"):
+            self.assertTrue(
+                perimeter_surrounds_grid(
+                    np.array(
+                        [-2000.1, -1000.1, -900, -500, 200.3, 700.1, 800.1, 1200.5]
+                    ),
+                    np.array(
+                        [1100.1, 400.9, 200, -100.8, -300.3, -500.1, -600.1, -1000.5]
+                    ),
+                    granule_extent,
+                )
             )
-        )
-
-        self.assertFalse(
-            check_perimeter_exceeds_grid_extents(
-                np.array([-2000.1, -1000.1, -900, -500, 200.3, 700.1, 800.1, 900.0]),
-                np.array([400.1, 300.9, 200, -100.8, -300.3, -500.1, -600.1, -700.5]),
-                granule_extent,
+        with self.subTest("Perimeter does not surround grid"):
+            self.assertFalse(
+                perimeter_surrounds_grid(
+                    np.array(
+                        [-2000.1, -1000.1, -900, -500, 200.3, 700.1, 800.1, 900.0]
+                    ),
+                    np.array(
+                        [400.1, 300.9, 200, -100.8, -300.3, -500.1, -600.1, -700.5]
+                    ),
+                    granule_extent,
+                )
             )
-        )
 
     def test_remove_points_outside_grid_extents(self):
         """Ensure that any point outside the grid extents and removed and the grid returned
@@ -1305,24 +1319,63 @@ class TestProjectionUtilities(TestCase):
 
         """
         points_x = np.array(
-            [-1100, -1000, -800, -700, -700, -700, -700, -800, -900, -1000, -1100]
+            [
+                -1100.1,
+                -1000.0,
+                -800.3,
+                -700.4,
+                -700.5,
+                -700.6,
+                -700.7,
+                -800.8,
+                -900.9,
+                -1000.0,
+                -1100.1,
+            ]
         )
-        points_y = np.array([600, 700, 800, 900, 1000, 1100, 1000, 900, 800, 700, 600])
-        expected_x = np.array([-1000, -800, -700, -700, -700, -800, -900, -1000])
-        expected_y = np.array([700, 800, 900, 1000, 1000, 900, 800, 700])
+        points_y = np.array(
+            [
+                600.1,
+                700.2,
+                800.3,
+                900.4,
+                1000.0,
+                1100.6,
+                1000.0,
+                900.8,
+                800.9,
+                700.0,
+                600.1,
+            ]
+        )
+        expected_x = np.array(
+            [-1000.0, -800.3, -700.4, -700.5, -700.7, -800.8, -900.9, -1000.0]
+        )
+        expected_y = np.array(
+            [700.2, 800.3, 900.4, 1000.0, 1000.0, 900.8, 800.9, 700.0]
+        )
 
-        granule_extent = {"x_min": -1000, "x_max": 1000, "y_min": -1000, "y_max": 1000}
+        granule_extent = {
+            "x_min": -1000.0,
+            "x_max": 1000.0,
+            "y_min": -1000.0,
+            "y_max": 1000.0,
+        }
 
-        x, y = remove_points_outside_grid_extents(points_x, points_y, granule_extent)
-        np.array_equal(expected_x, x)
-        np.array_equal(expected_y, y)
-
-        with self.assertRaises(InvalidRequestedRange):
-            remove_points_outside_grid_extents(
-                np.array([-2000.1, -1000.1, -900, -500, 200.3, 700.1, 1200.5]),
-                np.array([600, 800.9, 1000.2, 1100.8, 1100.1, 1000.1, 900.5]),
-                granule_extent,
+        with self.subTest("Perimeter contains some valid points within grid extent"):
+            x, y = remove_points_outside_grid_extents(
+                points_x, points_y, granule_extent
             )
+            np.array_equal(expected_x, x)
+            np.array_equal(expected_y, y)
+
+        with self.subTest("Perimeter has no valid points within the grid extent"):
+            with self.assertRaises(InvalidRequestedRange):
+                remove_points_outside_grid_extents(
+                    np.array([-2000.1, -1000.1, -900, -500, 200.3, 700.1, 1200.5]),
+                    np.array([600, 800.9, 1000.2, 1100.8, 1100.1, 1000.1, 900.5]),
+                    granule_extent,
+                )
 
     @patch('hoss.projection_utilities.get_grid_mapping_attributes')
     def test_get_master_geotransform(self, mock_get_grid_mapping_attributes):

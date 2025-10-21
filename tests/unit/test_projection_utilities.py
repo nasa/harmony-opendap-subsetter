@@ -456,11 +456,6 @@ class TestProjectionUtilities(TestCase):
         with self.subTest(
             'LAEA - Bounding box which is close to the edge of granule extent'
         ):
-            outputs = get_projected_x_y_extents(
-                x_values, y_values, crs, bounding_box=bbox
-            )
-            print(f'outputs={outputs}')
-            print(f'expected_output={expected_output}')
             assert_float_dict_almost_equal(
                 get_projected_x_y_extents(x_values, y_values, crs, bounding_box=bbox),
                 expected_output,

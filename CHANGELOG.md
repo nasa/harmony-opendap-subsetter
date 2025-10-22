@@ -1,12 +1,22 @@
+## [v1.1.14] - 2025-10-22
+
+### Changed
+
+- Adds default values for temporal requests with only one value. A default
+  start time of 0001-01-01 and a default end time of now are used when a
+  harmony message does not provide them.
+
 ## [v1.1.13] - 2025-10-21
 
 ### Changed
 
 - Updates evaluation of bbox or polygon constraint to exclude areas outside the
-  projected target grid. An error exception occurs if spatial constraint is entirely
+  projected target grid. An error exception occurs if spatial constraint is
+  entirely outside the projected grid extents.
 - Updates tests to be less dependent on architecture when comparing floats.
 - Fixes test that modified a source file fixture.
-- Changes infrastructure so that local and Docker runs of the tests produce output in same locations.
+- Changes infrastructure so that local and Docker runs of the tests produce
+  output in same locations.
 - GitHub once again captures the artifacts from the tests and coverage.
 
 

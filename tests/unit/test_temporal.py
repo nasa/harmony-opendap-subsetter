@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta, timezone
+from gc import freeze
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import ANY, patch
 
 import numpy as np
+from freezegun import freeze_time
 from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
@@ -12,6 +14,8 @@ from varinfo import VarInfoFromDmr
 
 from hoss.exceptions import UnsupportedTemporalUnits
 from hoss.temporal import (
+    DEFAULT_TIME_START,
+    default_time_end,
     get_datetime_with_timezone,
     get_temporal_index_ranges,
     get_time_ref,
@@ -130,6 +134,7 @@ class TestTemporal(TestCase):
             with self.assertRaises(UnsupportedTemporalUnits):
                 get_time_ref('fortnights since 2021-12-08 00:30:00')
 
+    @freeze_time("2025-10-21 16:15:00 UTC")
     def test_get_datetime_with_timezone(self):
         """Ensure the string is parsed to datetime with timezone."""
         expected_datetime = datetime(2021, 12, 8, 0, 30, tzinfo=timezone.utc)
@@ -152,4 +157,22 @@ class TestTemporal(TestCase):
         with self.subTest('space with trailing Z'):
             self.assertEqual(
                 get_datetime_with_timezone('2021-12-08 00:30:00Z'), expected_datetime
+            )
+
+        with self.subTest('ISO with fractional seconds Z'):
+            self.assertEqual(
+                get_datetime_with_timezone('2021-12-08T00:30:00.000Z'),
+                expected_datetime,
+            )
+
+        with self.subTest('DEFAULT_TIME_START'):
+            expected_start_time = datetime(1, 1, 1, 0, 0, tzinfo=timezone.utc)
+            self.assertEqual(
+                get_datetime_with_timezone(DEFAULT_TIME_START), expected_start_time
+            )
+
+        with self.subTest('default_end_time()'):
+            expected_stop_time = datetime(2025, 10, 21, 16, 15, tzinfo=timezone.utc)
+            self.assertEqual(
+                get_datetime_with_timezone(default_time_end()), expected_stop_time
             )

@@ -11,6 +11,7 @@ be combined with any other index ranges (e.g., spatial).
 from datetime import datetime, timedelta, timezone
 from typing import List, Set
 
+from dateutil import tz
 from dateutil.parser import parse as parse_datetime
 from harmony_service_lib.message import Message
 from netCDF4 import Dataset
@@ -27,6 +28,14 @@ units_day = {'day', 'days', 'd'}
 units_hour = {'hour', 'hours', 'hr', 'h'}
 units_min = {'minutes', 'minute', 'min', 'mins'}
 units_second = {'second', 'seconds', 'sec', 'secs', 's'}
+
+
+DEFAULT_TIME_START = '0001-01-01T00:00:00.000Z'
+
+
+def default_time_end():
+    """Returns the current UTC time to be used as a default ending time."""
+    return datetime.now(tz=tz.UTC).strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
 
 def get_temporal_index_ranges(
@@ -47,8 +56,12 @@ def get_temporal_index_ranges(
     index_ranges = {}
     temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
 
-    time_start = get_datetime_with_timezone(harmony_message.temporal.start)
-    time_end = get_datetime_with_timezone(harmony_message.temporal.end)
+    time_start = get_datetime_with_timezone(
+        harmony_message.temporal.start or DEFAULT_TIME_START
+    )
+    time_end = get_datetime_with_timezone(
+        harmony_message.temporal.end or default_time_end()
+    )
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dimension in temporal_dimensions:

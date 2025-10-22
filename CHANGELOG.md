@@ -1,12 +1,25 @@
+## [v1.1.14] - 2025-10-22
+
+### Fixed
+
+- Adds support for temporal requests with only start or end time specified.
+  When a Harmony message omits the start time, HOSS now defaults to
+  `0001-01-01T00:00:00.000Z`. When the end time is omitted, HOSS defaults to
+  the current time. This allows temporal subsetting to work with
+  partially-specified time ranges.  These changes do not affect requests
+  without a temporal component or fully qualified temporal requests.
+
 ## [v1.1.13] - 2025-10-21
 
 ### Changed
 
 - Updates evaluation of bbox or polygon constraint to exclude areas outside the
-  projected target grid. An error exception occurs if spatial constraint is entirely
+  projected target grid. An error exception occurs if spatial constraint is
+  entirely outside the projected grid extents.
 - Updates tests to be less dependent on architecture when comparing floats.
 - Fixes test that modified a source file fixture.
-- Changes infrastructure so that local and Docker runs of the tests produce output in same locations.
+- Changes infrastructure so that local and Docker runs of the tests produce
+  output in same locations.
 - GitHub once again captures the artifacts from the tests and coverage.
 
 

@@ -1,6 +1,6 @@
 ## [v1.1.14] - 2025-10-22
 
-### Added
+### Fixed
 
 - Adds support for temporal requests with only start or end time specified.
   When a Harmony message omits the start time, HOSS now defaults to

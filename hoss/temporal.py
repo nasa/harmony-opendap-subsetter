@@ -34,6 +34,7 @@ DEFAULT_TIME_START = '0001-01-01T00:00:00.000Z'
 
 
 def default_time_end():
+    """Returns the current UTC time to be used as a default ending time."""
     return datetime.now(tz=tz.UTC).strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
 

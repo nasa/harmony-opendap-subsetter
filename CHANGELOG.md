@@ -2,9 +2,12 @@
 
 ### Changed
 
-- Adds default values for temporal requests with only one value. A default
-  start time of 0001-01-01 and a default end time of now are used when a
-  harmony message does not provide them.
+- Adds support for temporal requests with only start or end time specified.
+  When a Harmony message omits the start time, HOSS now defaults to
+  `0001-01-01T00:00:00.000Z`. When the end time is omitted, HOSS defaults to
+  the current time. This allows temporal subsetting to work with
+  partially-specified time ranges.  These changes do not affect requests
+  without a temporal component or fully qualified temporal requests.
 
 ## [v1.1.13] - 2025-10-21
 

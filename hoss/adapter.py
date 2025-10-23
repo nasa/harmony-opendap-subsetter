@@ -35,7 +35,7 @@ from pystac import Asset, Item
 
 from hoss.dimension_utilities import is_index_subset
 from hoss.subset import subset_granule
-from hoss.utilities import get_file_mimetype
+from hoss.utilities import get_file_mimetype, raise_from_hoss_exception
 
 
 class HossAdapter(BaseHarmonyAdapter):
@@ -130,9 +130,7 @@ class HossAdapter(BaseHarmonyAdapter):
             return result
         except Exception as exception:
             self.logger.exception(exception)
-            raise HarmonyException(
-                'Subsetter failed with error: ' + str(exception)
-            ) from exception
+            raise_from_hoss_exception(exception)
         finally:
             # Clean up any intermediate resources
             shutil.rmtree(workdir)

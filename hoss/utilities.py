@@ -13,11 +13,16 @@ from typing import Dict, Optional, Set, Tuple
 from urllib.parse import quote
 from uuid import uuid4
 
-from harmony_service_lib.exceptions import ForbiddenException, ServerException
+from harmony_service_lib.exceptions import (
+    ForbiddenException,
+    HarmonyException,
+    NoRetryException,
+    ServerException,
+)
 from harmony_service_lib.util import Config
 from harmony_service_lib.util import download as util_download
 
-from hoss.exceptions import UrlAccessFailed
+from hoss.exceptions import CustomNoRetryError, UrlAccessFailed
 
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str], Optional[str]]:
@@ -158,3 +163,15 @@ def get_value_or_default(value: Optional[float], default: float) -> float:
 
     """
     return value if value is not None else default
+
+
+def raise_from_hoss_exception(exception: Exception):
+
+    if issubclass(type(exception), CustomNoRetryError):
+        ExceptionClass = NoRetryException
+    else:
+        ExceptionClass = HarmonyException
+
+    raise ExceptionClass(
+        'Subsetter failed with error: ' + str(exception)
+    ) from exception

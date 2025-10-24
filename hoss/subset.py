@@ -25,6 +25,7 @@ from hoss.dimension_utilities import (
     get_requested_index_ranges,
     is_index_subset,
 )
+from hoss.harmony_log_context import get_logger
 from hoss.spatial import get_spatial_index_ranges
 from hoss.temporal import get_temporal_index_ranges
 from hoss.utilities import (
@@ -72,7 +73,6 @@ def subset_granule(
     varinfo = get_varinfo(
         opendap_url,
         output_dir,
-        logger,
         harmony_source.shortName,
         harmony_message.accessToken,
         config,
@@ -182,7 +182,6 @@ def subset_granule(
 def get_varinfo(
     opendap_url: str,
     output_dir: str,
-    logger: Logger,
     collection_short_name: str,
     access_token: str,
     config: Config,
@@ -195,7 +194,6 @@ def get_varinfo(
     dmr_path = download_url(
         f'{opendap_url}.dmr.xml',
         output_dir,
-        logger,
         access_token=access_token,
         config=config,
     )

@@ -3,8 +3,8 @@
 This module is used to capture the logging context from Harmony and allow easy
 access to this context wrapped harmony logging adapter.
 
-We use this to capture the logger (logging-adapter) that harmony service lib
-has created and allowing all of the modules in the service to access and use
+We use this to capture the Logger (LoggerAdapter) that the harmony service lib
+has created and allows all of the modules in the service to access and use it
 without having to pass a logging object in each function signature.
 
 """

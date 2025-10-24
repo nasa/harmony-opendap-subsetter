@@ -26,7 +26,7 @@ class TestUtilities(TestCase):
         cls.harmony_500_error = ServerException('I can\'t do that')
         cls.harmony_auth_error = ForbiddenException('You can\'t do that.')
         cls.config = config(validate=False)
-        cls.logger = getLogger('tests')
+        cls.logger = getLogger('harmony-service')
 
     def test_get_file_mimetype(self):
         """Ensure a mimetype can be retrieved for a valid file path or, if
@@ -61,7 +61,7 @@ class TestUtilities(TestCase):
         with self.subTest('Successful response, only make one request.'):
             mock_util_download.return_value = http_response
             response = download_url(
-                test_url, output_directory, self.logger, access_token, self.config
+                test_url, output_directory, access_token, self.config
             )
 
             self.assertEqual(response, http_response)
@@ -80,7 +80,6 @@ class TestUtilities(TestCase):
             response = download_url(
                 test_url,
                 output_directory,
-                self.logger,
                 access_token,
                 self.config,
                 data=test_data,
@@ -101,9 +100,7 @@ class TestUtilities(TestCase):
             mock_util_download.side_effect = [self.harmony_500_error, http_response]
 
             with self.assertRaises(UrlAccessFailed):
-                download_url(
-                    test_url, output_directory, self.logger, access_token, self.config
-                )
+                download_url(test_url, output_directory, access_token, self.config)
 
             mock_util_download.assert_called_once_with(
                 test_url,
@@ -119,9 +116,7 @@ class TestUtilities(TestCase):
             mock_util_download.side_effect = [self.harmony_auth_error, http_response]
 
             with self.assertRaises(UrlAccessFailed):
-                download_url(
-                    test_url, output_directory, self.logger, access_token, self.config
-                )
+                download_url(test_url, output_directory, access_token, self.config)
 
             mock_util_download.assert_called_once_with(
                 test_url,

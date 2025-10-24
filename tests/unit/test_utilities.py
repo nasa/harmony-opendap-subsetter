@@ -6,6 +6,7 @@ from harmony_service_lib.exceptions import ForbiddenException, ServerException
 from harmony_service_lib.util import config
 
 from hoss.exceptions import UrlAccessFailed
+from hoss.harmony_log_context import set_logger
 from hoss.utilities import (
     download_url,
     format_dictionary_string,
@@ -26,7 +27,8 @@ class TestUtilities(TestCase):
         cls.harmony_500_error = ServerException('I can\'t do that')
         cls.harmony_auth_error = ForbiddenException('You can\'t do that.')
         cls.config = config(validate=False)
-        cls.logger = getLogger('harmony-service')
+        cls.logger = getLogger('test')
+        set_logger(cls.logger)
 
     def test_get_file_mimetype(self):
         """Ensure a mimetype can be retrieved for a valid file path or, if
@@ -154,7 +156,6 @@ class TestUtilities(TestCase):
                 url,
                 required_variables,
                 output_dir,
-                self.logger,
                 access_token,
                 self.config,
             )
@@ -175,7 +176,7 @@ class TestUtilities(TestCase):
 
         with self.subTest('Request with no variables omits dap4.ce'):
             output_file = get_opendap_nc4(
-                url, {}, output_dir, self.logger, access_token, self.config
+                url, {}, output_dir, access_token, self.config
             )
 
             self.assertEqual(output_file, moved_file_name)

@@ -47,7 +47,7 @@ class HossAdapter(BaseHarmonyAdapter):
     """
 
     def __init__(self, message, catalog=None, config=None):
-        """."""
+        """Initialize the HossAdapter"""
         super().__init__(message, catalog=catalog, config=config)
         set_logger(self.logger)
 

@@ -45,7 +45,6 @@ def get_opendap_nc4(
     url: str,
     required_variables: Set[str],
     output_dir: str,
-    logger: Logger,
     access_token: str,
     config: Config,
 ) -> str:

@@ -36,6 +36,7 @@ from hoss.bbox_utilities import (
     is_single_point,
 )
 from hoss.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
+from hoss.harmony_log_context import set_logger
 
 
 class TestBBoxUtilities(TestCase):
@@ -47,7 +48,8 @@ class TestBBoxUtilities(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = config(validate=False)
-        cls.logger = getLogger('tests')
+        cls.logger = getLogger('test')
+        set_logger(cls.logger)
         cls.point_geojson = cls.read_geojson('point.geo.json')
         cls.multipoint_geojson = cls.read_geojson('multipoint.geo.json')
         cls.linestring_geojson = cls.read_geojson('linestring.geo.json')
@@ -130,7 +132,7 @@ class TestBBoxUtilities(TestCase):
             )
 
             self.assertEqual(
-                get_request_shape_file(message, local_dir, self.logger, self.config),
+                get_request_shape_file(message, local_dir, self.config),
                 local_shape_file_path,
             )
 
@@ -152,7 +154,7 @@ class TestBBoxUtilities(TestCase):
             )
 
             with self.assertRaises(UnsupportedShapeFileFormat):
-                get_request_shape_file(message, local_dir, self.logger, self.config)
+                get_request_shape_file(message, local_dir, self.config)
 
             mock_download.assert_not_called()
 
@@ -161,18 +163,14 @@ class TestBBoxUtilities(TestCase):
                 {'accessToken': access_token, 'subset': {'bbox': [10, 20, 30, 40]}}
             )
 
-            self.assertIsNone(
-                get_request_shape_file(message, local_dir, self.logger, self.config)
-            )
+            self.assertIsNone(get_request_shape_file(message, local_dir, self.config))
 
             mock_download.assert_not_called()
 
         with self.subTest('No subset property in message'):
             message = Message({'accessToken': access_token})
 
-            self.assertIsNone(
-                get_request_shape_file(message, local_dir, self.logger, self.config)
-            )
+            self.assertIsNone(get_request_shape_file(message, local_dir, self.config))
 
             mock_download.assert_not_called()
 

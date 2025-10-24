@@ -106,7 +106,7 @@ class HossAdapter(BaseHarmonyAdapter):
 
             # Invoke service logic to retrieve subset of file from OPeNDAP
             output_file_path = subset_granule(
-                asset.href, source, workdir, self.message, self.logger, self.config
+                asset.href, source, workdir, self.message, self.config
             )
 
             # Stage the output file with a conventional filename

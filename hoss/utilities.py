@@ -23,6 +23,7 @@ from harmony_service_lib.util import Config
 from harmony_service_lib.util import download as util_download
 
 from hoss.exceptions import CustomNoRetryError, UrlAccessFailed
+from hoss.harmony_log_context import get_logger
 
 
 def get_file_mimetype(file_name: str) -> Tuple[Optional[str], Optional[str]]:
@@ -44,7 +45,6 @@ def get_opendap_nc4(
     url: str,
     required_variables: Set[str],
     output_dir: str,
-    logger: Logger,
     access_token: str,
     config: Config,
 ) -> str:
@@ -66,7 +66,6 @@ def get_opendap_nc4(
     downloaded_nc4 = download_url(
         netcdf4_url,
         output_dir,
-        logger,
         access_token=access_token,
         config=config,
         data=request_data,
@@ -104,7 +103,6 @@ def move_downloaded_nc4(output_dir: str, downloaded_file: str) -> str:
 def download_url(
     url: str,
     destination: str,
-    logger: Logger,
     access_token: str = None,
     config: Config = None,
     data=None,
@@ -121,14 +119,19 @@ def download_url(
     content from the URL.
 
     """
-    logger.info(f'Downloading: {url}')
+    get_logger().info(f'Downloading: {url}')
 
     if data is not None:
-        logger.info(f'POST request data: "{format_dictionary_string(data)}"')
+        get_logger().info(f'POST request data: "{format_dictionary_string(data)}"')
 
     try:
         response = util_download(
-            url, destination, logger, access_token=access_token, data=data, cfg=config
+            url,
+            destination,
+            get_logger(),
+            access_token=access_token,
+            data=data,
+            cfg=config,
         )
     except ForbiddenException as harmony_exception:
         raise UrlAccessFailed(url, 400) from harmony_exception

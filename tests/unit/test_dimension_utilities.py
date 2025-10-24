@@ -440,7 +440,6 @@ class TestDimensionUtilities(TestCase):
                 self.varinfo,
                 required_variables,
                 output_dir,
-                self.logger,
                 access_token,
                 self.config,
             ),
@@ -448,10 +447,10 @@ class TestDimensionUtilities(TestCase):
         )
 
         mock_get_opendap_nc4.assert_called_once_with(
-            url, required_dimensions, output_dir, self.logger, access_token, self.config
+            url, required_dimensions, output_dir, access_token, self.config
         )
         mock_check_add_artificial_bounds.assert_called_once_with(
-            prefetch_path, required_dimensions, self.varinfo, self.logger
+            prefetch_path, required_dimensions, self.varinfo
         )
 
     @patch('hoss.dimension_utilities.check_add_artificial_bounds')
@@ -492,17 +491,18 @@ class TestDimensionUtilities(TestCase):
                 varinfo,
                 requested_variables,
                 output_dir,
-                self.logger,
                 access_token,
                 self.config,
             ),
             prefetch_path,
         )
         mock_get_opendap_nc4.assert_called_once_with(
-            url, prefetch_variables, output_dir, self.logger, access_token, self.config
+            url, prefetch_variables, output_dir, access_token, self.config
         )
         mock_check_add_artificial_bounds.assert_called_once_with(
-            prefetch_path, prefetch_variables, varinfo, self.logger
+            prefetch_path,
+            prefetch_variables,
+            varinfo,
         )
 
     @patch('hoss.dimension_utilities.get_coordinate_variables')
@@ -542,7 +542,6 @@ class TestDimensionUtilities(TestCase):
                     varinfo,
                     requested_variables,
                     output_dir,
-                    self.logger,
                     access_token,
                     self.config,
                 )
@@ -569,7 +568,6 @@ class TestDimensionUtilities(TestCase):
                     varinfo,
                     requested_variables,
                     output_dir,
-                    self.logger,
                     access_token,
                     self.config,
                 )
@@ -605,7 +603,6 @@ class TestDimensionUtilities(TestCase):
                 prefetch_dataset_name,
                 required_dimensions,
                 varinfo_prefetch,
-                self.logger,
             )
             self.assertEqual(mock_write_bounds.call_count, 6)
 
@@ -618,7 +615,6 @@ class TestDimensionUtilities(TestCase):
                 prefetch_dataset_name,
                 required_dimensions,
                 varinfo_prefetch,
-                self.logger,
             )
             mock_write_bounds.assert_not_called()
 
@@ -790,7 +786,6 @@ class TestDimensionUtilities(TestCase):
                 self.varinfo_with_bounds,
                 required_variables,
                 self.temp_dir,
-                self.logger,
                 access_token,
                 self.config,
             ),
@@ -801,7 +796,6 @@ class TestDimensionUtilities(TestCase):
             url,
             dimensions_and_bounds,
             self.temp_dir,
-            self.logger,
             access_token,
             self.config,
         )

@@ -34,6 +34,7 @@ from harmony_service_lib.util import HarmonyException, generate_output_filename,
 from pystac import Asset, Item
 
 from hoss.dimension_utilities import is_index_subset
+from hoss.harmony_log_context import set_logger
 from hoss.subset import subset_granule
 from hoss.utilities import get_file_mimetype, raise_from_hoss_exception
 
@@ -44,6 +45,11 @@ class HossAdapter(BaseHarmonyAdapter):
     subsetting via requests to OPeNDAP.
 
     """
+
+    def __init__(self, message, catalog=None, config=None):
+        """Initialize the HossAdapter"""
+        super().__init__(message, catalog=catalog, config=config)
+        set_logger(self.logger)
 
     def invoke(self):
         """
@@ -100,7 +106,7 @@ class HossAdapter(BaseHarmonyAdapter):
 
             # Invoke service logic to retrieve subset of file from OPeNDAP
             output_file_path = subset_granule(
-                asset.href, source, workdir, self.message, self.logger, self.config
+                asset.href, source, workdir, self.message, self.config
             )
 
             # Stage the output file with a conventional filename

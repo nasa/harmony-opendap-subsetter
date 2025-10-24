@@ -24,6 +24,7 @@ from harmony_service_lib.message import Message
 from harmony_service_lib.util import Config, download
 
 from hoss.exceptions import InvalidInputGeoJSON, UnsupportedShapeFileFormat
+from hoss.harmony_log_context import get_logger
 
 AggCoordinates = List[Tuple[float]]
 BBox = namedtuple('BBox', ['west', 'south', 'east', 'north'])
@@ -50,7 +51,7 @@ def get_harmony_message_bbox(message: Message) -> Optional[BBox]:
 
 
 def get_request_shape_file(
-    message: Message, working_dir: str, adapter_logger: Logger, adapter_config: Config
+    message: Message, working_dir: str, adapter_config: Config
 ) -> str:
     """This helper function downloads the file specified in the input Harmony
     message via: `Message.subset.shape.href` and returns the local file
@@ -62,11 +63,11 @@ def get_request_shape_file(
             raise UnsupportedShapeFileFormat(message.subset.shape.type)
 
         shape_file_url = message.subset.shape.process('href')
-        adapter_logger.info('Downloading request shape file')
+        get_logger().info('Downloading request shape file')
         local_shape_file_path = download(
             shape_file_url,
             working_dir,
-            logger=adapter_logger,
+            logger=get_logger(),
             access_token=message.accessToken,
             cfg=adapter_config,
         )

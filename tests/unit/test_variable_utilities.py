@@ -13,7 +13,7 @@ from hoss.variable_utilities import (
 )
 
 
-def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger):
+def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo):
     """This test checks that an exception is thrown when an excluded science
     variable in the varinfo config file is explicitly requested.
 
@@ -44,9 +44,7 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo, logger)
     )
 
     with pytest.raises(InvalidVariableRequest) as excinfo:
-        check_invalid_variable_request(
-            requested_harmony_variables, mock_varinfo, logger
-        )
+        check_invalid_variable_request(requested_harmony_variables, mock_varinfo)
 
     # Check that the excluded variables are in the exception message.
     # Since it's an unordered set converted to string, check individually.
@@ -76,9 +74,7 @@ def test_check_invalid_variable_request_all(mocker, mock_varinfo, logger, caplog
 
     # Set caplog to capture INFO level logs.
     with caplog.at_level(logging.INFO):
-        check_invalid_variable_request(
-            requested_harmony_variables, mock_varinfo, logger
-        )
+        check_invalid_variable_request(requested_harmony_variables, mock_varinfo)
 
     # Check the log message
     assert (
@@ -122,9 +118,7 @@ def test_check_invalid_variable_request_no_exclusions(
 
     # Set caplog to capture INFO level logs.
     with caplog.at_level(logging.INFO):
-        check_invalid_variable_request(
-            requested_harmony_variables, mock_varinfo, logger
-        )
+        check_invalid_variable_request(requested_harmony_variables, mock_varinfo)
 
     # Check the log message
     assert 'No invalid variables are requested.' in caplog.text

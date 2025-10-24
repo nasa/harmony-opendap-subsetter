@@ -25,6 +25,7 @@ from hoss.dimension_utilities import (
     get_requested_index_ranges,
     is_index_subset,
 )
+from hoss.harmony_log_context import get_logger
 from hoss.spatial import get_spatial_index_ranges
 from hoss.temporal import get_temporal_index_ranges
 from hoss.utilities import (
@@ -40,7 +41,6 @@ def subset_granule(
     harmony_source: Source,
     output_dir: str,
     harmony_message: Message,
-    logger: Logger,
     config: Config,
 ) -> str:
     """This function is the main business logic for retrieving a variable,
@@ -72,7 +72,6 @@ def subset_granule(
     varinfo = get_varinfo(
         opendap_url,
         output_dir,
-        logger,
         harmony_source.shortName,
         harmony_message.accessToken,
         config,
@@ -80,14 +79,14 @@ def subset_granule(
 
     # Check if excluded variables are explicitly requested. An exception
     # is thrown if so.
-    check_invalid_variable_request(harmony_source.variables, varinfo, logger)
+    check_invalid_variable_request(harmony_source.variables, varinfo)
 
     # Obtain a list of all variables for the subset, including those used as
     # references by the requested variables.
     required_variables = get_required_variables(
-        varinfo, harmony_source.variables, request_is_index_subset, logger
+        varinfo, harmony_source.variables, request_is_index_subset
     )
-    logger.info(
+    get_logger().info(
         'All required variables: ' f'{format_variable_set_string(required_variables)}'
     )
 
@@ -101,7 +100,6 @@ def subset_granule(
             varinfo,
             required_variables,
             output_dir,
-            logger,
             harmony_message.accessToken,
             config,
         )
@@ -129,7 +127,7 @@ def subset_granule(
             # Update `index_ranges` cache with ranges for horizontal grid
             # dimension variables (geographic and projected).
             shape_file_path = get_request_shape_file(
-                harmony_message, output_dir, logger, config
+                harmony_message, output_dir, config
             )
 
             index_ranges.update(
@@ -157,7 +155,7 @@ def subset_granule(
         add_index_range(variable, varinfo, index_ranges)
         for variable in required_variables
     )
-    logger.info(
+    get_logger().info(
         'variables_with_ranges: ' f'{format_variable_set_string(variables_with_ranges)}'
     )
 
@@ -167,7 +165,6 @@ def subset_granule(
         opendap_url,
         variables_with_ranges,
         output_dir,
-        logger,
         harmony_message.accessToken,
         config,
     )
@@ -182,7 +179,6 @@ def subset_granule(
 def get_varinfo(
     opendap_url: str,
     output_dir: str,
-    logger: Logger,
     collection_short_name: str,
     access_token: str,
     config: Config,
@@ -195,7 +191,6 @@ def get_varinfo(
     dmr_path = download_url(
         f'{opendap_url}.dmr.xml',
         output_dir,
-        logger,
         access_token=access_token,
         config=config,
     )
@@ -208,7 +203,6 @@ def get_required_variables(
     varinfo: VarInfoFromDmr,
     variables: List[HarmonyVariable],
     request_is_index_subset: bool,
-    logger: Logger,
 ) -> Set[str]:
     """Iterate through all requested variables from the Harmony message and
     extract their full paths. Then use the
@@ -230,7 +224,7 @@ def get_required_variables(
             varinfo.get_metadata_variables()
         )
 
-    logger.info(
+    get_logger().info(
         'Requested variables: ' f'{format_variable_set_string(requested_variables)}'
     )
 

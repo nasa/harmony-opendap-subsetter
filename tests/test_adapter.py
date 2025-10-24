@@ -12,6 +12,7 @@ from typing import Dict, Set
 from unittest import TestCase
 from unittest.mock import ANY, Mock, call, patch
 
+from harmony_service_lib.exceptions import NoRetryException
 from harmony_service_lib.message import Message
 from harmony_service_lib.util import HarmonyException, config
 from netCDF4 import Dataset
@@ -19,6 +20,7 @@ from numpy.testing import assert_array_equal
 from pystac import Catalog
 
 from hoss.adapter import HossAdapter
+from hoss.exceptions import InvalidVariableRequest
 from tests.utilities import Granule, create_stac, write_dmr
 
 
@@ -2609,10 +2611,10 @@ class TestHossEndToEnd(TestCase):
     @patch('shutil.rmtree')
     @patch('hoss.subset.download_url')
     @patch('hoss.adapter.stage')
-    def test_exception_handling(
+    def test_retriable_exception_handling(
         self, mock_stage, mock_download_subset, mock_rmtree, mock_mkdtemp
     ):
-        """Ensure that if an exception is raised during processing, this
+        """Ensure that if a retriable exception is raised during processing, this
         causes a HarmonyException to be raised, to allow for informative
         logging.
 
@@ -2643,6 +2645,36 @@ class TestHossEndToEnd(TestCase):
         )
 
         with self.assertRaises(HarmonyException):
+            hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
+            hoss.invoke()
+
+        mock_stage.assert_not_called()
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+
+    @patch('hoss.adapter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('hoss.subset.check_invalid_variable_request')
+    @patch('hoss.adapter.stage')
+    def test_not_retriable_exception_handling(
+        self, mock_stage, mock_check_variable, mock_rmtree, mock_mkdtemp
+    ):
+        """Ensure that if a not retriable exception is raised during
+        processing, this causes a NoRetryException to be raised, to prevent
+        extra Harmony CPU cycles.
+
+        """
+        mock_mkdtemp.return_value = self.tmp_dir
+        mock_check_variable.side_effect = InvalidVariableRequest('Random error')
+
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [{}],
+            }
+        )
+
+        with self.assertRaises(NoRetryException):
             hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
             hoss.invoke()
 

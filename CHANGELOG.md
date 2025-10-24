@@ -1,3 +1,11 @@
+## [v1.1.15] - 2025-10-24
+
+### Changed
+
+- HOSS errors that will not succeed with an unchanged retry, are raised to the
+  harmony service as `NoRetryException`s to prevent wasted CPU cycles in
+  Harmony.
+
 ## [v1.1.14] - 2025-10-22
 
 ### Fixed

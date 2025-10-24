@@ -166,7 +166,14 @@ def get_value_or_default(value: Optional[float], default: float) -> float:
 
 
 def raise_from_hoss_exception(exception: Exception):
+    """Convert a HOSS exception to an appropriate Harmony exception.
 
+    Translates HOSS-specific exceptions into Harmony framework exceptions,
+    preserving the exception chain. CustomNoRetryError exceptions are converted
+    to NoRetryException, while all other exceptions become HarmonyException
+    instances.
+
+    """
     if issubclass(type(exception), CustomNoRetryError):
         ExceptionClass = NoRetryException
     else:

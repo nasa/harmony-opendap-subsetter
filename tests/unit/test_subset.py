@@ -90,7 +90,6 @@ class TestSubset(TestCase):
             self.harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -99,7 +98,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -108,7 +106,6 @@ class TestSubset(TestCase):
             self.granule_url,
             self.required_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -168,7 +165,6 @@ class TestSubset(TestCase):
             self.harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -176,7 +172,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -187,7 +182,6 @@ class TestSubset(TestCase):
             self.varinfo,
             self.required_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -202,7 +196,6 @@ class TestSubset(TestCase):
             self.granule_url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -253,7 +246,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -261,7 +253,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -271,7 +262,6 @@ class TestSubset(TestCase):
             self.granule_url,
             expected_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -356,7 +346,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -364,7 +353,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -375,7 +363,6 @@ class TestSubset(TestCase):
             self.varinfo,
             expected_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -390,7 +377,6 @@ class TestSubset(TestCase):
             self.granule_url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -489,7 +475,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -497,7 +482,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -508,7 +492,6 @@ class TestSubset(TestCase):
             varinfo,
             expected_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -523,7 +506,6 @@ class TestSubset(TestCase):
             url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -590,7 +572,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -598,7 +579,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -609,7 +589,6 @@ class TestSubset(TestCase):
             varinfo,
             expected_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -624,7 +603,6 @@ class TestSubset(TestCase):
             url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -694,7 +672,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -702,7 +679,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -713,7 +689,6 @@ class TestSubset(TestCase):
             varinfo,
             expected_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -728,7 +703,6 @@ class TestSubset(TestCase):
             url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -808,7 +782,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -816,7 +789,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -827,7 +799,6 @@ class TestSubset(TestCase):
             varinfo,
             expected_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -845,7 +816,6 @@ class TestSubset(TestCase):
             url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -915,7 +885,6 @@ class TestSubset(TestCase):
             self.harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -923,7 +892,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -934,14 +902,13 @@ class TestSubset(TestCase):
             self.varinfo,
             self.required_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
 
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_request_shape_file.assert_called_once_with(
-            harmony_message, self.output_dir, self.logger, self.config
+            harmony_message, self.output_dir, self.config
         )
         mock_get_spatial_index_ranges.assert_called_once_with(
             self.required_variables,
@@ -956,7 +923,6 @@ class TestSubset(TestCase):
             self.granule_url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -1028,7 +994,6 @@ class TestSubset(TestCase):
             self.harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -1036,7 +1001,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -1047,14 +1011,13 @@ class TestSubset(TestCase):
             self.varinfo,
             self.required_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
 
         mock_get_temporal_index_ranges.assert_not_called()
         mock_get_request_shape_file.assert_called_once_with(
-            harmony_message, self.output_dir, self.logger, self.config
+            harmony_message, self.output_dir, self.config
         )
         mock_get_spatial_index_ranges.assert_called_once_with(
             self.required_variables,
@@ -1069,7 +1032,6 @@ class TestSubset(TestCase):
             self.granule_url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -1136,7 +1098,6 @@ class TestSubset(TestCase):
             self.harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -1144,7 +1105,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -1155,7 +1115,6 @@ class TestSubset(TestCase):
             self.varinfo,
             self.required_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -1170,7 +1129,6 @@ class TestSubset(TestCase):
             self.granule_url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -1195,7 +1153,6 @@ class TestSubset(TestCase):
         varinfo = get_varinfo(
             self.granule_url,
             self.output_dir,
-            self.logger,
             self.collection_short_name,
             self.access_token,
             self.config,
@@ -1272,9 +1229,7 @@ class TestSubset(TestCase):
                 )
             ]
             self.assertSetEqual(
-                get_required_variables(
-                    self.varinfo, harmony_variables, False, self.logger
-                ),
+                get_required_variables(self.varinfo, harmony_variables, False),
                 {'/latitude', '/longitude', '/rainfall_rate', '/time'},
             )
 
@@ -1289,9 +1244,7 @@ class TestSubset(TestCase):
                 )
             ]
             self.assertSetEqual(
-                get_required_variables(
-                    self.varinfo, harmony_variables, False, self.logger
-                ),
+                get_required_variables(self.varinfo, harmony_variables, False),
                 {'/latitude', '/longitude', '/rainfall_rate', '/time'},
             )
 
@@ -1306,20 +1259,16 @@ class TestSubset(TestCase):
                 )
             ]
             self.assertSetEqual(
-                get_required_variables(
-                    self.varinfo, harmony_variables, True, self.logger
-                ),
+                get_required_variables(self.varinfo, harmony_variables, True),
                 {'/latitude', '/longitude', '/rainfall_rate', '/time'},
             )
 
         with self.subTest('No variables, no index range subset returns none'):
-            self.assertSetEqual(
-                get_required_variables(self.varinfo, [], False, self.logger), set()
-            )
+            self.assertSetEqual(get_required_variables(self.varinfo, [], False), set())
 
         with self.subTest('No variables, index-range subset, returns all'):
             self.assertSetEqual(
-                get_required_variables(self.varinfo, [], True, self.logger),
+                get_required_variables(self.varinfo, [], True),
                 all_variables,
             )
 
@@ -1346,7 +1295,7 @@ class TestSubset(TestCase):
         with self.subTest('Variables configured as ancillary for a single group'):
             self.assertSetEqual(
                 get_required_variables(
-                    spl2smap_s_varinfo, [harmony_variables[0]], False, self.logger
+                    spl2smap_s_varinfo, [harmony_variables[0]], False
                 ),
                 {
                     '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
@@ -1358,9 +1307,7 @@ class TestSubset(TestCase):
             )
         with self.subTest('Variables configured as ancillary in multiple groups'):
             self.assertSetEqual(
-                get_required_variables(
-                    spl2smap_s_varinfo, harmony_variables, False, self.logger
-                ),
+                get_required_variables(spl2smap_s_varinfo, harmony_variables, False),
                 {
                     '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
                     '/Soil_Moisture_Retrieval_Data_3km/soil_moisture_3km',
@@ -1607,7 +1554,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -1615,7 +1561,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             granule_url,
             self.output_dir,
-            self.logger,
             collection_short_name,
             self.access_token,
             self.config,
@@ -1626,7 +1571,6 @@ class TestSubset(TestCase):
             smap_varinfo,
             required_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -1638,7 +1582,6 @@ class TestSubset(TestCase):
             granule_url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -1720,7 +1663,6 @@ class TestSubset(TestCase):
             harmony_source,
             self.output_dir,
             harmony_message,
-            self.logger,
             self.config,
         )
 
@@ -1728,7 +1670,6 @@ class TestSubset(TestCase):
         mock_get_varinfo.assert_called_once_with(
             granule_url,
             self.output_dir,
-            self.logger,
             collection_short_name,
             self.access_token,
             self.config,
@@ -1739,7 +1680,6 @@ class TestSubset(TestCase):
             smap_varinfo,
             required_variables,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )
@@ -1751,7 +1691,6 @@ class TestSubset(TestCase):
             granule_url,
             variables_with_ranges,
             self.output_dir,
-            self.logger,
             self.access_token,
             self.config,
         )

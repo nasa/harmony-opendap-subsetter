@@ -2,7 +2,7 @@ import unittest
 from logging import Logger, LoggerAdapter, getLogger
 from unittest.mock import Mock
 
-from harmony_log_context import get_logger, set_logger
+from hoss.harmony_log_context import get_logger, set_logger
 
 
 class TestLoggingContext(unittest.TestCase):
@@ -10,9 +10,9 @@ class TestLoggingContext(unittest.TestCase):
 
     def setUp(self):
         """Reset the global logger before each test."""
-        import harmony_log_context
+        import hoss.harmony_log_context
 
-        harmony_log_context._LOGGER = None
+        hoss.harmony_log_context._LOGGER = None
 
     def test_set_logger_with_logger(self):
         """Test setting a Logger instance."""

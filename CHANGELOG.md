@@ -1,3 +1,15 @@
+## [v1.1.15] - 2025-10-24
+
+### Changed
+
+- HOSS errors that will not succeed with an unchanged retry, are raised to the
+  harmony service as `NoRetryException`s to prevent wasted CPU cycles in
+  Harmony.
+
+- HOSS logging is updated to use `set_logger` and `get_logger` from a new
+  `harmony_log_context` module. Rather than pass the adapter's logger to all of
+  the functions, any function may now call `get_logger()` to retrieve it.
+
 ## [v1.1.14] - 2025-10-22
 
 ### Fixed

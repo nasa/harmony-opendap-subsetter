@@ -31,6 +31,7 @@ from hoss.exceptions import (
     InvalidNamedDimension,
     InvalidRequestedRange,
 )
+from hoss.harmony_log_context import get_logger
 from hoss.utilities import (
     format_variable_set_string,
     get_opendap_nc4,
@@ -67,7 +68,6 @@ def get_prefetch_variables(
     varinfo: VarInfoFromDmr,
     required_variables: Set[str],
     output_dir: str,
-    logger: Logger,
     access_token: str,
     config: Config,
 ) -> str:
@@ -99,19 +99,17 @@ def get_prefetch_variables(
             "No dimensions or coordinates exist for the requested variables"
         )
 
-    logger.info(
+    get_logger().info(
         'Variables being retrieved in prefetch request: '
         f'{format_variable_set_string(prefetch_variables)}'
     )
 
     prefetch_variables_nc4 = get_opendap_nc4(
-        opendap_url, prefetch_variables, output_dir, logger, access_token, config
+        opendap_url, prefetch_variables, output_dir, access_token, config
     )
 
     # Create bounds variables if necessary.
-    check_add_artificial_bounds(
-        prefetch_variables_nc4, prefetch_variables, varinfo, logger
-    )
+    check_add_artificial_bounds(prefetch_variables_nc4, prefetch_variables, varinfo)
     return prefetch_variables_nc4
 
 
@@ -119,7 +117,6 @@ def check_add_artificial_bounds(
     dimensions_nc4: str,
     required_dimensions: Set[str],
     varinfo: VarInfoFromDmr,
-    logger: Logger,
 ) -> None:
     """Augment a NetCDF4 file with artificial bounds variables for each
     dimension variable that has been identified by the earthdata-varinfo
@@ -138,7 +135,7 @@ def check_add_artificial_bounds(
             if needs_bounds(dimension_variable):
                 write_bounds(prefetch_dataset, dimension_variable)
 
-                logger.info(
+                get_logger().info(
                     'Artificial bounds added for dimension variable: '
                     f'{dimension_name}'
                 )

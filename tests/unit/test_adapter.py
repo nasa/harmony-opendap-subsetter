@@ -108,7 +108,6 @@ class TestAdapter(TestCase):
             message.sources[0],
             ANY,
             hoss.message,
-            hoss.logger,
             hoss.config,
         )
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -151,7 +150,6 @@ class TestAdapter(TestCase):
             message.sources[0],
             ANY,
             hoss.message,
-            hoss.logger,
             hoss.config,
         )
 
@@ -195,7 +193,6 @@ class TestAdapter(TestCase):
             message.sources[0],
             ANY,
             hoss.message,
-            hoss.logger,
             hoss.config,
         )
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -237,7 +234,6 @@ class TestAdapter(TestCase):
             message.sources[0],
             ANY,
             hoss.message,
-            hoss.logger,
             hoss.config,
         )
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -280,7 +276,6 @@ class TestAdapter(TestCase):
             message.sources[0],
             ANY,
             hoss.message,
-            hoss.logger,
             hoss.config,
         )
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -323,7 +318,6 @@ class TestAdapter(TestCase):
             message.sources[0],
             ANY,
             hoss.message,
-            hoss.logger,
             hoss.config,
         )
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
@@ -368,7 +362,7 @@ class TestAdapter(TestCase):
             hoss.invoke()
 
         mock_subset_granule.assert_called_once_with(
-            granule_url, message.sources[0], ANY, hoss.message, hoss.logger, hoss.config
+            granule_url, message.sources[0], ANY, hoss.message, hoss.config
         )
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
 
@@ -462,7 +456,6 @@ class TestAdapter(TestCase):
                 message.sources[0],
                 ANY,
                 hoss.message,
-                hoss.logger,
                 self.config,
             )
             mock_get_mimetype.assert_any_call(output_paths[index])
@@ -502,7 +495,6 @@ class TestAdapter(TestCase):
             message.sources[0],
             ANY,
             hoss.message,
-            hoss.logger,
             hoss.config,
         )
         mock_get_mimetype.assert_called_once_with('/path/to/output.nc')

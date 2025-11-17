@@ -2,8 +2,8 @@
 
 ### Fixed
 
-- Add tolerance when comparing grid extent float values in the function 
-  `remove_points_outside_grid_extents` to prevent inaccurate spatial subset 
+- Add tolerance when comparing grid extent float values in the function
+  `remove_points_outside_grid_extents` to prevent inaccurate spatial subset
   results.
 
 ## [v1.1.15] - 2025-10-24

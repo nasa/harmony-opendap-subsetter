@@ -555,7 +555,7 @@ def remove_points_outside_grid_extents(
 
     """
     tolerance = 1e-9
-    
+
     mask = np.logical_and.reduce(
         [
             np.logical_or(

@@ -554,12 +554,27 @@ def remove_points_outside_grid_extents(
     exception if the resulting grid is empty.
 
     """
-
-    mask = (
-        (finite_x >= granule_extent["x_min"])
-        & (finite_x <= granule_extent["x_max"])
-        & (finite_y >= granule_extent["y_min"])
-        & (finite_y <= granule_extent["y_max"])
+    tolerance = 1e-9
+    
+    mask = np.logical_and.reduce(
+        [
+            np.logical_or(
+                finite_x > granule_extent["x_min"],
+                np.isclose(finite_x, granule_extent["x_min"], atol=tolerance),
+            ),
+            np.logical_or(
+                finite_x < granule_extent["x_max"],
+                np.isclose(finite_x, granule_extent["x_max"], atol=tolerance),
+            ),
+            np.logical_or(
+                finite_y > granule_extent["y_min"],
+                np.isclose(finite_y, granule_extent["y_min"], atol=tolerance),
+            ),
+            np.logical_or(
+                finite_y < granule_extent["y_max"],
+                np.isclose(finite_y, granule_extent["y_max"], atol=tolerance),
+            ),
+        ]
     )
 
     finite_x = finite_x[mask]

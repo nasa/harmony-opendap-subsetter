@@ -206,7 +206,9 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
-
+[v1.1.16]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.16
+[v1.1.15]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.15
+[v1.1.14]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.14
 [v1.1.13]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.13
 [v1.1.12]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.12
 [v1.1.11]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.11

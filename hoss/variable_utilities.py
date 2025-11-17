@@ -34,7 +34,8 @@ def check_invalid_variable_request(
     # varinfo exclusions will automatically be applied.
     if not requested_variables:
         get_logger().info(
-            f'All variables are requested. The following variables will be excluded: {unprocessable_variables}'
+            f'All variables are requested. The following variables will be excluded:'
+            f'{unprocessable_variables}'
         )
         return
 

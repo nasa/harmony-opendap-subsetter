@@ -5,7 +5,6 @@ allows finer-grained unit testing of each smaller part of functionality.
 """
 
 import mimetypes
-from logging import Logger
 from os import sep
 from os.path import splitext
 from shutil import move

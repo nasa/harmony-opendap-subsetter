@@ -556,8 +556,8 @@ def remove_points_outside_grid_extents(
     """
     tolerance = 1e-9
     # This gets the mask of points within the granule extent.
-    # The individual extents are checked to make sure the points are within 
-    # all 4 extents    
+    # The individual extents are checked to make sure the points are within
+    # all 4 extents
     mask = np.logical_and.reduce(
         [
             # points >= x_min allowing for a tolerance level

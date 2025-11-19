@@ -1284,8 +1284,8 @@ class TestProjectionUtilities(TestCase):
         expected_x_values = np.array([-800.2, -700.1, 500.0, 600.9, 700.0])
         expected_y_values = np.array([69.1, 40.5, 50.9, 70.2, 80.4])
         valid_x, valid_y = remove_non_finite_projected_values(points_x, points_y)
-        np.array_equal(valid_x, expected_x_values)
-        np.array_equal(valid_y, expected_y_values)
+        assert np.array_equal(valid_x, expected_x_values)
+        assert np.array_equal(valid_y, expected_y_values)
 
     def test_check_perimeter_exceeds_grid_extents(self):
         """Ensure that True value is returned when the input perimeter array exceeds grid
@@ -1330,63 +1330,62 @@ class TestProjectionUtilities(TestCase):
         """
         points_x = np.array(
             [
-                -1100.1,
-                -1000.0123456783,
-                -800.3,
-                -700.4,
-                -700.5,
-                -700.6,
-                -700.7,
-                -800.8,
-                -900.9,
-                -1000.01234567892,
-                -1100.1,
+                -1100.1,  # 1 should exclude this < x_min
+                -1000.0123456783,  # 2 should include this - edge case ~ xmin
+                1000.0123456798,  # 3 should exclude this - edge case > xmax,
+                1000.0123456781,  # 4 should include this - edge case ~ xmax
+                -700.5,  # 5
+                -700.6,  # 6
+                -700.7,  # 7
+                -800.8,  # 8
+                -900.9,  # 9
+                -950.1,  # 10
+                -1000.0123456797,  # 11 should exclude this - edge case < xmin
+                1100.1,  # 12 should exclude this > x_max
             ]
         )
         points_y = np.array(
             [
-                600.1,
-                700.2,
-                800.3,
-                900.4,
-                1000.0123456781,
-                1100.6,
-                1000.0123456784,
-                900.8,
-                800.9,
-                700.0,
-                600.1,
+                600.1,  # 1
+                700.2,  # 2
+                800.3,  # 3
+                900.4,  # 4
+                1000.0123456781,  # 5 should include this < y_max edge case
+                1100.6,  # 6 exclude this > y_max
+                1000.0123456799,  # 7 should exclude this > y_max edge case
+                -1000.0123456785,  # 8 should include this ~ y_min
+                -1000.0123456796,  # 9 should exclude this < y_min edge case
+                -1002.1,  # 10 exclude < y_min
+                700.0,  # 11
+                600.1,  # 12
             ]
         )
         expected_x = np.array(
             [
-                -1000.012345678,
-                -800.3,
-                -700.4,
-                -700.5,
-                -700.7,
-                -800.8,
-                -900.9,
-                -1000.012345678,
+                -1000.012345678,  # 2
+                1000.0123456781,  # 4
+                -700.5,  # 5
+                -800.8,  # 8
             ]
         )
         expected_y = np.array(
-            [700.2, 800.3, 900.4, 1000.012345678, 1000.012345678, 900.8, 800.9, 700.0]
+            [700.2, 900.4, 1000.012345678, -1000.012345678]  # 2  # 4  # 6  # 8
         )
 
         granule_extent = {
-            "x_min": -1000.0123456789,
-            "x_max": 1000.0123456786,
-            "y_min": -1000.0123456787,
-            "y_max": 1000.0123456788,
+            "x_min": -1000.012345678,
+            "x_max": 1000.012345678,
+            "y_min": -1000.012345678,
+            "y_max": 1000.012345678,
         }
 
         with self.subTest("Perimeter contains some valid points within grid extent"):
             x, y = remove_points_outside_grid_extents(
                 points_x, points_y, granule_extent
             )
-            np.array_equal(expected_x, x)
-            np.array_equal(expected_y, y)
+
+            assert np.allclose(expected_x, x, atol=1e-9)
+            assert np.allclose(expected_y, y, atol=1e-9)
 
         with self.subTest("Perimeter has no valid points within the grid extent"):
             with self.assertRaises(InvalidRequestedRange):

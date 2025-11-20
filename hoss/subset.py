@@ -5,7 +5,6 @@ wrapped by the `subset_granule` function, which is called from the
 
 """
 
-from logging import Logger
 from typing import List, Set
 
 from harmony_service_lib.message import Message, Source

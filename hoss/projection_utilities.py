@@ -554,12 +554,16 @@ def remove_points_outside_grid_extents(
     exception if the resulting grid is empty.
 
     """
+    tolerance = 1e-9
+    # This gets the mask of points within the granule extent.
+    # The points are checked to make sure they are within
+    # all 4 extents
 
     mask = (
-        (finite_x >= granule_extent["x_min"])
-        & (finite_x <= granule_extent["x_max"])
-        & (finite_y >= granule_extent["y_min"])
-        & (finite_y <= granule_extent["y_max"])
+        (finite_x >= granule_extent['x_min'] - tolerance)
+        & (finite_x <= granule_extent['x_max'] + tolerance)
+        & (finite_y >= granule_extent['y_min'] - tolerance)
+        & (finite_y <= granule_extent['y_max'] + tolerance)
     )
 
     finite_x = finite_x[mask]

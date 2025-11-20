@@ -1,3 +1,12 @@
+## [v1.1.16] - 2025-10-17
+
+### Fixed
+
+- Add tolerance when comparing grid extent float values in the function
+  `remove_points_outside_grid_extents` to prevent inaccurate spatial subset
+  results. Some issues caused by DAS-2424 updates are being resolved in this
+  release as part of DAS-2456.
+
 ## [v1.1.15] - 2025-10-24
 
 ### Changed
@@ -198,7 +207,9 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
-
+[v1.1.16]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.16
+[v1.1.15]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.15
+[v1.1.14]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.14
 [v1.1.13]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.13
 [v1.1.12]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.12
 [v1.1.11]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.11

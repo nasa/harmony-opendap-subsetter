@@ -312,5 +312,6 @@ class InvalidVariableRequest(CustomNoRetryError):
     def __init__(self, variable_names):
         super().__init__(
             'InvalidVariableRequest',
-            f'Some variables requested are not supported and could not be processed: "{variable_names}".',
+            f'Some variables requested are not supported and could not be processed: '
+            f'"{variable_names}".',
         )

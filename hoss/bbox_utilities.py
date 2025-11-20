@@ -16,7 +16,6 @@ the antimeridian.
 
 import json
 from collections import namedtuple
-from logging import Logger
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np

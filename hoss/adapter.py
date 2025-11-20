@@ -132,14 +132,15 @@ class HossAdapter(BaseHarmonyAdapter):
                 url, title=staged_filename, media_type=mime, roles=['data']
             )
 
-            # Return the STAC record
-            return result
         except Exception as exception:
             self.logger.exception(exception)
             raise_from_hoss_exception(exception)
         finally:
             # Clean up any intermediate resources
             shutil.rmtree(workdir)
+
+        # Return the STAC record
+        return result
 
     def validate_message(self):
         """Check the service was triggered by a valid message containing

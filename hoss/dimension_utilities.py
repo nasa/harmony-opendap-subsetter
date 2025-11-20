@@ -10,7 +10,6 @@ unwrapped in accordance with the longitude dimension values.
 
 """
 
-from logging import Logger
 from pathlib import PurePosixPath
 from typing import Dict, Set, Tuple
 

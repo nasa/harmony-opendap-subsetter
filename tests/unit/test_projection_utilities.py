@@ -1384,8 +1384,8 @@ class TestProjectionUtilities(TestCase):
                 points_x, points_y, granule_extent
             )
 
-            assert np.allclose(expected_x, x, atol=1e-9)
-            assert np.allclose(expected_y, y, atol=1e-9)
+            assert np.allclose(expected_x, x, atol=1e-9, rtol=0)
+            assert np.allclose(expected_y, y, atol=1e-9, rtol=0)
 
         with self.subTest("Perimeter has no valid points within the grid extent"):
             with self.assertRaises(InvalidRequestedRange):

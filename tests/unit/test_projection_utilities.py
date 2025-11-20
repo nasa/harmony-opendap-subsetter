@@ -1369,7 +1369,12 @@ class TestProjectionUtilities(TestCase):
             ]
         )
         expected_y = np.array(
-            [700.2, 900.4, 1000.012345678, -1000.012345678]  # 2  # 4  # 6  # 8
+            [
+                700.2,  # 2
+                900.4,  # 4
+                1000.012345678,  # 5
+                -1000.012345678,  # 8
+            ]
         )
 
         granule_extent = {

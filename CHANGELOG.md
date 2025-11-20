@@ -4,7 +4,8 @@
 
 - Add tolerance when comparing grid extent float values in the function
   `remove_points_outside_grid_extents` to prevent inaccurate spatial subset
-  results.
+  results. Some issues caused by DAS-2424 updates are being resolved in this
+  release as part of DAS-2456.
 
 ## [v1.1.15] - 2025-10-24
 

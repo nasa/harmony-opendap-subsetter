@@ -218,9 +218,8 @@ def get_required_variables(
     requested_variables = {
         f'/{variable.fullPath.lstrip("/")}' for variable in variables
     }
-
-    # check if the requested variables are in the granule.
     if requested_variables:
+        # check if the requested variables are in the granule.
         requested_variables = get_requested_variables_in_granule(
             varinfo, requested_variables
         )
@@ -239,22 +238,18 @@ def get_required_variables(
 def get_requested_variables_in_granule(
     varinfo: VarInfoFromDmr, requested_variables: List[str]
 ) -> Set[str]:
-    """Skip any variables that are not in the granule. Raise NoDataException
-    if all requested variables are not in the granule.
+    """Raise NoDataException if any of the requested variables are not in the granule."""
 
-    """
-    if requested_variables:
-        valid_requested_variables = {
-            variable_name
-            for variable_name in requested_variables
-            if varinfo.get_variable(variable_name) is not None
-        }
-        if not valid_requested_variables:
-            raise NoDataException(
-                f'Requested variables:{requested_variables} not found in granule'
-            )
-        return valid_requested_variables
-    return requested_variables
+    valid_requested_variables = {
+        variable_name
+        for variable_name in requested_variables
+        if varinfo.get_variable(variable_name) is not None
+    }
+    if not valid_requested_variables:
+        raise NoDataException(
+            f'Requested variables:{requested_variables} not found in granule'
+        )
+    return valid_requested_variables
 
 
 def fill_variables(

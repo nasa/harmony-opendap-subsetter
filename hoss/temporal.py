@@ -88,7 +88,7 @@ def get_temporal_index_ranges(
                         dimension, varinfo, dimensions_file
                     ),
                 )
-            # pylint: disable=duplicate-code
+
             except InvalidRequestedRange:
                 check_range_exception(
                     required_variables,
@@ -96,7 +96,6 @@ def get_temporal_index_ranges(
                     dimension,
                     varinfo,
                 )
-            # pylint: enable=duplicate-code
 
         if failed_variables:
             raise NoDataException(

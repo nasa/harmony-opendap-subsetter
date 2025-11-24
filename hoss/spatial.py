@@ -117,7 +117,7 @@ def get_spatial_index_ranges(
                     index_ranges[dimension] = get_geographic_index_range(
                         dimension, varinfo, dimensions_file, bounding_box
                     )
-            # pylint: disable=duplicate-code
+
             except InvalidRequestedRange:
                 check_range_exception(
                     required_variables,
@@ -125,7 +125,7 @@ def get_spatial_index_ranges(
                     dimension,
                     varinfo,
                 )
-            # pylint: enable=duplicate-code
+
         if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
                 try:

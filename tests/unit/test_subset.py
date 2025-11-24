@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import call, patch
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message, Source
 from harmony_service_lib.message import Variable as HarmonyVariable
 from harmony_service_lib.util import config
@@ -14,6 +15,7 @@ from varinfo import VarInfoFromDmr
 from hoss.subset import (
     fill_variable,
     fill_variables,
+    get_requested_variables_in_granule,
     get_required_variables,
     get_varinfo,
     subset_granule,
@@ -1694,3 +1696,59 @@ class TestSubset(TestCase):
             self.access_token,
             self.config,
         )
+
+    def test_get_requested_variables_in_granule(self):
+        """Ensure that all requested variables are in the granule file."""
+        all_variables_in_granule = {
+            '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/latitude_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/longitude_1km',
+        }
+        some_variables_not_in_granule = {
+            '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/latitude',
+            '/Soil_Moisture_Retrieval_Data_1km/longitude',
+        }
+        all_variables_not_in_granule = {
+            '/Soil_Moisture_Retrieval_Data_1km/albedo',
+            '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index',
+            '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index',
+            '/Soil_Moisture_Retrieval_Data_1km/latitude',
+            '/Soil_Moisture_Retrieval_Data_1km/longitude',
+        }
+
+        spl2smap_s_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL2SMAP_S.dmr', 'SPL2SMAP_S', 'hoss/hoss_config.json'
+        )
+
+        with self.subTest('All variables in the granule'):
+            self.assertSetEqual(
+                get_requested_variables_in_granule(
+                    spl2smap_s_varinfo, all_variables_in_granule
+                ),
+                all_variables_in_granule,
+            )
+        with self.subTest('Some variables not in granule'):
+            self.assertSetEqual(
+                get_requested_variables_in_granule(
+                    spl2smap_s_varinfo, some_variables_not_in_granule
+                ),
+                {
+                    '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
+                    '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+                },
+            )
+        with self.subTest('All variables not in granule'):
+            with self.assertRaises(NoDataException) as context:
+                get_requested_variables_in_granule(
+                    spl2smap_s_varinfo, all_variables_not_in_granule
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    f'Requested variables:{all_variables_not_in_granule} not found in granule',
+                )

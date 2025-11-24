@@ -14,6 +14,7 @@ from pathlib import PurePosixPath
 from typing import Dict, Set, Tuple
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from harmony_service_lib.message_utility import rgetattr
 from harmony_service_lib.util import Config
@@ -546,30 +547,46 @@ def get_requested_index_ranges(
     required_dimensions = varinfo.get_required_dimensions(required_variables)
 
     dim_index_ranges = {}
-
+    failed_variables = []
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dim in harmony_message.subset.dimensions:
-            if dim.name in required_dimensions:
-                dim_is_valid = True
-            elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
-                dim.name = f'/{dim.name}'
-                dim_is_valid = True
-            else:
-                dim_is_valid = False
+            try:
+                if dim.name in required_dimensions:
+                    dim_is_valid = True
+                elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
+                    dim.name = f'/{dim.name}'
+                    dim_is_valid = True
+                else:
+                    dim_is_valid = False
 
-            if dim_is_valid:
-                # Try to extract bounds metadata:
-                bounds_array = get_dimension_bounds(dim.name, varinfo, dimensions_file)
-                # Retrieve index ranges for the specifically named dimension:
-                dim_index_ranges[dim.name] = get_dimension_index_range(
-                    dimensions_file[dim.name][:],
-                    dim.min,
-                    dim.max,
-                    bounds_values=bounds_array,
+                if dim_is_valid:
+                    # Try to extract bounds metadata:
+                    bounds_array = get_dimension_bounds(
+                        dim.name, varinfo, dimensions_file
+                    )
+                    # Retrieve index ranges for the specifically named dimension:
+                    dim_index_ranges[dim.name] = get_dimension_index_range(
+                        dimensions_file[dim.name][:],
+                        dim.min,
+                        dim.max,
+                        bounds_values=bounds_array,
+                    )
+                else:
+                    # This requested dimension is not in the required dimension set
+                    raise InvalidNamedDimension(dim.name)
+
+            except InvalidRequestedRange:
+                check_range_exception(
+                    required_variables,
+                    failed_variables,
+                    dim.name,
+                    varinfo,
                 )
-            else:
-                # This requested dimension is not in the required dimension set
-                raise InvalidNamedDimension(dim.name)
+
+        if failed_variables:
+            raise NoDataException(
+                f'Input request specified range outside supported dimension range for {failed_variables}'
+            )
 
     return dim_index_ranges
 
@@ -623,3 +640,23 @@ def is_almost_in(value: float, array: np.ndarray) -> bool:
     return np.any(
         np.isclose(array, np.full_like(array, value), rtol=0, atol=array_precision)
     )
+
+
+def check_range_exception(
+    required_variables: set,
+    failed_variables: list,
+    failed_variable_or_dimension_name: str,
+    varinfo: VarInfoFromDmr,
+):
+    """If a dimension is outside range, the variables that reference that dimension are
+    added to the failed list of variables.
+
+    """
+    if required_variables is None:
+        failed_variables.append(failed_variable_or_dimension_name)
+    else:
+        for variable in required_variables:
+            required_for_this_variable = varinfo.get_required_variables({variable})
+            for required_dimension in required_for_this_variable:
+                if failed_variable_or_dimension_name == required_dimension:
+                    failed_variables.append(variable)

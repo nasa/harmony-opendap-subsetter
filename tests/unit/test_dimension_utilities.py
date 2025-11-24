@@ -17,6 +17,7 @@ from varinfo import VarInfoFromDmr
 from hoss.dimension_utilities import (
     add_index_range,
     check_add_artificial_bounds,
+    check_range_exception,
     get_bounds_array,
     get_dimension_bounds,
     get_dimension_extents,
@@ -1313,3 +1314,29 @@ class TestDimensionUtilities(TestCase):
         for description, input_array, input_value in false_tests:
             with self.subTest(description):
                 self.assertFalse(is_almost_in(input_value, input_array))
+
+    def test_check_range_exception(self):
+        """Ensure that NoDataException is raised when only one dimension exists and it is flagged
+        if multiple dimensions are in the dictionary.
+
+        """
+
+        atl16_varinfo = VarInfoFromDmr('tests/data/ATL16_prefetch.dmr')
+        failed_dimension_name = '/spolar_grid_lat'
+        expected_failed_variables = ['/spolar_asr']
+
+        required_variables = {
+            'global_asr_obs_grid',
+            '/npolar_asr',
+            '/spolar_asr',
+        }
+        failed_variables = []
+
+        with self.subTest('dimensions dictionary created'):
+            check_range_exception(
+                required_variables,
+                failed_variables,
+                failed_dimension_name,
+                atl16_varinfo,
+            )
+            self.assertListEqual(failed_variables, expected_failed_variables)

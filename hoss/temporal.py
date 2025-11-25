@@ -20,9 +20,9 @@ from varinfo import VarInfoFromDmr
 
 from hoss.dimension_utilities import (
     IndexRanges,
-    check_range_exception,
     get_dimension_bounds,
     get_dimension_index_range,
+    get_failed_variables,
 )
 from hoss.exceptions import InvalidRequestedRange, UnsupportedTemporalUnits
 
@@ -56,7 +56,7 @@ def get_temporal_index_ranges(
 
     """
     index_ranges = {}
-    failed_variables = []
+    failed_variables = set()
     temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
 
     time_start = get_datetime_with_timezone(
@@ -90,11 +90,12 @@ def get_temporal_index_ranges(
                 )
 
             except InvalidRequestedRange:
-                check_range_exception(
-                    required_variables,
-                    failed_variables,
-                    dimension,
-                    varinfo,
+                failed_variables.update(
+                    get_failed_variables(
+                        required_variables,
+                        dimension,
+                        varinfo,
+                    )
                 )
 
         if failed_variables:

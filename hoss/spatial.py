@@ -46,10 +46,10 @@ from hoss.coordinate_utilities import (
 from hoss.dimension_utilities import (
     IndexRange,
     IndexRanges,
-    check_range_exception,
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
+    get_failed_variables,
 )
 from hoss.exceptions import InvalidRequestedRange
 from hoss.projection_utilities import (
@@ -104,7 +104,7 @@ def get_spatial_index_ranges(
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
-    failed_variables = []
+    failed_variables = set()
     with Dataset(dimensions_path, 'r') as dimensions_file:
         if geographic_dimensions:
             # If there is no bounding box, but there is a shape file, calculate
@@ -119,13 +119,13 @@ def get_spatial_index_ranges(
                     )
 
             except InvalidRequestedRange:
-                check_range_exception(
-                    required_variables,
-                    failed_variables,
-                    dimension,
-                    varinfo,
+                failed_variables.update(
+                    get_failed_variables(
+                        required_variables,
+                        dimension,
+                        varinfo,
+                    )
                 )
-
         if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
                 try:
@@ -140,11 +140,12 @@ def get_spatial_index_ranges(
                         )
                     )
                 except InvalidRequestedRange:
-                    check_range_exception(
-                        None,
-                        failed_variables,
-                        non_spatial_variable,
-                        varinfo,
+                    failed_variables.update(
+                        get_failed_variables(
+                            None,
+                            non_spatial_variable,
+                            varinfo,
+                        )
                     )
 
         variables_with_anonymous_dims = get_variables_with_anonymous_dims(
@@ -171,11 +172,12 @@ def get_spatial_index_ranges(
                         )
                     )
             except InvalidRequestedRange:
-                check_range_exception(
-                    None,
-                    failed_variables,
-                    variable_with_anonymous_dims,
-                    varinfo,
+                failed_variables.update(
+                    get_failed_variables(
+                        None,
+                        variable_with_anonymous_dims,
+                        varinfo,
+                    )
                 )
 
     if failed_variables:

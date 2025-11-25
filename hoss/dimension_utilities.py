@@ -547,7 +547,7 @@ def get_requested_index_ranges(
     required_dimensions = varinfo.get_required_dimensions(required_variables)
 
     dim_index_ranges = {}
-    failed_variables = []
+    failed_variables = set()
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dim in harmony_message.subset.dimensions:
             try:
@@ -574,13 +574,16 @@ def get_requested_index_ranges(
                 else:
                     # This requested dimension is not in the required dimension set
                     raise InvalidNamedDimension(dim.name)
-
+            # In case subset constraint is out of range for a dimension, accumulate
+            # the associated variables as "failed". Continue processing the other
+            # dimensions and process the failed variables after all dimensions considered
             except InvalidRequestedRange:
-                check_range_exception(
-                    required_variables,
-                    failed_variables,
-                    dim.name,
-                    varinfo,
+                failed_variables.update(
+                    get_failed_variables(
+                        required_variables,
+                        dim.name,
+                        varinfo,
+                    )
                 )
 
         if failed_variables:
@@ -642,21 +645,22 @@ def is_almost_in(value: float, array: np.ndarray) -> bool:
     )
 
 
-def check_range_exception(
+def get_failed_variables(
     required_variables: set,
-    failed_variables: list,
     failed_variable_or_dimension_name: str,
     varinfo: VarInfoFromDmr,
-):
+) -> set:
     """If a dimension is outside range, the variables that reference that dimension are
     added to the failed list of variables.
 
     """
+
     if required_variables is None:
-        failed_variables.append(failed_variable_or_dimension_name)
-    else:
-        for variable in required_variables:
-            required_for_this_variable = varinfo.get_required_variables({variable})
-            for required_dimension in required_for_this_variable:
-                if failed_variable_or_dimension_name == required_dimension:
-                    failed_variables.append(variable)
+        return {failed_variable_or_dimension_name}
+
+    return {
+        variable
+        for variable in required_variables
+        if failed_variable_or_dimension_name
+        in varinfo.get_required_variables({variable})
+    }

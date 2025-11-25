@@ -218,10 +218,15 @@ def get_required_variables(
     requested_variables = {
         f'/{variable.fullPath.lstrip("/")}' for variable in variables
     }
+    # If request includes variable subsetting, check that all requested
+    # variables exist in the granule.
     if requested_variables:
         # check if the requested variables are in the granule.
         check_requested_variables_in_granule(varinfo, requested_variables)
-    if request_is_index_subset and len(requested_variables) == 0:
+
+    # Otherwise, if request is an index subset and no variables are requested,
+    # include all variables.
+    elif request_is_index_subset:
         requested_variables = varinfo.get_science_variables().union(
             varinfo.get_metadata_variables()
         )

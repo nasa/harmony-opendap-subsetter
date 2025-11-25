@@ -2,8 +2,8 @@
 
 ### Changed
 
-- Change HOSS behavior to return No Data Warning instead of a failed exception
-  when the variable, spatial, temporal request does not return any data.
+- Change HOSS behavior to return NoDataException warning instead of a failed
+  exception when the variable, spatial, temporal request does not return any data.
 
 ## [v1.1.16] - 2025-11-17
 

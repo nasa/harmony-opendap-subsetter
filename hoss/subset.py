@@ -246,14 +246,14 @@ def check_requested_variables_in_granule(
 
     """
 
-    not_valid_requested_variables = {
+    invalid_requested_variables = {
         variable_name
         for variable_name in requested_variables
         if varinfo.get_variable(variable_name) is None
     }
-    if not_valid_requested_variables:
+    if invalid_requested_variables:
         raise NoDataException(
-            f'Requested variables:{not_valid_requested_variables} not found in granule'
+            f'Requested variables:{invalid_requested_variables} not found in granule'
         )
     return True
 

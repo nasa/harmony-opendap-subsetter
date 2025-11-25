@@ -24,6 +24,7 @@ For example: [W, S, E, N] = [-20, -90, 20, 90]
 
 from typing import List, Set
 
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
@@ -48,7 +49,9 @@ from hoss.dimension_utilities import (
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
+    get_failed_variables,
 )
+from hoss.exceptions import InvalidRequestedRange
 from hoss.projection_utilities import (
     get_master_geotransform,
     get_projected_x_y_extents,
@@ -101,7 +104,7 @@ def get_spatial_index_ranges(
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
-
+    failed_variables = set()
     with Dataset(dimensions_path, 'r') as dimensions_file:
         if geographic_dimensions:
             # If there is no bounding box, but there is a shape file, calculate
@@ -109,44 +112,78 @@ def get_spatial_index_ranges(
             if bounding_box is None and shape_file_path is not None:
                 geojson_content = get_shape_file_geojson(shape_file_path)
                 bounding_box = get_geographic_bbox(geojson_content)
+            try:
+                for dimension in geographic_dimensions:
+                    index_ranges[dimension] = get_geographic_index_range(
+                        dimension, varinfo, dimensions_file, bounding_box
+                    )
 
-            for dimension in geographic_dimensions:
-                index_ranges[dimension] = get_geographic_index_range(
-                    dimension, varinfo, dimensions_file, bounding_box
-                )
-
-        if projected_dimensions:
-            for non_spatial_variable in non_spatial_variables:
-                index_ranges.update(
-                    get_projected_x_y_index_ranges(
-                        non_spatial_variable,
+            except InvalidRequestedRange:
+                failed_variables.update(
+                    get_failed_variables(
+                        required_variables,
+                        dimension,
                         varinfo,
-                        dimensions_file,
-                        index_ranges,
-                        bounding_box=bounding_box,
-                        shape_file_path=shape_file_path,
                     )
                 )
+        if projected_dimensions:
+            for non_spatial_variable in non_spatial_variables:
+                try:
+                    index_ranges.update(
+                        get_projected_x_y_index_ranges(
+                            non_spatial_variable,
+                            varinfo,
+                            dimensions_file,
+                            index_ranges,
+                            bounding_box=bounding_box,
+                            shape_file_path=shape_file_path,
+                        )
+                    )
+                except InvalidRequestedRange:
+                    failed_variables.update(
+                        get_failed_variables(
+                            None,
+                            non_spatial_variable,
+                            varinfo,
+                        )
+                    )
+
         variables_with_anonymous_dims = get_variables_with_anonymous_dims(
             varinfo, required_variables
         )
+
         for variable_with_anonymous_dims in variables_with_anonymous_dims:
-            latitude_coordinates, longitude_coordinates = get_coordinate_variables(
-                varinfo, [variable_with_anonymous_dims]
-            )
-            if latitude_coordinates and longitude_coordinates:
-                index_ranges.update(
-                    get_x_y_index_ranges_from_coordinates(
+            try:
+                latitude_coordinates, longitude_coordinates = get_coordinate_variables(
+                    varinfo, [variable_with_anonymous_dims]
+                )
+
+                if latitude_coordinates and longitude_coordinates:
+                    index_ranges.update(
+                        get_x_y_index_ranges_from_coordinates(
+                            variable_with_anonymous_dims,
+                            varinfo,
+                            dimensions_file,
+                            varinfo.get_variable(latitude_coordinates[0]),
+                            varinfo.get_variable(longitude_coordinates[0]),
+                            index_ranges,
+                            bounding_box=bounding_box,
+                            shape_file_path=shape_file_path,
+                        )
+                    )
+            except InvalidRequestedRange:
+                failed_variables.update(
+                    get_failed_variables(
+                        None,
                         variable_with_anonymous_dims,
                         varinfo,
-                        dimensions_file,
-                        varinfo.get_variable(latitude_coordinates[0]),
-                        varinfo.get_variable(longitude_coordinates[0]),
-                        index_ranges,
-                        bounding_box=bounding_box,
-                        shape_file_path=shape_file_path,
                     )
                 )
+
+    if failed_variables:
+        raise NoDataException(
+            f'Spatial subset request outside supported dimension range for {failed_variables}'
+        )
 
     return index_ranges
 

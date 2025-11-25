@@ -23,6 +23,7 @@ from hoss.dimension_utilities import (
     get_dimension_index_range,
     get_dimension_indices_from_bounds,
     get_dimension_indices_from_values,
+    get_failed_variables,
     get_fill_slice,
     get_prefetch_variables,
     get_range_strings,
@@ -1313,3 +1314,26 @@ class TestDimensionUtilities(TestCase):
         for description, input_array, input_value in false_tests:
             with self.subTest(description):
                 self.assertFalse(is_almost_in(input_value, input_array))
+
+    def test_get_failed_variables_exception(self):
+        """Ensure that NoDataException is raised when even one variable fails and
+        the list of all failed variables is returned.
+        """
+
+        atl16_varinfo = VarInfoFromDmr('tests/data/ATL16_prefetch.dmr')
+        failed_dimension_name = '/spolar_grid_lat'
+        expected_failed_variables = {'/spolar_asr'}
+
+        required_variables = {
+            'global_asr_obs_grid',
+            '/npolar_asr',
+            '/spolar_asr',
+        }
+
+        with self.subTest('create failed_variables list'):
+            failed_variables = get_failed_variables(
+                required_variables,
+                failed_dimension_name,
+                atl16_varinfo,
+            )
+            self.assertSetEqual(failed_variables, expected_failed_variables)

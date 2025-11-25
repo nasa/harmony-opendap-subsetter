@@ -4,6 +4,7 @@ from unittest import TestCase
 from unittest.mock import ANY, call, patch
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
@@ -44,18 +45,32 @@ class TestSpatial(TestCase):
         Albers Conic Equal Area projection, in the Alaska region.
 
         """
-        harmony_message = Message({'subset': {'bbox': [-160, 68, -145, 70]}})
-        above_varinfo = VarInfoFromDmr('tests/data/ABoVE_TVPRM_example.dmr')
+        with self.subTest('Spatial request range within granule region'):
+            harmony_message = Message({'subset': {'bbox': [-160, 68, -145, 70]}})
+            above_varinfo = VarInfoFromDmr('tests/data/ABoVE_TVPRM_example.dmr')
 
-        self.assertDictEqual(
-            get_spatial_index_ranges(
-                {'/NEE', '/x', '/y', '/time'},
-                above_varinfo,
-                'tests/data/ABoVE_TVPRM_prefetch.nc4',
-                harmony_message,
-            ),
-            {'/x': (37, 56), '/y': (7, 26)},
-        )
+            self.assertDictEqual(
+                get_spatial_index_ranges(
+                    {'/NEE', '/x', '/y', '/time'},
+                    above_varinfo,
+                    'tests/data/ABoVE_TVPRM_prefetch.nc4',
+                    harmony_message,
+                ),
+                {'/x': (37, 56), '/y': (7, 26)},
+            )
+        with self.subTest('Spatial request outside granule'):
+            harmony_message = Message({'subset': {'bbox': [120, -68, 140, -70]}})
+            with self.assertRaises(NoDataException) as context:
+                get_spatial_index_ranges(
+                    {'/NEE', '/x', '/y', '/time'},
+                    above_varinfo,
+                    'tests/data/ABoVE_TVPRM_prefetch.nc4',
+                    harmony_message,
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    "Spatial range request outside supported dimension range for ['/NEE']",
+                )
 
     def test_get_spatial_index_ranges_projected_from_coordinates(self):
         """Ensure that correct index ranges can be calculated for a SMAP L3

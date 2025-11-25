@@ -220,9 +220,7 @@ def get_required_variables(
     }
     if requested_variables:
         # check if the requested variables are in the granule.
-        requested_variables = get_requested_variables_in_granule(
-            varinfo, requested_variables
-        )
+        check_requested_variables_in_granule(varinfo, requested_variables)
     if request_is_index_subset and len(requested_variables) == 0:
         requested_variables = varinfo.get_science_variables().union(
             varinfo.get_metadata_variables()
@@ -235,21 +233,24 @@ def get_required_variables(
     return varinfo.get_required_variables(requested_variables)
 
 
-def get_requested_variables_in_granule(
+def check_requested_variables_in_granule(
     varinfo: VarInfoFromDmr, requested_variables: List[str]
-) -> Set[str]:
-    """Raise NoDataException if any of the requested variables are not in the granule."""
+) -> bool:
+    """Return True if all variables are in the granule. Raise NoDataException
+    if any of the requested variables are not in the granule.
 
-    valid_requested_variables = {
+    """
+
+    not_valid_requested_variables = {
         variable_name
         for variable_name in requested_variables
-        if varinfo.get_variable(variable_name) is not None
+        if varinfo.get_variable(variable_name) is None
     }
-    if not valid_requested_variables:
+    if not_valid_requested_variables:
         raise NoDataException(
-            f'Requested variables:{requested_variables} not found in granule'
+            f'Requested variables:{not_valid_requested_variables} not found in granule'
         )
-    return valid_requested_variables
+    return True
 
 
 def fill_variables(

@@ -13,9 +13,9 @@ from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
 
 from hoss.subset import (
+    check_requested_variables_in_granule,
     fill_variable,
     fill_variables,
-    get_requested_variables_in_granule,
     get_required_variables,
     get_varinfo,
     subset_granule,
@@ -1697,7 +1697,7 @@ class TestSubset(TestCase):
             self.config,
         )
 
-    def test_get_requested_variables_in_granule(self):
+    def test_check_requested_variables_in_granule(self):
         """Ensure that all requested variables are in the granule file."""
         all_variables_in_granule = {
             '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
@@ -1710,6 +1710,10 @@ class TestSubset(TestCase):
             '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
             '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
             '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
+            '/Soil_Moisture_Retrieval_Data_1km/latitude',
+            '/Soil_Moisture_Retrieval_Data_1km/longitude',
+        }
+        variables_not_in_granule = {
             '/Soil_Moisture_Retrieval_Data_1km/latitude',
             '/Soil_Moisture_Retrieval_Data_1km/longitude',
         }
@@ -1726,26 +1730,23 @@ class TestSubset(TestCase):
         )
 
         with self.subTest('All variables in the granule'):
-            self.assertSetEqual(
-                get_requested_variables_in_granule(
+            self.assertTrue(
+                check_requested_variables_in_granule(
                     spl2smap_s_varinfo, all_variables_in_granule
-                ),
-                all_variables_in_granule,
+                )
             )
         with self.subTest('Some variables not in granule'):
-            self.assertSetEqual(
-                get_requested_variables_in_granule(
+            with self.assertRaises(NoDataException) as context:
+                check_requested_variables_in_granule(
                     spl2smap_s_varinfo, some_variables_not_in_granule
-                ),
-                {
-                    '/Soil_Moisture_Retrieval_Data_1km/albedo_1km',
-                    '/Soil_Moisture_Retrieval_Data_1km/EASE_row_index_1km',
-                    '/Soil_Moisture_Retrieval_Data_1km/EASE_column_index_1km',
-                },
-            )
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    'Requested variables:{variables_not_in_granule} not found in granule',
+                )
         with self.subTest('All variables not in granule'):
             with self.assertRaises(NoDataException) as context:
-                get_requested_variables_in_granule(
+                check_requested_variables_in_granule(
                     spl2smap_s_varinfo, all_variables_not_in_granule
                 )
                 self.assertEqual(

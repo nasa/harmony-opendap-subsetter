@@ -75,6 +75,24 @@ def get_opendap_nc4(
     return move_downloaded_nc4(output_dir, downloaded_nc4)
 
 
+def unexecuted_url_requested(mimetype: str) -> bool:
+    """Return True if the user requests the unexecuted OPeNDAP URL."""
+    opendap_url_only_mimetype = [
+        'application/x-netcdf4; profile="opendap_url"',
+        'application/x-netcdf4;profile="opendap_url"',
+        'application/x-netcdf4;profile=opendap_url',
+    ]
+    return mimetype in opendap_url_only_mimetype
+
+
+def format_request_url(url: str, constraint_expression: str):
+    """This function formats the request NetCDF4 URL to return a dap4
+    OPeNDAP request URL.
+
+    """
+    return f'{url}?dap4.ce={constraint_expression}'
+
+
 def get_constraint_expression(variables: Set[str]) -> str:
     """Take a set of variables and return a URL encoded, semi-colon separated
     DAP4 constraint expression to retrieve those variables. Each variable

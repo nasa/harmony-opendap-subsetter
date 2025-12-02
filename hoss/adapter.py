@@ -106,13 +106,13 @@ class HossAdapter(BaseHarmonyAdapter):
             self.logger.info(f'Collection short name: {source.shortName}')
 
             # Invoke service logic to retrieve subset of file from OPeNDAP
-            output_file_path = subset_granule(
+            request_output = subset_granule(
                 asset.href, source, workdir, self.message, self.config
             )
 
             # Stage the output file with a conventional filename
-            mime, _ = get_file_mimetype(output_file_path)
-            staged_filename = generate_output_filename(
+            mime, _ = get_file_mimetype(request_output)
+            asset_name = generate_output_filename(
                 asset.href,
                 variable_subset=source.variables,
                 ext='.nc4',
@@ -121,8 +121,8 @@ class HossAdapter(BaseHarmonyAdapter):
                 ),
             )
             url = stage(
-                output_file_path,
-                staged_filename,
+                request_output,
+                asset_name,
                 mime,
                 location=self.message.stagingLocation,
                 logger=self.logger,
@@ -130,7 +130,7 @@ class HossAdapter(BaseHarmonyAdapter):
 
             # Update the STAC record
             result.assets['data'] = Asset(
-                url, title=staged_filename, media_type=mime, roles=['data']
+                url, title=asset_name, media_type=mime, roles=['data']
             )
 
         except NoDataException as no_data_exception:

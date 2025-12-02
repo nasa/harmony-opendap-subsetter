@@ -159,14 +159,16 @@ def subset_granule(
         'variables_with_ranges: ' f'{format_variable_set_string(variables_with_ranges)}'
     )
 
-    # Retrieve OPeNDAP data including only the specified variables in the
-    # specified ranges.
+    # Retrieve requested OPeNDAP output including only the specified variables
+    # in the specified ranges. Depending on the user input, this will either
+    # be the subset data or a link to the OPeNDAP request.
     output_url = get_opendap_nc4(
         input_granule_url,
         variables_with_ranges,
         output_dir,
         harmony_message.accessToken,
         config,
+        harmony_message.format.mime,
     )
 
     # Fill the data outside the requested ranges for variables that cross a

@@ -37,7 +37,11 @@ from pystac import Asset, Item
 from hoss.dimension_utilities import is_index_subset
 from hoss.harmony_log_context import set_logger
 from hoss.subset import subset_granule
-from hoss.utilities import get_file_mimetype, raise_from_hoss_exception
+from hoss.utilities import (
+    get_file_mimetype,
+    raise_from_hoss_exception,
+    unexecuted_url_requested,
+)
 
 
 class HossAdapter(BaseHarmonyAdapter):
@@ -105,28 +109,35 @@ class HossAdapter(BaseHarmonyAdapter):
 
             self.logger.info(f'Collection short name: {source.shortName}')
 
-            # Invoke service logic to retrieve subset of file from OPeNDAP
-            request_output = subset_granule(
+            # Invoke service logic to retrieve request output from OPeNDAP.
+            output_url = subset_granule(
                 asset.href, source, workdir, self.message, self.config
             )
 
-            # Stage the output file with a conventional filename
-            mime, _ = get_file_mimetype(request_output)
-            asset_name = generate_output_filename(
-                asset.href,
-                variable_subset=source.variables,
-                ext='.nc4',
-                is_subsetted=(
-                    is_index_subset(self.message) or len(source.variables) > 0
-                ),
-            )
-            url = stage(
-                request_output,
-                asset_name,
-                mime,
-                location=self.message.stagingLocation,
-                logger=self.logger,
-            )
+            # Check if an unexecuted OPeNDAP URL or subset file was requested.
+            if unexecuted_url_requested(self.message.format.mime):
+                asset_name = 'OPeNAP Request URL'
+                url = output_url
+                mime = self.message.format.mime
+            # Otherwise, stage the returned output file using a conventional
+            # filename.
+            else:
+                asset_name = generate_output_filename(
+                    asset.href,
+                    variable_subset=source.variables,
+                    ext='.nc4',
+                    is_subsetted=(
+                        is_index_subset(self.message) or len(source.variables) > 0
+                    ),
+                )
+                mime, _ = get_file_mimetype(output_url)
+                url = stage(
+                    output_url,
+                    asset_name,
+                    mime,
+                    location=self.message.stagingLocation,
+                    logger=self.logger,
+                )
 
             # Update the STAC record
             result.assets['data'] = Asset(

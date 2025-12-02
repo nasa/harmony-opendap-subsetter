@@ -46,16 +46,24 @@ def get_opendap_nc4(
     output_dir: str,
     access_token: str,
     config: Config,
+    mimetype=None,
 ) -> str:
     """Construct a semi-colon separated string of the required variables and
     use as a constraint expression to retrieve those variables from
     OPeNDAP.
 
-    Returns the path of the downloaded granule containing those variables.
+    Returns either the unexecuted OPeNDAP request URL or the path of the
+    downloaded granule containing those variables, depending on the requested
+    mimetype.
 
     """
     constraint_expression = get_constraint_expression(required_variables)
     netcdf4_url = f'{url}.dap.nc4'
+
+    # Check if the user requested an unexecuted OPeNDAP URL.
+    if unexecuted_url_requested(mimetype):
+        get_logger().info('Returning unexecuted OPeNAP URL.')
+        return format_request_url(netcdf4_url, constraint_expression)
 
     if constraint_expression != '':
         request_data = {'dap4.ce': constraint_expression}

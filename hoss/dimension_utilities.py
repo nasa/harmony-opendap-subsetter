@@ -347,6 +347,17 @@ def get_dimension_indices_from_values(
         dimension_values = np.flip(dimension)
         dimension_indices = np.flip(dimension_indices)
 
+    # np.interp does not throw an exception if the extents are outside dimension range
+    # It just returns the lowest index or highest index
+    if (minimum_extent < dimension_values[0]) and (
+        maximum_extent < dimension_values[0]
+    ):
+        raise InvalidRequestedRange()
+    if (minimum_extent > dimension_values[-1]) and (
+        maximum_extent > dimension_values[-1]
+    ):
+        raise InvalidRequestedRange()
+
     raw_indices = np.interp(dimension_range, dimension_values, dimension_indices)
 
     if (raw_indices[0] == raw_indices[1]) and (raw_indices[0] % 1 == 0.5):
@@ -547,7 +558,7 @@ def get_requested_index_ranges(
     required_dimensions = varinfo.get_required_dimensions(required_variables)
 
     dim_index_ranges = {}
-    failed_variables = set()
+    failed_dim_variables = set()
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dim in harmony_message.subset.dimensions:
             try:
@@ -574,21 +585,15 @@ def get_requested_index_ranges(
                 else:
                     # This requested dimension is not in the required dimension set
                     raise InvalidNamedDimension(dim.name)
-            # In case subset constraint is out of range for a dimension, accumulate
-            # the associated variables as "failed". Continue processing the other
-            # dimensions and process the failed variables after all dimensions considered
+            # In case subset constraint is out of range for a dimension. Continue
+            # processing the other dimensions and raise exception for all the
+            # dimensions that are invalid.
             except InvalidRequestedRange:
-                failed_variables.update(
-                    get_failed_variables(
-                        required_variables,
-                        dim.name,
-                        varinfo,
-                    )
-                )
+                failed_dim_variables.update(dim.name)
 
-        if failed_variables:
+        if failed_dim_variables:
             raise NoDataException(
-                f'Input request specified range outside supported dimension range for {failed_variables}'
+                f'Input request outside supported dimension range for {failed_dim_variables}'
             )
 
     return dim_index_ranges
@@ -643,24 +648,3 @@ def is_almost_in(value: float, array: np.ndarray) -> bool:
     return np.any(
         np.isclose(array, np.full_like(array, value), rtol=0, atol=array_precision)
     )
-
-
-def get_failed_variables(
-    required_variables: set,
-    failed_variable_or_dimension_name: str,
-    varinfo: VarInfoFromDmr,
-) -> set:
-    """If a dimension is outside range, the variables that reference that dimension are
-    added to the failed list of variables.
-
-    """
-
-    if required_variables is None:
-        return {failed_variable_or_dimension_name}
-
-    return {
-        variable
-        for variable in required_variables
-        if failed_variable_or_dimension_name
-        in varinfo.get_required_variables({variable})
-    }

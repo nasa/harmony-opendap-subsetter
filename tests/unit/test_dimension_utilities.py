@@ -7,6 +7,7 @@ from unittest import TestCase
 from unittest.mock import ANY, patch
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from harmony_service_lib.util import config
 from netCDF4 import Dataset
@@ -23,7 +24,6 @@ from hoss.dimension_utilities import (
     get_dimension_index_range,
     get_dimension_indices_from_bounds,
     get_dimension_indices_from_values,
-    get_failed_variables,
     get_fill_slice,
     get_prefetch_variables,
     get_range_strings,
@@ -1070,7 +1070,28 @@ class TestDimensionUtilities(TestCase):
             with self.assertRaises(InvalidNamedDimension):
                 get_requested_index_ranges(
                     required_variables, self.varinfo, descending_file, harmony_message
-                ),
+                )
+
+        with self.subTest('Out of range dimension'):
+            # Check for out of range dimension
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [{'name': '/latitude', 'min': 89.91, 'max': 90.0}]
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context:
+                get_requested_index_ranges(
+                    required_variables,
+                    self.varinfo,
+                    ascending_file,
+                    harmony_message,
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    "Input request outside supported dimension range for ['latitude']",
+                )
 
     @patch('hoss.dimension_utilities.get_dimension_index_range')
     def test_get_requested_index_ranges_bounds(self, mock_get_dimension_index_range):
@@ -1314,26 +1335,3 @@ class TestDimensionUtilities(TestCase):
         for description, input_array, input_value in false_tests:
             with self.subTest(description):
                 self.assertFalse(is_almost_in(input_value, input_array))
-
-    def test_get_failed_variables_exception(self):
-        """Ensure that NoDataException is raised when even one variable fails and
-        the list of all failed variables is returned.
-        """
-
-        atl16_varinfo = VarInfoFromDmr('tests/data/ATL16_prefetch.dmr')
-        failed_dimension_name = '/spolar_grid_lat'
-        expected_failed_variables = {'/spolar_asr'}
-
-        required_variables = {
-            'global_asr_obs_grid',
-            '/npolar_asr',
-            '/spolar_asr',
-        }
-
-        with self.subTest('create failed_variables list'):
-            failed_variables = get_failed_variables(
-                required_variables,
-                failed_dimension_name,
-                atl16_varinfo,
-            )
-            self.assertSetEqual(failed_variables, expected_failed_variables)

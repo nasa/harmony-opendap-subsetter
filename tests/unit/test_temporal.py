@@ -7,6 +7,7 @@ from unittest.mock import ANY, patch
 
 import numpy as np
 from freezegun import freeze_time
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
@@ -60,6 +61,34 @@ class TestTemporal(TestCase):
                 ),
                 {'/time': (1, 5)},
             )
+        harmony_message = Message(
+            {'temporal': {'start': '2021-01-10T01:30:00', 'end': '2021-01-10T05:30:00'}}
+        )
+
+        with Dataset(test_file_name, 'w', format='NETCDF4') as test_file:
+            test_file.createDimension('time', size=24)
+
+            test_file.createVariable('time', int, dimensions=('time',))
+            test_file['time'][:] = np.linspace(0, 1380, 24)
+            test_file['time'].setncatts({'units': 'minutes since 2021-01-10 00:30:00'})
+
+        with self.subTest('Time dimension, out of range'):
+            harmony_message = Message(
+                {
+                    'temporal': {
+                        'start': '2025-01-10T01:30:00',
+                        'end': '2025-01-10T05:30:00',
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context:
+                get_temporal_index_ranges(
+                    {'/time'}, self.varinfo, test_file_name, harmony_message
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    "Temporal range request outside supported dimension range for ['time']",
+                )
 
     @patch('hoss.temporal.get_dimension_index_range')
     def test_get_temporal_index_ranges_bounds(self, mock_get_dimension_index_range):

@@ -49,7 +49,6 @@ from hoss.dimension_utilities import (
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
-    get_failed_variables,
 )
 from hoss.exceptions import InvalidRequestedRange
 from hoss.projection_utilities import (
@@ -119,13 +118,8 @@ def get_spatial_index_ranges(
                     )
 
             except InvalidRequestedRange:
-                failed_variables.update(
-                    get_failed_variables(
-                        required_variables,
-                        dimension,
-                        varinfo,
-                    )
-                )
+                failed_variables.update(dimension)
+
         if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
                 try:
@@ -140,13 +134,7 @@ def get_spatial_index_ranges(
                         )
                     )
                 except InvalidRequestedRange:
-                    failed_variables.update(
-                        get_failed_variables(
-                            None,
-                            non_spatial_variable,
-                            varinfo,
-                        )
-                    )
+                    failed_variables.update(non_spatial_variable)
 
         variables_with_anonymous_dims = get_variables_with_anonymous_dims(
             varinfo, required_variables
@@ -172,13 +160,7 @@ def get_spatial_index_ranges(
                         )
                     )
             except InvalidRequestedRange:
-                failed_variables.update(
-                    get_failed_variables(
-                        None,
-                        variable_with_anonymous_dims,
-                        varinfo,
-                    )
-                )
+                failed_variables.update(variable_with_anonymous_dims)
 
     if failed_variables:
         raise NoDataException(

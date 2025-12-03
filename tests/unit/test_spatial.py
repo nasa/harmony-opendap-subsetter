@@ -112,6 +112,7 @@ class TestSpatial(TestCase):
                     38,
                 ),
             }
+
             index_ranges = get_spatial_index_ranges(
                 required_variables,
                 smap_varinfo,
@@ -149,6 +150,32 @@ class TestSpatial(TestCase):
                 ),
                 expected_index_ranges,
             )
+        with self.subTest('projection gridded with coordinates NoDataException'):
+            harmony_message = Message(
+                {'subset': {'bbox': [-179.9, -89.8, -179.8, -89.5]}}
+            )
+            smap_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3FTP_004.dmr',
+                'SPL3FTP',
+                'hoss/hoss_config.json',
+            )
+            prefetch_path = 'tests/data/SC_SPL3FTP_004_Polar_prefetch.nc4'
+            required_variables = {
+                '/Freeze_Thaw_Retrieval_Data_Polar/surface_flag',
+                '/Freeze_Thaw_Retrieval_Data_Polar/latitude',
+                '/Freeze_Thaw_Retrieval_Data_Polar/longitude',
+            }
+            with self.assertRaises(NoDataException) as context:
+                index_ranges = get_spatial_index_ranges(
+                    required_variables,
+                    smap_varinfo,
+                    prefetch_path,
+                    harmony_message,
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    "Spatial range request outside supported dimension range for ['/Freeze_Thaw_Retrieval_Data_Polar/surface_flag']",
+                )
 
     def test_get_spatial_index_ranges_geographic(self):
         """Ensure that correct index ranges can be calculated for:
@@ -275,6 +302,63 @@ class TestSpatial(TestCase):
                 ),
                 {'/latitude': (5, 44), '/longitude': (160, 199)},
             )
+        with self.subTest('Geographic dimensions NoDataException'):
+            harmony_message = Message(
+                {'subset': {'bbox': [-179.9, -89.8, -179.8, -89.5]}}
+            )
+            smap_varinfo = VarInfoFromDmr(
+                'tests/data/ATL16_prefetch.dmr',
+                'ATL16',
+                'hoss/hoss_config.json',
+            )
+            prefetch_path = 'tests/data/ATL16_prefetch.nc4'
+            required_variables = {
+                '/npolar_grid_lat',
+                '/npolar_grid_lon',
+                '/npolar_asr',
+            }
+            with self.assertRaises(NoDataException) as context:
+                get_spatial_index_ranges(
+                    required_variables,
+                    smap_varinfo,
+                    prefetch_path,
+                    harmony_message,
+                )
+                self.assertEqual(
+                    context.exception.message,
+                    "Spatial range request outside supported dimension range for ['/npolar_lat']",
+                )
+
+        with self.subTest('NoDataException for Geographic dimensions'):
+
+            test_file_name1 = f'{self.test_dir}/test1.nc'
+            harmony_message_outofrange = Message(
+                {'subset': {'bbox': [160.1, -44.9, 200.1, -22.9]}}
+            )
+
+            with Dataset(test_file_name1, 'w', format='NETCDF4') as test_file1:
+                test_file1.createDimension('latitude', size=90)
+                test_file1.createDimension('longitude', size=180)
+
+                test_file1.createVariable('latitude', float, dimensions=('latitude',))
+                test_file1['latitude'][:] = np.linspace(0, 89.5, 90)
+                test_file1['latitude'].setncatts({'units': 'degrees_north'})
+
+                test_file.createVariable('longitude', float, dimensions=('longitude',))
+                test_file['longitude'][:] = np.linspace(0.5, 179.5, 180)
+                test_file['longitude'].setncatts({'units': 'degrees_east'})
+
+                with self.assertRaises(NoDataException) as context:
+                    get_spatial_index_ranges(
+                        {'/latitude', '/longitude'},
+                        self.varinfo,
+                        test_file_name1,
+                        harmony_message_outofrange,
+                    )
+                    self.assertEqual(
+                        context.exception.message,
+                        "Spatial range request outside supported dimension range for ['/latitude']",
+                    )
 
     @patch('hoss.spatial.get_dimension_index_range')
     @patch('hoss.spatial.get_projected_x_y_extents')

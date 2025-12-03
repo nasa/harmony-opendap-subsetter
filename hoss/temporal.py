@@ -22,7 +22,6 @@ from hoss.dimension_utilities import (
     IndexRanges,
     get_dimension_bounds,
     get_dimension_index_range,
-    get_failed_variables,
 )
 from hoss.exceptions import InvalidRequestedRange, UnsupportedTemporalUnits
 
@@ -56,7 +55,7 @@ def get_temporal_index_ranges(
 
     """
     index_ranges = {}
-    failed_variables = set()
+    failed_dim_variables = set()
     temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
 
     time_start = get_datetime_with_timezone(
@@ -90,17 +89,12 @@ def get_temporal_index_ranges(
                 )
 
             except InvalidRequestedRange:
-                failed_variables.update(
-                    get_failed_variables(
-                        required_variables,
-                        dimension,
-                        varinfo,
-                    )
-                )
+                failed_dim_variables.update(dimension)
 
-        if failed_variables:
+        if failed_dim_variables:
             raise NoDataException(
-                f'Temporal range request outside supported dimension range for {failed_variables}'
+                f'Temporal range request outside supported dimension range for '
+                f'{failed_dim_variables}'
             )
 
     return index_ranges

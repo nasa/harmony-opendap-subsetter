@@ -103,7 +103,7 @@ def get_spatial_index_ranges(
     non_spatial_variables = required_variables.difference(
         varinfo.get_spatial_dimensions(required_variables)
     )
-    failed_variables = set()
+    out_of_range_variables = set()
     with Dataset(dimensions_path, 'r') as dimensions_file:
         if geographic_dimensions:
             # If there is no bounding box, but there is a shape file, calculate
@@ -118,7 +118,7 @@ def get_spatial_index_ranges(
                     )
 
             except InvalidRequestedRange:
-                failed_variables.update(dimension)
+                out_of_range_variables.add(dimension)
 
         if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:
@@ -134,7 +134,7 @@ def get_spatial_index_ranges(
                         )
                     )
                 except InvalidRequestedRange:
-                    failed_variables.update(non_spatial_variable)
+                    out_of_range_variables.add(non_spatial_variable)
 
         variables_with_anonymous_dims = get_variables_with_anonymous_dims(
             varinfo, required_variables
@@ -160,11 +160,11 @@ def get_spatial_index_ranges(
                         )
                     )
             except InvalidRequestedRange:
-                failed_variables.update(variable_with_anonymous_dims)
+                out_of_range_variables.add(variable_with_anonymous_dims)
 
-    if failed_variables:
+    if out_of_range_variables:
         raise NoDataException(
-            f'Spatial subset request outside supported dimension range for {failed_variables}'
+            f'Spatial subset request outside supported dimension range for {out_of_range_variables}'
         )
 
     return index_ranges

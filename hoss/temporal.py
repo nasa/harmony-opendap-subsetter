@@ -55,7 +55,7 @@ def get_temporal_index_ranges(
 
     """
     index_ranges = {}
-    failed_dim_variables = set()
+    out_of_range_dim_variables = set()
     temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
 
     time_start = get_datetime_with_timezone(
@@ -89,12 +89,12 @@ def get_temporal_index_ranges(
                 )
 
             except InvalidRequestedRange:
-                failed_dim_variables.update(dimension)
+                out_of_range_dim_variables.add(dimension)
 
-        if failed_dim_variables:
+        if out_of_range_dim_variables:
             raise NoDataException(
                 f'Temporal range request outside supported dimension range for '
-                f'{failed_dim_variables}'
+                f'{out_of_range_dim_variables}'
             )
 
     return index_ranges

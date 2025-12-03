@@ -66,6 +66,7 @@ class TestAdapter(TestCase):
             'accessToken': 'xyzzy',
             'subset': {'bbox': bounding_box, 'dimensions': dimensions, 'shape': None},
             'temporal': temporal_range,
+            'format': {'mime': 'fake-mimetype'},
         }
 
         if shape_file is not None:

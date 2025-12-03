@@ -34,6 +34,7 @@ class TestSubset(TestCase):
         cls.collection_short_name = 'RSSMIF16D'
         cls.granule_url = 'https://harmony.earthdata.nasa.gov/bucket/rssmif16d'
         cls.logger = Logger('tests')
+        cls.mime = 'fake-mimetype'
         cls.output_path = 'f16_ssmis_subset.nc4'
         cls.required_variables = {'/latitude', '/longitude', '/time', '/rainfall_rate'}
         cls.harmony_source = Source(
@@ -83,7 +84,12 @@ class TestSubset(TestCase):
         `hoss.temporal.py` should not be called.
 
         """
-        harmony_message = Message({'accessToken': self.access_token})
+        harmony_message = Message(
+            {
+                'accessToken': self.access_token,
+                'format': {'mime': self.mime},
+            }
+        )
         mock_get_varinfo.return_value = self.varinfo
         mock_get_opendap_nc4.return_value = self.output_path
 
@@ -110,6 +116,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
         mock_fill_variables.assert_called_once_with(
             self.output_path, self.varinfo, self.required_variables, {}
@@ -146,7 +153,11 @@ class TestSubset(TestCase):
 
         """
         harmony_message = Message(
-            {'accessToken': self.access_token, 'subset': {'bbox': self.bounding_box}}
+            {
+                'accessToken': self.access_token,
+                'subset': {'bbox': self.bounding_box},
+                'format': {'mime': self.mime},
+            }
         )
         index_ranges = {'/latitude': (240, 279), '/longitude': (160, 199)}
         prefetch_path = 'prefetch.nc4'
@@ -200,6 +211,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -237,7 +249,12 @@ class TestSubset(TestCase):
                 'shortName': self.collection_short_name,
             }
         )
-        harmony_message = Message({'accessToken': self.access_token})
+        harmony_message = Message(
+            {
+                'accessToken': self.access_token,
+                'format': {'mime': self.mime},
+            }
+        )
         expected_variables = set()
         index_ranges = {}
         mock_get_varinfo.return_value = self.varinfo
@@ -266,6 +283,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -313,7 +331,11 @@ class TestSubset(TestCase):
             }
         )
         harmony_message = Message(
-            {'accessToken': self.access_token, 'subset': {'bbox': self.bounding_box}}
+            {
+                'accessToken': self.access_token,
+                'subset': {'bbox': self.bounding_box},
+                'format': {'mime': self.mime},
+            }
         )
         expected_variables = {
             '/atmosphere_cloud_liquid_water_content',
@@ -381,6 +403,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -421,7 +444,11 @@ class TestSubset(TestCase):
             }
         )
         harmony_message = Message(
-            {'accessToken': self.access_token, 'subset': {'bbox': self.bounding_box}}
+            {
+                'accessToken': self.access_token,
+                'subset': {'bbox': self.bounding_box},
+                'format': {'mime': self.mime},
+            }
         )
         url = 'https://harmony.earthdata.nasa.gov/bucket/GPM'
         varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr')
@@ -510,6 +537,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -551,7 +579,11 @@ class TestSubset(TestCase):
             }
         )
         harmony_message = Message(
-            {'accessToken': self.access_token, 'subset': {'bbox': self.bounding_box}}
+            {
+                'accessToken': self.access_token,
+                'subset': {'bbox': self.bounding_box},
+                'format': {'mime': self.mime},
+            }
         )
         url = 'https://harmony.earthdata.nasa.gov/bucket/GPM'
         varinfo = VarInfoFromDmr('tests/data/GPM_3IMERGHH_example.dmr')
@@ -607,6 +639,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -650,6 +683,7 @@ class TestSubset(TestCase):
                     'start': '2021-01-10T01:00:00',
                     'end': '2021-01-10T03:00:00',
                 },
+                'format': {'mime': self.mime},
             }
         )
         varinfo = VarInfoFromDmr(
@@ -707,6 +741,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -751,6 +786,7 @@ class TestSubset(TestCase):
                     'start': '2021-01-10T01:00:00',
                     'end': '2021-01-10T03:00:00',
                 },
+                'format': {'mime': self.mime},
             }
         )
         varinfo = VarInfoFromDmr(
@@ -820,6 +856,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -866,6 +903,7 @@ class TestSubset(TestCase):
                         'type': 'application/geo+json',
                     }
                 },
+                'format': {'mime': self.mime},
             }
         )
         index_ranges = {'/latitude': (508, 527), '/longitude': (983, 1003)}
@@ -927,6 +965,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -974,6 +1013,7 @@ class TestSubset(TestCase):
                         'type': 'application/geo+json',
                     },
                 },
+                'format': {'mime': self.mime},
             }
         )
 
@@ -1036,6 +1076,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -1079,6 +1120,7 @@ class TestSubset(TestCase):
                         {'name': '/longitude', 'min': 40, 'max': 50},
                     ]
                 },
+                'format': {'mime': self.mime},
             }
         )
         index_ranges = {'/latitude': (240, 279), '/longitude': (160, 199)}
@@ -1133,6 +1175,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -1481,7 +1524,11 @@ class TestSubset(TestCase):
 
         """
         harmony_message = Message(
-            {'accessToken': self.access_token, 'subset': {'bbox': [2, 54, 42, 72]}}
+            {
+                'accessToken': self.access_token,
+                'subset': {'bbox': [2, 54, 42, 72]},
+                'format': {'mime': self.mime},
+            }
         )
         harmony_source = Source(
             {
@@ -1586,6 +1633,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
     @patch('hoss.subset.get_opendap_nc4')
@@ -1608,7 +1656,11 @@ class TestSubset(TestCase):
 
         """
         harmony_message = Message(
-            {'accessToken': self.access_token, 'subset': {'bbox': [2, 54, 42, 72]}}
+            {
+                'accessToken': self.access_token,
+                'subset': {'bbox': [2, 54, 42, 72]},
+                'format': {'mime': self.mime},
+            }
         )
         harmony_source = Source(
             {
@@ -1695,6 +1747,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            self.mime,
         )
 
     def test_check_requested_variables_in_granule(self):

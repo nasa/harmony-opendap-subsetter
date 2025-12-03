@@ -67,10 +67,10 @@ class TestSpatial(TestCase):
                     'tests/data/ABoVE_TVPRM_prefetch.nc4',
                     harmony_message,
                 )
-                self.assertEqual(
-                    context.exception.message,
-                    "Spatial range request outside supported dimension range for ['/NEE']",
-                )
+            self.assertEqual(
+                context.exception.message,
+                "Spatial subset request outside supported dimension range for {'/NEE'}",
+            )
 
     def test_get_spatial_index_ranges_projected_from_coordinates(self):
         """Ensure that correct index ranges can be calculated for a SMAP L3
@@ -172,10 +172,16 @@ class TestSpatial(TestCase):
                     prefetch_path,
                     harmony_message,
                 )
-                self.assertEqual(
-                    context.exception.message,
-                    "Spatial range request outside supported dimension range for ['/Freeze_Thaw_Retrieval_Data_Polar/surface_flag']",
-                )
+            expected_substrings = [
+                "Spatial subset request outside supported dimension range for",
+                "/Freeze_Thaw_Retrieval_Data_Polar/surface_flag",
+                "/Freeze_Thaw_Retrieval_Data_Polar/latitude",
+                "/Freeze_Thaw_Retrieval_Data_Polar/longitude",
+            ]
+
+            actual_message = context.exception.message
+            for substring in expected_substrings:
+                self.assertIn(substring, actual_message)
 
     def test_get_spatial_index_ranges_geographic(self):
         """Ensure that correct index ranges can be calculated for:
@@ -324,10 +330,10 @@ class TestSpatial(TestCase):
                     prefetch_path,
                     harmony_message,
                 )
-                self.assertEqual(
-                    context.exception.message,
-                    "Spatial range request outside supported dimension range for ['/npolar_lat']",
-                )
+            self.assertEqual(
+                context.exception.message,
+                "Spatial subset request outside supported dimension range for {'/npolar_grid_lat'}",
+            )
 
         with self.subTest('NoDataException for Geographic dimensions'):
 
@@ -355,10 +361,10 @@ class TestSpatial(TestCase):
                         test_file_name1,
                         harmony_message_outofrange,
                     )
-                    self.assertEqual(
-                        context.exception.message,
-                        "Spatial range request outside supported dimension range for ['/latitude']",
-                    )
+                self.assertEqual(
+                    context.exception.message,
+                    "Spatial subset request outside supported dimension range for {'/latitude'}",
+                )
 
     @patch('hoss.spatial.get_dimension_index_range')
     @patch('hoss.spatial.get_projected_x_y_extents')

@@ -589,7 +589,7 @@ def get_requested_index_ranges(
             # processing the other dimensions and raise exception for all the
             # dimensions that are invalid.
             except InvalidRequestedRange:
-                failed_dim_variables.update(dim.name)
+                failed_dim_variables.add(dim.name)
 
         if failed_dim_variables:
             raise NoDataException(

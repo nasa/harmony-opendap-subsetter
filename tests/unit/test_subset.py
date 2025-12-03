@@ -1742,7 +1742,7 @@ class TestSubset(TestCase):
                 )
                 self.assertEqual(
                     context.exception.message,
-                    'Requested variables:{variables_not_in_granule} not found in granule',
+                    f'Requested variables:{variables_not_in_granule} not found in granule',
                 )
         with self.subTest('All variables not in granule'):
             with self.assertRaises(NoDataException) as context:

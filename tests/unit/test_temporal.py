@@ -85,10 +85,10 @@ class TestTemporal(TestCase):
                 get_temporal_index_ranges(
                     {'/time'}, self.varinfo, test_file_name, harmony_message
                 )
-                self.assertEqual(
-                    context.exception.message,
-                    "Temporal range request outside supported dimension range for ['time']",
-                )
+            self.assertEqual(
+                context.exception.message,
+                "Temporal range request outside supported dimension range for {'/time'}",
+            )
 
     @patch('hoss.temporal.get_dimension_index_range')
     def test_get_temporal_index_ranges_bounds(self, mock_get_dimension_index_range):

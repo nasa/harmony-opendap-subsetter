@@ -1088,10 +1088,10 @@ class TestDimensionUtilities(TestCase):
                     ascending_file,
                     harmony_message,
                 )
-                self.assertEqual(
-                    context.exception.message,
-                    "Input request outside supported dimension range for ['latitude']",
-                )
+            self.assertEqual(
+                context.exception.message,
+                "Input request outside supported dimension range for {'/latitude'}",
+            )
 
     @patch('hoss.dimension_utilities.get_dimension_index_range')
     def test_get_requested_index_ranges_bounds(self, mock_get_dimension_index_range):

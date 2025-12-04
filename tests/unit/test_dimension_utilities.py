@@ -7,6 +7,7 @@ from unittest import TestCase
 from unittest.mock import ANY, patch
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from harmony_service_lib.util import config
 from netCDF4 import Dataset
@@ -1069,7 +1070,28 @@ class TestDimensionUtilities(TestCase):
             with self.assertRaises(InvalidNamedDimension):
                 get_requested_index_ranges(
                     required_variables, self.varinfo, descending_file, harmony_message
-                ),
+                )
+
+        with self.subTest('Out of range dimension'):
+            # Check for out of range dimension
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [{'name': '/latitude', 'min': 89.91, 'max': 90.0}]
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context:
+                get_requested_index_ranges(
+                    required_variables,
+                    self.varinfo,
+                    ascending_file,
+                    harmony_message,
+                )
+            self.assertEqual(
+                context.exception.message,
+                "Input request outside supported dimension range for {'/latitude'}",
+            )
 
     @patch('hoss.dimension_utilities.get_dimension_index_range')
     def test_get_requested_index_ranges_bounds(self, mock_get_dimension_index_range):

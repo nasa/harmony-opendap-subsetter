@@ -13,6 +13,7 @@ from typing import List, Set
 
 from dateutil import tz
 from dateutil.parser import parse as parse_datetime
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from varinfo import VarInfoFromDmr
@@ -22,7 +23,7 @@ from hoss.dimension_utilities import (
     get_dimension_bounds,
     get_dimension_index_range,
 )
-from hoss.exceptions import UnsupportedTemporalUnits
+from hoss.exceptions import InvalidRequestedRange, UnsupportedTemporalUnits
 
 units_day = {'day', 'days', 'd'}
 units_hour = {'hour', 'hours', 'hr', 'h'}
@@ -54,6 +55,7 @@ def get_temporal_index_ranges(
 
     """
     index_ranges = {}
+    out_of_range_dim_variables = set()
     temporal_dimensions = varinfo.get_temporal_dimensions(required_variables)
 
     time_start = get_datetime_with_timezone(
@@ -65,22 +67,34 @@ def get_temporal_index_ranges(
 
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dimension in temporal_dimensions:
-            time_variable = varinfo.get_variable(dimension)
-            time_ref, time_delta = get_time_ref(
-                time_variable.get_attribute_value('units')
-            )
+            try:
+                time_variable = varinfo.get_variable(dimension)
+                time_ref, time_delta = get_time_ref(
+                    time_variable.get_attribute_value('units')
+                )
 
-            # Convert the Harmony message start and end datetime values into
-            # integer or floating point values (e.g., a number of seconds since
-            # 1970-01-01) using the variable epoch and unit.
-            minimum_extent = (time_start - time_ref) / time_delta
-            maximum_extent = (time_end - time_ref) / time_delta
+                # Convert the Harmony message start and end datetime values into
+                # integer or floating point values (e.g., a number of seconds since
+                # 1970-01-01) using the variable epoch and unit.
+                minimum_extent = (time_start - time_ref) / time_delta
+                maximum_extent = (time_end - time_ref) / time_delta
 
-            index_ranges[dimension] = get_dimension_index_range(
-                dimensions_file[dimension][:],
-                minimum_extent,
-                maximum_extent,
-                bounds_values=get_dimension_bounds(dimension, varinfo, dimensions_file),
+                index_ranges[dimension] = get_dimension_index_range(
+                    dimensions_file[dimension][:],
+                    minimum_extent,
+                    maximum_extent,
+                    bounds_values=get_dimension_bounds(
+                        dimension, varinfo, dimensions_file
+                    ),
+                )
+
+            except InvalidRequestedRange:
+                out_of_range_dim_variables.add(dimension)
+
+        if out_of_range_dim_variables:
+            raise NoDataException(
+                f'Temporal range request outside supported dimension range for '
+                f'{out_of_range_dim_variables}'
             )
 
     return index_ranges

@@ -111,14 +111,14 @@ def get_spatial_index_ranges(
             if bounding_box is None and shape_file_path is not None:
                 geojson_content = get_shape_file_geojson(shape_file_path)
                 bounding_box = get_geographic_bbox(geojson_content)
-            try:
-                for dimension in geographic_dimensions:
+
+            for dimension in geographic_dimensions:
+                try:
                     index_ranges[dimension] = get_geographic_index_range(
                         dimension, varinfo, dimensions_file, bounding_box
                     )
-
-            except InvalidRequestedRange:
-                out_of_range_variables.add(dimension)
+                except InvalidRequestedRange:
+                    out_of_range_variables.add(dimension)
 
         if projected_dimensions:
             for non_spatial_variable in non_spatial_variables:

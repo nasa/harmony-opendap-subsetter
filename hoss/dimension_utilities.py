@@ -347,17 +347,12 @@ def get_dimension_indices_from_values(
         dimension_values = np.flip(dimension)
         dimension_indices = np.flip(dimension_indices)
 
-    # np.interp does not throw an exception if the extents are outside dimension range
-    # It just returns the lowest index or highest index
-    if (minimum_extent < dimension_values[0]) and (
-        maximum_extent < dimension_values[0]
-    ):
-        raise InvalidRequestedRange()
-    if (minimum_extent > dimension_values[-1]) and (
-        maximum_extent > dimension_values[-1]
-    ):
+    # Check if the minimum and maximum extents are out of range of the dimension values.
+    if minimum_extent < dimension_values[0] or maximum_extent > dimension_values[-1]:
         raise InvalidRequestedRange()
 
+    # np.interp does not throw an exception if the extents are outside dimension range
+    # It just returns the lowest index or highest index.
     raw_indices = np.interp(dimension_range, dimension_values, dimension_indices)
 
     if (raw_indices[0] == raw_indices[1]) and (raw_indices[0] % 1 == 0.5):
@@ -558,7 +553,7 @@ def get_requested_index_ranges(
     required_dimensions = varinfo.get_required_dimensions(required_variables)
 
     dim_index_ranges = {}
-    failed_dim_variables = set()
+    out_of_range_dim_variables = set()
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dim in harmony_message.subset.dimensions:
             try:
@@ -589,11 +584,11 @@ def get_requested_index_ranges(
             # processing the other dimensions and raise exception for all the
             # dimensions that are invalid.
             except InvalidRequestedRange:
-                failed_dim_variables.add(dim.name)
+                out_of_range_dim_variables.add(dim.name)
 
-        if failed_dim_variables:
+        if out_of_range_dim_variables:
             raise NoDataException(
-                f'Input request outside supported dimension range for {failed_dim_variables}'
+                f'Input request outside supported dimension range for {out_of_range_dim_variables}'
             )
 
     return dim_index_ranges

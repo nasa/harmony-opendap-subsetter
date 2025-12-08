@@ -3,7 +3,9 @@
 ### Changed
 
 - Change HOSS behavior to return NoDataException warning instead of a failed
-  exception when the variable, spatial, temporal request does not return any data.
+  exception when the variable, spatial, temporal request does not return any
+  data. Also fix a bug where the out of range subset requests were reported
+  with a default output.
 
 ## [v1.1.16] - 2025-11-17
 

@@ -221,7 +221,6 @@ def get_required_variables(
     # If request includes variable subsetting, check that all requested
     # variables exist in the granule.
     if requested_variables:
-        # check if the requested variables are in the granule.
         check_requested_variables_in_granule(varinfo, requested_variables)
 
     # Otherwise, if request is an index subset and no variables are requested,
@@ -245,7 +244,6 @@ def check_requested_variables_in_granule(
     if any of the requested variables are not in the granule.
 
     """
-
     invalid_requested_variables = {
         variable_name
         for variable_name in requested_variables

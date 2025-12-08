@@ -59,7 +59,7 @@ class TestSpatial(TestCase):
                 {'/x': (37, 56), '/y': (7, 26)},
             )
         with self.subTest('Spatial request outside granule'):
-            harmony_message = Message({'subset': {'bbox': [120, -68, 140, -70]}})
+            harmony_message = Message({'subset': {'bbox': [120, -70, 140, -68]}})
             with self.assertRaises(NoDataException) as context:
                 get_spatial_index_ranges(
                     {'/NEE', '/x', '/y', '/time'},
@@ -150,6 +150,7 @@ class TestSpatial(TestCase):
                 ),
                 expected_index_ranges,
             )
+
         with self.subTest('projection gridded with coordinates NoDataException'):
             harmony_message = Message(
                 {'subset': {'bbox': [-179.9, -89.8, -179.8, -89.5]}}
@@ -363,7 +364,7 @@ class TestSpatial(TestCase):
                     )
                 self.assertEqual(
                     context.exception.message,
-                    "Spatial subset request outside supported dimension range for {'/latitude'}",
+                    "Spatial subset request outside supported dimension range for {'/latitude', '/longitude'}",
                 )
 
     @patch('hoss.spatial.get_dimension_index_range')

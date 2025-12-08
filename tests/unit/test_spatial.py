@@ -309,7 +309,7 @@ class TestSpatial(TestCase):
                 ),
                 {'/latitude': (5, 44), '/longitude': (160, 199)},
             )
-        with self.subTest('Geographic dimensions NoDataException'):
+        with self.subTest('Geographic dimensions - one dimension out of range'):
             harmony_message = Message(
                 {'subset': {'bbox': [-179.9, -89.8, -179.8, -89.5]}}
             )
@@ -336,7 +336,9 @@ class TestSpatial(TestCase):
                 "Spatial subset request outside supported dimension range for {'/npolar_grid_lat'}",
             )
 
-        with self.subTest('NoDataException for Geographic dimensions'):
+        with self.subTest(
+            'NoDataException test for Geographic dimensions with - 2 dimensions out of range'
+        ):
 
             test_file_name1 = f'{self.test_dir}/test1.nc'
             harmony_message_outofrange = Message(
@@ -362,9 +364,17 @@ class TestSpatial(TestCase):
                         test_file_name1,
                         harmony_message_outofrange,
                     )
-                self.assertEqual(
+                self.assertIn(
+                    "Spatial subset request outside supported dimension range for ",
                     context.exception.message,
-                    "Spatial subset request outside supported dimension range for {'/latitude', '/longitude'}",
+                )
+                self.assertIn(
+                    '/latitude',
+                    context.exception.message,
+                )
+                self.assertIn(
+                    '/longitude',
+                    context.exception.message,
                 )
 
     @patch('hoss.spatial.get_dimension_index_range')

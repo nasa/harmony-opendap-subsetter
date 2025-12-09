@@ -81,7 +81,10 @@ class TestSpatial(TestCase):
                     harmony_message,
                 )
 
-            self.assertIn("Spatial subset request outside supported dimension range for ", context.exception.message)
+            self.assertIn(
+                "Spatial subset request outside supported dimension range for ",
+                context.exception.message,
+            )
             self.assertIn('/NEE', context.exception.message)
             self.assertIn('/lat', context.exception.message)
             self.assertIn('/lon', context.exception.message)

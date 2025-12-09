@@ -1102,6 +1102,38 @@ class TestDimensionUtilities(TestCase):
                 "Input request outside supported dimension range for {'/latitude'}",
             )
 
+        with self.subTest('Out of range dimension - multiple dimensions'):
+            # Check for out of range dimension
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [
+                            {'name': '/latitude', 'min': 89.91, 'max': 90.0},
+                            {'name': '/longitude', 'min': 140, 'max': 500},
+                        ]
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context:
+                get_requested_index_ranges(
+                    required_variables,
+                    self.varinfo,
+                    ascending_file,
+                    harmony_message,
+                )
+            self.assertIn(
+                '/longitude',
+                context.exception.message,
+            )
+            self.assertIn(
+                '/latitude',
+                context.exception.message,
+            )
+            self.assertIn(
+                "Input request outside supported dimension range for ",
+                context.exception.message,
+            )
+
     @patch('hoss.dimension_utilities.get_dimension_index_range')
     def test_get_requested_index_ranges_bounds(self, mock_get_dimension_index_range):
         """Ensure that if bounds are present for a dimension, they are used

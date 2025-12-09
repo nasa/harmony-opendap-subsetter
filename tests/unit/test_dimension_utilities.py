@@ -294,7 +294,7 @@ class TestDimensionUtilities(TestCase):
             with self.assertRaises(InvalidRequestedRange) as context:
                 results = get_dimension_indices_from_values(test_dimension, 5.0, 140.0)
 
-        with self.subTest("minimum extent below dimension range"):
+        with self.subTest("maximum extent above dimension range"):
             with self.assertRaises(InvalidRequestedRange) as context:
                 results = get_dimension_indices_from_values(test_dimension, 40.0, 540.0)
 

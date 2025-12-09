@@ -71,6 +71,20 @@ class TestSpatial(TestCase):
                 context.exception.message,
                 "Spatial subset request outside supported dimension range for {'/NEE'}",
             )
+        with self.subTest('Spatial request outside granule - multiple variables'):
+            harmony_message = Message({'subset': {'bbox': [120, -70, 140, -68]}})
+            with self.assertRaises(NoDataException) as context:
+                get_spatial_index_ranges(
+                    {'/NEE', '/lat', '/lon', '/x', '/y', '/time'},
+                    above_varinfo,
+                    'tests/data/ABoVE_TVPRM_prefetch.nc4',
+                    harmony_message,
+                )
+
+            self.assertIn("Spatial subset request outside supported dimension range for ", context.exception.message)
+            self.assertIn('/NEE', context.exception.message)
+            self.assertIn('/lat', context.exception.message)
+            self.assertIn('/lon', context.exception.message)
 
     def test_get_spatial_index_ranges_projected_from_coordinates(self):
         """Ensure that correct index ranges can be calculated for a SMAP L3

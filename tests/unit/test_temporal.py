@@ -90,6 +90,48 @@ class TestTemporal(TestCase):
                 "Temporal range request outside supported dimension range for {'/time'}",
             )
 
+        with self.subTest('Time dimension, out of range for multiple dimensions'):
+            test_varinfo = VarInfoFromDmr(
+                'tests/data/test_two_time_dimensions.dmr',
+                config_file='tests/data/test_subsetter_config.json',
+            )
+            test_file_name2 = f'{self.test_dir}/test2.nc'
+            with Dataset(test_file_name2, 'w', format='NETCDF4') as test_file2:
+                test_file2.createDimension('grid1_time', size=24)
+                test_file2.createDimension('grid2_time', size=36)
+
+                test_file2.createVariable('grid1_time', int, dimensions=('grid1_time',))
+                test_file2.createVariable('grid2_time', int, dimensions=('grid2_time',))
+                test_file2['grid1_time'][:] = np.linspace(0, 1380, 24)
+                test_file2['grid1_time'].setncatts(
+                    {'units': 'minutes since 2021-01-10 00:30:00'}
+                )
+                test_file2['grid2_time'][:] = np.linspace(0, 1380, 36)
+                test_file2['grid2_time'].setncatts(
+                    {'units': 'minutes since 2021-01-10 00:30:00'}
+                )
+            harmony_message = Message(
+                {
+                    'temporal': {
+                        'start': '2025-01-10T01:30:00',
+                        'end': '2025-01-10T05:30:00',
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context:
+                get_temporal_index_ranges(
+                    {'/grid1_time', '/grid2_time'},
+                    test_varinfo,
+                    test_file_name2,
+                    harmony_message,
+                )
+            self.assertIn(
+                "Temporal range request outside supported dimension range for ",
+                context.exception.message,
+            )
+            self.assertIn('/grid1_time', context.exception.message)
+            self.assertIn('/grid2_time', context.exception.message)
+
     @patch('hoss.temporal.get_dimension_index_range')
     def test_get_temporal_index_ranges_bounds(self, mock_get_dimension_index_range):
         """Ensure that bounds are correctly extracted and used as an argument

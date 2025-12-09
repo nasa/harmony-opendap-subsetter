@@ -244,7 +244,7 @@ class TestDimensionUtilities(TestCase):
             )
             mock_get_indices_from_values.reset_mock()
 
-    def test_get_dimension_indices_from_indices(self):
+    def test_get_dimension_indices_from_values(self):
         """Ensure the expected index values are retrieved for the minimum and
         maximum values of an expected range. This should correspond to the
         nearest integer, to ensure partial pixels are included in a
@@ -258,6 +258,7 @@ class TestDimensionUtilities(TestCase):
         between pixels should not include the outer pixel.
 
         """
+        test_dimension = masked_array(np.linspace(10, 200, 91))
         test_args = [
             ['Ascending dimension', self.ascending_dimension, 39, 174.3, (20, 87)],
             ['Descending dimension', self.descending_dimension, 174.3, 39, (13, 80)],
@@ -288,6 +289,14 @@ class TestDimensionUtilities(TestCase):
                 self.assertIsInstance(results[0], int)
                 self.assertIsInstance(results[1], int)
                 self.assertTupleEqual(results, expected_results)
+
+        with self.subTest("minimum extent below dimension range"):
+            with self.assertRaises(InvalidRequestedRange) as context:
+                results = get_dimension_indices_from_values(test_dimension, 5.0, 140.0)
+
+        with self.subTest("minimum extent below dimension range"):
+            with self.assertRaises(InvalidRequestedRange) as context:
+                results = get_dimension_indices_from_values(test_dimension, 40.0, 540.0)
 
     def test_add_index_range(self):
         """Ensure the correct combinations of index ranges are added as

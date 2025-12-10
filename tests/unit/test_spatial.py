@@ -359,7 +359,7 @@ class TestSpatial(TestCase):
 
             test_file_name1 = f'{self.test_dir}/test1.nc'
             harmony_message_outofrange = Message(
-                {'subset': {'bbox': [160.1, -44.9, 200.1, -22.9]}}
+                {'subset': {'bbox': [179.8, -44.9, 179.9, -22.9]}}
             )
 
             with Dataset(test_file_name1, 'w', format='NETCDF4') as test_file1:

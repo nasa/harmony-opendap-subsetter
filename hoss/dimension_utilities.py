@@ -348,7 +348,7 @@ def get_dimension_indices_from_values(
         dimension_indices = np.flip(dimension_indices)
 
     # Check if the minimum and maximum extents are out of range of the dimension values.
-    if minimum_extent < dimension_values[0] or maximum_extent > dimension_values[-1]:
+    if maximum_extent < dimension_values[0] or minimum_extent > dimension_values[-1]:
         raise InvalidRequestedRange()
 
     # np.interp does not throw an exception if the extents are outside dimension range

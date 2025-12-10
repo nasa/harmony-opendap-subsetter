@@ -290,13 +290,20 @@ class TestDimensionUtilities(TestCase):
                 self.assertIsInstance(results[1], int)
                 self.assertTupleEqual(results, expected_results)
 
-        with self.subTest("minimum extent below dimension range"):
+        with self.subTest("only minimum extent below dimension range"):
+            results1 = get_dimension_indices_from_values(test_dimension, 5.0, 140.0)
+            self.assertTupleEqual(results1, (0, 62))
+        with self.subTest("only maximum extent above dimension range"):
+            results2 = get_dimension_indices_from_values(test_dimension, 40.0, 540.0)
+            self.assertTupleEqual(results2, (14, 90))
+        with self.subTest("both minimum and maximum extent below dimension range"):
             with self.assertRaises(InvalidRequestedRange) as context:
-                results = get_dimension_indices_from_values(test_dimension, 5.0, 140.0)
-
-        with self.subTest("maximum extent above dimension range"):
+                results = get_dimension_indices_from_values(test_dimension, 5.0, 6.0)
+        with self.subTest("both minimum and maximum extent above dimension range"):
             with self.assertRaises(InvalidRequestedRange) as context:
-                results = get_dimension_indices_from_values(test_dimension, 40.0, 540.0)
+                results = get_dimension_indices_from_values(
+                    test_dimension, 340.0, 540.0
+                )
 
     def test_add_index_range(self):
         """Ensure the correct combinations of index ranges are added as
@@ -1109,7 +1116,7 @@ class TestDimensionUtilities(TestCase):
                     'subset': {
                         'dimensions': [
                             {'name': '/latitude', 'min': 89.91, 'max': 90.0},
-                            {'name': '/longitude', 'min': 140, 'max': 500},
+                            {'name': '/longitude', 'min': 440, 'max': 500},
                         ]
                     }
                 }

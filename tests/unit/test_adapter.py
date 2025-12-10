@@ -80,6 +80,45 @@ class TestAdapter(TestCase):
 
         return Message(json.dumps(message_content))
 
+    @patch('hoss.adapter.unexecuted_url_requested')
+    def test_opendap_url_request(
+        self,
+        mock_unexecuted_url_requested,
+        mock_stage,
+        mock_subset_granule,
+        mock_get_mimetype,
+    ):
+        """A request that returns an unexecuted OPeNDAP request URL instead
+        of subset data.
+
+        """
+        mock_subset_granule.return_value = (
+            'https://opendap.earthdata.nasa.gov/requst_url'
+        )
+        mock_unexecuted_url_requested.return_value = True
+
+        message = self.create_message(
+            'C123456789-EEDTEST',
+            'short_name',
+            ['variable'],
+            'some_user',
+        )
+
+        hoss = HossAdapter(message, config=self.config, catalog=self.africa_stac)
+
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
+
+        mock_subset_granule.assert_called_once_with(
+            self.africa_granule_url,
+            message.sources[0],
+            ANY,
+            hoss.message,
+            hoss.config,
+        )
+        mock_stage.assert_not_called()
+        mock_get_mimetype.assert_not_called()
+
     def test_temporal_request(self, mock_stage, mock_subset_granule, mock_get_mimetype):
         """A request that specifies a temporal range should result in a
         temporal subset.

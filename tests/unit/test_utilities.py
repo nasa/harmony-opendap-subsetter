@@ -16,6 +16,7 @@ from hoss.utilities import (
     get_opendap_nc4,
     get_value_or_default,
     move_downloaded_nc4,
+    unexecuted_url_requested,
 )
 
 
@@ -151,6 +152,26 @@ class TestUtilities(TestCase):
         access_token = 'secret_token!!!'
         expected_data = {'dap4.ce': 'variable'}
 
+        with self.subTest('Request with OPeNDAP URL mimetype'):
+            opendap_url_mimetype = 'application/x-netcdf4;profile="opendap_url"'
+            output_url = get_opendap_nc4(
+                url,
+                required_variables,
+                output_dir,
+                access_token,
+                self.config,
+                opendap_url_mimetype,
+            )
+            self.assertEqual(
+                'https://opendap.earthdata.nasa.gov/granule.dap.nc4?dap4.ce=variable',
+                output_url,
+            )
+            mock_download.assert_not_called()
+            mock_move_download.assert_not_called()
+
+        mock_download.reset_mock()
+        mock_move_download.reset_mock()
+
         with self.subTest('Request with variables includes dap4.ce'):
             output_file = get_opendap_nc4(
                 url,
@@ -158,6 +179,7 @@ class TestUtilities(TestCase):
                 output_dir,
                 access_token,
                 self.config,
+                'fake-mimetype',
             )
 
             self.assertEqual(output_file, moved_file_name)
@@ -279,3 +301,29 @@ class TestUtilities(TestCase):
 
         with self.subTest('Value = None returns the supplied default'):
             self.assertEqual(get_value_or_default(None, 20), 20)
+
+    def test_unexecuted_url_requested(self):
+        """Ensure that True is returned when a valid OPeNDAP URL format
+        string is in the Harmony message, otherwise False should be returned.
+
+        """
+        with self.subTest('Valid opendap_url format 1'):
+            self.assertTrue(
+                unexecuted_url_requested('application/x-netcdf4; profile="opendap_url"')
+            )
+
+        with self.subTest('Valid opendap_url format 2'):
+            self.assertTrue(
+                unexecuted_url_requested('application/x-netcdf4;profile="opendap_url"')
+            )
+
+        with self.subTest('Valid opendap_url format 3'):
+            self.assertTrue(
+                unexecuted_url_requested('application/x-netcdf4;profile=opendap_url')
+            )
+
+        with self.subTest('NetCDF4 format'):
+            self.assertFalse(unexecuted_url_requested('application/x-netcdf4'))
+
+        with self.subTest('Some other format'):
+            self.assertFalse(unexecuted_url_requested('fake-mimetype'))

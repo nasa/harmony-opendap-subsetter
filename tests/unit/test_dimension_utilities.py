@@ -1109,7 +1109,11 @@ class TestDimensionUtilities(TestCase):
                 "Input request outside supported dimension range for {'/latitude'}",
             )
 
-        with self.subTest('Out of range dimension - multiple dimensions'):
+        with self.subTest(
+            'Out of range dimension ascending file - multiple dimensions'
+        ):
+            # ascending file has latitude ranging from 45.1 to 60.1
+            # It has longitude ranging from 330.1 to 345.1
             # Check for out of range dimension
             harmony_message = Message(
                 {
@@ -1121,7 +1125,7 @@ class TestDimensionUtilities(TestCase):
                     }
                 }
             )
-            with self.assertRaises(NoDataException) as context:
+            with self.assertRaises(NoDataException) as context1:
                 get_requested_index_ranges(
                     required_variables,
                     self.varinfo,
@@ -1130,15 +1134,49 @@ class TestDimensionUtilities(TestCase):
                 )
             self.assertIn(
                 '/longitude',
-                context.exception.message,
+                context1.exception.message,
             )
             self.assertIn(
                 '/latitude',
-                context.exception.message,
+                context1.exception.message,
             )
             self.assertIn(
                 "Input request outside supported dimension range for ",
-                context.exception.message,
+                context1.exception.message,
+            )
+        with self.subTest(
+            'Out of range dimension -descending file - multiple dimensions'
+        ):
+            # descending file has latitude ranging from 60.1 to 45.1
+            # It has longitude ranging from 330.1 to 345.1
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [
+                            {'name': '/latitude', 'min': 89.91, 'max': 90.0},
+                            {'name': '/longitude', 'min': 440, 'max': 500},
+                        ]
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context2:
+                get_requested_index_ranges(
+                    required_variables,
+                    self.varinfo,
+                    descending_file,
+                    harmony_message,
+                )
+            self.assertIn(
+                '/longitude',
+                context2.exception.message,
+            )
+            self.assertIn(
+                '/latitude',
+                context2.exception.message,
+            )
+            self.assertIn(
+                "Input request outside supported dimension range for ",
+                context2.exception.message,
             )
 
     @patch('hoss.dimension_utilities.get_dimension_index_range')

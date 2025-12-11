@@ -1,3 +1,10 @@
+## ## [v1.2.0] - 2025-12-11
+
+### Added
+
+- Allow HOSS to format and return an unexecuted OPeNDAP URL instead of a subset
+  file when requested by the user.
+
 ## [v1.1.17] - 2025-11-25
 
 ### Changed

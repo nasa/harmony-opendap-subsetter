@@ -7,6 +7,7 @@ from unittest import TestCase
 from unittest.mock import ANY, patch
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from harmony_service_lib.util import config
 from netCDF4 import Dataset
@@ -243,7 +244,7 @@ class TestDimensionUtilities(TestCase):
             )
             mock_get_indices_from_values.reset_mock()
 
-    def test_get_dimension_indices_from_indices(self):
+    def test_get_dimension_indices_from_values(self):
         """Ensure the expected index values are retrieved for the minimum and
         maximum values of an expected range. This should correspond to the
         nearest integer, to ensure partial pixels are included in a
@@ -257,6 +258,7 @@ class TestDimensionUtilities(TestCase):
         between pixels should not include the outer pixel.
 
         """
+        test_dimension = masked_array(np.linspace(10, 200, 91))
         test_args = [
             ['Ascending dimension', self.ascending_dimension, 39, 174.3, (20, 87)],
             ['Descending dimension', self.descending_dimension, 174.3, 39, (13, 80)],
@@ -287,6 +289,21 @@ class TestDimensionUtilities(TestCase):
                 self.assertIsInstance(results[0], int)
                 self.assertIsInstance(results[1], int)
                 self.assertTupleEqual(results, expected_results)
+
+        with self.subTest("only minimum extent below dimension range"):
+            results1 = get_dimension_indices_from_values(test_dimension, 5.0, 140.0)
+            self.assertTupleEqual(results1, (0, 62))
+        with self.subTest("only maximum extent above dimension range"):
+            results2 = get_dimension_indices_from_values(test_dimension, 40.0, 540.0)
+            self.assertTupleEqual(results2, (14, 90))
+        with self.subTest("both minimum and maximum extent below dimension range"):
+            with self.assertRaises(InvalidRequestedRange) as context:
+                results = get_dimension_indices_from_values(test_dimension, 5.0, 6.0)
+        with self.subTest("both minimum and maximum extent above dimension range"):
+            with self.assertRaises(InvalidRequestedRange) as context:
+                results = get_dimension_indices_from_values(
+                    test_dimension, 340.0, 540.0
+                )
 
     def test_add_index_range(self):
         """Ensure the correct combinations of index ranges are added as
@@ -1069,7 +1086,98 @@ class TestDimensionUtilities(TestCase):
             with self.assertRaises(InvalidNamedDimension):
                 get_requested_index_ranges(
                     required_variables, self.varinfo, descending_file, harmony_message
-                ),
+                )
+
+        with self.subTest('Out of range dimension'):
+            # Check for out of range dimension
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [{'name': '/latitude', 'min': 89.91, 'max': 90.0}]
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context:
+                get_requested_index_ranges(
+                    required_variables,
+                    self.varinfo,
+                    ascending_file,
+                    harmony_message,
+                )
+            self.assertEqual(
+                context.exception.message,
+                "Input request outside supported dimension range for {'/latitude'}",
+            )
+
+        with self.subTest(
+            'Out of range dimension ascending file - multiple dimensions'
+        ):
+            # ascending file has latitude ranging from 45.1 to 60.1
+            # It has longitude ranging from 330.1 to 345.1
+            # Check for out of range dimension
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [
+                            {'name': '/latitude', 'min': 89.91, 'max': 90.0},
+                            {'name': '/longitude', 'min': 440, 'max': 500},
+                        ]
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context1:
+                get_requested_index_ranges(
+                    required_variables,
+                    self.varinfo,
+                    ascending_file,
+                    harmony_message,
+                )
+            self.assertIn(
+                '/longitude',
+                context1.exception.message,
+            )
+            self.assertIn(
+                '/latitude',
+                context1.exception.message,
+            )
+            self.assertIn(
+                "Input request outside supported dimension range for ",
+                context1.exception.message,
+            )
+        with self.subTest(
+            'Out of range dimension -descending file - multiple dimensions'
+        ):
+            # descending file has latitude ranging from 60.1 to 45.1
+            # It has longitude ranging from 330.1 to 345.1
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [
+                            {'name': '/latitude', 'min': 89.91, 'max': 90.0},
+                            {'name': '/longitude', 'min': 440, 'max': 500},
+                        ]
+                    }
+                }
+            )
+            with self.assertRaises(NoDataException) as context2:
+                get_requested_index_ranges(
+                    required_variables,
+                    self.varinfo,
+                    descending_file,
+                    harmony_message,
+                )
+            self.assertIn(
+                '/longitude',
+                context2.exception.message,
+            )
+            self.assertIn(
+                '/latitude',
+                context2.exception.message,
+            )
+            self.assertIn(
+                "Input request outside supported dimension range for ",
+                context2.exception.message,
+            )
 
     @patch('hoss.dimension_utilities.get_dimension_index_range')
     def test_get_requested_index_ranges_bounds(self, mock_get_dimension_index_range):

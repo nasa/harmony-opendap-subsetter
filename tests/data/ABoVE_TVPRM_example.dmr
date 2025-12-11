@@ -28,6 +28,9 @@
     <Attribute name="standard_name" type="String">
       <Value>longitude</Value>
     </Attribute>
+    <Attribute name="grid_mapping" type="String">
+      <Value>crs</Value>
+    </Attribute>
   </Float32>
   <Float64 name="time">
     <Dim name="/time"/>
@@ -61,6 +64,9 @@
     </Attribute>
     <Attribute name="standard_name" type="String">
       <Value>latitude</Value>
+    </Attribute>
+    <Attribute name="grid_mapping" type="String">
+      <Value>crs</Value>
     </Attribute>
   </Float32>
   <Float32 name="NEE">

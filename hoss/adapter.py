@@ -29,8 +29,9 @@ import shutil
 from tempfile import mkdtemp
 
 from harmony_service_lib import BaseHarmonyAdapter
+from harmony_service_lib.exceptions import HarmonyException, NoDataException
 from harmony_service_lib.message import Source
-from harmony_service_lib.util import HarmonyException, generate_output_filename, stage
+from harmony_service_lib.util import generate_output_filename, stage
 from pystac import Asset, Item
 
 from hoss.dimension_utilities import is_index_subset
@@ -132,6 +133,9 @@ class HossAdapter(BaseHarmonyAdapter):
                 url, title=staged_filename, media_type=mime, roles=['data']
             )
 
+        except NoDataException as no_data_exception:
+            self.logger.exception(no_data_exception)
+            raise
         except Exception as exception:
             self.logger.exception(exception)
             raise_from_hoss_exception(exception)

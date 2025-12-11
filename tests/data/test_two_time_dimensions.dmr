@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="http://opendap.uat.earthdata.nasa.gov/collections/C1215802944-GES_DISC/granules/M2T1NXSLV.5.12.4%3AMERRA2_400.tavg1_2d_slv_Nx.20210110.nc4" dapVersion="4.0" dmrVersion="1.0" name="MERRA2_400.tavg1_2d_slv_Nx.20210110.nc4">
+    <Dimension name="grid1_time" size="24"/>
+     <Dimension name="grid2_time" size="36"/>
+    <Dimension name="lat" size="361"/>
+    <Dimension name="lon" size="576"/>
+    <Float32 name="U2M">
+        <Dim name="/grid1_time"/>
+        <Dim name="/lat"/>
+        <Dim name="/lon"/>
+        <Attribute name="long_name" type="String">
+            <Value>2-meter_eastward_wind</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>m s-1</Value>
+        </Attribute>
+        <Attribute name="_FillValue" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="missing_value" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="fmissing_value" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="scale_factor" type="Float32">
+            <Value>1.</Value>
+        </Attribute>
+        <Attribute name="add_offset" type="Float32">
+            <Value>0.</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>2-meter_eastward_wind</Value>
+        </Attribute>
+        <Attribute name="vmax" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="vmin" type="Float32">
+            <Value>-9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="valid_range" type="Float32">
+            <Value>-9.99999987e+14</Value>
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+    </Float32>
+    <Float32 name="V250">
+        <Dim name="/grid_time2"/>
+        <Dim name="/lat"/>
+        <Dim name="/lon"/>
+        <Attribute name="long_name" type="String">
+            <Value>northward_wind_at_250_hPa</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>m s-1</Value>
+        </Attribute>
+        <Attribute name="_FillValue" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="missing_value" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="fmissing_value" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="scale_factor" type="Float32">
+            <Value>1.</Value>
+        </Attribute>
+        <Attribute name="add_offset" type="Float32">
+            <Value>0.</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>northward_wind_at_250_hPa</Value>
+        </Attribute>
+        <Attribute name="vmax" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="vmin" type="Float32">
+            <Value>-9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="valid_range" type="Float32">
+            <Value>-9.99999987e+14</Value>
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+    </Float32>
+    <Int32 name="grid1_time">
+        <Dim name="/grid1_time"/>
+        <Attribute name="long_name" type="String">
+            <Value>time</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>minutes since 2021-01-10 00:30:00</Value>
+        </Attribute>
+        <Attribute name="time_increment" type="Int32">
+            <Value>10000</Value>
+        </Attribute>
+        <Attribute name="begin_date" type="Int32">
+            <Value>20210110</Value>
+        </Attribute>
+        <Attribute name="begin_time" type="Int32">
+            <Value>3000</Value>
+        </Attribute>
+        <Attribute name="vmax" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="vmin" type="Float32">
+            <Value>-9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="valid_range" type="Float32">
+            <Value>-9.99999987e+14</Value>
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+    </Int32>
+    <Int32 name="grid2_time">
+        <Dim name="/grid2_time"/>
+        <Attribute name="long_name" type="String">
+            <Value>time</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>minutes since 2021-01-10 00:30:00</Value>
+        </Attribute>
+        <Attribute name="time_increment" type="Int32">
+            <Value>10000</Value>
+        </Attribute>
+        <Attribute name="begin_date" type="Int32">
+            <Value>20210110</Value>
+        </Attribute>
+        <Attribute name="begin_time" type="Int32">
+            <Value>3000</Value>
+        </Attribute>
+        <Attribute name="vmax" type="Float32">
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="vmin" type="Float32">
+            <Value>-9.99999987e+14</Value>
+        </Attribute>
+        <Attribute name="valid_range" type="Float32">
+            <Value>-9.99999987e+14</Value>
+            <Value>9.99999987e+14</Value>
+        </Attribute>
+    </Int32>
+</Dataset>

@@ -1,4 +1,13 @@
-## [v1.1.16] - 2025-10-17
+## [v1.1.17] - 2025-11-25
+
+### Changed
+
+- Change HOSS behavior to return NoDataException warning instead of a failed
+  exception when the variable, spatial, temporal request does not return any
+  data. Also fix a bug where the out of range subset requests were reported
+  with a default output.
+
+## [v1.1.16] - 2025-11-17
 
 ### Fixed
 
@@ -207,6 +216,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.1.17]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.17
 [v1.1.16]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.16
 [v1.1.15]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.15
 [v1.1.14]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.14

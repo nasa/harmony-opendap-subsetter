@@ -219,6 +219,74 @@
         </Value>
         </Attribute>
     </Float32>
+    <Float32 name="npolar_asr">
+        <Dim name="/npolar_grid_lat"/>
+        <Dim name="/npolar_grid_lon"/>
+        <Attribute name="_FillValue" type="Float32">
+            <Value>3.402823466e+38</Value>
+        </Attribute>
+        <Attribute name="long_name" type="String">
+            <Value>North Polar Apparent Surface Reflectance (0-1)</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>1</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 3.5, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float32">
+            <Value>0.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float32">
+            <Value>1.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>modelResult</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The north polar apparent surface reflectance (ASR) two-dimensional atmospheric gridded parameter. For each north polar grid cell this represents the ratio of the summation of the detected surface signal apparent surface reflectivity 25 Hz (high-rate profile) observations (apparent_surf_reflec () &gt; 0.0) to the number of detected surface signal ASR 25 Hz (high-rate profile) observations (npolar_asr_obs_grid (i,j)) in the cell. The gridded average north polar ASR values are produced when the number of detected surface signal ASR 25 Hz (high-rate profile) observations is equal to or greater than the minimum number of observations required for each grid cell (npolar_asr_obs_grid (i,j) =&gt; obs_minimum); otherwise set to INVALID. ASR represents the true surface reflectivity modified by the two-way atmospheric transmission. Generally a number between 0.0 and 1.0. ASR is related to the ratio of the received energy to the transmitted energy, assuming a Lambertian surface reflectance. The ATL09 required surface signal apparent surface reflectance (apparent_surf_reflec ()) values are determined in the L3A ATM high-rate profile processing. Grid array organization: npolar_asr (i,j), where i=longitude index, j=latitude index, as per ATBD Section 2.0. Given weekly polar_grid_lon_scale = 3.0 degrees and polar_grid_lat_scale = 1.0 degrees, and the north polar latitude range is: +90.0 down to +60.0 degrees, the gridded array dimension: is npolar_asr (120,30), type: floating point. Reference: npolar_asr (1,1) = (-180.0 degrees longitude, +90.0 degrees latitude), representing the upper left corner of the gridded parameter cell in the north polar projection array. Post-processing by the &quot;atlas_plot&quot; utility program using &quot;plot_atl16.py&quot; will generate and embed the image for this gridded parameter identified as &quot;npolar_asr_img&quot; in the ATL16 product. The applicable north polar observation counts for this atmosphere gridded parameter are available from: npolar_asr_obs_grid (i,j). Expected value range: minimum: 0.0, maximum: 1.0. Maximum value may exceed 1.0 (e.g., 1.19374275). Image will be limited to the range of 0.0 to 1.0.</Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+            <Value>npolar_grid_lat npolar_grid_lon</Value>
+        </Attribute>
+        <Attribute name="grid_mapping" type="String">
+            <Value>crs_latlon: npolar_grid_lat crs_latlon: npolar_grid_lon</Value>
+        </Attribute>
+    </Float32>
+    <Float32 name="spolar_asr">
+        <Dim name="/spolar_grid_lat"/>
+        <Dim name="/spolar_grid_lon"/>
+        <Attribute name="_FillValue" type="Float32">
+            <Value>3.402823466e+38</Value>
+        </Attribute>
+        <Attribute name="long_name" type="String">
+            <Value>South Polar Apparent Surface Reflectance (0-1)</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>1</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>L3B ATM ATBD, Section 3.5, Section 5.0, Table 5.</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float32">
+            <Value>0.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float32">
+            <Value>1.</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>modelResult</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>The south polar apparent surface reflectance (ASR) two-dimensional atmospheric gridded parameter. For each south polar grid cell this represents the ratio of the summation of the detected surface signal apparent surface reflectivity 25 Hz (high-rate profile) observations (apparent_surf_reflec () &gt; 0.0) to the number of detected surface signal ASR 25 Hz (high-rate profile) observations (spolar_asr_obs_grid (i,j)) in the cell. The gridded average south polar ASR values are produced when the number of detected surface signal ASR 25 Hz (high-rate profile) observations is equal to or greater than the minimum number of observations required for each grid cell (spolar_asr_obs_grid (i,j) =&gt; obs_minimum); otherwise set to INVALID. ASR represents the true surface reflectivity modified by the two-way atmospheric transmission. Generally a number between 0.0 and 1.0. ASR is related to the ratio of the received energy to the transmitted energy, assuming a Lambertian surface reflectance. The ATL09 required surface signal apparent surface reflectance (apparent_surf_reflec ()) values are determined in the L3A ATM high-rate profile processing. Grid array organization: spolar_asr (i,j), where i=longitude index, j=latitude index, as per ATBD Section 2.0. Given weekly polar_grid_lon_scale = 3.0 degrees and polar_grid_lat_scale = 1.0 degrees, and the south polar latitude range is: -90.0 up to -60.0 degrees, the weekly gridded array dimension: is spolar_asr (120,30), type: floating point. Reference: spolar_asr (1,1) = (-180.0 degrees longitude, -90.0 degrees latitude), representing the lower left corner of the gridded parameter cell in the south polar projection array. Post-processing by the &quot;atlas_plot&quot; utility program using &quot;plot_atl16.py&quot; will generate and embed the image for this gridded parameter identified as &quot;spolar_asr_img&quot; in the ATL16 product. The applicable south polar observation counts for this atmosphere gridded parameter are available from: spolar_asr_obs_grid (i,j). Expected value range: minimum: 0.0, maximum: 1.0. Maximum value may exceed 1.0 (e.g., 1.08103633). Image will be limited to the range of 0.0 to 1.0.</Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+            <Value>spolar_grid_lat spolar_grid_lon</Value>
+        </Attribute>
+        <Attribute name="grid_mapping" type="String">
+            <Value>crs_latlon: spolar_grid_lat crs_latlon: spolar_grid_lon</Value>
+        </Attribute>
+    </Float32>
     <Attribute name="short_name" type="String">
         <Value>ATL16</Value>
     </Attribute>

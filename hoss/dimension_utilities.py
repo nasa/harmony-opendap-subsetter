@@ -14,6 +14,7 @@ from pathlib import PurePosixPath
 from typing import Dict, Set, Tuple
 
 import numpy as np
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from harmony_service_lib.message_utility import rgetattr
 from harmony_service_lib.util import Config
@@ -346,6 +347,12 @@ def get_dimension_indices_from_values(
         dimension_values = np.flip(dimension)
         dimension_indices = np.flip(dimension_indices)
 
+    # Check if the minimum and maximum extents are out of range of the dimension values.
+    if maximum_extent < dimension_values[0] or minimum_extent > dimension_values[-1]:
+        raise InvalidRequestedRange()
+
+    # np.interp does not throw an exception if the extents are outside dimension range
+    # It just returns the lowest index or highest index.
     raw_indices = np.interp(dimension_range, dimension_values, dimension_indices)
 
     if (raw_indices[0] == raw_indices[1]) and (raw_indices[0] % 1 == 0.5):
@@ -546,30 +553,43 @@ def get_requested_index_ranges(
     required_dimensions = varinfo.get_required_dimensions(required_variables)
 
     dim_index_ranges = {}
-
+    out_of_range_dim_variables = set()
     with Dataset(dimensions_path, 'r') as dimensions_file:
         for dim in harmony_message.subset.dimensions:
-            if dim.name in required_dimensions:
-                dim_is_valid = True
-            elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
-                dim.name = f'/{dim.name}'
-                dim_is_valid = True
-            else:
-                dim_is_valid = False
+            try:
+                if dim.name in required_dimensions:
+                    dim_is_valid = True
+                elif dim.name[0] != '/' and f'/{dim.name}' in required_dimensions:
+                    dim.name = f'/{dim.name}'
+                    dim_is_valid = True
+                else:
+                    dim_is_valid = False
 
-            if dim_is_valid:
-                # Try to extract bounds metadata:
-                bounds_array = get_dimension_bounds(dim.name, varinfo, dimensions_file)
-                # Retrieve index ranges for the specifically named dimension:
-                dim_index_ranges[dim.name] = get_dimension_index_range(
-                    dimensions_file[dim.name][:],
-                    dim.min,
-                    dim.max,
-                    bounds_values=bounds_array,
-                )
-            else:
-                # This requested dimension is not in the required dimension set
-                raise InvalidNamedDimension(dim.name)
+                if dim_is_valid:
+                    # Try to extract bounds metadata:
+                    bounds_array = get_dimension_bounds(
+                        dim.name, varinfo, dimensions_file
+                    )
+                    # Retrieve index ranges for the specifically named dimension:
+                    dim_index_ranges[dim.name] = get_dimension_index_range(
+                        dimensions_file[dim.name][:],
+                        dim.min,
+                        dim.max,
+                        bounds_values=bounds_array,
+                    )
+                else:
+                    # This requested dimension is not in the required dimension set
+                    raise InvalidNamedDimension(dim.name)
+            # In case subset constraint is out of range for a dimension. Continue
+            # processing the other dimensions and raise exception for all the
+            # dimensions that are invalid.
+            except InvalidRequestedRange:
+                out_of_range_dim_variables.add(dim.name)
+
+        if out_of_range_dim_variables:
+            raise NoDataException(
+                f'Input request outside supported dimension range for {out_of_range_dim_variables}'
+            )
 
     return dim_index_ranges
 

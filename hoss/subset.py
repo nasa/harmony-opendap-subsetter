@@ -7,6 +7,7 @@ wrapped by the `subset_granule` function, which is called from the
 
 from typing import List, Set
 
+from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message, Source
 from harmony_service_lib.message import Variable as HarmonyVariable
 from harmony_service_lib.message_utility import rgetattr
@@ -217,8 +218,14 @@ def get_required_variables(
     requested_variables = {
         f'/{variable.fullPath.lstrip("/")}' for variable in variables
     }
+    # If request includes variable subsetting, check that all requested
+    # variables exist in the granule.
+    if requested_variables:
+        check_requested_variables_in_granule(varinfo, requested_variables)
 
-    if request_is_index_subset and len(requested_variables) == 0:
+    # Otherwise, if request is an index subset and no variables are requested,
+    # include all variables.
+    elif request_is_index_subset:
         requested_variables = varinfo.get_science_variables().union(
             varinfo.get_metadata_variables()
         )
@@ -228,6 +235,25 @@ def get_required_variables(
     )
 
     return varinfo.get_required_variables(requested_variables)
+
+
+def check_requested_variables_in_granule(
+    varinfo: VarInfoFromDmr, requested_variables: List[str]
+) -> bool:
+    """Return True if all variables are in the granule. Raise NoDataException
+    if any of the requested variables are not in the granule.
+
+    """
+    invalid_requested_variables = {
+        variable_name
+        for variable_name in requested_variables
+        if varinfo.get_variable(variable_name) is None
+    }
+    if invalid_requested_variables:
+        raise NoDataException(
+            f'Requested variables:{invalid_requested_variables} not found in granule'
+        )
+    return True
 
 
 def fill_variables(

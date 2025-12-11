@@ -12,12 +12,13 @@ from typing import Dict, Set
 from unittest import TestCase
 from unittest.mock import ANY, Mock, call, patch
 
-from harmony_service_lib.exceptions import NoRetryException
+from harmony_service_lib.exceptions import NoDataException, NoRetryException
 from harmony_service_lib.message import Message
 from harmony_service_lib.util import HarmonyException, config
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal
 from pystac import Catalog
+from varinfo import VarInfoFromDmr
 
 from hoss.adapter import HossAdapter
 from hoss.exceptions import InvalidVariableRequest
@@ -2823,3 +2824,59 @@ class TestHossEndToEnd(TestCase):
 
         # Ensure no variables were filled
         mock_get_fill_slice.assert_not_called()
+
+    @patch('hoss.adapter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('hoss.adapter.stage')
+    @patch('hoss.subset.get_prefetch_variables')
+    @patch('hoss.subset.get_varinfo')
+    def test_no_data_exception_handling(
+        self,
+        mock_get_varinfo,
+        mock_get_prefetch_variables,
+        mock_stage,
+        mock_rmtree,
+        mock_mkdtemp,
+    ):
+        """Ensure that if a NoDataException is raised during processing, this
+        is captured in the adapter and output is not staged.
+
+        """
+        mock_mkdtemp.return_value = self.tmp_dir
+        smap_varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3FTP_004.dmr',
+            'SPL3FTP',
+            'hoss/hoss_config.json',
+        )
+        prefetch_path = 'tests/data/SC_SPL3FTP_004_Polar_prefetch.nc4'
+        mock_get_varinfo.return_value = smap_varinfo
+        mock_get_prefetch_variables.return_value = prefetch_path
+
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1268617120-EEDTEST',
+                        'shortName': 'SPL3FTP',
+                        'variables': [
+                            {
+                                'id': 'V1247777461-EEDTEST',
+                                'name': 'surface_flag',
+                                'fullPath': '/Freeze_Thaw_Retrieval_Data_Polar/surface_flag',
+                            },
+                        ],
+                    }
+                ],
+                'subset': {'bbox': [-179.9, -89.8, -179.8, -89.5]},
+                'stagingLocation': self.staging_location,
+                'user': 'testuser',
+            }
+        )
+        with self.assertRaises(NoDataException):
+            hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
+            hoss.invoke()
+
+        mock_stage.assert_not_called()
+        mock_rmtree.assert_called_once_with(self.tmp_dir)

@@ -1,3 +1,10 @@
+## [v1.2.0] - 2025-12-11
+
+### Added
+
+- Add option to request an unexecuted OPeNDAP URL instead of a subset data
+  file.
+
 ## [v1.1.17] - 2025-11-25
 
 ### Changed
@@ -216,6 +223,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.0
 [v1.1.17]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.17
 [v1.1.16]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.16
 [v1.1.15]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.15

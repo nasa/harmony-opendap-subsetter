@@ -110,6 +110,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
         mock_fill_variables.assert_called_once_with(
             self.output_path, self.varinfo, self.required_variables, {}
@@ -200,6 +201,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -266,6 +268,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -381,6 +384,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -510,6 +514,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -607,6 +612,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -707,6 +713,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -820,6 +827,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -927,6 +935,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -1036,6 +1045,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -1133,6 +1143,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
         mock_fill_variables.assert_called_once_with(
@@ -1586,6 +1597,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
     @patch('hoss.subset.get_opendap_nc4')
@@ -1695,6 +1707,7 @@ class TestSubset(TestCase):
             self.output_dir,
             self.access_token,
             self.config,
+            None,
         )
 
     def test_check_requested_variables_in_granule(self):

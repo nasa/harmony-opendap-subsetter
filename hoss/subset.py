@@ -37,7 +37,7 @@ from hoss.variable_utilities import check_invalid_variable_request
 
 
 def subset_granule(
-    opendap_url: str,
+    input_granule_url: str,
     harmony_source: Source,
     output_dir: str,
     harmony_message: Message,
@@ -70,7 +70,7 @@ def subset_granule(
 
     # Produce map of variable dependencies with `earthdata-varinfo` and `.dmr`.
     varinfo = get_varinfo(
-        opendap_url,
+        input_granule_url,
         output_dir,
         harmony_source.shortName,
         harmony_message.accessToken,
@@ -96,7 +96,7 @@ def subset_granule(
     if request_is_index_subset:
         # Prefetch all dimension variables in full:
         dimensions_path = get_prefetch_variables(
-            opendap_url,
+            input_granule_url,
             varinfo,
             required_variables,
             output_dir,
@@ -159,21 +159,23 @@ def subset_granule(
         'variables_with_ranges: ' f'{format_variable_set_string(variables_with_ranges)}'
     )
 
-    # Retrieve OPeNDAP data including only the specified variables in the
-    # specified ranges.
-    output_path = get_opendap_nc4(
-        opendap_url,
+    # Retrieve requested OPeNDAP output including only the specified variables
+    # in the specified ranges. Depending on the user input, this will either
+    # be a path to the subsetted data or a link to the OPeNDAP request.
+    output_url = get_opendap_nc4(
+        input_granule_url,
         variables_with_ranges,
         output_dir,
         harmony_message.accessToken,
         config,
+        harmony_message.format.mime if harmony_message.format is not None else None,
     )
 
     # Fill the data outside the requested ranges for variables that cross a
     # dimensional discontinuity (for example longitude and the anti-meridian).
-    fill_variables(output_path, varinfo, required_variables, index_ranges)
+    fill_variables(output_url, varinfo, required_variables, index_ranges)
 
-    return output_path
+    return output_url
 
 
 def get_varinfo(

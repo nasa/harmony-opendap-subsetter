@@ -114,13 +114,13 @@ class HossAdapter(BaseHarmonyAdapter):
                 asset.href, source, workdir, self.message, self.config
             )
 
-            # Check if an unexecuted OPeNDAP URL or subset file was requested.
+            # Check if request was for an unexecuted OPeNDAP URL.
             if unexecuted_url_requested(self.message.format.mime):
                 asset_name = 'OPeNAP Request URL'
                 url = output_url
                 mime = self.message.format.mime
-            # Otherwise, stage the returned output file using a conventional
-            # filename.
+            # Otherwise, stage the returned subset output file path using a
+            # conventional filename.
             else:
                 asset_name = generate_output_filename(
                     asset.href,

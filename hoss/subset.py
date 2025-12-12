@@ -161,7 +161,7 @@ def subset_granule(
 
     # Retrieve requested OPeNDAP output including only the specified variables
     # in the specified ranges. Depending on the user input, this will either
-    # be the subset data or a link to the OPeNDAP request.
+    # be a path to the subsetted data or a link to the OPeNDAP request.
     output_url = get_opendap_nc4(
         input_granule_url,
         variables_with_ranges,

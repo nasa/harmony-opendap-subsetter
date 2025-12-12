@@ -89,7 +89,7 @@ class TestAdapter(TestCase):
         mock_get_mimetype,
     ):
         """A request that returns an unexecuted OPeNDAP request URL instead
-        of subset data.
+        of the path to the subset data.
 
         """
         mock_subset_granule.return_value = (

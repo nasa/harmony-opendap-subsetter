@@ -115,7 +115,9 @@ class HossAdapter(BaseHarmonyAdapter):
             )
 
             # Check if request was for an unexecuted OPeNDAP URL.
-            if unexecuted_url_requested(self.message.format.mime):
+            if self.message.format is not None and unexecuted_url_requested(
+                self.message.format.mime
+            ):
                 asset_name = 'OPeNAP Request URL'
                 url = output_url
                 mime = self.message.format.mime

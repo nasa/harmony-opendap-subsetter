@@ -168,7 +168,7 @@ def subset_granule(
         output_dir,
         harmony_message.accessToken,
         config,
-        harmony_message.format.mime,
+        harmony_message.format.mime if harmony_message.format is not None else None,
     )
 
     # Fill the data outside the requested ranges for variables that cross a

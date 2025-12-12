@@ -93,7 +93,7 @@ class TestAdapter(TestCase):
 
         """
         mock_subset_granule.return_value = (
-            'https://opendap.earthdata.nasa.gov/requst_url'
+            'https://opendap.earthdata.nasa.gov/request_url'
         )
         mock_unexecuted_url_requested.return_value = True
 

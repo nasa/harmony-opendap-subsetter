@@ -39,7 +39,6 @@ class TestHossEndToEnd(TestCase):
         cls.rssmif16d_variable = '/wind_speed'
         cls.atl16_variable = '/global_asr_obs_grid'
         cls.staging_location = 's3://example-bucket/'
-        cls.mime = 'fake-mimetype'
 
         with open('tests/data/ATL03_example.dmr', 'r') as file_handler:
             cls.atl03_dmr = file_handler.read()
@@ -238,7 +237,6 @@ class TestHossEndToEnd(TestCase):
                         ],
                     }
                 ],
-                'format': {'mime': self.mime},
                 'stagingLocation': self.staging_location,
                 'user': 'fhaise',
             }
@@ -363,7 +361,6 @@ class TestHossEndToEnd(TestCase):
                 ],
                 'stagingLocation': self.staging_location,
                 'subset': {'bbox': [-30, 45, -15, 60]},
-                'format': {'mime': self.mime},
                 'user': 'jlovell',
             }
         )
@@ -509,7 +506,6 @@ class TestHossEndToEnd(TestCase):
                 ],
                 'stagingLocation': self.staging_location,
                 'subset': {'bbox': [-30, 45, -15, 60]},
-                'format': {'mime': self.mime},
                 'user': 'cduke',
             }
         )
@@ -639,7 +635,6 @@ class TestHossEndToEnd(TestCase):
                 ],
                 'stagingLocation': self.staging_location,
                 'subset': {'bbox': [-7.5, -60, 7.5, -45]},
-                'format': {'mime': self.mime},
                 'user': 'jswiggert',
             }
         )
@@ -847,7 +842,6 @@ class TestHossEndToEnd(TestCase):
                         ],
                         'stagingLocation': self.staging_location,
                         'subset': {'bbox': bounding_box},
-                        'format': {'mime': self.mime},
                         'user': 'jaaron',
                     }
                 )
@@ -975,7 +969,6 @@ class TestHossEndToEnd(TestCase):
                 ],
                 'stagingLocation': self.staging_location,
                 'subset': {'bbox': [-30, 45, -15, 60]},
-                'format': {'mime': self.mime},
                 'user': 'kerwinj',
             }
         )
@@ -1120,7 +1113,6 @@ class TestHossEndToEnd(TestCase):
                     'start': '2021-01-10T01:00:00',
                     'end': '2021-01-10T03:00:00',
                 },
-                'format': {'mime': self.mime},
                 'user': 'jyoung',
             }
         )
@@ -1252,7 +1244,6 @@ class TestHossEndToEnd(TestCase):
                     'start': '2021-01-10T01:00:00',
                     'end': '2021-01-10T03:00:00',
                 },
-                'format': {'mime': self.mime},
                 'user': 'jyoung',
             }
         )
@@ -1428,7 +1419,6 @@ class TestHossEndToEnd(TestCase):
                     'start': '2021-01-10T01:00:00',
                     'end': '2021-01-10T03:00:00',
                 },
-                'format': {'mime': self.mime},
                 'user': 'jyoung',
             }
         )
@@ -1570,7 +1560,6 @@ class TestHossEndToEnd(TestCase):
                 'subset': {
                     'shape': {'href': shape_file_url, 'type': 'application/geo+json'}
                 },
-                'format': {'mime': self.mime},
                 'user': 'dscott',
             }
         )
@@ -1721,7 +1710,6 @@ class TestHossEndToEnd(TestCase):
                 'subset': {
                     'shape': {'href': shape_file_url, 'type': 'application/geo+json'}
                 },
-                'format': {'mime': self.mime},
                 'user': 'dscott',
             }
         )
@@ -1881,7 +1869,6 @@ class TestHossEndToEnd(TestCase):
                     'bbox': [-30, 45, -15, 60],
                     'shape': {'href': shape_file_url, 'type': 'application/geo+json'},
                 },
-                'format': {'mime': self.mime},
                 'user': 'aworden',
             }
         )
@@ -2039,7 +2026,6 @@ class TestHossEndToEnd(TestCase):
                         {'name': 'longitude', 'min': 15, 'max': 30},
                     ]
                 },
-                'format': {'mime': self.mime},
                 'user': 'blightyear',
             }
         )
@@ -2168,7 +2154,6 @@ class TestHossEndToEnd(TestCase):
                 ],
                 'stagingLocation': self.staging_location,
                 'subset': {'bbox': [-160, 68, -145, 70]},
-                'format': {'mime': self.mime},
                 'user': 'wfunk',
             }
         )
@@ -2308,7 +2293,6 @@ class TestHossEndToEnd(TestCase):
                 'subset': {
                     'shape': {'href': shape_file_url, 'type': 'application/geo+json'}
                 },
-                'format': {'mime': self.mime},
                 'user': 'wfunk',
             }
         )
@@ -2456,7 +2440,6 @@ class TestHossEndToEnd(TestCase):
                     'start': '2020-01-01T12:15:00',
                     'end': '2020-01-01T12:45:00',
                 },
-                'format': {'mime': self.mime},
                 'user': 'jlovell',
             }
         )
@@ -2622,7 +2605,6 @@ class TestHossEndToEnd(TestCase):
                     'start': '2020-01-01T12:15:00',
                     'end': '2020-01-01T12:45:00',
                 },
-                'format': {'mime': self.mime},
                 'user': 'jlovell',
             }
         )
@@ -2845,7 +2827,6 @@ class TestHossEndToEnd(TestCase):
                 ],
                 'stagingLocation': self.staging_location,
                 'subset': {'bbox': [77, 71.25, 88, 74.75]},
-                'format': {'mime': self.mime},
                 'user': 'sride',
             }
         )

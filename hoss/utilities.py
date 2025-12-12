@@ -63,9 +63,7 @@ def get_opendap_nc4(
     # Check if the user requested an unexecuted OPeNDAP URL.
     if unexecuted_url_requested(mimetype):
         formatted_opendap_url = format_request_url(netcdf4_url, constraint_expression)
-        get_logger().info(
-            f'Returning unexecuted OPeNAP URL: {formatted_opendap_url}'
-        )
+        get_logger().info(f'Returning unexecuted OPeNAP URL: {formatted_opendap_url}')
         return formatted_opendap_url
 
     if constraint_expression != '':

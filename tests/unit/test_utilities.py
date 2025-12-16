@@ -322,6 +322,11 @@ class TestUtilities(TestCase):
                 unexecuted_url_requested('application/x-netcdf4;profile=opendap_url')
             )
 
+        with self.subTest('Valid opendap_url format 4'):
+            self.assertTrue(
+                unexecuted_url_requested('application/x-netcdf4; profile=opendap_url')
+            )
+
         with self.subTest('NetCDF4 format'):
             self.assertFalse(unexecuted_url_requested('application/x-netcdf4'))
 

@@ -85,11 +85,17 @@ def get_opendap_nc4(
 
 
 def unexecuted_url_requested(mimetype: str | None) -> bool:
-    """Return True if the user requests the unexecuted OPeNDAP URL."""
+    """Return True if the user requests the unexecuted OPeNDAP URL.
+
+    Multiple possible format strings are added to account for string
+    variation of spaces and double-quotes.
+
+    """
     opendap_url_only_mimetype = [
         'application/x-netcdf4; profile="opendap_url"',
         'application/x-netcdf4;profile="opendap_url"',
         'application/x-netcdf4;profile=opendap_url',
+        'application/x-netcdf4; profile=opendap_url',
     ]
     return mimetype in opendap_url_only_mimetype
 

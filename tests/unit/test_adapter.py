@@ -92,9 +92,7 @@ class TestAdapter(TestCase):
         of the path to the subset data.
 
         """
-        mock_subset_granule.return_value = (
-            'https://opendap.earthdata.nasa.gov/request_url'
-        )
+        mock_subset_granule.return_value = 'opendap/request_url'
         mock_unexecuted_url_requested.return_value = True
 
         message = self.create_message(
@@ -107,7 +105,21 @@ class TestAdapter(TestCase):
         hoss = HossAdapter(message, config=self.config, catalog=self.africa_stac)
 
         with patch.object(HossAdapter, 'process_item', self.process_item_spy):
-            hoss.invoke()
+            _, result_catalog = hoss.invoke()
+
+        # Verify resulting catalog.
+        items = list(result_catalog.get_items())
+        self.assertEqual(len(items), 1)
+        self.assertListEqual(list(items[0].assets.keys()), ['data'])
+        result_catalog_dict = items[0].assets['data'].to_dict()
+
+        expected_catalog = {
+            'href': 'opendap/request_url',
+            'type': 'fake-mimetype',
+            'title': 'OPeNAP Request URL',
+            'roles': ['data'],
+        }
+        self.assertDictEqual(result_catalog_dict, expected_catalog)
 
         mock_subset_granule.assert_called_once_with(
             self.africa_granule_url,
@@ -116,6 +128,7 @@ class TestAdapter(TestCase):
             hoss.message,
             hoss.config,
         )
+        mock_unexecuted_url_requested.assert_called_with('fake-mimetype')
         mock_stage.assert_not_called()
         mock_get_mimetype.assert_not_called()
 

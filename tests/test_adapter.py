@@ -116,7 +116,7 @@ class TestHossEndToEnd(TestCase):
         )
 
         # The href value must be compared separately because it can contain
-        # an constraint expression in the case where an unexecuted OPeNDAP URL
+        # a constraint expression in the case where an unexecuted OPeNDAP URL
         # is requested, where the variable order is not consistent.
         self.assertEqual(
             sorted(actual_catalog['href']), sorted(expected_catalog['href'])

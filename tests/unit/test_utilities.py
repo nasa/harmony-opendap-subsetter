@@ -327,3 +327,6 @@ class TestUtilities(TestCase):
 
         with self.subTest('Some other format'):
             self.assertFalse(unexecuted_url_requested('fake-mimetype'))
+
+        with self.subTest('Format type is None'):
+            self.assertFalse(unexecuted_url_requested(None))

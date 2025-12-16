@@ -46,7 +46,7 @@ def get_opendap_nc4(
     output_dir: str,
     access_token: str,
     config: Config,
-    mimetype=None,
+    mimetype: Optional[str] = None,
 ) -> str:
     """Construct a semi-colon separated string of the required variables and
     use as a constraint expression to retrieve those variables from
@@ -84,7 +84,7 @@ def get_opendap_nc4(
     return move_downloaded_nc4(output_dir, downloaded_nc4)
 
 
-def unexecuted_url_requested(mimetype: str) -> bool:
+def unexecuted_url_requested(mimetype: str | None) -> bool:
     """Return True if the user requests the unexecuted OPeNDAP URL."""
     opendap_url_only_mimetype = [
         'application/x-netcdf4; profile="opendap_url"',

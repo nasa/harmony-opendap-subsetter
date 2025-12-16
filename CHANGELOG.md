@@ -2,23 +2,23 @@
 
 ### Added
 
-- Add option to request an unexecuted OPeNDAP URL instead of a subset data
+- Adds option to request an unexecuted OPeNDAP URL instead of a subset data
   file.
 
 ## [v1.1.17] - 2025-11-25
 
 ### Changed
 
-- Change HOSS behavior to return NoDataException warning instead of a failed
+- Changes HOSS behavior to return NoDataException warning instead of a failed
   exception when the variable, spatial, temporal request does not return any
-  data. Also fix a bug where the out of range subset requests were reported
+  data. Also fixes a bug where the out of range subset requests were reported
   with a default output.
 
 ## [v1.1.16] - 2025-11-17
 
 ### Fixed
 
-- Add tolerance when comparing grid extent float values in the function
+- Adds tolerance when comparing grid extent float values in the function
   `remove_points_outside_grid_extents` to prevent inaccurate spatial subset
   results. Some issues caused by DAS-2424 updates are being resolved in this
   release as part of DAS-2456.

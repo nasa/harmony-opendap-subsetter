@@ -1,3 +1,9 @@
+## unreleased
+
+### Changedale
+
+- Updates library versions to address snyk vulnerabilities.
+
 ## [v1.1.17] - 2025-11-25
 
 ### Changed

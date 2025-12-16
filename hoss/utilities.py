@@ -46,7 +46,7 @@ def get_opendap_nc4(
     output_dir: str,
     access_token: str,
     config: Config,
-    mimetype: Optional[str] = None,
+    mimetype: str | None = None,
 ) -> str:
     """Construct a semi-colon separated string of the required variables and
     use as a constraint expression to retrieve those variables from

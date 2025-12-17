@@ -14,7 +14,7 @@
 # You should then be able to start a Jupyter notebook server and run both of
 # the DAAC operator and end-user notebooks.
 #
-harmony-py~=0.4.10
-netCDF4~=1.6.4
-notebook~=7.2.2
-xarray~=2023.9.0
+harmony-py~=1.3.3
+netCDF4~=1.7.3
+notebook~=7.5.1
+xarray~=2025.12.0

@@ -2,8 +2,9 @@
 
 ### Added
 
-- Adds option to request an unexecuted OPeNDAP URL instead of a subset data
-  file.
+- Adds option to request an unexecuted OPeNDAP URL instead of a subset
+  data file.
+- Updates library versions to address snyk vulnerabilities.
 
 ## [v1.1.17] - 2025-11-25
 

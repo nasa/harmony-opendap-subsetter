@@ -1,23 +1,25 @@
-## unreleased
+## [v1.2.0] - 2025-12-11
 
-### Changed
+### Added
 
+- Adds option to request an unexecuted OPeNDAP URL instead of a subset
+  data file.
 - Updates library versions to address snyk vulnerabilities.
 
 ## [v1.1.17] - 2025-11-25
 
 ### Changed
 
-- Change HOSS behavior to return NoDataException warning instead of a failed
+- Changes HOSS behavior to return NoDataException warning instead of a failed
   exception when the variable, spatial, temporal request does not return any
-  data. Also fix a bug where the out of range subset requests were reported
+  data. Also fixes a bug where the out of range subset requests were reported
   with a default output.
 
 ## [v1.1.16] - 2025-11-17
 
 ### Fixed
 
-- Add tolerance when comparing grid extent float values in the function
+- Adds tolerance when comparing grid extent float values in the function
   `remove_points_outside_grid_extents` to prevent inaccurate spatial subset
   results. Some issues caused by DAS-2424 updates are being resolved in this
   release as part of DAS-2456.
@@ -222,6 +224,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.0
 [v1.1.17]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.17
 [v1.1.16]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.16
 [v1.1.15]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.15

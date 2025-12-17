@@ -82,7 +82,11 @@ class TestHossEndToEnd(TestCase):
         self.assertSetEqual(requested_variables, expected_variables)
 
     def assert_expected_output_catalog(
-        self, catalog: Catalog, expected_href: str, expected_title: str
+        self,
+        catalog: Catalog,
+        expected_href: str,
+        expected_title: str,
+        expected_mimetype='application/x-netcdf4',
     ):
         """Check the contents of the Harmony output STAC. It should have a
         single data item, containing an asset with the supplied URL and
@@ -90,17 +94,101 @@ class TestHossEndToEnd(TestCase):
 
         """
         items = list(catalog.get_items())
+
         self.assertEqual(len(items), 1)
         self.assertListEqual(list(items[0].assets.keys()), ['data'])
-        self.assertDictEqual(
-            items[0].assets['data'].to_dict(),
-            {
-                'href': expected_href,
-                'title': expected_title,
-                'type': 'application/x-netcdf4',
-                'roles': ['data'],
-            },
+
+        actual_catalog = items[0].assets['data'].to_dict()
+        expected_catalog = {
+            'href': expected_href,
+            'title': expected_title,
+            'type': expected_mimetype,
+            'roles': ['data'],
+        }
+
+        # Check all the dictionary values match except for the href value.
+        self.assertTrue(
+            all(
+                actual_catalog[key] == expected_catalog[key]
+                for key in actual_catalog
+                if key != 'href'
+            )
         )
+
+        # The href value must be compared separately because it can contain
+        # a constraint expression in the case where an unexecuted OPeNDAP URL
+        # is requested, where the variable order is not consistent.
+        self.assertEqual(
+            sorted(actual_catalog['href']), sorted(expected_catalog['href'])
+        )
+
+    @patch('hoss.utilities.uuid4')
+    @patch('hoss.adapter.mkdtemp')
+    @patch('shutil.rmtree')
+    @patch('hoss.utilities.util_download')
+    @patch('hoss.adapter.stage')
+    def test_opendap_url_end_to_end(
+        self, mock_stage, mock_util_download, mock_rmtree, mock_mkdtemp, mock_uuid4
+    ):
+        """Ensure HOSS will run an unexecuted OPeNDAP URL request end-to-end,
+        only mocking the HTTP responses, and the output interactions
+        with Harmony.
+
+        """
+        expected_title = 'OPeNAP Request URL'
+        expected_dap4 = '.dap.nc4?dap4.ce=%2Flongitude%5B60%3A119%5D%3B%2Fwind_speed%5B%5D%5B540%3A599%5D%5B60%3A119%5D%3B%2Flatitude%5B540%3A599%5D%3B%2Ftime'
+        expected_opendap_url = f'{self.granule_url}{expected_dap4}'
+
+        mock_uuid4.return_value = Mock(hex='uuid')
+        mock_mkdtemp.return_value = self.tmp_dir
+
+        mimetype = 'application/x-netcdf4;profile=opendap_url'
+
+        dmr_path = write_dmr(self.tmp_dir, self.rssmif16d_dmr)
+
+        dimensions_path = f'{self.tmp_dir}/dimensions.nc4'
+        copy('tests/data/f16_ssmis_lat_lon.nc', dimensions_path)
+
+        all_variables_path = f'{self.tmp_dir}/variables.nc4'
+        copy('tests/data/f16_ssmis_geo.nc', all_variables_path)
+
+        mock_util_download.side_effect = [dmr_path, dimensions_path, all_variables_path]
+
+        message = Message(
+            {
+                'accessToken': 'fake-token',
+                'callback': 'https://example.com/',
+                'sources': [
+                    {
+                        'collection': 'C1234567890-EEDTEST',
+                        'shortName': 'RSSMIF16D',
+                        'variables': [
+                            {
+                                'id': '',
+                                'name': self.rssmif16d_variable,
+                                'fullPath': self.rssmif16d_variable,
+                            }
+                        ],
+                    }
+                ],
+                'stagingLocation': self.staging_location,
+                'subset': {'bbox': [15, 45, 30, 60]},
+                'format': {'mime': mimetype},
+                'user': 'auser',
+            }
+        )
+
+        hoss = HossAdapter(message, config=config(False), catalog=self.input_stac)
+
+        _, output_catalog = hoss.invoke()
+
+        # Ensure that there is a single item in the output catalog with the
+        # expected asset:
+        self.assert_expected_output_catalog(
+            output_catalog, expected_opendap_url, expected_title, mimetype
+        )
+        mock_stage.assert_not_called()
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
 
     @patch('hoss.utilities.uuid4')
     @patch('hoss.adapter.mkdtemp')

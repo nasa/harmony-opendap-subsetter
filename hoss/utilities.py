@@ -46,16 +46,25 @@ def get_opendap_nc4(
     output_dir: str,
     access_token: str,
     config: Config,
+    mimetype: str | None = None,
 ) -> str:
     """Construct a semi-colon separated string of the required variables and
     use as a constraint expression to retrieve those variables from
     OPeNDAP.
 
-    Returns the path of the downloaded granule containing those variables.
+    Returns either the unexecuted OPeNDAP request URL or the path of the
+    downloaded granule containing those variables, depending on the requested
+    mimetype.
 
     """
     constraint_expression = get_constraint_expression(required_variables)
     netcdf4_url = f'{url}.dap.nc4'
+
+    # Check if the user requested an unexecuted OPeNDAP URL.
+    if unexecuted_url_requested(mimetype):
+        formatted_opendap_url = format_request_url(netcdf4_url, constraint_expression)
+        get_logger().info(f'Returning unexecuted OPeNAP URL: {formatted_opendap_url}')
+        return formatted_opendap_url
 
     if constraint_expression != '':
         request_data = {'dap4.ce': constraint_expression}
@@ -73,6 +82,30 @@ def get_opendap_nc4(
     # Rename output file, to ensure repeated data downloads to OPeNDAP will be
     # respected by `harmony-service-lib-py`.
     return move_downloaded_nc4(output_dir, downloaded_nc4)
+
+
+def unexecuted_url_requested(mimetype: str | None) -> bool:
+    """Return True if the user requests the unexecuted OPeNDAP URL.
+
+    Multiple possible format strings are added to account for string
+    variation of spaces and double-quotes.
+
+    """
+    opendap_url_only_mimetype = [
+        'application/x-netcdf4; profile="opendap_url"',
+        'application/x-netcdf4;profile="opendap_url"',
+        'application/x-netcdf4;profile=opendap_url',
+        'application/x-netcdf4; profile=opendap_url',
+    ]
+    return mimetype in opendap_url_only_mimetype
+
+
+def format_request_url(url: str, constraint_expression: str):
+    """This function formats the request NetCDF4 URL to return a dap4
+    OPeNDAP request URL.
+
+    """
+    return f'{url}?dap4.ce={constraint_expression}'
 
 
 def get_constraint_expression(variables: Set[str]) -> str:

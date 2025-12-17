@@ -37,7 +37,11 @@ from pystac import Asset, Item
 from hoss.dimension_utilities import is_index_subset
 from hoss.harmony_log_context import set_logger
 from hoss.subset import subset_granule
-from hoss.utilities import get_file_mimetype, raise_from_hoss_exception
+from hoss.utilities import (
+    get_file_mimetype,
+    raise_from_hoss_exception,
+    unexecuted_url_requested,
+)
 
 
 class HossAdapter(BaseHarmonyAdapter):
@@ -105,32 +109,41 @@ class HossAdapter(BaseHarmonyAdapter):
 
             self.logger.info(f'Collection short name: {source.shortName}')
 
-            # Invoke service logic to retrieve subset of file from OPeNDAP
-            output_file_path = subset_granule(
+            # Invoke service logic to retrieve request output from OPeNDAP.
+            output_url = subset_granule(
                 asset.href, source, workdir, self.message, self.config
             )
 
-            # Stage the output file with a conventional filename
-            mime, _ = get_file_mimetype(output_file_path)
-            staged_filename = generate_output_filename(
-                asset.href,
-                variable_subset=source.variables,
-                ext='.nc4',
-                is_subsetted=(
-                    is_index_subset(self.message) or len(source.variables) > 0
-                ),
-            )
-            url = stage(
-                output_file_path,
-                staged_filename,
-                mime,
-                location=self.message.stagingLocation,
-                logger=self.logger,
-            )
+            # Check if request was for an unexecuted OPeNDAP URL.
+            if self.message.format is not None and unexecuted_url_requested(
+                self.message.format.mime
+            ):
+                asset_name = 'OPeNAP Request URL'
+                url = output_url
+                mime = self.message.format.mime
+            # Otherwise, stage the returned subset output file path using a
+            # conventional filename.
+            else:
+                asset_name = generate_output_filename(
+                    asset.href,
+                    variable_subset=source.variables,
+                    ext='.nc4',
+                    is_subsetted=(
+                        is_index_subset(self.message) or len(source.variables) > 0
+                    ),
+                )
+                mime, _ = get_file_mimetype(output_url)
+                url = stage(
+                    output_url,
+                    asset_name,
+                    mime,
+                    location=self.message.stagingLocation,
+                    logger=self.logger,
+                )
 
             # Update the STAC record
             result.assets['data'] = Asset(
-                url, title=staged_filename, media_type=mime, roles=['data']
+                url, title=asset_name, media_type=mime, roles=['data']
             )
 
         except NoDataException as no_data_exception:

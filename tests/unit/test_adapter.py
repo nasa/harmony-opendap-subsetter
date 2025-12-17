@@ -66,6 +66,7 @@ class TestAdapter(TestCase):
             'accessToken': 'xyzzy',
             'subset': {'bbox': bounding_box, 'dimensions': dimensions, 'shape': None},
             'temporal': temporal_range,
+            'format': {'mime': 'fake-mimetype'},
         }
 
         if shape_file is not None:
@@ -78,6 +79,58 @@ class TestAdapter(TestCase):
             message_content['isSynchronous'] = is_synchronous
 
         return Message(json.dumps(message_content))
+
+    @patch('hoss.adapter.unexecuted_url_requested')
+    def test_opendap_url_request(
+        self,
+        mock_unexecuted_url_requested,
+        mock_stage,
+        mock_subset_granule,
+        mock_get_mimetype,
+    ):
+        """A request that returns an unexecuted OPeNDAP request URL instead
+        of the path to the subset data.
+
+        """
+        mock_subset_granule.return_value = 'opendap/request_url'
+        mock_unexecuted_url_requested.return_value = True
+
+        message = self.create_message(
+            'C123456789-EEDTEST',
+            'short_name',
+            ['variable'],
+            'some_user',
+        )
+
+        hoss = HossAdapter(message, config=self.config, catalog=self.africa_stac)
+
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            _, result_catalog = hoss.invoke()
+
+        # Verify resulting catalog.
+        items = list(result_catalog.get_items())
+        self.assertEqual(len(items), 1)
+        self.assertListEqual(list(items[0].assets.keys()), ['data'])
+        result_catalog_dict = items[0].assets['data'].to_dict()
+
+        expected_catalog = {
+            'href': 'opendap/request_url',
+            'type': 'fake-mimetype',
+            'title': 'OPeNAP Request URL',
+            'roles': ['data'],
+        }
+        self.assertDictEqual(result_catalog_dict, expected_catalog)
+
+        mock_subset_granule.assert_called_once_with(
+            self.africa_granule_url,
+            message.sources[0],
+            ANY,
+            hoss.message,
+            hoss.config,
+        )
+        mock_unexecuted_url_requested.assert_called_with('fake-mimetype')
+        mock_stage.assert_not_called()
+        mock_get_mimetype.assert_not_called()
 
     def test_temporal_request(self, mock_stage, mock_subset_granule, mock_get_mimetype):
         """A request that specifies a temporal range should result in a

@@ -1,6 +1,6 @@
 ## unreleased
 
-### Changedale
+### Changed
 
 - Updates library versions to address snyk vulnerabilities.
 

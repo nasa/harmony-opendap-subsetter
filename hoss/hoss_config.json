@@ -123,26 +123,12 @@
       "Applicability": {
         "Mission": "SMAP",
         "ShortNamePath": "SPL2SMAP_S",
-        "VariablePattern": "/Soil_Moisture_Retrieval_Data_1km/.*"
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_(1|3)km/.*"
       },
       "Attributes": [
         {
           "Name": "grid_mapping",
-          "Value": "/EASE2_global_projection_1km"
-        }
-      ],
-      "_Description": "SMAP L3 collections omit global grid mapping information"
-    },
-    {
-      "Applicability": {
-        "Mission": "SMAP",
-        "ShortNamePath": "SPL2SMAP_S",
-        "VariablePattern": "/Soil_Moisture_Retrieval_Data_3km/.*"
-      },
-      "Attributes": [
-        {
-          "Name": "grid_mapping",
-          "Value": "/EASE2_global_projection_3km"
+          "Value": "/EASE2_global_projection"
         }
       ],
       "_Description": "SMAP L3 collections omit global grid mapping information"
@@ -288,7 +274,7 @@
       "Applicability": {
         "Mission": "SMAP",
         "ShortNamePath": "SPL2SMAP_S",
-        "VariablePattern": "/EASE2_global_projection_1km"
+        "VariablePattern": "/EASE2_global_projection"
       },
       "Attributes": [
         {
@@ -326,10 +312,6 @@
         {
           "Name": "semi_minor_axis",
           "Value": 6356752.314245
-        },
-        {
-          "Name": "master_geotransform",
-          "Value": [-17367530.4451615, 1000.89502335, 0, 7314540.8306386, 0, -1000.89502335]
         }
       ],
       "_Description": "Provide missing global grid mapping attributes for SMAP L3 collections."
@@ -337,7 +319,7 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3SMA$|SPL2SMAP_S",
+        "ShortNamePath": "SPL3SMA$",
         "VariablePattern": "/EASE2_global_projection_3km"
       },
       "Attributes": [

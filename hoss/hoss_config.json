@@ -122,13 +122,13 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3FT(P|P_E)",
-        "VariablePattern": "(?i).*global.*"
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_1km/.*"
       },
       "Attributes": [
         {
           "Name": "grid_mapping",
-          "Value": "/EASE2_global_projection"
+          "Value": "/EASE2_global_projection_1km"
         }
       ],
       "_Description": "SMAP L3 collections omit global grid mapping information"
@@ -136,16 +136,57 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3FTP",
-        "VariablePattern": "/Freeze_Thaw_Retrieval_Data_Polar/.*"
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/Soil_Moisture_Retrieval_Data_3km/.*"
       },
       "Attributes": [
         {
           "Name": "grid_mapping",
-          "Value": "/EASE2_polar_projection_36km"
+          "Value": "/EASE2_global_projection_3km"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit global grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMA$",
+        "VariablePattern": "/(Soil_Moisture_Retrieval_Data|Radar_Data|Ancillary_Data)/.*"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_global_projection_3km"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit global grid mapping information. Additionally, SMAP L3 data are HDF5 and without dimension settings. Overrides here define the dimensions, a useful reference name, and critically, the dimension order."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTA"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_polar_projection_3km"
         }
       ],
       "_Description": "SMAP L3 collections omit polar grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTP_E",
+        "VariablePattern": "(?i).*global.*"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_global_projection_9km"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit global grid mapping information"
     },
     {
       "Applicability": {
@@ -170,7 +211,7 @@
       "Attributes": [
         {
           "Name": "grid_mapping",
-          "Value": "/EASE2_global_projection"
+          "Value": "/EASE2_global_projection_9km"
         }
       ],
       "_Description": "SMAP L3 collections omit global grid mapping information"
@@ -192,25 +233,12 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3FTA"
+        "ShortNamePath": "SPL3SMAP"
       },
       "Attributes": [
         {
           "Name": "grid_mapping",
-          "Value": "/EASE2_polar_projection_3km"
-        }
-      ],
-      "_Description": "SMAP L3 collections omit polar grid mapping information"
-    },
-    {
-      "Applicability": {
-        "Mission": "SMAP",
-        "ShortNamePath": "SPL3SM(P|A|AP)$|SPL2SMAP_S"
-      },
-      "Attributes": [
-        {
-          "Name": "grid_mapping",
-          "Value": "/EASE2_global_projection"
+          "Value": "/EASE2_global_projection_9km"
         }
       ],
       "_Description": "SMAP L3 collections omit global grid mapping information"
@@ -218,8 +246,49 @@
     {
       "Applicability": {
         "Mission": "SMAP",
-        "ShortNamePath": "SPL3FT(P|P_E)|SPL3SM(P|P_E|A|AP)|SPL2SMAP_S",
-        "VariablePattern": "/EASE2_global_projection"
+        "ShortNamePath": "SPL3SMP$"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_global_projection_36km"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit global grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTP",
+        "VariablePattern": "(?i).*global.*"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_global_projection_36km"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit global grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTP",
+        "VariablePattern": "/Freeze_Thaw_Retrieval_Data_Polar/.*"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping",
+          "Value": "/EASE2_polar_projection_36km"
+        }
+      ],
+      "_Description": "SMAP L3 collections omit polar grid mapping information"
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL2SMAP_S",
+        "VariablePattern": "/EASE2_global_projection_1km"
       },
       "Attributes": [
         {
@@ -241,6 +310,76 @@
         {
           "Name": "false_northing",
           "Value": 0.0
+        },
+        {
+          "Name": "horizontal_datum_name",
+          "Value": "WGS84"
+        },
+        {
+          "Name": "inverse_flattening",
+          "Value": 298.257223563
+        },
+        {
+          "Name": "semi_major_axis",
+          "Value": 6378137.0
+        },
+        {
+          "Name": "semi_minor_axis",
+          "Value": 6356752.314245
+        },
+        {
+          "Name": "master_geotransform",
+          "Value": [-17367530.4451615, 1000.89502335, 0, 7314540.8306386, 0, -1000.89502335]
+        }
+      ],
+      "_Description": "Provide missing global grid mapping attributes for SMAP L3 collections."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3SMA$|SPL2SMAP_S",
+        "VariablePattern": "/EASE2_global_projection_3km"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping_name",
+          "Value": "lambert_cylindrical_equal_area"
+        },
+        {
+          "Name": "standard_parallel",
+          "Value": 30.0
+        },
+        {
+          "Name": "longitude_of_central_meridian",
+          "Value": 0.0
+        },
+        {
+          "Name": "false_easting",
+          "Value": 0.0
+        },
+        {
+          "Name": "false_northing",
+          "Value": 0.0
+        },
+        {
+          "Name": "horizontal_datum_name",
+          "Value": "WGS84"
+        },
+        {
+          "Name": "inverse_flattening",
+          "Value": 298.257223563
+        },
+        {
+          "Name": "semi_major_axis",
+          "Value" : 6378137.0
+        },
+        {
+          "Name": "semi_minor_axis",
+          "Value": 6356752.314245
+        },
+        {
+          "Name": "master_geotransform",
+          "Value": [-17367530.4451615, 3002.6850700487, 0, 7314540.8306386, 0, -3002.6850700487]
         }
       ],
       "_Description": "Provide missing global grid mapping attributes for SMAP L3 collections."
@@ -282,6 +421,56 @@
     {
       "Applicability": {
         "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTP_E|SPL3SMAP|SPL3SMP_E",
+        "VariablePattern": "/EASE2_global_projection_9km"
+      },
+        "Attributes": [
+        {
+          "Name": "grid_mapping_name",
+          "Value": "lambert_cylindrical_equal_area"
+        },
+        {
+          "Name": "standard_parallel",
+          "Value": 30.0
+        },
+        {
+          "Name": "longitude_of_central_meridian",
+          "Value": 0.0
+        },
+        {
+          "Name": "false_easting",
+          "Value": 0.0
+        },
+        {
+          "Name": "false_northing",
+          "Value": 0.0
+        },
+        {
+          "Name": "horizontal_datum_name",
+          "Value": "WGS84"
+        },
+        {
+          "Name": "inverse_flattening",
+          "Value": 298.257223563
+        },
+        {
+          "Name": "semi_major_axis",
+          "Value":  6378137.0
+        },
+        {
+          "Name": "semi_minor_axis",
+          "Value": 6356752.314245
+        },
+        {
+          "Name": "master_geotransform",
+          "Value": [-17367530.4451615, 9008.055210146, 0, 7314540.8306386, 0, -9008.055210146]
+        }
+      ],
+      "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
         "ShortNamePath": "SPL3FTP_E|SPL3SMP_E",
         "VariablePattern": "/EASE2_polar_projection_9km"
       },
@@ -312,6 +501,56 @@
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
+    },
+    {
+      "Applicability": {
+        "Mission": "SMAP",
+        "ShortNamePath": "SPL3FTP$|SPL3SMP$",
+        "VariablePattern": "/EASE2_global_projection_36km"
+      },
+      "Attributes": [
+        {
+          "Name": "grid_mapping_name",
+          "Value": "lambert_cylindrical_equal_area"
+        },
+        {
+          "Name": "standard_parallel",
+          "Value": 30.0
+        },
+        {
+          "Name": "longitude_of_central_meridian",
+          "Value": 0.0
+        },
+        {
+          "Name": "false_easting",
+          "Value": 0.0
+        },
+        {
+          "Name": "false_northing",
+          "Value": 0.0
+        },
+        {
+          "Name": "horizontal_datum_name",
+          "Value": "WGS84"
+        },
+        {
+          "Name": "inverse_flattening",
+          "Value": 298.257223563
+        },
+        {
+          "Name": "semi_major_axis",
+          "Value": 6378137.0
+        },
+        {
+          "Name": "semi_minor_axis",
+          "Value": 6356752.314245
+        },
+        {
+          "Name": "master_geotransform",
+          "Value": [-17367530.4451615, 36032.22084058, 0, 7314540.8306386, 0, -36032.22084058]
+        }
+      ],
+      "_Description": "Provide missing global grid mapping attributes for SMAP L3 collections."
     },
     {
       "Applicability": {

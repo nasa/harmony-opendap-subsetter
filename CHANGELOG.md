@@ -1,9 +1,9 @@
-## [v1.2.1] - 2026-01-09
+## [v1.2.1] - 2026-01-12
 
 ### Changed
 
-- Updates HOSS configuration to use Master Geotransform to calculate the
-dimension scales for all SMAP L3 collections.
+- Updates HOSS configuration to use the `master_geotransform` attribute to
+calculate the dimension scales for all SMAP L3 collections.
 
 ## [v1.2.0] - 2025-12-11
 

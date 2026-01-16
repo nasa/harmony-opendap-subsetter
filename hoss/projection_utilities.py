@@ -102,6 +102,27 @@ def get_master_geotransform(
     )
 
 
+def get_geographic_spatial_extent(
+    variable: str, varinfo: VarInfoFromDmr
+) -> BBox | None:
+    """Retrieves the `geographic_spatial_extent` attribute from the grid mapping
+    attributes of the given variable. If the `geographic_spatial_extent` attribute
+    doesn't exist, a `None` value will be returned.
+
+    """
+    spatial_extent = get_grid_mapping_attributes(variable, varinfo).get(
+        "geographic_spatial_extent", None
+    )
+    if spatial_extent is not None:
+        return BBox(
+            spatial_extent[0],  # west
+            spatial_extent[1],  # south
+            spatial_extent[2],  # east
+            spatial_extent[3],  # north
+        )
+    return None
+
+
 def get_projected_x_y_variables(
     varinfo: VarInfoFromDmr, variable: str
 ) -> Tuple[Optional[str]]:
@@ -182,6 +203,7 @@ def get_projected_x_y_extents(
     crs: CRS,
     shape_file: str = None,
     bounding_box: BBox = None,
+    geographic_spatial_extent: BBox = None,
 ) -> Dict[str, float]:
     """Retrieve the minimum and maximum values for a projected grid as derived
     from either a bounding box or GeoJSON shape file, both of which are
@@ -225,6 +247,14 @@ def get_projected_x_y_extents(
         np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
     )
 
+    # If there is a configuration for geographic spatial extent apply that.
+    if geographic_spatial_extent is not None:
+        granule_extent = BBox(
+            np.min([granule_extent.west, geographic_spatial_extent.west]),
+            np.min([granule_extent.south, geographic_spatial_extent.south]),
+            np.max([granule_extent.east, geographic_spatial_extent.east]),
+            np.max([granule_extent.north, geographic_spatial_extent.north]),
+        )
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
     granule_extent_projected_meters = {

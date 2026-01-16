@@ -52,6 +52,7 @@ from hoss.dimension_utilities import (
 )
 from hoss.exceptions import InvalidRequestedRange
 from hoss.projection_utilities import (
+    get_geographic_spatial_extent,
     get_master_geotransform,
     get_projected_x_y_extents,
     get_projected_x_y_variables,
@@ -288,13 +289,16 @@ def get_x_y_index_ranges_from_coordinates(
     projected_y, projected_x = dimension_arrays.keys()
 
     if not set((projected_x, projected_y)).issubset(set(index_ranges.keys())):
-
+        geographic_spatial_extent = get_geographic_spatial_extent(
+            non_spatial_variable, varinfo
+        )
         x_y_extents = get_projected_x_y_extents(
             dimension_arrays[projected_x][:],
             dimension_arrays[projected_y][:],
             crs,
             shape_file=shape_file_path,
             bounding_box=bounding_box,
+            geographic_spatial_extent=geographic_spatial_extent,
         )
 
         x_index_ranges = get_dimension_index_range(

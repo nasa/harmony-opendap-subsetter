@@ -477,7 +477,12 @@ class TestSpatial(TestCase):
                 )
 
                 mock_get_x_y_extents.assert_called_once_with(
-                    ANY, ANY, crs, shape_file=None, bounding_box=bbox
+                    ANY,
+                    ANY,
+                    crs,
+                    shape_file=None,
+                    bounding_box=bbox,
+                    geographic_spatial_extent=None,
                 )
 
                 self.assertEqual(mock_get_dimension_index_range.call_count, 2)

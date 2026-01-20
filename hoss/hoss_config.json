@@ -394,10 +394,6 @@
         {
           "Name": "master_geotransform",
           "Value": [-17367530.4451615, 9008.055210146, 0, 7314540.8306386, 0, -9008.055210146]
-        },
-        {
-          "Name": "geographic_spatial_extent",
-          "Value": [-180.0, 0, 180.0, 90.0]
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."

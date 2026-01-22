@@ -32,6 +32,7 @@ from hoss.projection_utilities import (
     get_densified_perimeter,
     get_filtered_points,
     get_geographic_resolution,
+    get_geographic_spatial_extent,
     get_grid_lat_lons,
     get_grid_mapping_attributes,
     get_master_geotransform,
@@ -385,7 +386,7 @@ class TestProjectionUtilities(TestCase):
     def test_get_projected_x_y_extents_whole_earth(self):
         """Ensure that the expected values for the x and y dimension extents
         are recovered for a polar projected grid and when a whole earth
-        bounding box or shape is requested.
+        bounding box or shape is requested and geographic extent is not constrained.
 
         """
         whole_earth_bbox = BBox(-180.0, -90.0, 180.0, 90.0)
@@ -471,6 +472,75 @@ class TestProjectionUtilities(TestCase):
                 x_values1 = np.linspace(-9200000, 9200000, 500)
                 y_values1 = np.linspace(9200000, -9200000, 500)
                 get_projected_x_y_extents(x_values1, y_values1, crs, bounding_box=bbox)
+
+    def test_get_projected_x_y_extents_with_configured_geographic_extent(self):
+        """Ensure that the expected values for the x and y dimension extents
+        are returned when the geographic spatial extent is configured
+
+        The dimension values used below mimic the SPL3FTP collection's polar
+        grid. The values returned should not contain extents outside the
+        configured spatial extent.
+
+        """
+
+        x_values = np.linspace(-8982000, 8982000, 500)
+        y_values = np.linspace(8982000, -8982000, 500)
+        crs = CRS.from_cf(
+            {
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'latitude_of_projection_origin': 90.0,
+                'longitude_of_projection_origin': 0.0,
+                'grid_mapping_name': 'lambert_azimuthal_equal_area',
+            }
+        )
+
+        bounding_box = BBox(12, -38, 36, 68)
+        geographic_spatial_extent = BBox(-180.0, 0, 180, 90.0)
+
+        expected_output = {
+            'x_min': 507518.9840003274,
+            'x_max': 5288134.075113788,
+            'y_min': -8800111.32936258,
+            'y_max': -1974835.9575607865,
+        }
+
+        with self.subTest('geo spatial extent configured'):
+            geographic_spatial_extent = BBox(-180.0, 0, 180, 90.0)
+            expected_output = {
+                'x_min': 507518.9840003274,
+                'x_max': 5288134.075113788,
+                'y_min': -8800111.32936258,
+                'y_max': -1974835.9575607865,
+            }
+            assert_float_dict_almost_equal(
+                get_projected_x_y_extents(
+                    x_values,
+                    y_values,
+                    crs,
+                    bounding_box=bounding_box,
+                    geographic_spatial_extent=geographic_spatial_extent,
+                ),
+                expected_output,
+            )
+
+        with self.subTest('geo spatial extent not configured'):
+            expected_output = {
+                'x_min': 507518.9840003274,
+                'x_max': 6525593.1802023165,
+                'y_min': -8981708.47358046,
+                'y_max': -1974835.9575607865,
+            }
+            assert_float_dict_almost_equal(
+                get_projected_x_y_extents(
+                    x_values,
+                    y_values,
+                    crs,
+                    bounding_box=bounding_box,
+                    geographic_spatial_extent=None,
+                ),
+                expected_output,
+            )
 
     def test_get_filtered_points(self):
         """Ensure that the coordinates returned are clipped to the granule extent or
@@ -1472,4 +1542,30 @@ class TestProjectionUtilities(TestCase):
                 'fake_attribute': [-9000000, 3000, 0, 9000000, 0, -3000]
             }
             result = get_master_geotransform("test_variable", varinfo)
+            self.assertIsNone(result)
+
+    def test_get_geographic_spatial_extent(self):
+        """Ensure that the `geographic_spatial_extent` attribute is returned if
+        it exists. If it doesn't exist the return value should be `None`.
+
+        """
+
+        varinfo = VarInfoFromDmr(
+            'tests/data/SC_SPL3FTP_004.dmr',
+            'SPL3FTP',
+            'hoss/hoss_config.json',
+        )
+
+        with self.subTest('grid mapping attribute contains geographic spatial extent'):
+            result = get_geographic_spatial_extent(
+                "/Freeze_Thaw_Retrieval_Data_Polar/altitude_dem", varinfo
+            )
+            self.assertEqual(result, BBox(west=-180.0, south=0, east=180.0, north=90.0))
+
+        with self.subTest(
+            'grid mapping attribute does not contain geographic spatial extent'
+        ):
+            result = get_geographic_spatial_extent(
+                "/Freeze_Thaw_Retrieval_Data_Global/altitude_dem", varinfo
+            )
             self.assertIsNone(result)

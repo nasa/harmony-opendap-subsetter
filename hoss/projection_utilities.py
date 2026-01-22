@@ -224,6 +224,7 @@ def get_projected_x_y_extents(
                    'y_max': 5500}
 
     """
+
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
@@ -253,14 +254,16 @@ def get_projected_x_y_extents(
             np.min([granule_extent.east, geographic_spatial_extent.east]),
             np.min([granule_extent.north, geographic_spatial_extent.north]),
         )
-    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
-    # the source file's geographic extents
-    # clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
-    requested_lons, requested_lats = np.array(densified_perimeter).T
-    clipped_lons, clipped_lats = remove_points_outside_geographic_extents(
-        requested_lons, requested_lats, granule_extent
-    )
-    clipped_perimeter = list(zip(clipped_lons, clipped_lats))
+        requested_lons, requested_lats = np.array(densified_perimeter).T
+        clipped_lons, clipped_lats = remove_points_outside_grid_extents(
+            requested_lons, requested_lats, granule_extent
+        )
+        clipped_perimeter = list(zip(clipped_lons, clipped_lats))
+    else:
+        # To avoid out-of-limits projection, we need to clip the bounding perimeter to
+        # the source file's geographic extents
+        clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
+
     granule_extent_projected_meters = {
         "x_min": np.min(x_values),
         "x_max": np.max(x_values),
@@ -579,34 +582,6 @@ def perimeter_surrounds_grid(
         return True
 
     return False
-
-
-def remove_points_outside_geographic_extents(
-    requested_lons, requested_lats, geographic_granule_extent: BBox
-) -> tuple[np.ndarray, np.ndarray]:
-    """Remove any points that are outside the grid and are invalid and raise an
-    exception if the resulting grid is empty.
-
-    """
-    tolerance = 1e-9
-    # This gets the mask of points within the granule extent.
-    # The points are checked to make sure they are within
-    # all 4 extents
-
-    mask = (
-        (requested_lons >= geographic_granule_extent.west - tolerance)
-        & (requested_lons <= geographic_granule_extent.east + tolerance)
-        & (requested_lats >= geographic_granule_extent.south - tolerance)
-        & (requested_lats <= geographic_granule_extent.north + tolerance)
-    )
-
-    requested_lons = requested_lons[mask]
-    requested_lats = requested_lats[mask]
-
-    if requested_lats.size == 0 or requested_lons.size == 0:
-        raise InvalidRequestedRange
-
-    return requested_lons, requested_lats
 
 
 def remove_points_outside_grid_extents(

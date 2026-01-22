@@ -394,6 +394,75 @@ class TestSpatial(TestCase):
                     context.exception.message,
                 )
 
+    def test_get_x_y_index_ranges_with_configured_spatial_extent(
+        self,
+    ):
+        """Ensure that x and y index ranges are accurately calculated for
+        collections which have the geographic spatial extent configured.
+        The example used in this test is for the SMAP SPL3FTP collection,
+        which has polar and global grids and the polar grid is configured with
+        spatial extent in the northern hemisphere.
+
+        """
+
+        with self.subTest('Polar variable subset in the north'):
+            harmony_message = Message({'subset': {'bbox': [12.0, 38, 36.0, 68.0]}})
+            smap_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3FTP_004.dmr',
+                'SPL3FTP',
+                'hoss/hoss_config.json',
+            )
+            prefetch_path = 'tests/data/SC_SPL3FTP_004_Polar_prefetch.nc4'
+            required_variables = {
+                '/Freeze_Thaw_Retrieval_Data_Polar/surface_flag',
+                '/Freeze_Thaw_Retrieval_Data_Polar/latitude',
+                '/Freeze_Thaw_Retrieval_Data_Polar/longitude',
+            }
+            expected_ranges = {
+                '/Freeze_Thaw_Retrieval_Data_Polar/x_dim': (264, 341),
+                '/Freeze_Thaw_Retrieval_Data_Polar/y_dim': (304, 402),
+            }
+            self.assertDictEqual(
+                get_spatial_index_ranges(
+                    required_variables,
+                    smap_varinfo,
+                    prefetch_path,
+                    harmony_message,
+                ),
+                expected_ranges,
+            )
+
+        with self.subTest('Polar variable subset in the south'):
+            harmony_message = Message({'subset': {'bbox': [12.0, -30, 36.0, -10]}})
+            smap_varinfo = VarInfoFromDmr(
+                'tests/data/SC_SPL3FTP_004.dmr',
+                'SPL3FTP',
+                'hoss/hoss_config.json',
+            )
+            prefetch_path = 'tests/data/SC_SPL3FTP_004_Polar_prefetch.nc4'
+            required_variables = {
+                '/Freeze_Thaw_Retrieval_Data_Polar/surface_flag',
+                '/Freeze_Thaw_Retrieval_Data_Polar/latitude',
+                '/Freeze_Thaw_Retrieval_Data_Polar/longitude',
+            }
+            with self.assertRaises(NoDataException) as context:
+                get_spatial_index_ranges(
+                    required_variables,
+                    smap_varinfo,
+                    prefetch_path,
+                    harmony_message,
+                )
+            expected_substrings = [
+                "Spatial subset request outside supported dimension range for",
+                "/Freeze_Thaw_Retrieval_Data_Polar/surface_flag",
+                "/Freeze_Thaw_Retrieval_Data_Polar/latitude",
+                "/Freeze_Thaw_Retrieval_Data_Polar/longitude",
+            ]
+
+            actual_message = context.exception.message
+            for substring in expected_substrings:
+                self.assertIn(substring, actual_message)
+
     @patch('hoss.spatial.get_dimension_index_range')
     @patch('hoss.spatial.get_projected_x_y_extents')
     def test_get_x_y_index_ranges_from_coordinates(

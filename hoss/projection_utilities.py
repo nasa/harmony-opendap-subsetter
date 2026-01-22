@@ -241,8 +241,6 @@ def get_projected_x_y_extents(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
 
-    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
-    # the source file's geographic extents
     granule_extent = BBox(
         np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
     )
@@ -250,13 +248,19 @@ def get_projected_x_y_extents(
     # If there is a configuration for geographic spatial extent apply that.
     if geographic_spatial_extent is not None:
         granule_extent = BBox(
-            np.min([granule_extent.west, geographic_spatial_extent.west]),
-            np.min([granule_extent.south, geographic_spatial_extent.south]),
-            np.max([granule_extent.east, geographic_spatial_extent.east]),
-            np.max([granule_extent.north, geographic_spatial_extent.north]),
+            np.max([granule_extent.west, geographic_spatial_extent.west]),
+            np.max([granule_extent.south, geographic_spatial_extent.south]),
+            np.min([granule_extent.east, geographic_spatial_extent.east]),
+            np.min([granule_extent.north, geographic_spatial_extent.north]),
         )
-    clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
-
+    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
+    # the source file's geographic extents
+    # clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
+    requested_lons, requested_lats = np.array(densified_perimeter).T
+    clipped_lons, clipped_lats = remove_points_outside_geographic_extents(
+        requested_lons, requested_lats, granule_extent
+    )
+    clipped_perimeter = list(zip(clipped_lons, clipped_lats))
     granule_extent_projected_meters = {
         "x_min": np.min(x_values),
         "x_max": np.max(x_values),
@@ -577,8 +581,8 @@ def perimeter_surrounds_grid(
     return False
 
 
-def remove_points_outside_grid_extents(
-    finite_x: np.ndarray, finite_y: np.ndarray, granule_extent: dict[str, float]
+def remove_points_outside_geographic_extents(
+    requested_lons, requested_lats, geographic_granule_extent: BBox
 ) -> tuple[np.ndarray, np.ndarray]:
     """Remove any points that are outside the grid and are invalid and raise an
     exception if the resulting grid is empty.
@@ -590,11 +594,50 @@ def remove_points_outside_grid_extents(
     # all 4 extents
 
     mask = (
-        (finite_x >= granule_extent['x_min'] - tolerance)
-        & (finite_x <= granule_extent['x_max'] + tolerance)
-        & (finite_y >= granule_extent['y_min'] - tolerance)
-        & (finite_y <= granule_extent['y_max'] + tolerance)
+        (requested_lons >= geographic_granule_extent.west - tolerance)
+        & (requested_lons <= geographic_granule_extent.east + tolerance)
+        & (requested_lats >= geographic_granule_extent.south - tolerance)
+        & (requested_lats <= geographic_granule_extent.north + tolerance)
     )
+
+    requested_lons = requested_lons[mask]
+    requested_lats = requested_lats[mask]
+
+    if requested_lats.size == 0 or requested_lons.size == 0:
+        raise InvalidRequestedRange
+
+    return requested_lons, requested_lats
+
+
+def remove_points_outside_grid_extents(
+    finite_x: np.ndarray,
+    finite_y: np.ndarray,
+    granule_extent: Union[BBox, dict[str, float]],
+) -> tuple[np.ndarray, np.ndarray]:
+    """Remove any points that are outside the grid and are invalid and raise an
+    exception if the resulting grid is empty.
+
+    """
+    tolerance = 1e-9
+    # This gets the mask of points within the granule extent.
+    # The points are checked to make sure they are within
+    # all 4 extents
+
+    if isinstance(granule_extent, BBox):
+        # finite_x is the requested lons and finite_y is the requested lats
+        mask = (
+            (finite_x >= granule_extent.west - tolerance)
+            & (finite_x <= granule_extent.east + tolerance)
+            & (finite_y >= granule_extent.south - tolerance)
+            & (finite_y <= granule_extent.north + tolerance)
+        )
+    else:
+        mask = (
+            (finite_x >= granule_extent['x_min'] - tolerance)
+            & (finite_x <= granule_extent['x_max'] + tolerance)
+            & (finite_y >= granule_extent['y_min'] - tolerance)
+            & (finite_y <= granule_extent['y_max'] + tolerance)
+        )
 
     finite_x = finite_x[mask]
     finite_y = finite_y[mask]

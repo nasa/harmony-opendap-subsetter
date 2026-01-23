@@ -614,8 +614,8 @@ class TestProjectionUtilities(TestCase):
         bounding_box_south_of_granule = [
             (-120.0, -88.0),
             (120.0, -88.0),
-            (120.0, 85.0),
-            (-120.0, 85.0),
+            (120.0, -85.0),
+            (-120.0, -85.0),
             (-120.0, -88.0),
         ]
 

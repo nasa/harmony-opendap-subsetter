@@ -509,8 +509,8 @@ class TestProjectionUtilities(TestCase):
             geographic_spatial_extent = BBox(-180.0, 0, 180, 90.0)
             expected_output = {
                 'x_min': 507518.9840003274,
-                'x_max': 5288134.075113788,
-                'y_min': -8800111.32936258,
+                'x_max': 5295924.410326623,
+                'y_min': -8813075.413894517,
                 'y_max': -1974835.9575607865,
             }
             assert_float_dict_almost_equal(
@@ -587,6 +587,38 @@ class TestProjectionUtilities(TestCase):
             (-100.0, -60.0),
         ]
 
+        bounding_box_west_of_granule = [
+            (-160.0, -80.0),
+            (-150.0, -80.0),
+            (-150.0, 80.0),
+            (-160.0, 80.0),
+            (-160.0, -80.0),
+        ]
+
+        bounding_box_east_of_granule = [
+            (150.0, -80.0),
+            (160.0, -80.0),
+            (160.0, 80.0),
+            (150.0, 80.0),
+            (150.0, -80.0),
+        ]
+
+        bounding_box_north_of_granule = [
+            (-120.0, 85.0),
+            (120.0, 85.0),
+            (120.0, 88.0),
+            (-120.0, 88.0),
+            (-120.0, 85.0),
+        ]
+
+        bounding_box_south_of_granule = [
+            (-120.0, -88.0),
+            (120.0, -88.0),
+            (120.0, 85.0),
+            (-120.0, 85.0),
+            (-120.0, -88.0),
+        ]
+
         with self.subTest('Bounding box completely contains granule extent'):
             self.assertListEqual(
                 get_filtered_points(bounding_points_contains_granule, granule_extent),
@@ -618,6 +650,19 @@ class TestProjectionUtilities(TestCase):
                     (-100.0, -60.0),
                 ],
             )
+
+        with self.subTest('Bounding box west of granule'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_filtered_points(bounding_box_west_of_granule, granule_extent)
+        with self.subTest('Bounding box east of granule'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_filtered_points(bounding_box_east_of_granule, granule_extent)
+        with self.subTest('Bounding box north of granule'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_filtered_points(bounding_box_north_of_granule, granule_extent)
+        with self.subTest('Bounding box south of granule'):
+            with self.assertRaises(InvalidRequestedRange):
+                get_filtered_points(bounding_box_south_of_granule, granule_extent)
 
     def test_get_projected_x_y_variables(self):
         """Ensure that the `standard_name` metadata attribute can be parsed

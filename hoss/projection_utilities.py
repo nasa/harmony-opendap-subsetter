@@ -254,15 +254,10 @@ def get_projected_x_y_extents(
             np.min([granule_extent.east, geographic_spatial_extent.east]),
             np.min([granule_extent.north, geographic_spatial_extent.north]),
         )
-        requested_lons, requested_lats = np.array(densified_perimeter).T
-        clipped_lons, clipped_lats = remove_points_outside_grid_extents(
-            requested_lons, requested_lats, granule_extent
-        )
-        clipped_perimeter = list(zip(clipped_lons, clipped_lats))
-    else:
-        # To avoid out-of-limits projection, we need to clip the bounding perimeter to
-        # the source file's geographic extents
-        clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
+
+    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
+    # the source file's geographic extents
+    clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
     granule_extent_projected_meters = {
         "x_min": np.min(x_values),
@@ -281,7 +276,17 @@ def get_filtered_points(
     """Returns lat/lon values clipped to the extent of the granule"""
 
     requested_lons, requested_lats = zip(*points_in_requested_extent)
+    # if all the points in the bounding box are outside the granule extent,
+    if (
+        np.max(requested_lons) < granule_extent.west
+        or np.min(requested_lons) > granule_extent.east
+        or np.max(requested_lats) < granule_extent.south
+        or np.min(requested_lats) > granule_extent.north
+    ):
+        raise InvalidRequestedRange
 
+    # if the bounding box points are enclosing the granule extent,
+    # clip to the granule extent
     # all lon values are clipped within the granule lon extent
     clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
 
@@ -587,7 +592,7 @@ def perimeter_surrounds_grid(
 def remove_points_outside_grid_extents(
     finite_x: np.ndarray,
     finite_y: np.ndarray,
-    granule_extent: Union[BBox, dict[str, float]],
+    granule_extent: dict[str, float],
 ) -> tuple[np.ndarray, np.ndarray]:
     """Remove any points that are outside the grid and are invalid and raise an
     exception if the resulting grid is empty.
@@ -598,21 +603,12 @@ def remove_points_outside_grid_extents(
     # The points are checked to make sure they are within
     # all 4 extents
 
-    if isinstance(granule_extent, BBox):
-        # finite_x is the requested lons and finite_y is the requested lats
-        mask = (
-            (finite_x >= granule_extent.west - tolerance)
-            & (finite_x <= granule_extent.east + tolerance)
-            & (finite_y >= granule_extent.south - tolerance)
-            & (finite_y <= granule_extent.north + tolerance)
-        )
-    else:
-        mask = (
-            (finite_x >= granule_extent['x_min'] - tolerance)
-            & (finite_x <= granule_extent['x_max'] + tolerance)
-            & (finite_y >= granule_extent['y_min'] - tolerance)
-            & (finite_y <= granule_extent['y_max'] + tolerance)
-        )
+    mask = (
+        (finite_x >= granule_extent['x_min'] - tolerance)
+        & (finite_x <= granule_extent['x_max'] + tolerance)
+        & (finite_y >= granule_extent['y_min'] - tolerance)
+        & (finite_y <= granule_extent['y_max'] + tolerance)
+    )
 
     finite_x = finite_x[mask]
     finite_y = finite_y[mask]

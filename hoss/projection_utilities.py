@@ -271,11 +271,14 @@ def get_projected_x_y_extents(
 
 
 def get_filtered_points(
-    points_in_requested_extent: List[Coordinates], granule_extent: BBox
+    spatial_constraint_pts: List[Coordinates], granule_extent: BBox
 ) -> List[Coordinates]:
-    """Returns lat/lon values clipped to the extent of the granule"""
+    """Returns spatial constraint lat/lon values clipped to the spatial
+    extent of the granule or raises exception if entirely outside
+    the granule
 
-    requested_lons, requested_lats = zip(*points_in_requested_extent)
+    """
+    requested_lons, requested_lats = zip(*spatial_constraint_pts)
     # if all the points in the bounding box are outside the granule extent,
     if (
         np.max(requested_lons) < granule_extent.west
@@ -285,9 +288,9 @@ def get_filtered_points(
     ):
         raise InvalidRequestedRange
 
-    # if the bounding box points are enclosing the granule extent,
-    # clip to the granule extent
-    # all lon values are clipped within the granule lon extent
+    # If the spatial constraint encloses the granule extent,
+    # clip to the granule extent.
+    # First, all lon values are clipped within the granule lon extent
     clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
 
     # all lat values are clipped to granule lat extent

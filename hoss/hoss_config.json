@@ -478,6 +478,10 @@
         {
           "Name": "master_geotransform",
           "Value": [-9000000, 3000, 0, 9000000, 0, -3000]
+        },
+        {
+          "Name": "geographic_spatial_extent",
+          "Value": [-180.0, 0, 180.0, 90.0]
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
@@ -512,6 +516,10 @@
         {
           "Name": "master_geotransform",
           "Value": [-9000000, 9000, 0, 9000000, 0, -9000]
+        },
+        {
+          "Name": "geographic_spatial_extent",
+          "Value": [-180.0, 0, 180.0, 90.0]
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."
@@ -546,6 +554,10 @@
         {
           "Name": "master_geotransform",
           "Value": [-9000000, 36000, 0, 9000000, 0, -36000]
+        },
+        {
+          "Name": "geographic_spatial_extent",
+          "Value": [-180.0, 0, 180.0, 90.0]
         }
       ],
       "_Description": "Provide missing polar grid mapping attributes for SMAP L3 collections."

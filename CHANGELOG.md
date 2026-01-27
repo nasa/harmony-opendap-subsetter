@@ -1,3 +1,9 @@
+## [v1.2.2] - 2026-01-22
+
+### Changed
+
+- SMAP polar data subsetting constrained to north of Equator.
+
 ## [v1.2.1] - 2026-01-12
 
 ### Changed
@@ -231,6 +237,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.2]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.2
 [v1.2.1]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.1
 [v1.2.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.0
 [v1.1.17]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.1.17

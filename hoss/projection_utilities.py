@@ -102,6 +102,27 @@ def get_master_geotransform(
     )
 
 
+def get_geographic_spatial_extent(
+    variable: str, varinfo: VarInfoFromDmr
+) -> BBox | None:
+    """Retrieves the `geographic_spatial_extent` attribute from the grid mapping
+    attributes of the given variable. If the `geographic_spatial_extent` attribute
+    doesn't exist, a `None` value will be returned.
+
+    """
+    spatial_extent = get_grid_mapping_attributes(variable, varinfo).get(
+        "geographic_spatial_extent", None
+    )
+    if spatial_extent is not None:
+        return BBox(
+            spatial_extent[0],  # west
+            spatial_extent[1],  # south
+            spatial_extent[2],  # east
+            spatial_extent[3],  # north
+        )
+    return None
+
+
 def get_projected_x_y_variables(
     varinfo: VarInfoFromDmr, variable: str
 ) -> Tuple[Optional[str]]:
@@ -182,6 +203,7 @@ def get_projected_x_y_extents(
     crs: CRS,
     shape_file: str = None,
     bounding_box: BBox = None,
+    geographic_spatial_extent: BBox = None,
 ) -> Dict[str, float]:
     """Retrieve the minimum and maximum values for a projected grid as derived
     from either a bounding box or GeoJSON shape file, both of which are
@@ -202,6 +224,7 @@ def get_projected_x_y_extents(
                    'y_max': 5500}
 
     """
+
     grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
         x_values, y_values, crs
     )
@@ -219,12 +242,21 @@ def get_projected_x_y_extents(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
 
-    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
-    # the source file's geographic extents
     granule_extent = BBox(
         np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
     )
 
+    # If there is a configuration for geographic spatial extent apply that.
+    if geographic_spatial_extent is not None:
+        granule_extent = BBox(
+            np.max([granule_extent.west, geographic_spatial_extent.west]),
+            np.max([granule_extent.south, geographic_spatial_extent.south]),
+            np.min([granule_extent.east, geographic_spatial_extent.east]),
+            np.min([granule_extent.north, geographic_spatial_extent.north]),
+        )
+
+    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
+    # the source file's geographic extents
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
     granule_extent_projected_meters = {
@@ -239,13 +271,26 @@ def get_projected_x_y_extents(
 
 
 def get_filtered_points(
-    points_in_requested_extent: List[Coordinates], granule_extent: BBox
+    spatial_constraint_pts: List[Coordinates], granule_extent: BBox
 ) -> List[Coordinates]:
-    """Returns lat/lon values clipped to the extent of the granule"""
+    """Returns spatial constraint lat/lon values clipped to the spatial
+    extent of the granule or raises exception if entirely outside
+    the granule
 
-    requested_lons, requested_lats = zip(*points_in_requested_extent)
+    """
+    requested_lons, requested_lats = zip(*spatial_constraint_pts)
+    # if all the points in the bounding box are outside the granule extent,
+    if (
+        np.max(requested_lons) < granule_extent.west
+        or np.min(requested_lons) > granule_extent.east
+        or np.max(requested_lats) < granule_extent.south
+        or np.min(requested_lats) > granule_extent.north
+    ):
+        raise InvalidRequestedRange
 
-    # all lon values are clipped within the granule lon extent
+    # If the spatial constraint encloses the granule extent,
+    # clip to the granule extent.
+    # First, all lon values are clipped within the granule lon extent
     clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
 
     # all lat values are clipped to granule lat extent
@@ -548,7 +593,9 @@ def perimeter_surrounds_grid(
 
 
 def remove_points_outside_grid_extents(
-    finite_x: np.ndarray, finite_y: np.ndarray, granule_extent: dict[str, float]
+    finite_x: np.ndarray,
+    finite_y: np.ndarray,
+    granule_extent: dict[str, float],
 ) -> tuple[np.ndarray, np.ndarray]:
     """Remove any points that are outside the grid and are invalid and raise an
     exception if the resulting grid is empty.

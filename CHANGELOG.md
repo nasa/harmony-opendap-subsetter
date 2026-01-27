@@ -2,7 +2,7 @@
 
 ### Changed
 
-- SMAP Polar data subsetting constrained to North of Equator.
+- SMAP polar data subsetting constrained to north of Equator.
 
 ## [v1.2.1] - 2026-01-12
 

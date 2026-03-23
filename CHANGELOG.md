@@ -1,3 +1,10 @@
+## [v1.2.2] - 2026-03-23
+
+### Changed
+
+- Failures encounted during downloading of OPeNDAP files are now retried
+  if the error is not due to authentication problem.
+
 ## [v1.2.2] - 2026-01-22
 
 ### Changed
@@ -237,6 +244,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.3]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.3
 [v1.2.2]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.2
 [v1.2.1]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.1
 [v1.2.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.0

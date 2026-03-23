@@ -21,7 +21,7 @@ from harmony_service_lib.exceptions import (
 from harmony_service_lib.util import Config
 from harmony_service_lib.util import download as util_download
 
-from hoss.exceptions import CustomNoRetryError, UrlAccessFailed
+from hoss.exceptions import CustomNoRetryError, UrlAccessFailed, UrlAccessForbidden
 from hoss.harmony_log_context import get_logger
 
 
@@ -166,7 +166,7 @@ def download_url(
             cfg=config,
         )
     except ForbiddenException as harmony_exception:
-        raise UrlAccessFailed(url, 400) from harmony_exception
+        raise UrlAccessForbidden(url, 403) from harmony_exception
     except ServerException as harmony_exception:
         raise UrlAccessFailed(url, 500) from harmony_exception
     except Exception as harmony_exception:

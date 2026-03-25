@@ -3,7 +3,7 @@
 ### Changed
 
 - Failures encounted during downloading of OPeNDAP files are now retried
-  if the error is not due to authentication problem.
+  if the error is not due to Authorization.
 
 ## [v1.2.2] - 2026-01-22
 

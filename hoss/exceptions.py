@@ -293,14 +293,24 @@ class UnsupportedTemporalUnits(CustomNoRetryError):
         )
 
 
-class UrlAccessFailed(CustomNoRetryError):
-    """This exception is raised when an HTTP request for a given URL has a non
-    500 error, and is therefore not retried.
+class UrlAccessFailed(CustomError):
+    """This exception is raised when an HTTP request for a given URL fails due
+    to a server or transient network error that may succeed on retry.
 
     """
 
     def __init__(self, url, status_code):
         super().__init__('UrlAccessFailed', f'{status_code} error retrieving: {url}')
+
+
+class UrlAccessForbidden(CustomNoRetryError):
+    """This exception is raised when access to a URL is forbidden (e.g., HTTP
+    403) and should not be retried.
+
+    """
+
+    def __init__(self, url, status_code):
+        super().__init__('UrlAccessForbidden', f'{status_code} error retrieving: {url}')
 
 
 class InvalidVariableRequest(CustomNoRetryError):

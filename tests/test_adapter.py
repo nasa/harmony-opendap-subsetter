@@ -13,6 +13,7 @@ from unittest import TestCase
 from unittest.mock import ANY, Mock, call, patch
 
 from harmony_service_lib.exceptions import NoDataException, NoRetryException
+from harmony_service_lib.http import ForbiddenException
 from harmony_service_lib.message import Message
 from harmony_service_lib.util import HarmonyException, config
 from netCDF4 import Dataset
@@ -21,7 +22,7 @@ from pystac import Catalog
 from varinfo import VarInfoFromDmr
 
 from hoss.adapter import HossAdapter
-from hoss.exceptions import InvalidVariableRequest
+from hoss.exceptions import InvalidVariableRequest, UrlAccessForbidden
 from tests.utilities import Granule, create_stac, write_dmr
 
 
@@ -2742,10 +2743,10 @@ class TestHossEndToEnd(TestCase):
 
     @patch('hoss.adapter.mkdtemp')
     @patch('shutil.rmtree')
-    @patch('hoss.subset.check_invalid_variable_request')
+    @patch('hoss.utilities.util_download')
     @patch('hoss.adapter.stage')
     def test_not_retriable_exception_handling(
-        self, mock_stage, mock_check_variable, mock_rmtree, mock_mkdtemp
+        self, mock_stage, mock_util_download, mock_rmtree, mock_mkdtemp
     ):
         """Ensure that if a not retriable exception is raised during
         processing, this causes a NoRetryException to be raised, to prevent
@@ -2753,7 +2754,7 @@ class TestHossEndToEnd(TestCase):
 
         """
         mock_mkdtemp.return_value = self.tmp_dir
-        mock_check_variable.side_effect = InvalidVariableRequest('Random error')
+        mock_util_download.side_effect = ForbiddenException('403 no permission error')
 
         message = Message(
             {

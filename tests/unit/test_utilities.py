@@ -2,10 +2,20 @@ from logging import getLogger
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from harmony_service_lib.exceptions import ForbiddenException, ServerException
+from harmony_service_lib.exceptions import (
+    ForbiddenException,
+    HarmonyException,
+    NoRetryException,
+    ServerException,
+)
 from harmony_service_lib.util import config
 
-from hoss.exceptions import UrlAccessFailed
+from hoss.exceptions import (
+    CustomError,
+    CustomNoRetryError,
+    UrlAccessFailed,
+    UrlAccessForbidden,
+)
 from hoss.harmony_log_context import set_logger
 from hoss.utilities import (
     download_url,
@@ -16,6 +26,7 @@ from hoss.utilities import (
     get_opendap_nc4,
     get_value_or_default,
     move_downloaded_nc4,
+    raise_from_hoss_exception,
     unexecuted_url_requested,
 )
 
@@ -99,11 +110,14 @@ class TestUtilities(TestCase):
             )
             mock_util_download.reset_mock()
 
-        with self.subTest('500 error is caught and handled.'):
+        with self.subTest('500 error is caught and handled, and is retryable.'):
             mock_util_download.side_effect = [self.harmony_500_error, http_response]
 
-            with self.assertRaises(UrlAccessFailed):
+            with self.assertRaises(UrlAccessFailed) as context:
                 download_url(test_url, output_directory, access_token, self.config)
+
+            self.assertIsInstance(context.exception, CustomError)
+            self.assertNotIsInstance(context.exception, CustomNoRetryError)
 
             mock_util_download.assert_called_once_with(
                 test_url,
@@ -115,11 +129,35 @@ class TestUtilities(TestCase):
             )
             mock_util_download.reset_mock()
 
-        with self.subTest('Non-500 error does not retry, and is re-raised.'):
+        with self.subTest('A 403 error (forbidden) is not retried.'):
             mock_util_download.side_effect = [self.harmony_auth_error, http_response]
 
-            with self.assertRaises(UrlAccessFailed):
+            with self.assertRaises(UrlAccessForbidden) as context:
                 download_url(test_url, output_directory, access_token, self.config)
+
+            self.assertIsInstance(context.exception, CustomNoRetryError)
+
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config,
+            )
+            mock_util_download.reset_mock()
+
+        with self.subTest('Unknown/transient error is caught and is retryable.'):
+            mock_util_download.side_effect = [
+                Exception('something broke'),
+                http_response,
+            ]
+
+            with self.assertRaises(UrlAccessFailed) as context:
+                download_url(test_url, output_directory, access_token, self.config)
+
+            self.assertIsInstance(context.exception, CustomError)
+            self.assertNotIsInstance(context.exception, CustomNoRetryError)
 
             mock_util_download.assert_called_once_with(
                 test_url,
@@ -335,3 +373,23 @@ class TestUtilities(TestCase):
 
         with self.subTest('Format type is None'):
             self.assertFalse(unexecuted_url_requested(None))
+
+    def test_raise_from_hoss_exception(self):
+        """Ensure that HOSS exceptions are correctly converted to Harmony
+        exceptions. CustomNoRetryError subclasses should become
+        NoRetryException, while CustomError subclasses should become a
+        retryable HarmonyException.
+
+        """
+        test_url = 'fake_website.com'
+
+        with self.subTest('UrlAccessForbidden (no-retry) raises NoRetryException.'):
+            forbidden_exception = UrlAccessForbidden(test_url, 403)
+            with self.assertRaises(NoRetryException):
+                raise_from_hoss_exception(forbidden_exception)
+
+        with self.subTest('UrlAccessFailed (retryable) raises HarmonyException.'):
+            failed_exception = UrlAccessFailed(test_url, 500)
+            with self.assertRaises(HarmonyException) as context:
+                raise_from_hoss_exception(failed_exception)
+            self.assertNotIsInstance(context.exception, NoRetryException)

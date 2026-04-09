@@ -5,6 +5,7 @@ allows finer-grained unit testing of each smaller part of functionality.
 """
 
 import mimetypes
+import re
 from os import sep
 from os.path import splitext
 from shutil import move
@@ -21,7 +22,12 @@ from harmony_service_lib.exceptions import (
 from harmony_service_lib.util import Config
 from harmony_service_lib.util import download as util_download
 
-from hoss.exceptions import CustomNoRetryError, UrlAccessFailed, UrlAccessForbidden
+from hoss.exceptions import (
+    CustomNoRetryError,
+    UrlAccessFailed,
+    UrlAccessForbidden,
+    UrlAccessFailedWithNoRetries,
+)
 from hoss.harmony_log_context import get_logger
 
 
@@ -168,7 +174,8 @@ def download_url(
     except ForbiddenException as harmony_exception:
         raise UrlAccessForbidden(url, 403) from harmony_exception
     except ServerException as harmony_exception:
-        raise UrlAccessFailed(url, 500) from harmony_exception
+        # raise UrlAccessFailed(url, 500) from harmony_exception
+        parse_harmony_server_exception(url, harmony_exception)
     except Exception as harmony_exception:
         raise UrlAccessFailed(url, 'Unknown') from harmony_exception
 
@@ -217,3 +224,30 @@ def raise_from_hoss_exception(exception: Exception):
     raise ExceptionClass(
         'Subsetter failed with error: ' + str(exception)
     ) from exception
+
+
+def parse_harmony_server_exception(url: str, harmony_exception: Exception):
+    """
+    Parses a harmony ServerException for the status code and raises the
+    appropriate UrlAccess exception based on whether it is a 500 or another code.
+
+    """
+
+    message = str(harmony_exception)
+
+    # Search for "status code: <number>" in the exception message
+    match = re.search(r'status code:\s*(\d+)', message)
+
+    if match:
+        status_code = int(match.group(1))
+
+        # Retry downloads on HTTP 500 reponse code (transient)
+        # Fail without retries for all other status codes
+        if status_code == 500:
+            raise UrlAccessFailed(url, 500) from harmony_exception
+
+        raise UrlAccessFailedWithNoRetries(url, status_code) from harmony_exception
+
+    # Fallback in case the exception message doesn't contain a status code
+    # Defaulting to 500
+    raise UrlAccessFailed(url, 500) from harmony_exception

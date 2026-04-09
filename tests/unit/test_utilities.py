@@ -15,6 +15,7 @@ from hoss.exceptions import (
     CustomNoRetryError,
     UrlAccessFailed,
     UrlAccessForbidden,
+    UrlAccessFailedWithNoRetries,
 )
 from hoss.harmony_log_context import set_logger
 from hoss.utilities import (
@@ -37,6 +38,7 @@ class TestUtilities(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.harmony_500_error = ServerException('I can\'t do that')
+        cls.harmony_400_error = ServerException('Unable to download due to status code: 400 and content')
         cls.harmony_auth_error = ForbiddenException('You can\'t do that.')
         cls.config = config(validate=False)
         cls.logger = getLogger('test')
@@ -133,6 +135,24 @@ class TestUtilities(TestCase):
             mock_util_download.side_effect = [self.harmony_auth_error, http_response]
 
             with self.assertRaises(UrlAccessForbidden) as context:
+                download_url(test_url, output_directory, access_token, self.config)
+
+            self.assertIsInstance(context.exception, CustomNoRetryError)
+
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config,
+            )
+            mock_util_download.reset_mock()
+
+        with self.subTest('A 400 error (Bad Request) is not retried.'):
+            mock_util_download.side_effect = [self.harmony_400_error, http_response]
+
+            with self.assertRaises(UrlAccessFailedWithNoRetries) as context:
                 download_url(test_url, output_directory, access_token, self.config)
 
             self.assertIsInstance(context.exception, CustomNoRetryError)

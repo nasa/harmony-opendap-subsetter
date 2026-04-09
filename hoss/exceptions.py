@@ -325,3 +325,16 @@ class InvalidVariableRequest(CustomNoRetryError):
             f'Some variables requested are not supported and could not be processed: '
             f'"{variable_names}".',
         )
+
+
+class UrlAccessFailedWithNoRetries(CustomNoRetryError):
+    """This exception is raised when an HTTP request for a given URL fails due
+    to a server other than response code 500.
+
+    """
+
+    def __init__(self, url, status_code):
+        super().__init__(
+            'UrlAccessFailedWithNoRetries',
+            f'{status_code} error retrieving: {url}',
+        )

@@ -563,12 +563,8 @@ class TestAdapter(TestCase):
             logger=hoss.logger,
         )
 
-    def test_hoss_stage(
-        self, mock_stage, mock_subset_granule, mock_get_mimetype
-    ):
-        """Ensure hoss_stage successfully calls hoss_stage and returns the URL
-
-        """
+    def test_hoss_stage(self, mock_stage, mock_subset_granule, mock_get_mimetype):
+        """Ensure hoss_stage successfully calls hoss_stage and returns the URL"""
         mock_subset_granule.return_value = '/path/to/output.nc'
         expected_output_basename = '/path/to/output.nc'
         mock_get_mimetype.return_value = ('application/x-netcdf4', None)
@@ -601,16 +597,13 @@ class TestAdapter(TestCase):
             'africa.nc4',
             'application/x-netcdf4',
         )
-        
+
         assert result == expected_staged_url
 
     def test_hoss_stage_raises_exception(
-            self,
-            mock_stage,
-            mock_subset_granule,
-            mock_get_mimetype
-        ):
-        """Ensure hoss_stage raises an StagingFailed exception when 
+        self, mock_stage, mock_subset_granule, mock_get_mimetype
+    ):
+        """Ensure hoss_stage raises an StagingFailed exception when
         the Harmony stage function throws an exception.
 
         """
@@ -631,12 +624,9 @@ class TestAdapter(TestCase):
                 '/path/to/output.nc',
                 'africa.nc4',
                 'application/x-netcdf4',
-        )
+            )
 
-        self.assertIsInstance(
-            context_manager.exception,
-            CustomError
-        )
+        self.assertIsInstance(context_manager.exception, CustomError)
         self.assertEqual(
             str(context_manager.exception),
             'Staging failed, Connection timeout',

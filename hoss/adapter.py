@@ -35,6 +35,7 @@ from harmony_service_lib.util import generate_output_filename, stage
 from pystac import Asset, Item
 
 from hoss.dimension_utilities import is_index_subset
+from hoss.exceptions import StagingFailed
 from hoss.harmony_log_context import set_logger
 from hoss.subset import subset_granule
 from hoss.utilities import (
@@ -42,7 +43,6 @@ from hoss.utilities import (
     raise_from_hoss_exception,
     unexecuted_url_requested,
 )
-from hoss.exceptions import StagingFailed
 
 
 class HossAdapter(BaseHarmonyAdapter):
@@ -189,11 +189,7 @@ class HossAdapter(BaseHarmonyAdapter):
             if not hasattr(source, 'variables') or not source.variables:
                 self.logger.info('All variables will be retrieved.')
 
-    def hoss_stage(
-            self,
-            url: str,
-            asset_name: str,
-            output_mimetype: str) -> str:
+    def hoss_stage(self, url: str, asset_name: str, output_mimetype: str) -> str:
         """Stages the file to and S3 location and returns the url.
         Throws a retriable exception when there is a failure.
 
@@ -204,12 +200,10 @@ class HossAdapter(BaseHarmonyAdapter):
                 asset_name,
                 output_mimetype,
                 location=self.message.stagingLocation,
-                logger=self.logger
+                logger=self.logger,
             )
 
             return output_url
 
         except Exception as exception:
-            raise StagingFailed(
-                'Staging failed, ' + str(exception)
-            ) from exception
+            raise StagingFailed('Staging failed, ' + str(exception)) from exception

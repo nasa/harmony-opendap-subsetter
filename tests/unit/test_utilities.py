@@ -446,7 +446,9 @@ class TestUtilities(TestCase):
                 raise_from_hoss_exception(failed_exception)
             self.assertNotIsInstance(context.exception, NoRetryException)
 
-        with self.subTest('UrlAccessFailedWithNoRetries (no-retry) raises NoRetryException.'):
+        with self.subTest(
+            'UrlAccessFailedWithNoRetries (no-retry) raises NoRetryException.'
+        ):
             failed_exception = UrlAccessFailedWithNoRetries(test_url, 400)
             with self.assertRaises(NoRetryException):
                 raise_from_hoss_exception(failed_exception)

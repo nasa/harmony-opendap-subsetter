@@ -13,6 +13,7 @@ from harmony_service_lib.util import config
 from hoss.exceptions import (
     CustomError,
     CustomNoRetryError,
+    StagingFailed,
     UrlAccessFailed,
     UrlAccessFailedWithNoRetries,
     UrlAccessForbidden,
@@ -441,6 +442,17 @@ class TestUtilities(TestCase):
 
         with self.subTest('UrlAccessFailed (retryable) raises HarmonyException.'):
             failed_exception = UrlAccessFailed(test_url, 500)
+            with self.assertRaises(HarmonyException) as context:
+                raise_from_hoss_exception(failed_exception)
+            self.assertNotIsInstance(context.exception, NoRetryException)
+
+        with self.subTest('UrlAccessFailedWithNoRetries (no-retry) raises NoRetryException.'):
+            failed_exception = UrlAccessFailedWithNoRetries(test_url, 400)
+            with self.assertRaises(NoRetryException):
+                raise_from_hoss_exception(failed_exception)
+
+        with self.subTest('StagingFailed (retryable) raises HarmonyException.'):
+            failed_exception = StagingFailed('Staging failed, Connection timeout')
             with self.assertRaises(HarmonyException) as context:
                 raise_from_hoss_exception(failed_exception)
             self.assertNotIsInstance(context.exception, NoRetryException)

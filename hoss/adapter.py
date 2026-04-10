@@ -42,6 +42,7 @@ from hoss.utilities import (
     raise_from_hoss_exception,
     unexecuted_url_requested,
 )
+from hoss.exceptions import StagingFailed
 
 
 class HossAdapter(BaseHarmonyAdapter):
@@ -133,12 +134,10 @@ class HossAdapter(BaseHarmonyAdapter):
                     ),
                 )
                 mime, _ = get_file_mimetype(output_url)
-                url = stage(
+                url = self.hoss_stage(
                     output_url,
                     asset_name,
                     mime,
-                    location=self.message.stagingLocation,
-                    logger=self.logger,
                 )
 
             # Update the STAC record
@@ -189,3 +188,28 @@ class HossAdapter(BaseHarmonyAdapter):
         for source in self.message.sources:
             if not hasattr(source, 'variables') or not source.variables:
                 self.logger.info('All variables will be retrieved.')
+
+    def hoss_stage(
+            self,
+            url: str,
+            asset_name: str,
+            output_mimetype: str) -> str:
+        """Stages the file to and S3 location and returns the url.
+        Throws a retriable exception when there is a failure.
+
+        """
+        try:
+            output_url = stage(
+                url,
+                asset_name,
+                output_mimetype,
+                location=self.message.stagingLocation,
+                logger=self.logger
+            )
+
+            return output_url
+
+        except Exception as exception:
+            raise StagingFailed(
+                'Staging failed, ' + str(exception)
+            ) from exception

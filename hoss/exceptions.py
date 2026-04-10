@@ -338,3 +338,13 @@ class UrlAccessFailedWithNoRetries(CustomNoRetryError):
             'UrlAccessFailedWithNoRetries',
             f'{status_code} error retrieving: {url}',
         )
+
+
+class StagingFailed(CustomError):
+    """This Exception is used as a catch any errors
+    during staging. This will be retriable exception.
+
+    """
+
+    def __init__(self, message):
+        super().__init__('StagingFailed', message)

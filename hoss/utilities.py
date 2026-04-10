@@ -23,7 +23,7 @@ from harmony_service_lib.util import Config
 from harmony_service_lib.util import download as util_download
 
 from hoss.exceptions import (
-    CustomNoRetryError,
+    CustomError,
     UrlAccessFailed,
     UrlAccessFailedWithNoRetries,
     UrlAccessForbidden,
@@ -210,15 +210,15 @@ def raise_from_hoss_exception(exception: Exception):
     """Convert a HOSS exception to an appropriate Harmony exception.
 
     Translates HOSS-specific exceptions into Harmony framework exceptions,
-    preserving the exception chain. CustomNoRetryError exceptions are converted
-    to NoRetryException, while all other exceptions become HarmonyException
-    instances.
+    preserving the exception chain. Ensures CustomError (download/staging)
+    are retried via HarmonyException, and all other errors fail permanently
+    with NoRetryException
 
     """
-    if issubclass(type(exception), CustomNoRetryError):
-        ExceptionClass = NoRetryException
-    else:
+    if issubclass(type(exception), CustomError):
         ExceptionClass = HarmonyException
+    else:
+        ExceptionClass = NoRetryException
 
     raise ExceptionClass(
         'Subsetter failed with error: ' + str(exception)

@@ -38,7 +38,12 @@ class TestUtilities(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.harmony_500_error = ServerException('I can\'t do that')
-        cls.harmony_400_error = ServerException('Unable to download due to status code: 400 and content')
+        cls.harmony_500_status_code_error = ServerException(
+            'Unable to download due to status code: 500 and content'
+        )
+        cls.harmony_400_status_code_error = ServerException(
+            'Unable to download due to status code: 400 and content'
+        )
         cls.harmony_auth_error = ForbiddenException('You can\'t do that.')
         cls.config = config(validate=False)
         cls.logger = getLogger('test')
@@ -131,6 +136,28 @@ class TestUtilities(TestCase):
             )
             mock_util_download.reset_mock()
 
+        with self.subTest('Harmony server exception 500 error should be retried.'):
+            mock_util_download.side_effect = [
+                self.harmony_500_status_code_error,
+                http_response
+            ]
+
+            with self.assertRaises(UrlAccessFailed) as context:
+                download_url(test_url, output_directory, access_token, self.config)
+
+            self.assertIsInstance(context.exception, CustomError)
+            self.assertNotIsInstance(context.exception, CustomNoRetryError)
+
+            mock_util_download.assert_called_once_with(
+                test_url,
+                output_directory,
+                self.logger,
+                access_token=access_token,
+                data=None,
+                cfg=self.config,
+            )
+            mock_util_download.reset_mock()
+
         with self.subTest('A 403 error (forbidden) is not retried.'):
             mock_util_download.side_effect = [self.harmony_auth_error, http_response]
 
@@ -150,12 +177,16 @@ class TestUtilities(TestCase):
             mock_util_download.reset_mock()
 
         with self.subTest('A 400 error (Bad Request) is not retried.'):
-            mock_util_download.side_effect = [self.harmony_400_error, http_response]
+            mock_util_download.side_effect = [
+                self.harmony_400_status_code_error,
+                http_response
+            ]
 
             with self.assertRaises(UrlAccessFailedWithNoRetries) as context:
                 download_url(test_url, output_directory, access_token, self.config)
 
             self.assertIsInstance(context.exception, CustomNoRetryError)
+            self.assertNotIsInstance(context.exception, CustomError)
 
             mock_util_download.assert_called_once_with(
                 test_url,

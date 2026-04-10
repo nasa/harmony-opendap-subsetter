@@ -329,7 +329,7 @@ class InvalidVariableRequest(CustomNoRetryError):
 
 class UrlAccessFailedWithNoRetries(CustomNoRetryError):
     """This exception is raised when an HTTP request for a given URL fails due
-    to a server other than response code 500.
+    to a server error other than response code 500.
 
     """
 

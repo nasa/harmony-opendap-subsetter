@@ -174,8 +174,7 @@ def download_url(
     except ForbiddenException as harmony_exception:
         raise UrlAccessForbidden(url, 403) from harmony_exception
     except ServerException as harmony_exception:
-        # raise UrlAccessFailed(url, 500) from harmony_exception
-        parse_harmony_server_exception(url, harmony_exception)
+        handle_harmony_server_exception(url, harmony_exception)
     except Exception as harmony_exception:
         raise UrlAccessFailed(url, 'Unknown') from harmony_exception
 
@@ -226,7 +225,7 @@ def raise_from_hoss_exception(exception: Exception):
     ) from exception
 
 
-def parse_harmony_server_exception(url: str, harmony_exception: Exception):
+def handle_harmony_server_exception(url: str, harmony_exception: Exception):
     """
     Parses a harmony ServerException for the status code and raises the
     appropriate UrlAccess exception based on whether it is a 500 or another code.

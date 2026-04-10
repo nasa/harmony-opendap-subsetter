@@ -139,7 +139,7 @@ class TestUtilities(TestCase):
         with self.subTest('Harmony server exception 500 error should be retried.'):
             mock_util_download.side_effect = [
                 self.harmony_500_status_code_error,
-                http_response
+                http_response,
             ]
 
             with self.assertRaises(UrlAccessFailed) as context:
@@ -179,7 +179,7 @@ class TestUtilities(TestCase):
         with self.subTest('A 400 error (Bad Request) is not retried.'):
             mock_util_download.side_effect = [
                 self.harmony_400_status_code_error,
-                http_response
+                http_response,
             ]
 
             with self.assertRaises(UrlAccessFailedWithNoRetries) as context:

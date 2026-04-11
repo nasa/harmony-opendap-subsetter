@@ -1,4 +1,11 @@
-## [v1.2.2] - 2026-03-23
+## [v1.2.4] - 2026-04-09
+
+### Changed
+
+- Ensure Harmony ServerExceptions with HTTP 500 are caught and retried,
+  while all other status codes are re-raised as NoRetryExceptions.
+
+## [v1.2.3] - 2026-03-23
 
 ### Changed
 

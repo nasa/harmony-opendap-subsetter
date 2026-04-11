@@ -1,4 +1,5 @@
 import json
+from os.path import join as path_join
 from typing import Dict, List, Optional
 from unittest import TestCase
 from unittest.mock import ANY, patch
@@ -8,6 +9,7 @@ from harmony_service_lib.util import config
 
 from hoss.adapter import HossAdapter
 from hoss.bbox_utilities import BBox
+from hoss.exceptions import CustomError, StagingFailed
 from tests.utilities import Granule, create_stac, spy_on
 
 
@@ -33,6 +35,7 @@ class TestAdapter(TestCase):
         cls.africa_stac = create_stac(
             [Granule(cls.africa_granule_url, None, ['opendap', 'data'])]
         )
+        cls.staging_location = 's3://example-bucket'
 
     def setUp(self):
         self.config = config(validate=False)
@@ -558,4 +561,73 @@ class TestAdapter(TestCase):
             'application/x-netcdf4',
             location='s3://example-bucket/',
             logger=hoss.logger,
+        )
+
+    def test_hoss_stage(self, mock_stage, mock_subset_granule, mock_get_mimetype):
+        """Ensure hoss_stage successfully calls hoss_stage and returns the URL"""
+        mock_subset_granule.return_value = '/path/to/output.nc'
+        expected_output_basename = '/path/to/output.nc'
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+        expected_staged_url = path_join(self.staging_location, expected_output_basename)
+        mock_stage.return_value = expected_staged_url
+
+        collection_short_name = 'harmony_example_l2'
+
+        message = self.create_message(
+            'C1233860183-EEDTEST', collection_short_name, [], 'jlovell'
+        )
+
+        hoss = HossAdapter(message, config=self.config, catalog=self.africa_stac)
+
+        with patch.object(HossAdapter, 'process_item', self.process_item_spy):
+            hoss.invoke()
+
+        mock_subset_granule.assert_called_once_with(
+            self.africa_granule_url,
+            message.sources[0],
+            ANY,
+            hoss.message,
+            hoss.config,
+        )
+
+        mock_get_mimetype.assert_called_once_with('/path/to/output.nc')
+
+        result = hoss.hoss_stage(
+            expected_output_basename,
+            'africa.nc4',
+            'application/x-netcdf4',
+        )
+
+        assert result == expected_staged_url
+
+    def test_hoss_stage_raises_exception(
+        self, mock_stage, mock_subset_granule, mock_get_mimetype
+    ):
+        """Ensure hoss_stage raises an StagingFailed exception when
+        the Harmony stage function throws an exception.
+
+        """
+        mock_stage.side_effect = Exception("Connection timeout")
+        mock_subset_granule.return_value = '/path/to/output.nc'
+        mock_get_mimetype.return_value = ('application/x-netcdf4', None)
+
+        collection_short_name = 'harmony_example_l2'
+
+        message = self.create_message(
+            'C1233860183-EEDTEST', collection_short_name, [], 'jlovell'
+        )
+
+        hoss = HossAdapter(message, config=self.config, catalog=self.africa_stac)
+
+        with self.assertRaises(StagingFailed) as context_manager:
+            hoss.hoss_stage(
+                '/path/to/output.nc',
+                'africa.nc4',
+                'application/x-netcdf4',
+            )
+
+        self.assertIsInstance(context_manager.exception, CustomError)
+        self.assertEqual(
+            str(context_manager.exception),
+            'Staging failed, Connection timeout',
         )

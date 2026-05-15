@@ -28,7 +28,7 @@ def check_invalid_variable_request(
     requested_variable_paths = {
         f'/{v.fullPath.lstrip("/")}' for v in requested_variables
     }
-    unprocessable_variables = get_excluded_variables(varinfo)
+    unprocessable_variables = varinfo.get_excluded_science_variables()
 
     # If no variables are requested, all variables will be returned and the
     # varinfo exclusions will automatically be applied.
@@ -52,27 +52,3 @@ def check_invalid_variable_request(
 
     get_logger().info('No invalid variables are requested.')
     return
-
-
-def get_excluded_variables(var_info: VarInfoFromNetCDF4) -> Set[str]:
-    """Input variables that can't be processed by HOSS.
-
-    This includes the excluded science variables specified in the varinfo
-    configuration file.
-    """
-    all_variables = var_info.get_all_variables()
-    excluded_vars = {
-        var for var in all_variables if is_excluded_science_variable(var_info, var)
-    }
-
-    return excluded_vars
-
-
-def is_excluded_science_variable(
-    var_info: VarInfoFromNetCDF4, variable_name: str
-) -> bool:
-    """Returns True if variable is explicitly excluded by varinfo configuration."""
-    exclusions_pattern = re.compile(
-        '|'.join(var_info.cf_config.excluded_science_variables)
-    )
-    return var_info.variable_is_excluded(variable_name, exclusions_pattern)

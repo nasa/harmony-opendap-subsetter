@@ -4,6 +4,7 @@
 
 - Updated `get_excluded_variables()` to utilize the
   `get_excluded_science_variables()` method from `earthdata-varinfo`
+  for consistency and commonality.
 
 ## [v1.2.4] - 2026-04-09
 

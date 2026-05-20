@@ -5,7 +5,6 @@ varinfo.
 
 """
 
-import re
 from typing import Set
 
 from harmony_service_lib.message import Variable as HarmonyVariable

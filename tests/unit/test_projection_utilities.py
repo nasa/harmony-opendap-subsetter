@@ -859,9 +859,18 @@ class TestProjectionUtilities(TestCase):
         y_values = np.array([-705878.15743769, -381492.36347575])
         crs = CRS.from_epsg(6931)
 
-        actual_lats, actual_lons = get_grid_lat_lons(x_values, y_values, crs)
-        expected_lats = np.array([[75.0, 78.6663628], [75.9858088, 80.0]])
-        expected_lons = np.array([[65.0, 56.0414351], [75.8550777, 70.0]])
+        # Revised implementation for row-by-row Lat/Lon processing only returns
+        # a single result each
+        actual_lats, actual_lons = get_grid_lat_lons(x_values, y_values, crs, row_idx=0)
+        expected_lats = np.array([75.0, 78.6663628])  # , [75.9858088, 80.0])
+        expected_lons = np.array([65.0, 56.0414351])  # , [75.8550777, 70.0])
+
+        np.testing.assert_almost_equal(actual_lats, expected_lats)
+        np.testing.assert_almost_equal(actual_lons, expected_lons)
+
+        actual_lats, actual_lons = get_grid_lat_lons(x_values, y_values, crs, row_idx=1)
+        expected_lats = np.array([75.9858088, 80.0])  # ([75.0, 78.6663628]), ...)
+        expected_lons = np.array([75.8550777, 70.0])  # ([65.0, 56.0414351]), ...)
 
         np.testing.assert_almost_equal(actual_lats, expected_lats)
         np.testing.assert_almost_equal(actual_lons, expected_lons)

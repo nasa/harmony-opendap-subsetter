@@ -46,7 +46,6 @@ Shape = Union[LineString, Point, Polygon, MultiShape]
 def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     """Retrieves the grid mapping variable metadata attributes for a given
     variable and creates a `pyproj.CRS` object from the grid mapping attributes.
-
     """
     return CRS.from_cf(get_grid_mapping_attributes(variable, varinfo))
 
@@ -64,7 +63,6 @@ def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
     the earthdata-varinfo configuration file is checked, as it may
     contain metadata overrides specified for that non-existent variable
     name.
-
     """
     var = varinfo.get_variable(variable)
     assert (
@@ -99,7 +97,6 @@ def get_master_geotransform(
     """Retrieves the `master_geotransform` attribute from the grid mapping
     attributes of the given variable. If the `master_geotransform` attribute
     doesn't exist, `None` will be returned.
-
     """
     return get_grid_mapping_attributes(variable, varinfo).get(
         "master_geotransform", None
@@ -112,7 +109,6 @@ def get_config_geo_spatial_extent(
     """Retrieves the `geographic_spatial_extent` attribute from the grid mapping
     attributes of the given variable. If the `geographic_spatial_extent` attribute
     doesn't exist, `None` will be returned.
-
     """
     spatial_extent = get_grid_mapping_attributes(variable, varinfo).get(
         "geographic_spatial_extent", None
@@ -137,7 +133,6 @@ def get_x_y_dim_var_names(
     Note - the input variables to this function are only filtered to remove
     variables that are spatial dimensions. The input to this function may
     have no dimensions, or may not be spatially gridded.
-
     """
     var = varinfo.get_variable(variable)
     assert (
@@ -175,7 +170,6 @@ def is_projection_x_dimension(varinfo: VarInfoFromDmr, dimension_variable: str) 
     dimensions, such as the `nv`, `latv` and `lonv` that define the
     2-element dimension of bounds variables, exist only as a size, not as a
     full variable within the input granule.
-
     """
     projected_x_names = ("projection_x_coordinate", "projection_x_angular_coordinate")
     var = varinfo.get_variable(dimension_variable)
@@ -193,7 +187,6 @@ def is_projection_y_dimension(varinfo: VarInfoFromDmr, dimension_variable: str) 
     dimensions, such as the `nv`, `latv` and `lonv` that define the
     2-element dimension of bounds variables, exist only as a size, not as a
     full variable within the input granule.
-
     """
     projected_y_names = ("projection_y_coordinate", "projection_y_angular_coordinate")
     var = varinfo.get_variable(dimension_variable)
@@ -232,7 +225,6 @@ def get_projected_x_y_extents(
     calculated resolution is used to define the necessary number of points
     (density).
     """
-
     geo_bbox, geographic_resolution = get_grid_geographic_info(x_values, y_values, crs)
 
     # Note - we have to get full reverse-projected lat/lons (in
@@ -274,48 +266,96 @@ def get_grid_geographic_info(
 ) -> Tuple[BBox, float]:  # geo-BBox, WSEN, geo-resolution
     """Get the geographic bounding extents (BBox) of the source grid
     and the geographic resolution. Both of these require the projected
-    grid converted to geographic coordinates.
+    grid converted to geographic coordinates. To avoid working with a
+    potentially large grid, this is done using a sliding 2 row window on
+    the projected grid.
     """
-    grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
-        x_values, y_values, crs
-    )
+
+    # Set initial out-of-range values
+    last_rows_bbox = BBox(180, 90, -90, -180)  # beyond expected values - WSEN
+    last_rows_resolution = 180  # beyond expected resolution values
+
+    last_row_lats, last_row_lons = get_grid_lat_lons(x_values, y_values, crs, row_idx=0)
+    for row_idx in range(1, len(y_values)):
+        row_lats, row_lons = get_grid_lat_lons(x_values, y_values, crs, row_idx)
+        lats_2_rows = np.array([last_row_lats, row_lats])
+        lons_2_rows = np.array([last_row_lons, row_lons])
+
+        last_rows_bbox, last_rows_resolution = get_grid_geographic_info_by_rows(
+            lats_2_rows, lons_2_rows, last_rows_bbox, last_rows_resolution
+        )
+        # reset for next iteration
+        last_row_lats = row_lats
+        last_row_lons = row_lons
+    return last_rows_bbox, last_rows_resolution
+
+
+def get_grid_geographic_info_by_rows(
+    grid_lats: np.ndarray,
+    grid_lons: np.ndarray,
+    last_rows_bbox: BBox,  # geo-BBox, WSEN
+    last_rows_resolution: float,  # geo-resolution
+) -> Tuple[BBox, float]:  # geo-BBox, WSEN  # geo-resolution
+    """Get the geographic bounding extents (BBox) and resolution for
+    2 rows of the source grid, projected to latitude and longitude. Using
+    the previous 2 row BBox and resolution, ensure the new results are the
+    lesser/greater extents and lesser resolution value.
+    """
     if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
         raise InvalidGranuleDimensions
 
-    geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
-
     bbox = BBox(
-        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
+        min(last_rows_bbox[0], np.min(grid_lons)),
+        min(last_rows_bbox[1], np.min(grid_lats)),
+        max(last_rows_bbox[2], np.max(grid_lons)),
+        max(last_rows_bbox[3], np.max(grid_lats)),
     )
-    return bbox, geographic_resolution
+    resolution = get_geographic_resolution(grid_lons, grid_lats)
+
+    resolution = min(resolution, last_rows_resolution)
+    return bbox, resolution
 
 
 def get_grid_lat_lons(
-    x_values: np.ndarray, y_values: np.ndarray, crs: CRS
+    x_values: np.ndarray, y_values: np.ndarray, crs: CRS, row_idx: int
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Construct a 2-D grid of projected x and y values from values in the
-    corresponding dimension variable 1-D arrays. Then transform those
+    """Construct one row of x and y values from values in the corresponding
+    dimension variable 1-D arrays. Use the passed-in x values (used for all y
+    values) and a repeat of the current y value (row_idx) across the length of
+    the x-axis. Create as array of array, but only 1 row. Then transform these
     points to longitudes and latitudes.
 
+    Derived from an original implemetation which handled the full x/y array. Commented
+    code will be useful for a DASK solution which looks more like the original.
     """
-    projected_x = np.repeat(x_values.reshape(1, len(x_values)), len(y_values), axis=0)
-    projected_y = np.repeat(y_values.reshape(len(y_values), 1), len(x_values), axis=1)
+    # Create a 2D array from x values repeated down the y dimension
+    # projected_x = np.repeat(x_values.reshape(1, len(x_values)), len(y_values), axis=0)
+    # Create a 2D array from y values repeated acrss the x dimension
+    # projected_y = np.repeat(y_values.reshape(len(y_values), 1), len(x_values), axis=1)
 
+    projected_x = np.array([x_values])
+    projected_y = np.array([np.repeat(y_values[row_idx], len(x_values))])
     to_geo_transformer = Transformer.from_crs(crs, 4326)
 
-    return to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
+    lats, lons = to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
         projected_x, projected_y
     )
+    # result is an array of one-row results, return the stand-alone rows
+    return (lats[0], lons[0])  # return (lats, lons)
 
 
 def get_geographic_resolution(longitudes: np.ndarray, latitudes: np.ndarray) -> float:
     """Calculate the distance between diagonally adjacent cells in both
-    longitude and latitude. Combined those differences in quadrature to
+    longitude and latitude. Combine those differences in quadrature to
     obtain Euclidean distances. Return the minimum of these Euclidean
     distances. Over the typical distances being considered, differences
     between the Euclidean and geodesic distance between points should be
     minimal, with Euclidean distances being slightly shorter.
 
+    Note - strictly speaking this is not the "true" resolution, but a
+    diagonal cell-wise distance for "densifying" the perimeter points. It
+    will be approximately √2 * the cell-center distance, which more typically
+    defines the resolution.
     """
     lon_square_diffs = np.square(np.subtract(longitudes[1:, 1:], longitudes[:-1, :-1]))
     lat_square_diffs = np.square(np.subtract(latitudes[1:, 1:], latitudes[:-1, :-1]))
@@ -326,10 +366,12 @@ def get_densified_perimeter(
     resolution: float, shape_file: str | None = None, bounding_box: BBox | None = None
 ) -> List[Coordinates]:
     """Take a shape file or bounding box, as defined by the input Harmony
-    request, and return a full set of points that correspond to the
-    exterior of any GeoJSON shape fixed to the resolution of the projected
-    grid of the data.
-
+    request and return a set of perimeter points - filled to the density
+    specified by the resolution given. One of either the bounding_box
+    argument or the shape_file argument is required. Priority is given
+    to the bounding_box argument. A bounding box is converted to a set
+    of perimeter points. A shape_file is resolved to the exterior of the
+    GeoJson features.
     """
     if bounding_box is not None:
         resolved_geojson = get_resolved_feature(
@@ -338,7 +380,6 @@ def get_densified_perimeter(
     elif shape_file is not None:
         with open(shape_file, "r", encoding="utf-8") as file_handler:
             geojson_content = json.load(file_handler)
-
         resolved_geojson = get_resolved_features(geojson_content, resolution)
     else:
         raise MissingSpatialSubsetInformation()
@@ -511,7 +552,6 @@ def get_resolved_geometry(
     the final point of the geometry is appended to the full list of
     resolved points to ensure all points are represented in the output. For
     closed geometries, this is already present as the first returned point.
-
     """
     new_points = [
         get_resolved_line(point_one, geometry_points[point_one_index + 1], resolution)[
@@ -539,11 +579,7 @@ def get_resolved_line(
 
     The resulting points will be appended to the rest of the ring,
     ensuring the ring has points at a resolution of the gridded data.
-
     """
-    if len(point_one) < 2 or len(point_two) < 2:
-        raise InvalidInputGeoJSON  # added to avoid type checking failures
-
     distance = np.linalg.norm(np.array(point_two[:2]) - np.array(point_one[:2]))
     n_points = np.ceil(distance / resolution) + 1
     new_x = np.linspace(point_one[0], point_two[0], int(n_points))
@@ -563,7 +599,6 @@ def get_x_y_extents_from_geographic_perimeter(
     of those projected coordinates. Check first for perimeter exceeding grid on
     all axes (whole grid extents returned). Then remove any points that are
     outside the grid before finding the min and max extent.
-
     """
     # get the x,y projected values from the geographic points
     point_longitudes, point_latitudes = zip(*points)
@@ -631,7 +666,6 @@ def remove_points_outside_grid_extents(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Remove any points that are outside the grid and are invalid and raise an
     exception if the resulting grid is empty.
-
     """
     tolerance = 1e-9
     # This gets the mask of points within the granule extent.

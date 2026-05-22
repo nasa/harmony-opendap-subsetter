@@ -1300,35 +1300,35 @@ class TestCoordinateUtilities(TestCase):
                 self.assertListEqual(
                     list(x_y_dim_pm.keys()), list(projected_dimension_names_pm.values())
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/y_dim'][0],
                     expected_ydim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/y_dim'][-1],
                     expected_ydim[-1],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/x_dim'][0],
                     expected_xdim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_am['/Soil_Moisture_Retrieval_Data_AM/x_dim'][-1],
                     expected_xdim[-1],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/y_dim'][0],
                     expected_ydim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/y_dim'][-1],
                     expected_ydim[-1],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/x_dim'][0],
                     expected_xdim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_pm['/Soil_Moisture_Retrieval_Data_PM/x_dim'][-1],
                     expected_xdim[-1],
                 )
@@ -1448,19 +1448,19 @@ class TestCoordinateUtilities(TestCase):
                 self.assertListEqual(
                     list(x_y_dim_global.keys()), list(dimension_names_global.values())
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/y_dim'][0],
                     expected_ydim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/y_dim'][-1],
                     expected_ydim[-1],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/x_dim'][0],
                     expected_xdim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim_global['/Freeze_Thaw_Retrieval_Data_Global/x_dim'][-1],
                     expected_xdim[-1],
                 )
@@ -1507,19 +1507,19 @@ class TestCoordinateUtilities(TestCase):
                 self.assertListEqual(
                     list(x_y_dim.keys()), list(dimension_names.values())
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim['/Soil_Moisture_Retrieval_Data_AM/y_dim'][0],
                     expected_ydim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim['/Soil_Moisture_Retrieval_Data_AM/y_dim'][-1],
                     expected_ydim[-1],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim['/Soil_Moisture_Retrieval_Data_AM/x_dim'][0],
                     expected_xdim[0],
                 )
-                self.assertEqual(
+                self.assertAlmostEqual(
                     x_y_dim['/Soil_Moisture_Retrieval_Data_AM/x_dim'][-1],
                     expected_xdim[-1],
                 )

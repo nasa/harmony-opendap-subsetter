@@ -25,6 +25,7 @@ from shapely.geometry import (
     Polygon,
     shape,
 )
+from shapely.geometry.base import BaseGeometry
 from varinfo import VarInfoFromDmr
 
 from hoss.bbox_utilities import BBox, flatten_list
@@ -37,7 +38,7 @@ from hoss.exceptions import (
     MissingSpatialSubsetInformation,
 )
 
-Coordinates = Tuple[float]
+Coordinates = Tuple[float, float]
 MultiShape = Union[GeometryCollection, MultiLineString, MultiPoint, MultiPolygon]
 Shape = Union[LineString, Point, Polygon, MultiShape]
 
@@ -65,9 +66,12 @@ def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
     name.
 
     """
-    grid_mapping = next(
-        iter(varinfo.get_variable(variable).references.get('grid_mapping', [])), None
-    )
+    var = varinfo.get_variable(variable)
+    assert (
+        var is not None  # avoids type checking issues
+    ), "Program error - variable should never be undefined in VarInfo"
+
+    grid_mapping = next(iter(var.references.get("grid_mapping", [])), None)
 
     if grid_mapping is not None:
         try:
@@ -94,7 +98,7 @@ def get_master_geotransform(
 ) -> Optional[List[int]]:
     """Retrieves the `master_geotransform` attribute from the grid mapping
     attributes of the given variable. If the `master_geotransform` attribute
-    doesn't exist, a `None` value will be returned.
+    doesn't exist, `None` will be returned.
 
     """
     return get_grid_mapping_attributes(variable, varinfo).get(
@@ -102,12 +106,12 @@ def get_master_geotransform(
     )
 
 
-def get_geographic_spatial_extent(
+def get_config_geo_spatial_extent(
     variable: str, varinfo: VarInfoFromDmr
 ) -> BBox | None:
     """Retrieves the `geographic_spatial_extent` attribute from the grid mapping
     attributes of the given variable. If the `geographic_spatial_extent` attribute
-    doesn't exist, a `None` value will be returned.
+    doesn't exist, `None` will be returned.
 
     """
     spatial_extent = get_grid_mapping_attributes(variable, varinfo).get(
@@ -123,9 +127,9 @@ def get_geographic_spatial_extent(
     return None
 
 
-def get_projected_x_y_variables(
+def get_x_y_dim_var_names(
     varinfo: VarInfoFromDmr, variable: str
-) -> Tuple[Optional[str]]:
+) -> Tuple[Optional[str], Optional[str]]:
     """Retrieve the names of the projected x and y dimension variables
     associated with a variable. If either are not found, a `None` value
     will be returned for the absent dimension variable.
@@ -135,27 +139,30 @@ def get_projected_x_y_variables(
     have no dimensions, or may not be spatially gridded.
 
     """
-    variable_dimensions = varinfo.get_variable(variable).dimensions
+    var = varinfo.get_variable(variable)
+    assert (
+        var is not None  # avoids type checking issues
+    ), "Program error - variable should never be undefined in VarInfo"
 
-    projected_x = next(
+    x_dim_var = next(
         (
             dimension
-            for dimension in variable_dimensions
+            for dimension in var.dimensions
             if is_projection_x_dimension(varinfo, dimension)
         ),
         None,
     )
 
-    projected_y = next(
+    y_dim_var = next(
         (
             dimension
-            for dimension in variable_dimensions
+            for dimension in var.dimensions
             if is_projection_y_dimension(varinfo, dimension)
         ),
         None,
     )
 
-    return projected_x, projected_y
+    return x_dim_var, y_dim_var
 
 
 def is_projection_x_dimension(varinfo: VarInfoFromDmr, dimension_variable: str) -> bool:
@@ -170,11 +177,10 @@ def is_projection_x_dimension(varinfo: VarInfoFromDmr, dimension_variable: str) 
     full variable within the input granule.
 
     """
-    projected_x_names = ('projection_x_coordinate', 'projection_x_angular_coordinate')
-
-    return varinfo.get_variable(dimension_variable) is not None and (
-        varinfo.get_variable(dimension_variable).attributes.get('standard_name')
-        in projected_x_names
+    projected_x_names = ("projection_x_coordinate", "projection_x_angular_coordinate")
+    var = varinfo.get_variable(dimension_variable)
+    return var is not None and (
+        var.attributes.get("standard_name") in projected_x_names
     )
 
 
@@ -189,22 +195,21 @@ def is_projection_y_dimension(varinfo: VarInfoFromDmr, dimension_variable: str) 
     full variable within the input granule.
 
     """
-    projected_y_names = ('projection_y_coordinate', 'projection_y_angular_coordinate')
-
-    return varinfo.get_variable(dimension_variable) is not None and (
-        varinfo.get_variable(dimension_variable).attributes.get('standard_name')
-        in projected_y_names
+    projected_y_names = ("projection_y_coordinate", "projection_y_angular_coordinate")
+    var = varinfo.get_variable(dimension_variable)
+    return var is not None and (
+        var.attributes.get("standard_name") in projected_y_names
     )
 
 
 def get_projected_x_y_extents(
-    x_values: np.ndarray,
-    y_values: np.ndarray,
+    x_values: np.ndarray,  # 1D dimension coordinate (scale)
+    y_values: np.ndarray,  # 1D dimension coordinate (scale)
     crs: CRS,
-    shape_file: str = None,
-    bounding_box: BBox = None,
-    geographic_spatial_extent: BBox = None,
-) -> Dict[str, float]:
+    shape_file: str | None = None,
+    bounding_box: BBox | None = None,
+    config_geo_bbox: BBox | None = None,
+) -> Dict[str, float]:  # {'x_min', 'x_max', 'y_min', 'y_max'}
     """Retrieve the minimum and maximum values for a projected grid as derived
     from either a bounding box or GeoJSON shape file, both of which are
     defined in geographic coordinates.
@@ -216,92 +221,78 @@ def get_projected_x_y_extents(
     CRS, allowing the retrieval of a minimum and maximum value in both the
     projected x and projected y dimension.
 
-    Example output:
-
-    x_y_extents = {'x_min': 1000,
-                   'x_max': 4000,
-                   'y_min': 2500,
-                   'y_max': 5500}
-
+    Example output: x_y_extents = {'x_min': 1000,
+                                   'x_max': 4000,
+                                   'y_min': 2500,
+                                   'y_max': 5500}
+    When projected, the perimeter of a bounding box or polygon given in
+    geographic terms may become curved. To determine the X, Y extent of the
+    requested bounding area, we need a perimeter with a suitable density of
+    points, such that we catch the extent of that curve when projected. The
+    calculated resolution is used to define the necessary number of points
+    (density).
     """
 
-    grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
-        x_values, y_values, crs
-    )
-    if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
-        raise InvalidGranuleDimensions
+    geo_bbox, geographic_resolution = get_grid_geographic_info(x_values, y_values, crs)
 
-    # When projected, the perimeter of a bounding box or polygon in geographic
-    # terms will become curved.  To determine the X, Y extent of the requested
-    # bounding area, we need a perimeter with a suitable density of points, such that
-    # we catch that curve when projected. The source file resolution is used to define
-    # the necessary number of points (density).
-    geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
+    # Note - we have to get full reverse-projected lat/lons (in
+    # get_grid_geographic_info, call above) to properly determine resolution,
+    # but... Now check for configured lat-lon extent to supercede grid-defined
+    # lat-lon extent
+    if config_geo_bbox is None:
+        granule_extent = geo_bbox
+    else:
+        granule_extent = config_geo_bbox
 
+    print(f"Granule Geo bbox: {granule_extent}, resolution: {geographic_resolution}")
+
+    # Create the "densified" perimeter using either a bounding-box
+    # (priority) or a shape_file. One or the other is required.
     densified_perimeter = get_densified_perimeter(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
     )
 
-    granule_extent = BBox(
-        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
-    )
-
-    # If there is a configuration for geographic spatial extent apply that.
-    if geographic_spatial_extent is not None:
-        granule_extent = BBox(
-            np.max([granule_extent.west, geographic_spatial_extent.west]),
-            np.max([granule_extent.south, geographic_spatial_extent.south]),
-            np.min([granule_extent.east, geographic_spatial_extent.east]),
-            np.min([granule_extent.north, geographic_spatial_extent.north]),
-        )
-
-    # To avoid out-of-limits projection, we need to clip the bounding perimeter to
-    # the source file's geographic extents
+    # To avoid out-of-limits projection in the last step, we need to
+    # clip the bounding perimeter to the source file's geographic extents
     clipped_perimeter = get_filtered_points(densified_perimeter, granule_extent)
 
-    granule_extent_projected_meters = {
+    # Getting subset x-y extents is also limited by the source granule's extents
+    # in projected space.
+    source_granule_extent = {
         "x_min": np.min(x_values),
         "x_max": np.max(x_values),
         "y_min": np.min(y_values),
         "y_max": np.max(y_values),
     }
     return get_x_y_extents_from_geographic_perimeter(
-        clipped_perimeter, crs, granule_extent_projected_meters
+        clipped_perimeter, crs, source_granule_extent
     )
 
 
-def get_filtered_points(
-    spatial_constraint_pts: List[Coordinates], granule_extent: BBox
-) -> List[Coordinates]:
-    """Returns spatial constraint lat/lon values clipped to the spatial
-    extent of the granule or raises exception if entirely outside
-    the granule
-
+def get_grid_geographic_info(
+    x_values: np.ndarray, y_values: np.ndarray, crs: CRS
+) -> Tuple[BBox, float]:  # geo-BBox, WSEN, geo-resolution
+    """Get the geographic bounding extents (BBox) of the source grid
+    and the geographic resolution. Both of these require the projected
+    grid converted to geographic coordinates.
     """
-    requested_lons, requested_lats = zip(*spatial_constraint_pts)
-    # if all the points in the bounding box are outside the granule extent,
-    if (
-        np.max(requested_lons) < granule_extent.west
-        or np.min(requested_lons) > granule_extent.east
-        or np.max(requested_lats) < granule_extent.south
-        or np.min(requested_lats) > granule_extent.north
-    ):
-        raise InvalidRequestedRange
+    grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
+        x_values, y_values, crs
+    )
+    if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
+        raise InvalidGranuleDimensions
 
-    # If the spatial constraint encloses the granule extent,
-    # clip to the granule extent.
-    # First, all lon values are clipped within the granule lon extent
-    clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
+    geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
 
-    # all lat values are clipped to granule lat extent
-    clipped_lats = np.clip(requested_lats, granule_extent.south, granule_extent.north)
-
-    return list(zip(clipped_lons, clipped_lats))
+    bbox = BBox(
+        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
+    )
+    return bbox, geographic_resolution
 
 
 def get_grid_lat_lons(
     x_values: np.ndarray, y_values: np.ndarray, crs: CRS
-) -> Tuple[np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Construct a 2-D grid of projected x and y values from values in the
     corresponding dimension variable 1-D arrays. Then transform those
     points to longitudes and latitudes.
@@ -332,7 +323,7 @@ def get_geographic_resolution(longitudes: np.ndarray, latitudes: np.ndarray) -> 
 
 
 def get_densified_perimeter(
-    resolution: float, shape_file: str = None, bounding_box: BBox = None
+    resolution: float, shape_file: str | None = None, bounding_box: BBox | None = None
 ) -> List[Coordinates]:
     """Take a shape file or bounding box, as defined by the input Harmony
     request, and return a full set of points that correspond to the
@@ -345,7 +336,7 @@ def get_densified_perimeter(
             get_bbox_polygon(bounding_box), resolution
         )
     elif shape_file is not None:
-        with open(shape_file, 'r', encoding='utf-8') as file_handler:
+        with open(shape_file, "r", encoding="utf-8") as file_handler:
             geojson_content = json.load(file_handler)
 
         resolved_geojson = get_resolved_features(geojson_content, resolution)
@@ -355,10 +346,37 @@ def get_densified_perimeter(
     return resolved_geojson
 
 
+def get_filtered_points(
+    spatial_constraint_pts: List[Coordinates], granule_extent: BBox
+) -> List[Coordinates]:
+    """Returns spatial constraint lat/lon values clipped to the spatial
+    extent of the granule or raises exception if entirely outside
+    the granule
+    """
+    requested_lons, requested_lats = zip(*spatial_constraint_pts)
+    # if all the points in the bounding box are outside the granule extent,
+    if (
+        np.max(requested_lons) < granule_extent.west
+        or np.min(requested_lons) > granule_extent.east
+        or np.max(requested_lats) < granule_extent.south
+        or np.min(requested_lats) > granule_extent.north
+    ):
+        raise InvalidRequestedRange
+
+    # If the spatial constraint encloses the granule extent,
+    # clip to the granule extent.
+    # First, all lon values are clipped within the granule lon extent
+    clipped_lons = np.clip(requested_lons, granule_extent.west, granule_extent.east)
+
+    # all lat values are clipped to granule lat extent
+    clipped_lats = np.clip(requested_lats, granule_extent.south, granule_extent.north)
+
+    return list(zip(clipped_lons, clipped_lats))
+
+
 def get_bbox_polygon(bounding_box: BBox) -> Polygon:
     """Convert a bounding box into a polygon with points at each corner of
     that box.
-
     """
     coordinates = [
         (bounding_box.west, bounding_box.south),
@@ -367,15 +385,15 @@ def get_bbox_polygon(bounding_box: BBox) -> Polygon:
         (bounding_box.west, bounding_box.north),
         (bounding_box.west, bounding_box.south),
     ]
-
     return Polygon(coordinates)
 
 
 def get_resolved_features(
     geojson_content: Dict, resolution: float
 ) -> List[Coordinates]:
-    """Parse GeoJSON read from a file. Once `shapely.geometry.shape` objects
-    have been created for all features, these features will be resolved
+    """Geojson_content is read and parsed from a json file, yielding
+    `shapely.geometry.shape` objects for all features. These features need
+    to be resolved (densified and simplified to the exterior perimeter)
     using the supplied resolution of the projected grid.
 
     * The first condition will recognise a single GeoJSON geometry, using
@@ -392,26 +410,29 @@ def get_resolved_features(
 
     """
     feature_types = (
-        'geometrycollection',
-        'linestring',
-        'point',
-        'polygon',
-        'multilinestring',
-        'multipoint',
-        'multipolygon',
+        "geometrycollection",
+        "linestring",
+        "point",
+        "polygon",
+        "multilinestring",
+        "multipoint",
+        "multipolygon",
     )
 
-    if geojson_content.get('type', '').lower() in feature_types:
+    if not geojson_content:  # avoids type check failures for Null
+        return []
+
+    if geojson_content.get("type", "").lower() in feature_types:
         resolved_features = get_resolved_feature(shape(geojson_content), resolution)
-    elif 'geometry' in geojson_content:
+    elif "geometry" in geojson_content:
         resolved_features = get_resolved_feature(
-            shape(geojson_content['geometry']), resolution
+            shape(geojson_content["geometry"]), resolution
         )
-    elif 'features' in geojson_content:
+    elif "features" in geojson_content:
         resolved_features = flatten_list(
             [
-                get_resolved_feature(shape(feature['geometry']), resolution)
-                for feature in geojson_content['features']
+                get_resolved_feature(shape(feature["geometry"]), resolution)
+                for feature in geojson_content["features"]
             ]
         )
     else:
@@ -420,7 +441,9 @@ def get_resolved_features(
     return resolved_features
 
 
-def get_resolved_feature(feature: Shape, resolution: float) -> List[Coordinates]:
+def get_resolved_feature(
+    feature: Shape | BaseGeometry, resolution: float
+) -> List[Coordinates]:
     """Take an input `shapely` feature, such as a GeoJSON Point, LineString,
     Polygon or multiple of those options, and return a list of coordinates
     on that feature at the supplied resolution. This resolution corresponds
@@ -456,7 +479,9 @@ def get_resolved_feature(feature: Shape, resolution: float) -> List[Coordinates]
         resolved_points = flatten_list(
             [
                 get_resolved_feature(sub_geometry, resolution)
-                for sub_geometry in feature.geoms
+                for sub_geometry in feature.geoms  # type: ignore
+                # note: BaseGeometry added as type option above to address
+                # type checking, but is not expected.
             ]
         )
     else:
@@ -466,7 +491,10 @@ def get_resolved_feature(feature: Shape, resolution: float) -> List[Coordinates]
 
 
 def get_resolved_geometry(
-    geometry_points: List[Coordinates], resolution: float, is_closed: bool = True
+    geometry_points: List[Tuple[float, ...]],
+    # List[Coordinates] & CoordinateSequence (shapely.coords) fail type checking
+    resolution: float,
+    is_closed: bool = True,
 ) -> List[Coordinates]:
     """Iterate through all pairs of consecutive points and ensure that, if
     those points are further apart than the resolution of the input data,
@@ -499,8 +527,10 @@ def get_resolved_geometry(
 
 
 def get_resolved_line(
-    point_one: Coordinates, point_two: Coordinates, resolution: float
-) -> List[Coordinates]:
+    point_one: Coordinates | Tuple[float, ...],
+    point_two: Coordinates | Tuple[float, ...],
+    resolution: float,
+) -> List[Coordinates | Tuple[float, ...]]:
     """A function that takes two consecutive points from either an exterior
     ring of a `shapely.geometry.Polygon` object or the coordinates of a
     `LineString` object and places equally spaced points along that line
@@ -511,10 +541,14 @@ def get_resolved_line(
     ensuring the ring has points at a resolution of the gridded data.
 
     """
+    if len(point_one) < 2 or len(point_two) < 2:
+        raise InvalidInputGeoJSON  # added to avoid type checking failures
+
     distance = np.linalg.norm(np.array(point_two[:2]) - np.array(point_one[:2]))
     n_points = np.ceil(distance / resolution) + 1
     new_x = np.linspace(point_one[0], point_two[0], int(n_points))
     new_y = np.linspace(point_one[1], point_two[1], int(n_points))
+
     return list(zip(new_x, new_y))
 
 
@@ -552,15 +586,15 @@ def get_x_y_extents_from_geographic_perimeter(
     )
 
     return {
-        'x_min': np.min(finite_x),
-        'x_max': np.max(finite_x),
-        'y_min': np.min(finite_y),
-        'y_max': np.max(finite_y),
+        "x_min": np.min(finite_x),
+        "x_max": np.max(finite_x),
+        "y_min": np.min(finite_y),
+        "y_max": np.max(finite_y),
     }
 
 
 def remove_non_finite_projected_values(
-    points_x: list[float], points_y: list[float]
+    points_x: np.ndarray, points_y: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
     """Removes any NaN and infinity values and returns the results as numpy arrays"""
     # isfinite checks for NaN and infinty values returned for certain projections
@@ -578,9 +612,7 @@ def perimeter_surrounds_grid(
 ) -> bool:
     """Returns True if perimeter exceeds the grid extents on all axes.
     Returns False if does not.
-
     """
-
     if (
         np.min(finite_x) < granule_extent["x_min"]
         and np.max(finite_x) > granule_extent["x_max"]
@@ -607,10 +639,10 @@ def remove_points_outside_grid_extents(
     # all 4 extents
 
     mask = (
-        (finite_x >= granule_extent['x_min'] - tolerance)
-        & (finite_x <= granule_extent['x_max'] + tolerance)
-        & (finite_y >= granule_extent['y_min'] - tolerance)
-        & (finite_y <= granule_extent['y_max'] + tolerance)
+        (finite_x >= granule_extent["x_min"] - tolerance)
+        & (finite_x <= granule_extent["x_max"] + tolerance)
+        & (finite_y >= granule_extent["y_min"] - tolerance)
+        & (finite_y <= granule_extent["y_max"] + tolerance)
     )
 
     finite_x = finite_x[mask]

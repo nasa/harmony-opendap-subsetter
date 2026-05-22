@@ -551,7 +551,7 @@ class TestSpatial(TestCase):
                     crs,
                     shape_file=None,
                     bounding_box=bbox,
-                    geographic_spatial_extent=None,
+                    config_geo_bbox=None,
                 )
 
                 self.assertEqual(mock_get_dimension_index_range.call_count, 2)

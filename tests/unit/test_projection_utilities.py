@@ -32,12 +32,12 @@ from hoss.projection_utilities import (
     get_densified_perimeter,
     get_filtered_points,
     get_geographic_resolution,
-    get_geographic_spatial_extent,
+    get_config_geo_spatial_extent,
     get_grid_lat_lons,
     get_grid_mapping_attributes,
     get_master_geotransform,
     get_projected_x_y_extents,
-    get_projected_x_y_variables,
+    get_x_y_dim_var_names,
     get_resolved_feature,
     get_resolved_features,
     get_resolved_geometry,
@@ -519,7 +519,7 @@ class TestProjectionUtilities(TestCase):
                     y_values,
                     crs,
                     bounding_box=bounding_box,
-                    geographic_spatial_extent=geographic_spatial_extent,
+                    config_geo_bbox=geographic_spatial_extent,
                 ),
                 expected_output,
             )
@@ -537,7 +537,7 @@ class TestProjectionUtilities(TestCase):
                     y_values,
                     crs,
                     bounding_box=bounding_box,
-                    geographic_spatial_extent=None,
+                    config_geo_bbox=None,
                 ),
                 expected_output,
             )
@@ -664,7 +664,7 @@ class TestProjectionUtilities(TestCase):
             with self.assertRaises(InvalidRequestedRange):
                 get_filtered_points(bounding_box_south_of_granule, granule_extent)
 
-    def test_get_projected_x_y_variables(self):
+    def test_get_x_y_dim_var_names(self):
         """Ensure that the `standard_name` metadata attribute can be parsed
         via `VarInfoFromDmr` for all dimenions of a specifed variable. If
         no dimensions have either an x or y coordinate, the corresponding
@@ -736,28 +736,28 @@ class TestProjectionUtilities(TestCase):
         expected_y = '/y'
 
         with self.subTest('A variable has both x and y dimensions'):
-            actual_x, actual_y = get_projected_x_y_variables(
+            actual_x, actual_y = get_x_y_dim_var_names(
                 varinfo, '/variable_with_x_y_dims'
             )
             self.assertEqual(actual_x, expected_x)
             self.assertEqual(actual_y, expected_y)
 
         with self.subTest('Variable lacks projection_x_coordinate dimension'):
-            actual_x, actual_y = get_projected_x_y_variables(
+            actual_x, actual_y = get_x_y_dim_var_names(
                 varinfo, '/variable_with_y_dim'
             )
             self.assertIsNone(actual_x)
             self.assertEqual(actual_y, expected_y)
 
         with self.subTest('Variable lacks projection_y_coordinate dimension'):
-            actual_x, actual_y = get_projected_x_y_variables(
+            actual_x, actual_y = get_x_y_dim_var_names(
                 varinfo, '/variable_with_x_dim'
             )
             self.assertEqual(actual_x, expected_x)
             self.assertIsNone(actual_y)
 
         with self.subTest('Variable lacks x and y dimensions'):
-            actual_x, actual_y = get_projected_x_y_variables(
+            actual_x, actual_y = get_x_y_dim_var_names(
                 varinfo, '/variable_without_x_y_dims'
             )
             self.assertIsNone(actual_x)
@@ -1589,7 +1589,7 @@ class TestProjectionUtilities(TestCase):
             result = get_master_geotransform("test_variable", varinfo)
             self.assertIsNone(result)
 
-    def test_get_geographic_spatial_extent(self):
+    def test_get_config_geo_spatial_extent(self):
         """Ensure that the `geographic_spatial_extent` attribute is returned if
         it exists. If it doesn't exist the return value should be `None`.
 
@@ -1602,7 +1602,7 @@ class TestProjectionUtilities(TestCase):
         )
 
         with self.subTest('grid mapping attribute contains geographic spatial extent'):
-            result = get_geographic_spatial_extent(
+            result = get_config_geo_spatial_extent(
                 "/Freeze_Thaw_Retrieval_Data_Polar/altitude_dem", varinfo
             )
             self.assertEqual(result, BBox(west=-180.0, south=0, east=180.0, north=90.0))
@@ -1610,7 +1610,7 @@ class TestProjectionUtilities(TestCase):
         with self.subTest(
             'grid mapping attribute does not contain geographic spatial extent'
         ):
-            result = get_geographic_spatial_extent(
+            result = get_config_geo_spatial_extent(
                 "/Freeze_Thaw_Retrieval_Data_Global/altitude_dem", varinfo
             )
             self.assertIsNone(result)

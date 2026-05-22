@@ -80,7 +80,7 @@ def get_temporal_index_ranges(
                 maximum_extent = (time_end - time_ref) / time_delta
 
                 index_ranges[dimension] = get_dimension_index_range(
-                    dimensions_file[dimension][:],
+                    dimensions_file[dimension][:],  # type: ignore
                     minimum_extent,
                     maximum_extent,
                     bounds_values=get_dimension_bounds(

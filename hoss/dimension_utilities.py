@@ -272,7 +272,7 @@ def get_dimension_index_range(
     dimension_values: MaskedArray,
     request_min: float,
     request_max: float,
-    bounds_values: MaskedArray = None,
+    bounds_values: MaskedArray | None = None,
 ) -> IndexRange:
     """Ensure that both a minimum and maximum value are defined from the
     message, if not, use the first or last value in the dimension array,
@@ -516,7 +516,7 @@ def get_fill_slice(dimension: str, fill_ranges: IndexRanges) -> slice:
     return fill_slice
 
 
-def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
+def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float, float]:
     """Fit the dimension with a straight line, and find the outer edge of the
     first and last pixel, assuming the supplied values lie at the centre of
     each pixel.
@@ -596,7 +596,7 @@ def get_requested_index_ranges(
 
 def get_dimension_bounds(
     dimension_name: str, varinfo: VarInfoFromDmr, prefetch_dataset: Dataset
-) -> MaskedArray:
+) -> MaskedArray | None:
     """Check if a named dimension has a `bounds` metadata attribute, if so
     retrieve the array of values for the named variable from the NetCDF-4
     variables retrieved from OPeNDAP in the prefetch request.

@@ -28,7 +28,7 @@ from harmony_service_lib.exceptions import NoDataException
 from harmony_service_lib.message import Message
 from netCDF4 import Dataset
 from numpy.ma.core import MaskedArray
-from varinfo import VariableFromDmr, VarInfoFromDmr
+from varinfo import VariableFromDmr, VarInfoFromDmr, VariableFromNetCDF4
 
 from hoss.bbox_utilities import (
     BBox,
@@ -168,8 +168,12 @@ def get_spatial_index_ranges(
                     assert (  # avoids type checking issues
                         latitude_coordinate is not None
                         and longitude_coordinate is not None
-                    ), "Program Error - Computed latitude/longitude coordinates"
-                    " cannot be None"
+                        and not isinstance(latitude_coordinate, VariableFromNetCDF4)
+                        and not isinstance(longitude_coordinate, VariableFromNetCDF4)
+                    ), (
+                        "Program Error - Computed latitude/longitude coordinates"
+                        " cannot be None nor VariableFromNetCDF4"
+                    )
                     index_ranges.update(
                         get_x_y_index_ranges_from_coordinates(
                             variable_with_anonymous_dims,

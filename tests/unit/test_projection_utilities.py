@@ -542,6 +542,33 @@ class TestProjectionUtilities(TestCase):
                 expected_output,
             )
 
+    def test_get_grid_geographic_info(self):
+        """ Verify call to da.reduction with properly composed projected_x_y_array.
+        Assuming dask.array handles chunking and reduction properly (not tested).
+        Alternatively, create some big x, y arrays and test DASK reduction and 
+        calls to reduce_geo_chunk and combine_bbox_array (mocks - much more
+        challenging).
+        """
+        pass
+
+    def test_combine_bbox_r(self):
+        """ Verify combining bbox_r properly combines two bbox_r values
+        """
+        pass
+
+    def test_combine_bbox_array(self):
+        """ Verify handling of array and nested arrays is correct.
+        Possibly use array handling to establish combine_bbox_r testing?
+        """
+        pass
+
+    def test_reduce_geo_chunk(self):
+        """ Similar testing as for test_get_projected_x_y_extent, testing
+        here can focus on the intermediate results of geographic bbox and 
+        resolutions
+        """
+        pass
+
     def test_get_filtered_points(self):
         """Ensure that the coordinates returned are clipped to the granule extent or
         the bbox extent whichever is the smaller of the two.
@@ -849,17 +876,22 @@ class TestProjectionUtilities(TestCase):
 
     def test_get_grid_lat_lons(self):
         """Ensure that a grid of projected values is correctly converted to
-        longitude and latitude values. The inputs include 1-D arrays for
-        the x and y dimensions, whilst the output are 2-D grids of latitude
-        and longitude that correspond to all grid points defined by the
-        combinations of x and y coordinates.
+        longitude and latitude values. The inputs include 2-D arrays for the
+        "projected" x and y dimensions (1-D dimension arrays extended in the x
+        and y directions), whilst the output are 2-D grids of latitude and
+        longitude that correspond to all grid points defined by the combinations
+        of x and y coordinates.
 
         """
-        x_values = np.array([1513760.59366167, 1048141.65434399])
-        y_values = np.array([-705878.15743769, -381492.36347575])
+        projected_x = np.array(
+            [[1513760.59366167, 1048141.65434399], [1513760.59366167, 1048141.65434399]]
+        )
+        projected_y = np.array(
+            [[-705878.15743769, -705878.15743769], [-381492.36347575, -381492.36347575]]
+        )
         crs = CRS.from_epsg(6931)
 
-        actual_lats, actual_lons = get_grid_lat_lons(x_values, y_values, crs)
+        actual_lats, actual_lons = get_grid_lat_lons(projected_x, projected_y, crs)
         expected_lats = np.array([[75.0, 78.6663628], [75.9858088, 80.0]])
         expected_lons = np.array([[65.0, 56.0414351], [75.8550777, 70.0]])
 

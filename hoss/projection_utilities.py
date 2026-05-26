@@ -14,6 +14,9 @@ import json
 from typing import Dict, List, Optional, Tuple, Union, get_args
 
 import numpy as np
+import dask.array as da
+from dask.array.overlap import overlap as da_overlap
+
 from pyproj import CRS, Transformer
 from shapely.geometry import (
     GeometryCollection,
@@ -28,7 +31,7 @@ from shapely.geometry import (
 from shapely.geometry.base import BaseGeometry
 from varinfo import VarInfoFromDmr
 
-from hoss.bbox_utilities import BBox, flatten_list
+from hoss.bbox_utilities import BBox, flatten_list, BBox_R
 from hoss.exceptions import (
     InvalidGranuleDimensions,
     InvalidInputGeoJSON,
@@ -46,7 +49,6 @@ Shape = Union[LineString, Point, Polygon, MultiShape]
 def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     """Retrieves the grid mapping variable metadata attributes for a given
     variable and creates a `pyproj.CRS` object from the grid mapping attributes.
-
     """
     return CRS.from_cf(get_grid_mapping_attributes(variable, varinfo))
 
@@ -64,7 +66,6 @@ def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
     the earthdata-varinfo configuration file is checked, as it may
     contain metadata overrides specified for that non-existent variable
     name.
-
     """
     var = varinfo.get_variable(variable)
     assert (
@@ -99,7 +100,6 @@ def get_master_geotransform(
     """Retrieves the `master_geotransform` attribute from the grid mapping
     attributes of the given variable. If the `master_geotransform` attribute
     doesn't exist, `None` will be returned.
-
     """
     return get_grid_mapping_attributes(variable, varinfo).get(
         "master_geotransform", None
@@ -112,7 +112,6 @@ def get_config_geo_spatial_extent(
     """Retrieves the `geographic_spatial_extent` attribute from the grid mapping
     attributes of the given variable. If the `geographic_spatial_extent` attribute
     doesn't exist, `None` will be returned.
-
     """
     spatial_extent = get_grid_mapping_attributes(variable, varinfo).get(
         "geographic_spatial_extent", None
@@ -137,7 +136,6 @@ def get_x_y_dim_var_names(
     Note - the input variables to this function are only filtered to remove
     variables that are spatial dimensions. The input to this function may
     have no dimensions, or may not be spatially gridded.
-
     """
     var = varinfo.get_variable(variable)
     assert (
@@ -152,7 +150,6 @@ def get_x_y_dim_var_names(
         ),
         None,
     )
-
     y_dim_var = next(
         (
             dimension
@@ -161,7 +158,6 @@ def get_x_y_dim_var_names(
         ),
         None,
     )
-
     return x_dim_var, y_dim_var
 
 
@@ -274,48 +270,140 @@ def get_grid_geographic_info(
 ) -> Tuple[BBox, float]:  # geo-BBox, WSEN, geo-resolution
     """Get the geographic bounding extents (BBox) of the source grid
     and the geographic resolution. Both of these require the projected
-    grid converted to geographic coordinates.
+    grid converted to geographic coordinates. This method uses Dask.Array
+    features to expedite handling large arrays, and calls reduce_geo_chunks
+    to process per DASK Array chunk (i.e., get_grid_geographic_info per chunk).
+    combine_bbox_array is used to combine the results of "reducing" the chunks.
+
+    Note that "projection" for x & y refers to the extension of values in the x
+    & y direction, as well as the data being coordinates in the CRS projection
+    space.
     """
-    grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
-        x_values, y_values, crs
+    # DASK'ify the x and y coordinate vectors (dask.array as da)
+    xda = da.from_array(x_values.data, chunks="1000")
+    yda = da.from_array(y_values.data, chunks="1000")
+
+    # Create a 2D array from x values repeated down the y dimension
+    projected_x = da.repeat(xda.reshape(1, len(xda)), len(yda), axis=0)
+
+    # Create a 2D array from y values repeated acrss the x dimension
+    projected_y = da.repeat(yda.reshape(len(yda), 1), len(xda), axis=1)
+
+    # Combine the projected_x and projected_y arrays into a single array
+    # to simplify DASK Array processing (single array vs parallel handling
+    # of two arrays)
+    projected_x_y = da.stack([projected_x, projected_y], axis=0).rechunk(
+        chunks=(2, 1000, 1000)
     )
+
+    # Using the dask.array.overlap feature, extend the chunks with single
+    # row/column overlaps at the edges. This allows resolution calculations to
+    # include the edges with adjacent values to work with. No extension occurs
+    # at the edges.
+    projected_x_y = da_overlap(projected_x_y, depth={1: 1, 2: 1}, boundary="none")
+    # depth={1:1,2:1} means 1 element overlap in dimensions 1 & 2, row, column.
+    # There is no overlap in first dimension (0, the x, y stacking)
+
+    bbox_r = da.reduction(
+        projected_x_y,
+        chunk=lambda a_chunk, **kwargs: reduce_geo_chunk(a_chunk, crs=crs, **kwargs),
+        aggregate=combine_bbox_array,
+        axis=(1, 2),  # axes of reduction is (x, y)
+        dtype=projected_x.dtype,
+        concatenate=False,
+    ).compute()
+
+    return (bbox_r.bbox, bbox_r.resolution)
+
+
+def combine_bbox_r(a: BBox_R, b: BBox_R) -> BBox_R:
+    """Reduce a pair of BBox_R to a single BBox_R, returning an encompassing
+    BBox and the lessor of the given resolutions
+    """
+    bboxr = BBox_R(
+        BBox(
+            min(a.bbox[0], b.bbox[0]),
+            min(a.bbox[1], b.bbox[1]),
+            max(a.bbox[2], b.bbox[2]),
+            max(a.bbox[3], b.bbox[3]),
+        ),
+        min(a.resolution, b.resolution),
+    )
+    return bboxr
+
+
+def combine_bbox_array(bbox_r_arr: BBox_R | List[BBox_R], **kwargs) -> BBox_R:
+    """Combine an array of BBox_R results to a single BBox_R
+    """
+    agg = BBox_R(BBox(180, 90, -90, -180), 180)  # all beyond expected values
+
+    # Return (combine_bbox_r(agg, bbox_r) for bbox_r in bbox_r_arr)
+    # but list comprehension creates a "generator" in python, which DASK
+    # cannot serialize. Also - it turns out DASK may submit nested arrays
+    # of arrays
+    if isinstance(bbox_r_arr, BBox_R):
+        agg = bbox_r_arr
+    elif isinstance(bbox_r_arr, list):
+        for bbox_r in bbox_r_arr:
+            agg = combine_bbox_r(agg, combine_bbox_array(bbox_r, **kwargs))
+    return agg
+
+
+def reduce_geo_chunk(
+    projected_x_y: np.ndarray,
+    # stacked array of [ repeated rows of x values (2D),
+    #                    repeated columns of y values (2D) ]
+    crs: CRS | None = None,
+    **kwargs,
+) -> BBox_R:
+    """Process a projected_x_y array chunk to determine the geographic extents
+    (in lat/lon values) and geographic resolution (in degrees) of the x, y
+    locations.
+    """
+    # Unstack arrays
+    projected_x = projected_x_y[0]
+    projected_y = projected_x_y[1]
+
+    grid_lats, grid_lons = get_grid_lat_lons(projected_x, projected_y, crs)
     if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
         raise InvalidGranuleDimensions
 
-    geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
+    bbox = BBox(grid_lons.min(), grid_lats.min(), grid_lons.max(), grid_lats.max())
+    resolution = get_geographic_resolution(grid_lons, grid_lats)
 
-    bbox = BBox(
-        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
-    )
-    return bbox, geographic_resolution
+    return BBox_R(bbox, resolution)
 
 
 def get_grid_lat_lons(
-    x_values: np.ndarray, y_values: np.ndarray, crs: CRS
+    projected_x: np.ndarray, projected_y: np.ndarray, crs: CRS | None
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Construct a 2-D grid of projected x and y values from values in the
-    corresponding dimension variable 1-D arrays. Then transform those
-    points to longitudes and latitudes.
-
+    """Transform projected_x + projected_y coordinates into lat/lon
+    coordinates
     """
-    projected_x = np.repeat(x_values.reshape(1, len(x_values)), len(y_values), axis=0)
-    projected_y = np.repeat(y_values.reshape(len(y_values), 1), len(x_values), axis=1)
+    if not crs:
+        (lats, lons) = zip(projected_x, projected_y)
+        return (np.array(lats), np.array(lons))
 
     to_geo_transformer = Transformer.from_crs(crs, 4326)
 
-    return to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
+    lats, lons = to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
         projected_x, projected_y
     )
+    return (lats, lons)
 
 
 def get_geographic_resolution(longitudes: np.ndarray, latitudes: np.ndarray) -> float:
     """Calculate the distance between diagonally adjacent cells in both
-    longitude and latitude. Combined those differences in quadrature to
+    longitude and latitude. Combine those differences in quadrature to
     obtain Euclidean distances. Return the minimum of these Euclidean
     distances. Over the typical distances being considered, differences
     between the Euclidean and geodesic distance between points should be
     minimal, with Euclidean distances being slightly shorter.
 
+    Note - strictly speaking this is not the "true" resolution, but a
+    diagonal cell-wise distance for "densifying" the perimeter points. It
+    will be approximately √2 * the cell-center distance, which more typically
+    defines the resolution.
     """
     lon_square_diffs = np.square(np.subtract(longitudes[1:, 1:], longitudes[:-1, :-1]))
     lat_square_diffs = np.square(np.subtract(latitudes[1:, 1:], latitudes[:-1, :-1]))
@@ -326,10 +414,12 @@ def get_densified_perimeter(
     resolution: float, shape_file: str | None = None, bounding_box: BBox | None = None
 ) -> List[Coordinates]:
     """Take a shape file or bounding box, as defined by the input Harmony
-    request, and return a full set of points that correspond to the
-    exterior of any GeoJSON shape fixed to the resolution of the projected
-    grid of the data.
-
+    request and return a set of perimeter points - filled to the density
+    specified by the resolution given. One of either the bounding_box
+    argument or the shape_file argument is required. Priority is given
+    to the bounding_box argument. A bounding box is converted to a set
+    of perimeter points. A shape_file is resolved the exterior of the
+    GeoJson features.
     """
     if bounding_box is not None:
         resolved_geojson = get_resolved_feature(
@@ -421,7 +511,6 @@ def get_resolved_features(
 
     if not geojson_content:  # avoids type check failures for Null
         return []
-
     if geojson_content.get("type", "").lower() in feature_types:
         resolved_features = get_resolved_feature(shape(geojson_content), resolution)
     elif "geometry" in geojson_content:
@@ -463,7 +552,6 @@ def get_resolved_feature(
     Later processing will try to determine the extents from these points,
     but won't require the list of coordinates to distinguish between input
     subgeometries, so a flattened list of all coordinates is returned.
-
     """
     if isinstance(feature, Polygon):
         resolved_points = get_resolved_geometry(
@@ -511,7 +599,6 @@ def get_resolved_geometry(
     the final point of the geometry is appended to the full list of
     resolved points to ensure all points are represented in the output. For
     closed geometries, this is already present as the first returned point.
-
     """
     new_points = [
         get_resolved_line(point_one, geometry_points[point_one_index + 1], resolution)[
@@ -519,7 +606,6 @@ def get_resolved_geometry(
         ]
         for point_one_index, point_one in enumerate(geometry_points[:-1])
     ]
-
     if not is_closed:
         new_points.append([geometry_points[-1]])
 
@@ -555,7 +641,7 @@ def get_resolved_line(
 def get_x_y_extents_from_geographic_perimeter(
     points: List[Coordinates],
     crs: CRS,
-    granule_extent_projected_meters: dict[str, float],
+    source_granule_extent: dict[str, float],
 ) -> Dict[str, float]:
     """Take an input list of (longitude, latitude) coordinates that define the
     exterior of the input GeoJSON shape or bounding box, and project those
@@ -572,17 +658,18 @@ def get_x_y_extents_from_geographic_perimeter(
         from_geo_transformer.transform(point_latitudes, point_longitudes)
     )
 
+    # Filter out where projection is NaN or Inf
     finite_x, finite_y = remove_non_finite_projected_values(points_x, points_y)
 
     # Check if perimeter exceeds the grid extents on all axes. If true, return
     # whole grid extents and skips the code that follows (which fails in
     # this case).
-    if perimeter_surrounds_grid(finite_x, finite_y, granule_extent_projected_meters):
-        return granule_extent_projected_meters
+    if perimeter_surrounds_grid(finite_x, finite_y, source_granule_extent):
+        return source_granule_extent
 
     # Remove any points that are outside the grid
     finite_x, finite_y = remove_points_outside_grid_extents(
-        finite_x, finite_y, granule_extent_projected_meters
+        finite_x, finite_y, source_granule_extent
     )
 
     return {

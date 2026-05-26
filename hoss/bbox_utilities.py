@@ -27,6 +27,29 @@ from hoss.harmony_log_context import get_logger
 
 AggCoordinates = List[Tuple[float]]
 BBox = namedtuple('BBox', ['west', 'south', 'east', 'north'])
+
+
+# BBox_R = namedtuple('BBox_R', ['bbox', 'resolution'])
+class BBox_R:
+    """Defining BBox_R here to define a single return object for DASK Array
+    reduction, combining the BBox tuple and a resolution value. DASK Array
+    reduction does not work well with functions that return a tuple. A single
+    return data type is required. Further, it is necessary to define BBox_R as
+    a class (vs namedtuple) to avoid DASK Array reduction attempting to further
+    "reduce" the BBox_R.
+    """
+
+    def __init__(self, bbox: BBox, resolution: float):
+        self.bbox = bbox
+        self.resolution = resolution
+        self.dtype = np.array(bbox).dtype
+        # DASK Array reduction requires a dtype attribute value
+        # to facilitate reduction processing.
+
+    def __str__(self):
+        return f"BBox_R(bbox={self.bbox}, resolution={self.resolution})"
+
+
 Coordinates = Union[
     List[float],
     List[List[float]],
@@ -41,7 +64,7 @@ def get_harmony_message_bbox(message: Message) -> Optional[BBox]:
     is no bounding box, return None.
 
     """
-    if message.subset is not None and message.subset.bbox is not None:
+    if message.subset is not None and message.subset['bbox'] is not None:
         bounding_box = BBox(*message.subset.process('bbox'))
     else:
         bounding_box = None
@@ -51,15 +74,16 @@ def get_harmony_message_bbox(message: Message) -> Optional[BBox]:
 
 def get_request_shape_file(
     message: Message, working_dir: str, adapter_config: Config
-) -> str:
+) -> str | None:
     """This helper function downloads the file specified in the input Harmony
     message via: `Message.subset.shape.href` and returns the local file
     path.
 
     """
     if message.subset is not None and message.subset.shape is not None:
-        if message.subset.shape.type != 'application/geo+json':
-            raise UnsupportedShapeFileFormat(message.subset.shape.type)
+        shape_type = message.subset.shape["type"]
+        if shape_type is None or shape_type != "application/geo+json":
+            raise UnsupportedShapeFileFormat(str(shape_type))
 
         shape_file_url = message.subset.shape.process('href')
         get_logger().info('Downloading request shape file')
@@ -103,8 +127,8 @@ def get_geographic_bbox(geojson_input: GeoJSON) -> Optional[BBox]:
     conform to this recommendation.
 
     """
-    if 'bbox' in geojson_input:
-        return get_bounding_box_lon_lat(geojson_input['bbox'])
+    if isinstance(geojson_input, Dict) and "bbox" in geojson_input:
+        return get_bounding_box_lon_lat(geojson_input["bbox"])
 
     grouped_coordinates = aggregate_all_geometries(geojson_input)
 
@@ -117,6 +141,9 @@ def get_geographic_bbox(geojson_input: GeoJSON) -> Optional[BBox]:
     bbox_south, bbox_north = get_latitude_range(contiguous_bbox, antimeridian_bbox)
 
     if antimeridian_bbox is None:
+        assert (  # to avoid type checking issues
+            contiguous_bbox is not None
+        ), "Program error: contiguous_bbox and antimeridian_bbox cannot both be Null"
         bbox_west = contiguous_bbox.west
         bbox_east = contiguous_bbox.east
     elif contiguous_bbox is None:
@@ -240,7 +267,7 @@ def get_antimeridian_geometry_bbox(
 
 def get_latitude_range(
     contiguous_bbox: Optional[BBox], antimeridian_bbox: Optional[BBox]
-) -> Tuple[float]:
+) -> Tuple[float, float]:
     """Retrieve the southern and northern extent for all bounding boxes. One
     of `contiguous_bbox` or `antimeridian_bbox` must not be `None`.
 
@@ -285,6 +312,9 @@ def aggregate_all_geometries(geojson_input: GeoJSON) -> List[AggCoordinates]:
     polygons).
 
     """
+    if not isinstance(geojson_input, Dict):
+        raise InvalidInputGeoJSON()
+
     if 'coordinates' in geojson_input:
         # A Geometry object with a `coordinates` attribute, e.g., Point,
         # LineString, Polygon, etc.
@@ -313,7 +343,10 @@ def aggregate_all_geometries(geojson_input: GeoJSON) -> List[AggCoordinates]:
     elif 'features' in geojson_input:
         # A GeoJSON FeatureCollection
         grouped_coords = flatten_list(
-            aggregate_all_geometries(feature) for feature in geojson_input['features']
+            [
+                aggregate_all_geometries(feature)
+                for feature in geojson_input['features']
+            ]
         )
     else:
         raise InvalidInputGeoJSON()
@@ -322,7 +355,7 @@ def aggregate_all_geometries(geojson_input: GeoJSON) -> List[AggCoordinates]:
 
 
 def aggregate_geometry_coordinates(
-    coordinates: Coordinates, aggregated_coordinates: List[AggCoordinates] = None
+    coordinates: Coordinates, aggregated_coordinates: List[AggCoordinates] | None = None
 ) -> List[AggCoordinates]:
     """Extract the aggregated latitude and longitude coordinates associated
     with all child items in the `coordinates` attribute of a GeoJSON
@@ -350,12 +383,12 @@ def aggregate_geometry_coordinates(
         aggregated_coordinates = []
 
     if is_single_point(coordinates):
-        aggregated_coordinates.append([(coordinates[0],), (coordinates[1],)])
+        aggregated_coordinates.append([(coordinates[0],), (coordinates[1],)]) # type: ignore
     elif is_list_of_coordinates(coordinates):
         aggregated_coordinates.append(list(zip(*coordinates)))
     else:
         for nested_coordinates in coordinates:
-            aggregate_geometry_coordinates(nested_coordinates, aggregated_coordinates)
+            aggregate_geometry_coordinates(nested_coordinates, aggregated_coordinates) #type: ignore
 
     return aggregated_coordinates
 

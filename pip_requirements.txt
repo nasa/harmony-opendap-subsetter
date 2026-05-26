@@ -4,5 +4,6 @@ earthdata-varinfo ~= 3.3.1
 harmony-service-lib ~= 2.11.0
 netCDF4 ~= 1.7.2
 numpy ~= 2.2.6
+dask ~= 2026.1
 pyproj ~= 3.7.1
 shapely ~= 2.1.1

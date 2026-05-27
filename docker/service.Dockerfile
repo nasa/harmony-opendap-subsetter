@@ -16,7 +16,7 @@
 # 2023-10-02: Updated conda environment to Python 3.11.
 # 2023-10-06: Updated pymods directory to HOSS, conda environment name to hoss.
 #
-FROM continuumio/miniconda3
+FROM continuumio/miniconda3:26.1.1
 
 WORKDIR "/home"
 

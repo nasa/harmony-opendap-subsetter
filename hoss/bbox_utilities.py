@@ -383,12 +383,16 @@ def aggregate_geometry_coordinates(
         aggregated_coordinates = []
 
     if is_single_point(coordinates):
-        aggregated_coordinates.append([(coordinates[0],), (coordinates[1],)]) # type: ignore
+        aggregated_coordinates.append(
+            [(coordinates[0],), (coordinates[1],)]  # type: ignore
+        )
     elif is_list_of_coordinates(coordinates):
         aggregated_coordinates.append(list(zip(*coordinates)))
     else:
         for nested_coordinates in coordinates:
-            aggregate_geometry_coordinates(nested_coordinates, aggregated_coordinates) #type: ignore
+            aggregate_geometry_coordinates(
+                nested_coordinates, aggregated_coordinates  # type: ignore
+            )
 
     return aggregated_coordinates
 

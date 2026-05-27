@@ -1,3 +1,11 @@
+## [v1.2.5] - 2026-05-15
+
+### Changed
+
+- Updated `get_excluded_variables()` to utilize the
+  `get_excluded_science_variables()` method from `earthdata-varinfo`
+  for consistency and commonality.
+
 ## [v1.2.4] - 2026-04-09
 
 ### Changed
@@ -251,6 +259,8 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.5]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.5
+[v1.2.4]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.4
 [v1.2.3]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.3
 [v1.2.2]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.2
 [v1.2.1]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.1

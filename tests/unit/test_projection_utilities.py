@@ -314,6 +314,63 @@ class TestProjectionUtilities(TestCase):
             #     actual_grid_mapping_attributes, expected_grid_mapping_attributes
             # )
 
+        with self.subTest(
+            'Returns the correct attribute when multiple grid mapping variables exist'
+        ):
+            icesat_varinfo = VarInfoFromDmr(
+                'tests/data/SC_ATL21_003.dmr',
+                'ATL21',
+                'hoss/hoss_config.json',
+            )
+            expected_grid_mapping_attributes = {
+                'crs_wkt': 'PROJCS[\"NSIDC Sea Ice Polar Stereographic North\",GEOGCS[\"Unspecified datum based upon the Hughes 1980 ellipsoid\",DATUM[\"Not_specified_based_on_Hughes_1980_ellipsoid\",SPHEROID[\"Hughes 1980\",6378273,298.279411123061,AUTHORITY[\"EPSG\",\"7058\"]],AUTHORITY[\"EPSG\",\"6054\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4054\"]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",70],PARAMETER[\"central_meridian\",-45],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],AUTHORITY[\"EPSG\",\"3411\"]]',
+                'proj4text': '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs',
+                'false_easting': 0.0,
+                'false_northing': 0.0,
+                'inverse_flattening': 298.27941112306098,
+                'semi_major_axis': 6378273.0,
+                'latitude_of_projection_origin': 90.0,
+                'longitude_of_projection_origin': -45.0,
+                'standard_parallel': 70.0,
+                'srid': 'urn:ogc:def:crs:EPSG::3411',
+                'grid_mapping_name': 'polar_stereographic',
+            }
+
+            self.assertEqual(
+                get_grid_mapping_attributes('/daily/day20/n_refsurfs', icesat_varinfo),
+                expected_grid_mapping_attributes,
+            )
+            self.assertEqual(
+                get_grid_mapping_attributes(
+                    '/daily/day17/mean_weighted_mss', icesat_varinfo
+                ),
+                expected_grid_mapping_attributes,
+            )
+            self.assertEqual(
+                get_grid_mapping_attributes('/grid_y', icesat_varinfo),
+                expected_grid_mapping_attributes,
+            )
+            self.assertEqual(
+                get_grid_mapping_attributes('/grid_x', icesat_varinfo),
+                expected_grid_mapping_attributes,
+            )
+            self.assertEqual(
+                get_grid_mapping_attributes('/monthly/sigma', icesat_varinfo),
+                expected_grid_mapping_attributes,
+            )
+            self.assertEqual(
+                get_grid_mapping_attributes('/monthly/sigma', icesat_varinfo),
+                expected_grid_mapping_attributes,
+            )
+            with self.assertRaises(MissingGridMappingMetadata) as context:
+                get_grid_mapping_attributes(
+                    '/crs', icesat_varinfo
+                ), expected_grid_mapping_attributes
+            with self.assertRaises(MissingGridMappingMetadata) as context:
+                get_grid_mapping_attributes(
+                    '/daily/day20/delta_time_end', icesat_varinfo
+                ), expected_grid_mapping_attributes
+
     def test_get_projected_x_y_extents(self):
         """Ensure that the expected values for the x and y dimension extents
         are recovered for a known projected grid and requested input.

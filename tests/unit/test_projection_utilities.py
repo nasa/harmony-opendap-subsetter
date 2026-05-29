@@ -342,7 +342,7 @@ class TestProjectionUtilities(TestCase):
             )
             self.assertEqual(
                 get_grid_mapping_attributes(
-                    '/daily/day17/mean_weighted_mss', icesat_varinfo
+                    '/daily/day20/mean_weighted_mss', icesat_varinfo
                 ),
                 expected_grid_mapping_attributes,
             )
@@ -359,7 +359,7 @@ class TestProjectionUtilities(TestCase):
                 expected_grid_mapping_attributes,
             )
             self.assertEqual(
-                get_grid_mapping_attributes('/monthly/sigma', icesat_varinfo),
+                get_grid_mapping_attributes('/monthly/n_refsurfs', icesat_varinfo),
                 expected_grid_mapping_attributes,
             )
             with self.assertRaises(MissingGridMappingMetadata) as context:

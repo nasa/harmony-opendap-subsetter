@@ -1,3 +1,10 @@
+## [v1.2.6] - 2026-05-29
+
+### Changed
+
+- Update HOSS to support ATL21 multiple grid_mapping variables and return
+  the correct grid_mapping attribute
+
 ## [v1.2.5] - 2026-05-15
 
 ### Changed
@@ -259,6 +266,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.6]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.6
 [v1.2.5]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.5
 [v1.2.4]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.4
 [v1.2.3]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.3

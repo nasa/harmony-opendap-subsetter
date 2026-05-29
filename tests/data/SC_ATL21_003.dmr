@@ -1,0 +1,914 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="https://opendap.uat.earthdata.nasa.gov/collections/C1260128044-EEDTEST/granules/SC:ATL21.003:281280801" dapVersion="4.0" dmrVersion="1.0" name="ATL21-01_20201201000814_10360901_003_01.h5">
+    <Dimension name="grid_y" size="448"/>
+    <Dimension name="grid_x" size="304"/>
+    <Float64 name="grid_x">
+        <Dim name="/grid_x"/>
+        <Attribute name="long_name" type="String">
+            <Value>gridded x</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>projection_x_coordinate</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>meters</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>Sea Ice ATBD</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>Grid cell center X value in projection grid</Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+            <Value>grid_y</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>X</Value>
+        </Attribute>
+        <Attribute name="grid_mapping" type="String">
+            <Value>crs</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="grid_y">
+        <Dim name="/grid_y"/>
+        <Attribute name="long_name" type="String">
+            <Value>gridded y</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>projection_y_coordinate</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>meters</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>Sea Ice ATBD</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>Grid cell center Y value in projection grid</Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+            <Value>grid_x</Value>
+        </Attribute>
+        <Attribute name="axis" type="String">
+            <Value>Y</Value>
+        </Attribute>
+        <Attribute name="grid_mapping" type="String">
+            <Value>crs</Value>
+        </Attribute>
+    </Float64>
+    <Float64 name="grid_lat">
+        <Dim name="/grid_y"/>
+        <Dim name="/grid_x"/>
+        <Attribute name="long_name" type="String">
+            <Value>gridded latitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_north</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>Sea Ice ATBD</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>Grid cell center latitude</Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+            <Value>grid_x grid_y</Value>
+        </Attribute>
+        <Map name="/grid_x"/>
+        <Map name="/grid_y"/>
+    </Float64>
+    <Int32 name="land_mask_map">
+        <Dim name="/grid_y"/>
+        <Dim name="/grid_x"/>
+        <Attribute name="_FillValue" type="Int32">
+            <Value>2147483647</Value>
+        </Attribute>
+        <Attribute name="long_name" type="String">
+            <Value>land mask map</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>1</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>Sea Ice ATBD</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Int32">
+            <Value>0</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Int32">
+            <Value>1</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>Gridded map which describes each grid cell as land (=1) or ocean/sea ice (=0)</Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+            <Value>grid_x grid_y</Value>
+        </Attribute>
+        <Attribute name="grid_mapping" type="String">
+            <Value>crs: grid_x crs: grid_y</Value>
+        </Attribute>
+        <Map name="/grid_x"/>
+        <Map name="/grid_y"/>
+    </Int32>
+    <Int8 name="crs">
+        <Dim size="1"/>
+        <Attribute name="crs_wkt" type="String">
+            <Value>&quot;PROJCS[&quot;NSIDC Sea Ice Polar Stereographic North&quot;,GEOGCS[&quot;Unspecified datum based upon the Hughes 1980 ellipsoid&quot;,DATUM[&quot;Not_specified_based_on_Hughes_1980_ellipsoid&quot;,SPHEROID[&quot;Hughes 1980&quot;,6378273,298.279411123061,AUTHORITY[&quot;EPSG&quot;,&quot;7058&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6054&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4054&quot;]],PROJECTION[&quot;Polar_Stereographic&quot;],PARAMETER[&quot;latitude_of_origin&quot;,70],PARAMETER[&quot;central_meridian&quot;,-45],PARAMETER[&quot;scale_factor&quot;,1],PARAMETER[&quot;false_easting&quot;,0],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;X&quot;,EAST],AXIS[&quot;Y&quot;,NORTH],AUTHORITY[&quot;EPSG&quot;,&quot;3411&quot;]]</Value>
+        </Attribute>
+        <Attribute name="proj4text" type="String">
+            <Value>+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs</Value>
+        </Attribute>
+        <Attribute name="false_easting" type="Float64">
+            <Value>0.</Value>
+        </Attribute>
+        <Attribute name="false_northing" type="Float64">
+            <Value>0.</Value>
+        </Attribute>
+        <Attribute name="grid_mapping_name" type="String">
+            <Value>polar_stereographic</Value>
+        </Attribute>
+        <Attribute name="inverse_flattening" type="Float64">
+            <Value>298.27941112306098</Value>
+        </Attribute>
+        <Attribute name="semi_major_axis" type="Float64">
+            <Value>6378273.</Value>
+        </Attribute>
+        <Attribute name="latitude_of_projection_origin" type="Float64">
+            <Value>90.</Value>
+        </Attribute>
+        <Attribute name="longitude_of_projection_origin" type="Float64">
+            <Value>-45.</Value>
+        </Attribute>
+        <Attribute name="standard_parallel" type="Float64">
+            <Value>70.</Value>
+        </Attribute>
+        <Attribute name="srid" type="String">
+            <Value>urn:ogc:def:crs:EPSG::3411</Value>
+        </Attribute>
+    </Int8>
+    <Float64 name="grid_lon">
+        <Dim name="/grid_y"/>
+        <Dim name="/grid_x"/>
+        <Attribute name="long_name" type="String">
+            <Value>gridded longitude</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_east</Value>
+        </Attribute>
+        <Attribute name="source" type="String">
+            <Value>Sea Ice ATBD</Value>
+        </Attribute>
+        <Attribute name="contentType" type="String">
+            <Value>referenceInformation</Value>
+        </Attribute>
+        <Attribute name="description" type="String">
+            <Value>Grid cell center longitude</Value>
+        </Attribute>
+        <Attribute name="coordinates" type="String">
+            <Value>grid_x grid_y</Value>
+        </Attribute>
+        <Map name="/grid_x"/>
+        <Map name="/grid_y"/>
+    </Float64>
+    <Attribute name="short_name" type="String">
+        <Value>ATL21</Value>
+    </Attribute>
+    <Attribute name="level" type="String">
+        <Value>L3B</Value>
+    </Attribute>
+    <Attribute name="title" type="String">
+        <Value>SET_BY_META</Value>
+    </Attribute>
+    <Attribute name="description" type="String">
+        <Value>This data set (ATL21) contains daily and monthly gridded polar sea surface height anomalies</Value>
+    </Attribute>
+    <Attribute name="Conventions" type="String">
+        <Value>CF-1.7</Value>
+    </Attribute>
+    <Attribute name="contributor_name" type="String">
+        <Value>Alek Petty (alek.a.petty@nasa.gov), Ron Kwok (rkwok01@uw.edu), Marco Bagnardi (marco.bagnardi@nasa.gov), Nathan Kurtz (nathan.t.kurtz@nasa.gov), Jeff Lee (jeffrey.e.lee@nasa.gov), Jesse Wimert (jesse.wimert@us.kbr.com), David Hancock (david.w.hancock@nasa.gov)</Value>
+    </Attribute>
+    <Attribute name="contributor_role" type="String">
+        <Value>Investigator, Investigator, Investigator, Investigator, Algorithm Developer, Algorithm Developer, Algorithm Developer</Value>
+    </Attribute>
+    <Attribute name="date_type" type="String">
+        <Value>UTC</Value>
+    </Attribute>
+    <Attribute name="geospatial_lat_units" type="String">
+        <Value>degrees_north</Value>
+    </Attribute>
+    <Attribute name="geospatial_lon_units" type="String">
+        <Value>degrees_east</Value>
+    </Attribute>
+    <Attribute name="granule_type" type="String">
+        <Value>ATL21</Value>
+    </Attribute>
+    <Attribute name="identifier_product_doi_authority" type="String">
+        <Value>http://dx.doi.org</Value>
+    </Attribute>
+    <Attribute name="license" type="String">
+        <Value>Data may not be reproduced or distributed without including the citation for this product included in this metadata. Data may not be distributed in an altered form without the written permission of the ICESat-2 Science Project Office at NASA/GSFC.</Value>
+    </Attribute>
+    <Attribute name="naming_authority" type="String">
+        <Value>http://dx.doi.org</Value>
+    </Attribute>
+    <Attribute name="spatial_coverage_type" type="String">
+        <Value>Horizontal</Value>
+    </Attribute>
+    <Attribute name="standard_name_vocabulary" type="String">
+        <Value>CF-1.6</Value>
+    </Attribute>
+    <Attribute name="time_type" type="String">
+        <Value>CCSDS UTC-A</Value>
+    </Attribute>
+    <Attribute name="date_created" type="String">
+        <Value>2023-07-21T16:23:21.000000Z</Value>
+    </Attribute>
+    <Attribute name="hdfversion" type="String">
+        <Value>HDF5 1.10.7</Value>
+    </Attribute>
+    <Attribute name="history" type="String">
+        <Value>2023-07-21T16:23:21.000000Z;25fa22ac-2a0a-3960-8a2b-bf499e664466;Created by PGE atlas_l3b_si Version 3.0</Value>
+    </Attribute>
+    <Attribute name="identifier_file_uuid" type="String">
+        <Value>25fa22ac-2a0a-3960-8a2b-bf499e664466</Value>
+    </Attribute>
+    <Attribute name="identifier_product_format_version" type="String">
+        <Value>3.0</Value>
+    </Attribute>
+    <Attribute name="time_coverage_duration" type="Float64">
+        <Value>2681602.</Value>
+    </Attribute>
+    <Attribute name="time_coverage_end" type="String">
+        <Value>2021-01-01T01:01:36.000000Z</Value>
+    </Attribute>
+    <Attribute name="time_coverage_start" type="String">
+        <Value>2020-12-01T00:08:14.000000Z</Value>
+    </Attribute>
+    <Attribute name="geospatial_lat_min" type="Float64">
+        <Value>50.368177262583472</Value>
+    </Attribute>
+    <Attribute name="geospatial_lon_min" type="Float64">
+        <Value>-179.99999941781232</Value>
+    </Attribute>
+    <Attribute name="geospatial_lat_max" type="Float64">
+        <Value>88.040412194772188</Value>
+    </Attribute>
+    <Attribute name="geospatial_lon_max" type="Float64">
+        <Value>179.99999907113448</Value>
+    </Attribute>
+    <Attribute name="publisher_name" type="String">
+        <Value>NSIDC DAAC &gt; NASA National Snow and Ice Data Center Distributed Active Archive Center</Value>
+    </Attribute>
+    <Attribute name="publisher_email" type="String">
+        <Value>nsidc@nsidc.org</Value>
+    </Attribute>
+    <Attribute name="publisher_url" type="String">
+        <Value>https://nsidc.org/daac/</Value>
+    </Attribute>
+    <Attribute name="identifier_product_type" type="String">
+        <Value>ATL21</Value>
+    </Attribute>
+    <Attribute name="identifier_product_doi" type="String">
+        <Value>doi:10.5067/ATLAS/ATL21.003</Value>
+    </Attribute>
+    <Attribute name="institution" type="String">
+        <Value>National Aeronautics and Space Administration (NASA)</Value>
+    </Attribute>
+    <Attribute name="creator_name" type="String">
+        <Value>GSFC I-SIPS &gt; ICESat-2 Science Investigator-led Processing System</Value>
+    </Attribute>
+    <Attribute name="summary" type="String">
+        <Value>Scientific Research</Value>
+    </Attribute>
+    <Attribute name="keywords" type="String">
+        <Value>EARTH SCIENCE &gt; OCEANS &gt; SEA SURFACE TOPOGRAPHY &gt; SEA SURFACE HEIGHT &gt; SEA SURFACE HEIGHT ANOMALY _SSHA_</Value>
+    </Attribute>
+    <Attribute name="keywords_vocabulary" type="String">
+        <Value>NASA/GCMD Science Keywords</Value>
+    </Attribute>
+    <Attribute name="citation" type="String">
+        <Value>Cite these data in publications as follows: The data used in this study were produced by the ICESat-2 Science Project Office at NASA/GSFC. The data archive site is the NASA National Snow and Ice Data Center Distributed Active Archive Center.</Value>
+    </Attribute>
+    <Attribute name="processing_level" type="String">
+        <Value>3B</Value>
+    </Attribute>
+    <Attribute name="references" type="String">
+        <Value>http://nsidc.org/data/icesat2/data.html</Value>
+    </Attribute>
+    <Attribute name="project" type="String">
+        <Value>ICESat-2 &gt; Ice, Cloud, and land Elevation Satellite-2</Value>
+    </Attribute>
+    <Attribute name="instrument" type="String">
+        <Value>ATLAS &gt; Advanced Topographic Laser Altimeter System</Value>
+    </Attribute>
+    <Attribute name="platform" type="String">
+        <Value>ICESat-2 &gt; Ice, Cloud, and land Elevation Satellite-2</Value>
+    </Attribute>
+    <Attribute name="source" type="String">
+        <Value>Spacecraft</Value>
+    </Attribute>
+    <Attribute name="build_dmrpp_metadata" type="Container">
+        <Attribute name="build_dmrpp" type="String">
+            <Value>3.20.13-951</Value>
+        </Attribute>
+        <Attribute name="bes" type="String">
+            <Value>3.20.13-951</Value>
+        </Attribute>
+        <Attribute name="libdap" type="String">
+            <Value>libdap-3.20.11-211</Value>
+        </Attribute>
+        <Attribute name="configuration" type="String">
+            <Value>
+# TheBESKeys::get_as_config()
+AllowedHosts=^https?:\/\/
+BES.Catalog.catalog.FollowSymLinks=Yes
+BES.Catalog.catalog.RootDirectory=/usr/share/hyrax
+BES.Catalog.catalog.TypeMatch=dmrpp:.*\.(dmrpp)$;
+BES.Catalog.catalog.TypeMatch+=h5:.*(\.bz2|\.gz|\.Z)?$;
+BES.Data.RootDirectory=/dev/null
+BES.LogName=./bes.log
+BES.UncompressCache.dir=/tmp/hyrax_ux
+BES.UncompressCache.prefix=ux_
+BES.UncompressCache.size=500
+BES.module.cmd=/usr/lib64/bes/libdap_xml_module.so
+BES.module.dap=/usr/lib64/bes/libdap_module.so
+BES.module.dmrpp=/usr/lib64/bes/libdmrpp_module.so
+BES.module.h5=/usr/lib64/bes/libhdf5_module.so
+BES.modules=dap,cmd,h5,dmrpp
+H5.DefaultHandleDimensions=true
+H5.EnableCF=false
+H5.EnableCheckNameClashing=true
+</Value>
+        </Attribute>
+        <Attribute name="invocation" type="String">
+            <Value>build_dmrpp -c /tmp/bes_conf_Tx9W -f /usr/share/hyrax/ATL21_003/ATL21-01_20201201000814_10360901_003_01.h5 -r /tmp/dmr__MdO9n5 -u OPeNDAP_DMRpp_DATA_ACCESS_URL -M</Value>
+        </Attribute>
+    </Attribute>
+    <Group name="orbit_info">
+        <Dimension name="crossing_time" size="444"/>
+        <Dimension name="sc_orient_time" size="1"/>
+        <Float64 name="crossing_time">
+            <Dim name="/orbit_info/crossing_time"/>
+            <Attribute name="long_name" type="String">
+                <Value>Ascending Node Crossing Time</Value>
+            </Attribute>
+            <Attribute name="standard_name" type="String">
+                <Value>time</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>seconds since 2018-01-01</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>POD/PPD</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>The time, in seconds since the ATLAS SDP GPS Epoch, at which the ascending node crosses the equator. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+            </Attribute>
+        </Float64>
+        <Float64 name="sc_orient_time">
+            <Dim name="/orbit_info/sc_orient_time"/>
+            <Attribute name="long_name" type="String">
+                <Value>Time of Last Spacecraft Orientation Change</Value>
+            </Attribute>
+            <Attribute name="standard_name" type="String">
+                <Value>time</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>seconds since 2018-01-01</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>POD/PPD</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>The time of the last spacecraft orientation change between forward, backward and transitional flight modes, expressed in seconds since the ATLAS SDP GPS Epoch. ICESat-2 is considered to be flying forward when the weak beams are leading the strong beams; and backward when the strong beams are leading the weak beams. ICESat-2 is considered to be in transition while it is maneuvering between the two orientations. Science quality is potentially degraded while in transition mode. The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+            </Attribute>
+        </Float64>
+        <UInt16 name="orbit_number">
+            <Dim name="/orbit_info/crossing_time"/>
+            <Attribute name="long_name" type="String">
+                <Value>Orbit Number</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>Operations</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="UInt16">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="UInt16">
+                <Value>65000</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>Unique identifying number for each planned ICESat-2 orbit.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>crossing_time</Value>
+            </Attribute>
+            <Map name="/orbit_info/crossing_time"/>
+        </UInt16>
+        <Float64 name="lan">
+            <Dim name="/orbit_info/crossing_time"/>
+            <Attribute name="long_name" type="String">
+                <Value>Ascending Node Longitude</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>degrees_east</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>POD/PPD</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float64">
+                <Value>-180.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float64">
+                <Value>180.</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>Longitude at the ascending node crossing.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>crossing_time</Value>
+            </Attribute>
+            <Map name="/orbit_info/crossing_time"/>
+        </Float64>
+        <Int8 name="sc_orient">
+            <Dim name="/orbit_info/sc_orient_time"/>
+            <Attribute name="long_name" type="String">
+                <Value>Spacecraft Orientation</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>POD/PPD</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Int8">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Int8">
+                <Value>2</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>This parameter tracks the spacecraft orientation between forward, backward and transitional flight modes. ICESat-2 is considered to be flying forward when the weak beams are leading the strong beams; and backward when the strong beams are leading the weak beams. ICESat-2 is considered to be in transition while it is maneuvering between the two orientations. Science quality is potentially degraded while in transition mode.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>sc_orient_time</Value>
+            </Attribute>
+            <Attribute name="flag_meanings" type="String">
+                <Value>backward forward transition</Value>
+            </Attribute>
+            <Attribute name="flag_values" type="Int8">
+                <Value>0</Value>
+                <Value>1</Value>
+                <Value>2</Value>
+            </Attribute>
+            <Map name="/orbit_info/sc_orient_time"/>
+        </Int8>
+        <Int16 name="rgt">
+            <Dim name="/orbit_info/crossing_time"/>
+            <Attribute name="long_name" type="String">
+                <Value>Reference Ground track</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>POD/PPD</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Int16">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Int16">
+                <Value>1387</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>The reference ground track (RGT) is the track on the earth at which a specified unit vector within the observatory is pointed. Under nominal operating conditions, there will be no data collected along the RGT, as the RGT is spanned by GT3 and GT4.  During slews or off-pointing, it is possible that ground tracks may intersect the RGT. The ICESat-2 mission has 1387 RGTs.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>crossing_time</Value>
+            </Attribute>
+            <Map name="/orbit_info/crossing_time"/>
+        </Int16>
+        <Int8 name="cycle_number">
+            <Dim name="/orbit_info/crossing_time"/>
+            <Attribute name="long_name" type="String">
+                <Value>Cycle Number</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Int8">
+                <Value>0</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Int8">
+                <Value>50</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>referenceInformation</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>A count of the number of exact repeats of this reference orbit.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>crossing_time</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>Operations</Value>
+            </Attribute>
+            <Map name="/orbit_info/crossing_time"/>
+        </Int8>
+        <Attribute name="Description" type="String">
+            <Value>Contains orbit information.</Value>
+        </Attribute>
+        <Attribute name="data_rate" type="String">
+            <Value>Varies. Data are only provided when one of the stored values (besides time) changes.</Value>
+        </Attribute>
+    </Group>
+    <Group name="daily">
+        <Attribute name="Description" type="String">
+            <Value>gridded daily averages</Value>
+        </Attribute>
+        <Group name="day20">
+            <Float64 name="delta_time_end">
+                <Dim size="1"/>
+                <Attribute name="long_name" type="String">
+                    <Value>Elapsed GPS seconds</Value>
+                </Attribute>
+                <Attribute name="standard_name" type="String">
+                    <Value>time</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>seconds since 2018-01-01</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Derived via Time Tagging</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Center time of the last reference surface used in this gridded composite in seconds since the ATLAS SDP GPS Epoch.  The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+                </Attribute>
+            </Float64>
+            <Float32 name="mean_ssha">
+                <Dim name="/grid_y"/>
+                <Dim name="/grid_x"/>
+                <Attribute name="_FillValue" type="Float32">
+                    <Value>3.402823466e+38</Value>
+                </Attribute>
+                <Attribute name="long_name" type="String">
+                    <Value>Daily mean sea surface height anomalies</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>meters</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Sea Ice ATBD</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Daily mean sea surface height anomalies (SSHA) for each daily grid cell. Sea surface height anomalies expressed relative to the mean sea surface (other geophysical corrections also applied, as indicated in the ATBD) using the reference surface heights.</Value>
+                </Attribute>
+                <Attribute name="coordinates" type="String">
+                    <Value>../../grid_x ../../grid_y</Value>
+                </Attribute>
+                <Attribute name="grid_mapping" type="String">
+                    <Value>../../crs: ../../grid_x ../../crs: ../../grid_y</Value>
+                </Attribute>
+                <Map name="/grid_x"/>
+                <Map name="/grid_y"/>
+            </Float32>
+            <Int32 name="n_refsurfs">
+                <Dim name="/grid_y"/>
+                <Dim name="/grid_x"/>
+                <Attribute name="_FillValue" type="Int32">
+                    <Value>2147483647</Value>
+                </Attribute>
+                <Attribute name="long_name" type="String">
+                    <Value>Daily population count</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>1</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Sea Ice ATBD</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Number of reference surface sections used in each daily grid cell.</Value>
+                </Attribute>
+                <Attribute name="coordinates" type="String">
+                    <Value>../../grid_x ../../grid_y</Value>
+                </Attribute>
+                <Attribute name="grid_mapping" type="String">
+                    <Value>../../crs: ../../grid_x ../../crs: ../../grid_y</Value>
+                </Attribute>
+                <Map name="/grid_x"/>
+                <Map name="/grid_y"/>
+            </Int32>
+            <Float32 name="mean_weighted_mss">
+                <Dim name="/grid_y"/>
+                <Dim name="/grid_x"/>
+                <Attribute name="_FillValue" type="Float32">
+                    <Value>3.402823466e+38</Value>
+                </Attribute>
+                <Attribute name="long_name" type="String">
+                    <Value>Daily mean MSS</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>meters</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Sea Ice ATBD</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Grid-cell mean of the Mean Sea Surface (MSS) values sampled at each reference surface height location used in the daily grid cell. MSS in ATL10 is expressed relative to the WGS-84 reference ellipsoid from a CryoSat-2/DTU13 merged product (https://doi.org/10. 5281/zenodo.4294047) and is in a tide free system. MSS is converted to mean tide when sampled by ATL21 using the geoid_free2mean correction.</Value>
+                </Attribute>
+                <Attribute name="coordinates" type="String">
+                    <Value>../../grid_x ../../grid_y</Value>
+                </Attribute>
+                <Attribute name="grid_mapping" type="String">
+                    <Value>../../crs: ../../grid_x ../../crs: ../../grid_y</Value>
+                </Attribute>
+                <Map name="/grid_x"/>
+                <Map name="/grid_y"/>
+            </Float32>
+            <Float32 name="mean_weighted_earth_free2mean">
+                <Dim name="/grid_y"/>
+                <Dim name="/grid_x"/>
+                <Attribute name="_FillValue" type="Float32">
+                    <Value>3.402823466e+38</Value>
+                </Attribute>
+                <Attribute name="long_name" type="String">
+                    <Value>Daily mean solid earth tide free-to-mean conversion</Value>
+                </Attribute>
+                <Attribute name="standard_name" type="String">
+                    <Value>solid earth tide free2mean</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>meters</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Sea Ice ATBD</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Mean of the solid earth permanent tide correction (height_segment_earth_free2mean in ATL10) sampled at each reference surface height location used in the daily grid cell. Subtract from mean_ssha to remove the solid earth permanent tide.</Value>
+                </Attribute>
+                <Attribute name="coordinates" type="String">
+                    <Value>../../grid_x ../../grid_y</Value>
+                </Attribute>
+                <Attribute name="grid_mapping" type="String">
+                    <Value>../../crs: ../../grid_x ../../crs: ../../grid_y</Value>
+                </Attribute>
+                <Map name="/grid_x"/>
+                <Map name="/grid_y"/>
+            </Float32>
+            <Float64 name="delta_time_beg">
+                <Dim size="1"/>
+                <Attribute name="long_name" type="String">
+                    <Value>Elapsed GPS seconds</Value>
+                </Attribute>
+                <Attribute name="standard_name" type="String">
+                    <Value>time</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>seconds since 2018-01-01</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Derived via Time Tagging</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Center time of the first reference surface used in this gridded composite in seconds since the ATLAS SDP GPS Epoch.  The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+                </Attribute>
+            </Float64>
+            <Float32 name="mean_weighted_geoid">
+                <Dim name="/grid_y"/>
+                <Dim name="/grid_x"/>
+                <Attribute name="_FillValue" type="Float32">
+                    <Value>3.402823466e+38</Value>
+                </Attribute>
+                <Attribute name="long_name" type="String">
+                    <Value>Daily mean geoid</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>meters</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Sea Ice ATBD</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Mean of the geoid values (height_segment_geoid in ATL10) sampled at each reference surface height location used in the daily grid cell. Geoid is expressed relative to the WGS-84 reference ellipsoid from EGM2008 and is in a mean-tide system.</Value>
+                </Attribute>
+                <Attribute name="coordinates" type="String">
+                    <Value>../../grid_x ../../grid_y</Value>
+                </Attribute>
+                <Attribute name="grid_mapping" type="String">
+                    <Value>../../crs: ../../grid_x ../../crs: ../../grid_y</Value>
+                </Attribute>
+                <Map name="/grid_x"/>
+                <Map name="/grid_y"/>
+            </Float32>
+            <Float32 name="mean_weighted_geoid_free2mean">
+                <Dim name="/grid_y"/>
+                <Dim name="/grid_x"/>
+                <Attribute name="_FillValue" type="Float32">
+                    <Value>3.402823466e+38</Value>
+                </Attribute>
+                <Attribute name="long_name" type="String">
+                    <Value>Daily mean geoid free-to-mean conversion</Value>
+                </Attribute>
+                <Attribute name="standard_name" type="String">
+                    <Value>geoid free2mean</Value>
+                </Attribute>
+                <Attribute name="units" type="String">
+                    <Value>meters</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Sea Ice ATBD</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Mean of the geoid free-to-mean correction (height_segment_geoid_free2mean in ATL10) sampled at each reference surface height location used in the daily grid cell. Subtract from mean_weighted_mss or mean_weighted_geoid to convert to a tide-free system.</Value>
+                </Attribute>
+                <Attribute name="coordinates" type="String">
+                    <Value>../../grid_x ../../grid_y</Value>
+                </Attribute>
+                <Attribute name="grid_mapping" type="String">
+                    <Value>../../crs: ../../grid_x ../../crs: ../../grid_y</Value>
+                </Attribute>
+                <Map name="/grid_x"/>
+                <Map name="/grid_y"/>
+            </Float32>
+            <Float32 name="sigma">
+                <Dim name="/grid_y"/>
+                <Dim name="/grid_x"/>
+                <Attribute name="units" type="String">
+                    <Value>meters</Value>
+                </Attribute>
+                <Attribute name="_FillValue" type="Float32">
+                    <Value>3.402823466e+38</Value>
+                </Attribute>
+                <Attribute name="long_name" type="String">
+                    <Value>Daily standard deviation</Value>
+                </Attribute>
+                <Attribute name="source" type="String">
+                    <Value>Sea Ice ATBD</Value>
+                </Attribute>
+                <Attribute name="contentType" type="String">
+                    <Value>modelResult</Value>
+                </Attribute>
+                <Attribute name="description" type="String">
+                    <Value>Standard deviation of daily gridded mean sea surface height anomaly, computed following ATBD section 6.3.</Value>
+                </Attribute>
+                <Attribute name="coordinates" type="String">
+                    <Value>../../grid_x ../../grid_y</Value>
+                </Attribute>
+                <Attribute name="grid_mapping" type="String">
+                    <Value>../../crs: ../../grid_x ../../crs: ../../grid_y</Value>
+                </Attribute>
+                <Map name="/grid_x"/>
+                <Map name="/grid_y"/>
+            </Float32>
+            <Attribute name="Description" type="String">
+                <Value>Gridded daily averages</Value>
+            </Attribute>
+        </Group>
+    </Group>
+    <Group name="monthly">
+        <Float64 name="delta_time_end">
+            <Dim size="1"/>
+            <Attribute name="long_name" type="String">
+                <Value>Elapsed GPS seconds</Value>
+            </Attribute>
+            <Attribute name="standard_name" type="String">
+                <Value>time</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>seconds since 2018-01-01</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>Derived via Time Tagging</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>modelResult</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>Center time of the last reference surface used in this gridded composite in seconds since the ATLAS SDP GPS Epoch.  The ATLAS Standard Data Products (SDP) epoch offset is defined within /ancillary_data/atlas_sdp_gps_epoch as the number of GPS seconds between the GPS epoch (1980-01-06T00:00:00.000000Z UTC) and the ATLAS SDP epoch. By adding the offset contained within atlas_sdp_gps_epoch to delta time parameters, the time in gps_seconds relative to the GPS epoch can be computed.</Value>
+            </Attribute>
+        </Float64>
+        <Int32 name="n_refsurfs">
+            <Dim name="/grid_y"/>
+            <Dim name="/grid_x"/>
+            <Attribute name="_FillValue" type="Int32">
+                <Value>2147483647</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Monthly population count</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>1</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>Sea Ice ATBD</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>modelResult</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>Number of reference surface sections used in each monthly grid cell</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>../grid_x ../grid_y</Value>
+            </Attribute>
+            <Attribute name="grid_mapping" type="String">
+                <Value>../crs: ../grid_x ../crs: ../grid_y</Value>
+            </Attribute>
+            <Map name="/grid_x"/>
+            <Map name="/grid_y"/>
+        </Int32>
+        <Float32 name="sigma">
+            <Dim name="/grid_y"/>
+            <Dim name="/grid_x"/>
+            <Attribute name="units" type="String">
+                <Value>meters</Value>
+            </Attribute>
+            <Attribute name="_FillValue" type="Float32">
+                <Value>3.402823466e+38</Value>
+            </Attribute>
+            <Attribute name="long_name" type="String">
+                <Value>Monthly standard deviation</Value>
+            </Attribute>
+            <Attribute name="source" type="String">
+                <Value>Sea Ice ATBD</Value>
+            </Attribute>
+            <Attribute name="contentType" type="String">
+                <Value>modelResult</Value>
+            </Attribute>
+            <Attribute name="description" type="String">
+                <Value>Standard deviation of monthly gridded mean sea surface height anomaly, computed following ATBD section 6.3.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>../grid_x ../grid_y</Value>
+            </Attribute>
+            <Attribute name="grid_mapping" type="String">
+                <Value>../crs: ../grid_x ../crs: ../grid_y</Value>
+            </Attribute>
+            <Map name="/grid_x"/>
+            <Map name="/grid_y"/>
+        </Float32>
+        <Attribute name="Description" type="String">
+            <Value>Gridded Monthly averages</Value>
+        </Attribute>
+    </Group>
+</Dataset>

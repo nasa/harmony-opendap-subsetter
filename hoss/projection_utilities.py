@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Tuple, Union, get_args
 
 import numpy as np
 from pyproj import CRS, Transformer
+from pyproj.exceptions import CRSError
 from shapely.geometry import (
     GeometryCollection,
     LineString,
@@ -47,7 +48,16 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     variable and creates a `pyproj.CRS` object from the grid mapping attributes.
 
     """
-    return CRS.from_cf(get_grid_mapping_attributes(variable, varinfo))
+    cf_attributes = get_grid_mapping_attributes(variable, varinfo)
+    try:
+        crs = CRS.from_cf(cf_attributes)
+    except CRSError:
+        if 'srid' in cf_attributes:
+            crs = CRS(cf_attributes['srid'])
+        else:
+            raise MissingGridMappingMetadata(variable.name)
+
+    return crs
 
 
 def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:

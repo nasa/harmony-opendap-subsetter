@@ -55,7 +55,7 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
         if 'srid' in cf_attributes:
             crs = CRS(cf_attributes['srid'])
         else:
-            raise MissingGridMappingMetadata(variable.name)
+            raise MissingGridMappingMetadata(variable)
 
     return crs
 
@@ -80,28 +80,26 @@ def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
     coordinates = varinfo.get_variable(variable).references.get('coordinates', set())
     grid_mapping_var_name_list = list(grid_mapping - coordinates)
 
-    if grid_mapping_var_name_list and len(grid_mapping_var_name_list) == 1:
-        grid_mapping_var_name = grid_mapping_var_name_list[0]
-        try:
-            grid_mapping_variable = varinfo.get_variable(grid_mapping_var_name)
-            if grid_mapping_variable is not None:
-                cf_attributes = grid_mapping_variable.attributes
-            else:
-                # check for configuration provided attributes
-                cf_attributes = varinfo.get_missing_variable_attributes(
-                    grid_mapping_var_name
-                )
-
-            if cf_attributes:
-                return cf_attributes
-            raise MissingGridMappingVariable(grid_mapping_var_name, variable)
-
-        except AttributeError as exception:
-            raise MissingGridMappingVariable(
-                grid_mapping_var_name, variable
-            ) from exception
-    else:
+    if len(grid_mapping_var_name_list) == 0:
         raise MissingGridMappingMetadata(variable)
+
+    grid_mapping_var_name = grid_mapping_var_name_list[0]
+    try:
+        grid_mapping_variable = varinfo.get_variable(grid_mapping_var_name)
+        if grid_mapping_variable is not None:
+            cf_attributes = grid_mapping_variable.attributes
+        else:
+            # check for configuration provided attributes
+            cf_attributes = varinfo.get_missing_variable_attributes(
+                grid_mapping_var_name
+            )
+
+        if cf_attributes:
+            return cf_attributes
+        raise MissingGridMappingVariable(grid_mapping_var_name, variable)
+
+    except AttributeError as exception:
+        raise MissingGridMappingVariable(grid_mapping_var_name, variable) from exception
 
 
 def get_master_geotransform(

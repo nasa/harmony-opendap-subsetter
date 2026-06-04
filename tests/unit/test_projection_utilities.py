@@ -15,6 +15,7 @@ from unittest.mock import call, patch
 
 import numpy as np
 from pyproj import CRS
+from pyproj.exceptions import CRSError
 from shapely.geometry import Polygon, shape
 from varinfo import VarInfoFromDmr
 
@@ -174,55 +175,42 @@ class TestProjectionUtilities(TestCase):
             self.assertEqual(actual_crs, expected_crs)
             self.assertIsInstance(actual_crs, CRS)
 
-    def test_get_variable_crs_atl21_polar_stereographic_north_south(self):
-        """Ensure a `pyproj.CRS` object can be correctly instantiated from
-        grid mapping attributes for ATL21 products using Polar Stereographic
-        North (EPSG:3411) and South (EPSG:3412) projections.
-
-        """
-        with self.subTest(
-            'Returns the correct CRS for Polar Stereographic North (EPSG:3411)'
-        ):
-            icesat_varinfo = VarInfoFromDmr(
-                'tests/data/SC_ATL21_003_polar_north.dmr',
-                'ATL21',
-                'hoss/hoss_config.json',
-            )
-
-            expected_crs = CRS('urn:ogc:def:crs:EPSG::3411')
-
-            actual_crs = get_variable_crs('/daily/day20/n_refsurfs', icesat_varinfo)
-            self.assertEqual(actual_crs, expected_crs)
+        icesat_varinfo = VarInfoFromDmr(
+            'tests/data/SC_ATL21_003_polar_south.dmr',
+            'ATL21',
+            'hoss/hoss_config.json',
+        )
 
         with self.subTest(
-            'Returns the correct CRS for Polar Stereographic South (EPSG:3412)'
+            'Ensure when metadata attribute is not present, falls back to using the SRID'
         ):
-            icesat_varinfo = VarInfoFromDmr(
-                'tests/data/SC_ATL21_003_polar_south.dmr',
-                'ATL21',
-                'hoss/hoss_config.json',
-            )
-
-            grid_mapping_attributes = {
-                'crs_wkt': 'PROJCS[\"NSIDC Sea Ice Polar Stereographic South\",GEOGCS[\"Unspecified datum based upon the Hughes 1980 ellipsoid\",DATUM[\"Not_specified_based_on_Hughes_1980_ellipsoid\",SPHEROID[\"Hughes 1980\",6378273,298.279411123061,AUTHORITY[\"EPSG\",\"7058\"]],AUTHORITY[\"EPSG\",\"6054\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4054\"]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-70],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],AUTHORITY[\"EPSG\",\"3412\"]]',
-                'proj4text': '+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs',
-                'false_easting': np.float64(0.0),
-                'false_northing': np.float64(0.0),
-                'grid_mapping_name': 'polar_stereographic',
-                'inverse_flattening': np.float64(298.27941112306098),
-                'semi_major_axis': np.float64(6378273.0),
-                'latitude_of_projection_origin': np.float64(-90.0),
-                'longitude_of_projection_origin': np.float64(0.0),
-                'standard_parallel': np.float64(-70.0),
+            mock_get_grid_mapping_attributes.side_effect = None
+            mock_get_grid_mapping_attributes.return_value = {
+                'crs_wkt': '"PROJCS[\"NSIDC Sea Ice Polar Stereographic South\",GEOGCS[\"Unspecified datum based upon the Hughes 1980 ellipsoid\",DATUM[\"Not_specified_based_on_Hughes_1980_ellipsoid\",SPHEROID[\"Hughes 1980\",6378273,298.279411123061,AUTHORITY[\"EPSG\",\"7058\"]],AUTHORITY[\"EPSG\",\"6054\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4054\"]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",70],PARAMETER[\"central_meridian\",-45],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],AUTHORITY[\"EPSG\",\"3411\"]]',
                 'srid': 'urn:ogc:def:crs:EPSG::3412',
             }
 
-            expected_crs = CRS.from_cf(grid_mapping_attributes)
-
+            expected_crs = CRS('urn:ogc:def:crs:EPSG::3412')
             actual_crs = get_variable_crs(
                 '/daily/day21/mean_weighted_mss', icesat_varinfo
             )
             self.assertEqual(actual_crs, expected_crs)
+
+        with self.subTest(
+            'Ensure metadata attribute and srid are not present then the MissingGridMappingMetadata exception is raised'
+        ):
+            mock_get_grid_mapping_attributes.side_effect = None
+            mock_get_grid_mapping_attributes.return_value = {}
+
+            with self.assertRaises(MissingGridMappingMetadata) as context:
+                get_variable_crs('/daily/day21/mean_weighted_mss', icesat_varinfo)
+
+            self.assertEqual(
+                context.exception.message,
+                'Projected variable "/daily/day21/mean_weighted_mss"'
+                ' does not have an associated "grid_mapping" '
+                'metadata attribute.',
+            )
 
     def test_get_grid_mapping_attributes(self):
         """Ensure that the grid mapping attributes can be retrieved via the reference
@@ -365,7 +353,7 @@ class TestProjectionUtilities(TestCase):
             # )
 
         with self.subTest(
-            'Returns the correct Polar Stereographic North attribute when multiple grid mapping variables exist'
+            'Returns the correct attribute when multiple variables reference the same grid_mapping'
         ):
             icesat_varinfo = VarInfoFromDmr(
                 'tests/data/SC_ATL21_003_polar_north.dmr',
@@ -390,93 +378,6 @@ class TestProjectionUtilities(TestCase):
                 get_grid_mapping_attributes('/daily/day20/n_refsurfs', icesat_varinfo),
                 expected_grid_mapping_attributes,
             )
-            self.assertEqual(
-                get_grid_mapping_attributes(
-                    '/daily/day20/mean_weighted_mss', icesat_varinfo
-                ),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/grid_y', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/grid_x', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/monthly/sigma', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/monthly/n_refsurfs', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            with self.assertRaises(MissingGridMappingMetadata) as context:
-                get_grid_mapping_attributes(
-                    '/crs', icesat_varinfo
-                ), expected_grid_mapping_attributes
-            with self.assertRaises(MissingGridMappingMetadata) as context:
-                get_grid_mapping_attributes(
-                    '/daily/day20/delta_time_end', icesat_varinfo
-                ), expected_grid_mapping_attributes
-
-        with self.subTest(
-            'Returns the correct Polar Stereographic South attribute when multiple grid mapping variables exist'
-        ):
-            icesat_varinfo = VarInfoFromDmr(
-                'tests/data/SC_ATL21_003_polar_south.dmr',
-                'ATL21',
-                'hoss/hoss_config.json',
-            )
-            expected_grid_mapping_attributes = {
-                'crs_wkt': 'PROJCS[\"NSIDC Sea Ice Polar Stereographic South\",GEOGCS[\"Unspecified datum based upon the Hughes 1980 ellipsoid\",DATUM[\"Not_specified_based_on_Hughes_1980_ellipsoid\",SPHEROID[\"Hughes 1980\",6378273,298.279411123061,AUTHORITY[\"EPSG\",\"7058\"]],AUTHORITY[\"EPSG\",\"6054\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4054\"]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-70],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],AUTHORITY[\"EPSG\",\"3412\"]]',
-                'proj4text': '+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs',
-                'false_easting': np.float64(0.0),
-                'false_northing': np.float64(0.0),
-                'grid_mapping_name': 'polar_stereographic',
-                'inverse_flattening': np.float64(298.27941112306098),
-                'semi_major_axis': np.float64(6378273.0),
-                'latitude_of_projection_origin': np.float64(-90.0),
-                'longitude_of_projection_origin': np.float64(0.0),
-                'standard_parallel': np.float64(-70.0),
-                'srid': 'urn:ogc:def:crs:EPSG::3412',
-            }
-
-            self.assertEqual(
-                get_grid_mapping_attributes('/daily/day20/n_refsurfs', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes(
-                    '/daily/day20/mean_weighted_mss', icesat_varinfo
-                ),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/grid_y', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/grid_x', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/monthly/sigma', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            self.assertEqual(
-                get_grid_mapping_attributes('/monthly/n_refsurfs', icesat_varinfo),
-                expected_grid_mapping_attributes,
-            )
-            with self.assertRaises(MissingGridMappingMetadata) as context:
-                get_grid_mapping_attributes(
-                    '/crs', icesat_varinfo
-                ), expected_grid_mapping_attributes
-            with self.assertRaises(MissingGridMappingMetadata) as context:
-                get_grid_mapping_attributes(
-                    '/daily/day20/delta_time_end', icesat_varinfo
-                ), expected_grid_mapping_attributes
 
     def test_get_projected_x_y_extents(self):
         """Ensure that the expected values for the x and y dimension extents

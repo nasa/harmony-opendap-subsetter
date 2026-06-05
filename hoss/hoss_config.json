@@ -1228,20 +1228,6 @@
     },
     {
       "Applicability": {
-        "Mission": "ICESat2",
-        "ShortNamePath": "ATL20",
-        "VariablePattern": ".*"
-      },
-      "Attributes": [
-        {
-          "Name": "coordinates",
-          "Value": "/crs"
-        }
-      ],
-      "_Description": "Include CRS variable as a coordinate for all ATL20 variables."
-    },
-    {
-      "Applicability": {
         "Mission": "SMAP",
         "ShortNamePath": "SPL3SMP_E",
         "VariablePattern": "/$"

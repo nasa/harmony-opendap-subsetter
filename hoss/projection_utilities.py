@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Tuple, Union, get_args
 
 import numpy as np
 from pyproj import CRS, Transformer
+from pyproj.exceptions import CRSError
 from shapely.geometry import (
     GeometryCollection,
     LineString,
@@ -47,7 +48,16 @@ def get_variable_crs(variable: str, varinfo: VarInfoFromDmr) -> CRS:
     variable and creates a `pyproj.CRS` object from the grid mapping attributes.
 
     """
-    return CRS.from_cf(get_grid_mapping_attributes(variable, varinfo))
+    cf_attributes = get_grid_mapping_attributes(variable, varinfo)
+    try:
+        crs = CRS.from_cf(cf_attributes)
+    except CRSError:
+        if 'srid' in cf_attributes:
+            crs = CRS(cf_attributes['srid'])
+        else:
+            raise MissingGridMappingMetadata(variable)
+
+    return crs
 
 
 def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
@@ -56,37 +66,40 @@ def get_grid_mapping_attributes(variable: str, varinfo: VarInfoFromDmr) -> Dict:
 
     All metadata attributes that contain references from one variable to
     another are stored in the `Variable.references` dictionary attribute
-    as sets. There should only be one reference in the `grid_mapping`
-    attribute value, so the first element of the set is retrieved.
-    If the grid mapping variable, as referred to in the grid_mapping
+    as sets. To isolate the true grid mapping variable name, coordinate
+    variable references are filtered out of the grid mapping references.
+    There must be exactly one grid mapping variable reference remaining after
+    this filtering.  If the grid mapping variable, as referred to in the grid_mapping
     CF-Convention metadata attribute, does not exist in the file then
     the earthdata-varinfo configuration file is checked, as it may
     contain metadata overrides specified for that non-existent variable
     name.
 
     """
-    grid_mapping = next(
-        iter(varinfo.get_variable(variable).references.get('grid_mapping', [])), None
-    )
+    grid_mapping = varinfo.get_variable(variable).references.get('grid_mapping', set())
+    coordinates = varinfo.get_variable(variable).references.get('coordinates', set())
+    grid_mapping_var_name_list = list(grid_mapping - coordinates)
 
-    if grid_mapping is not None:
-        try:
-            grid_mapping_variable = varinfo.get_variable(grid_mapping)
-            if grid_mapping_variable is not None:
-                cf_attributes = grid_mapping_variable.attributes
-            else:
-                # check for configuration provided attributes
-                cf_attributes = varinfo.get_missing_variable_attributes(grid_mapping)
-
-            if cf_attributes:
-                return cf_attributes
-            raise MissingGridMappingVariable(grid_mapping, variable)
-
-        except AttributeError as exception:
-            raise MissingGridMappingVariable(grid_mapping, variable) from exception
-
-    else:
+    if len(grid_mapping_var_name_list) == 0:
         raise MissingGridMappingMetadata(variable)
+
+    grid_mapping_var_name = grid_mapping_var_name_list[0]
+    try:
+        grid_mapping_variable = varinfo.get_variable(grid_mapping_var_name)
+        if grid_mapping_variable is not None:
+            cf_attributes = grid_mapping_variable.attributes
+        else:
+            # check for configuration provided attributes
+            cf_attributes = varinfo.get_missing_variable_attributes(
+                grid_mapping_var_name
+            )
+
+        if cf_attributes:
+            return cf_attributes
+        raise MissingGridMappingVariable(grid_mapping_var_name, variable)
+
+    except AttributeError as exception:
+        raise MissingGridMappingVariable(grid_mapping_var_name, variable) from exception
 
 
 def get_master_geotransform(

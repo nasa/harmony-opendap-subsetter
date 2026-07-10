@@ -238,25 +238,17 @@ def get_projected_x_y_extents(
 
     """
 
-    grid_lats, grid_lons = get_grid_lat_lons(  # pylint: disable=unpacking-non-sequence
+    granule_extent, geographic_resolution = get_grid_geographic_info(
         x_values, y_values, crs
     )
-    if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
-        raise InvalidGranuleDimensions
 
     # When projected, the perimeter of a bounding box or polygon in geographic
     # terms will become curved.  To determine the X, Y extent of the requested
     # bounding area, we need a perimeter with a suitable density of points, such that
     # we catch that curve when projected. The source file resolution is used to define
     # the necessary number of points (density).
-    geographic_resolution = get_geographic_resolution(grid_lons, grid_lats)
-
     densified_perimeter = get_densified_perimeter(
         geographic_resolution, shape_file=shape_file, bounding_box=bounding_box
-    )
-
-    granule_extent = BBox(
-        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
     )
 
     # If there is a configuration for geographic spatial extent apply that.
@@ -312,22 +304,100 @@ def get_filtered_points(
     return list(zip(clipped_lons, clipped_lats))
 
 
-def get_grid_lat_lons(
+def get_grid_geographic_info(
     x_values: np.ndarray, y_values: np.ndarray, crs: CRS
-) -> Tuple[np.ndarray]:
-    """Construct a 2-D grid of projected x and y values from values in the
-    corresponding dimension variable 1-D arrays. Then transform those
-    points to longitudes and latitudes.
+) -> Tuple[BBox, float]:
+    """Determine the geographic bounding box and the minimum geographic
+    resolution of a projected grid, without holding the full 2-D
+    latitude/longitude grid in memory.
+
+    The projected grid is the cross product of the 1-D x and y dimension
+    variables. Both the bounding box (min/max latitude and longitude) and the
+    resolution (minimum diagonal spacing between adjacent cells) are pure
+    reductions over that grid, so they can be accumulated while streaming a
+    sliding window down the y dimension: each iteration projects a
+    single new row, pairs it with the previous row to measure the diagonal
+    spacing, folds the result into the running summary, and discards the
+    older row.
 
     """
-    projected_x = np.repeat(x_values.reshape(1, len(x_values)), len(y_values), axis=0)
-    projected_y = np.repeat(y_values.reshape(len(y_values), 1), len(x_values), axis=1)
+    if len(y_values) < 2 or len(x_values) < 2:
+        raise InvalidGranuleDimensions
 
     to_geo_transformer = Transformer.from_crs(crs, 4326)
 
-    return to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
-        projected_x, projected_y
+    running_bbox = None
+    running_resolution = None
+
+    last_row_lats, last_row_lons = get_row_lat_lons(
+        x_values, y_values[0], to_geo_transformer
     )
+    for row_index in range(1, len(y_values)):
+        row_lats, row_lons = get_row_lat_lons(
+            x_values, y_values[row_index], to_geo_transformer
+        )
+        two_row_lats = np.array([last_row_lats, row_lats])
+        two_row_lons = np.array([last_row_lons, row_lons])
+
+        running_bbox, running_resolution = get_grid_geographic_info_by_rows(
+            two_row_lats, two_row_lons, running_bbox, running_resolution
+        )
+
+        last_row_lats, last_row_lons = row_lats, row_lons
+
+    return running_bbox, running_resolution
+
+
+def get_grid_geographic_info_by_rows(
+    grid_lats: np.ndarray,
+    grid_lons: np.ndarray,
+    running_bbox: Optional[BBox],
+    running_resolution: Optional[float],
+) -> Tuple[BBox, float]:
+    """Fold a two-row window of projected latitudes and longitudes into the
+    running geographic bounding box and minimum resolution. The returned
+    bounding box encompasses both the window and the previous running box,
+    and the returned resolution is the lesser of the two. On the first
+    window (running values are None) the window's own values are returned.
+
+    """
+    if not np.all(np.isfinite(grid_lats)) or not np.all(np.isfinite(grid_lons)):
+        raise InvalidGranuleDimensions
+
+    window_bbox = BBox(
+        np.min(grid_lons), np.min(grid_lats), np.max(grid_lons), np.max(grid_lats)
+    )
+    window_resolution = get_geographic_resolution(grid_lons, grid_lats)
+
+    if running_bbox is None:
+        return window_bbox, window_resolution
+
+    merged_bbox = BBox(
+        min(running_bbox.west, window_bbox.west),
+        min(running_bbox.south, window_bbox.south),
+        max(running_bbox.east, window_bbox.east),
+        max(running_bbox.north, window_bbox.north),
+    )
+    return merged_bbox, min(running_resolution, window_resolution)
+
+
+def get_row_lat_lons(
+    x_values: np.ndarray, y_value: float, to_geo_transformer: Transformer
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Project a single grid row to geographic coordinates: the full x
+    dimension paired with one constant y value. Returns the 1-D latitude and
+    longitude arrays for that row.
+
+    """
+    projected_x = np.array(x_values)
+    projected_y = np.repeat(y_value, len(x_values))
+
+    row_lats, row_lons = (
+        to_geo_transformer.transform(  # pylint: disable=unpacking-non-sequence
+            projected_x, projected_y
+        )
+    )
+    return row_lats, row_lons
 
 
 def get_geographic_resolution(longitudes: np.ndarray, latitudes: np.ndarray) -> float:

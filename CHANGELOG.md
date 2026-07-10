@@ -1,3 +1,15 @@
+## [v1.2.7] - 2026-07-09
+
+### Fixed
+
+- HOSS no longer runs out of memory when determining the geographic extent
+  and minimum resolution of large projected grids (e.g. ATL14). The
+  full 2-D latitude/longitude grid is no longer materialized:
+  `get_projected_x_y_extents` now calls a new `get_grid_geographic_info`, which
+  streams a sliding two-row window down the grid (`get_grid_geographic_info_by_rows`, `get_row_lat_lons`)
+  to accumulate the bounding box and minimum resolution.
+  This resolves the HOSS out-of-memory failures for large spatial subset requests (DAS-2125).
+
 ## [v1.2.6] - 2026-05-29
 
 ### Changed
@@ -266,6 +278,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.7]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.7
 [v1.2.6]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.6
 [v1.2.5]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.5
 [v1.2.4]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.4

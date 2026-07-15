@@ -944,8 +944,8 @@ class TestProjectionUtilities(TestCase):
         projected grid, without materializing the full 2-D lat/lon grid.
 
         """
-        x_values = np.array([1513760.59366167, 1048141.65434399])
-        y_values = np.array([-705878.15743769, -381492.36347575])
+        x_values = np.linspace(1048141.65434399, 1513760.59366167, 4)
+        y_values = np.linspace(-705878.15743769, -381492.36347575, 4)
         crs = CRS.from_epsg(6931)
 
         granule_bbox, resolution = get_grid_geographic_info(x_values, y_values, crs)
@@ -955,7 +955,7 @@ class TestProjectionUtilities(TestCase):
         )
         self.assertIsInstance(granule_bbox, BBox)
         np.testing.assert_almost_equal(tuple(granule_bbox), tuple(expected_bbox))
-        self.assertAlmostEqual(resolution, 7.07106781202973, places=7)
+        self.assertAlmostEqual(resolution, 5.771482489355279, places=7)
 
     def test_get_grid_geographic_info_invalid_dimensions(self):
         """A projected grid needs at least two rows and two columns to measure

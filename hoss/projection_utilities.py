@@ -351,8 +351,8 @@ def get_grid_geographic_info(
 def get_grid_geographic_info_by_rows(
     grid_lats: np.ndarray,
     grid_lons: np.ndarray,
-    running_bbox: Optional[BBox],
-    running_resolution: Optional[float],
+    running_bbox: BBox | None,
+    running_resolution: float | None,
 ) -> Tuple[BBox, float]:
     """Fold a two-row window of projected latitudes and longitudes into the
     running geographic bounding box and minimum resolution. The returned

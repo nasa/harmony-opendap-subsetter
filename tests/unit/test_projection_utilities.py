@@ -14,7 +14,7 @@ from unittest import TestCase
 from unittest.mock import call, patch
 
 import numpy as np
-from pyproj import CRS
+from pyproj import CRS, Transformer
 from pyproj.exceptions import CRSError
 from shapely.geometry import Polygon, shape
 from varinfo import VarInfoFromDmr
@@ -34,7 +34,8 @@ from hoss.projection_utilities import (
     get_filtered_points,
     get_geographic_resolution,
     get_geographic_spatial_extent,
-    get_grid_lat_lons,
+    get_grid_geographic_info,
+    get_grid_geographic_info_by_rows,
     get_grid_mapping_attributes,
     get_master_geotransform,
     get_projected_x_y_extents,
@@ -43,6 +44,7 @@ from hoss.projection_utilities import (
     get_resolved_features,
     get_resolved_geometry,
     get_resolved_line,
+    get_row_lat_lons,
     get_variable_crs,
     get_x_y_extents_from_geographic_perimeter,
     is_projection_x_dimension,
@@ -912,24 +914,101 @@ class TestProjectionUtilities(TestCase):
         with self.subTest('Non-existent dimension returns False'):
             self.assertFalse(is_projection_y_dimension(varinfo, '/missing'))
 
-    def test_get_grid_lat_lons(self):
-        """Ensure that a grid of projected values is correctly converted to
-        longitude and latitude values. The inputs include 1-D arrays for
-        the x and y dimensions, whilst the output are 2-D grids of latitude
-        and longitude that correspond to all grid points defined by the
-        combinations of x and y coordinates.
+    def test_get_row_lat_lons(self):
+        """Ensure a single projected grid row (the full x dimension paired
+        with one constant y value) is correctly converted to latitude and
+        longitude values.
 
         """
         x_values = np.array([1513760.59366167, 1048141.65434399])
-        y_values = np.array([-705878.15743769, -381492.36347575])
+        crs = CRS.from_epsg(6931)
+        to_geo_transformer = Transformer.from_crs(crs, 4326)
+
+        with self.subTest('First grid row'):
+            row_lats, row_lons = get_row_lat_lons(
+                x_values, -705878.15743769, to_geo_transformer
+            )
+            np.testing.assert_almost_equal(row_lats, np.array([75.0, 78.6663628]))
+            np.testing.assert_almost_equal(row_lons, np.array([65.0, 56.0414351]))
+
+        with self.subTest('Second grid row'):
+            row_lats, row_lons = get_row_lat_lons(
+                x_values, -381492.36347575, to_geo_transformer
+            )
+            np.testing.assert_almost_equal(row_lats, np.array([75.9858088, 80.0]))
+            np.testing.assert_almost_equal(row_lons, np.array([75.8550777, 70.0]))
+
+    def test_get_grid_geographic_info(self):
+        """Ensure the streaming, row-by-row computation returns the correct
+        geographic bounding box and minimum geographic resolution for a known
+        projected grid, without materializing the full 2-D lat/lon grid.
+
+        """
+        x_values = np.linspace(1048141.65434399, 1513760.59366167, 4)
+        y_values = np.linspace(-705878.15743769, -381492.36347575, 4)
         crs = CRS.from_epsg(6931)
 
-        actual_lats, actual_lons = get_grid_lat_lons(x_values, y_values, crs)
-        expected_lats = np.array([[75.0, 78.6663628], [75.9858088, 80.0]])
-        expected_lons = np.array([[65.0, 56.0414351], [75.8550777, 70.0]])
+        granule_bbox, resolution = get_grid_geographic_info(x_values, y_values, crs)
 
-        np.testing.assert_almost_equal(actual_lats, expected_lats)
-        np.testing.assert_almost_equal(actual_lons, expected_lons)
+        expected_bbox = BBox(
+            56.04143512197393, 74.99999999927691, 75.8550776615272, 79.99999999950946
+        )
+        self.assertIsInstance(granule_bbox, BBox)
+        np.testing.assert_almost_equal(tuple(granule_bbox), tuple(expected_bbox))
+        self.assertAlmostEqual(resolution, 5.771482489355279, places=7)
+
+    def test_get_grid_geographic_info_invalid_dimensions(self):
+        """A projected grid needs at least two rows and two columns to measure
+        the diagonal spacing between adjacent cells. Invalid grids raise
+        InvalidGranuleDimensions.
+
+        """
+        crs = CRS.from_epsg(3413)
+
+        with self.subTest('Single row'):
+            with self.assertRaises(InvalidGranuleDimensions):
+                get_grid_geographic_info(
+                    np.linspace(-1000000, 1000000, 10), np.array([0.0]), crs
+                )
+
+        with self.subTest('Single column'):
+            with self.assertRaises(InvalidGranuleDimensions):
+                get_grid_geographic_info(
+                    np.array([0.0]), np.linspace(-1000000, 1000000, 10), crs
+                )
+
+    def test_get_grid_geographic_info_by_rows(self):
+        """Ensure the two-row reducer seeds from the first window, merges
+        subsequent windows to the outer bounding box and lesser resolution,
+        and raises on non-finite projected values.
+
+        """
+        first_lats = np.array([[10.0, 10.0, 10.0], [15.0, 15.0, 15.0]])
+        first_lons = np.array([[10.0, 15.0, 25.0], [10.0, 15.0, 25.0]])
+
+        with self.subTest('First window seeds the running summary'):
+            running_bbox, running_resolution = get_grid_geographic_info_by_rows(
+                first_lats, first_lons, None, None
+            )
+            np.testing.assert_almost_equal(
+                tuple(running_bbox), (10.0, 10.0, 25.0, 15.0)
+            )
+            self.assertAlmostEqual(running_resolution, math.sqrt(50), places=7)
+
+        with self.subTest('Later window expands bbox and lowers resolution'):
+            next_lats = np.array([[15.0, 15.0, 15.0], [16.0, 16.0, 16.0]])
+            next_lons = np.array([[10.0, 15.0, 25.0], [10.0, 15.0, 25.0]])
+            merged_bbox, merged_resolution = get_grid_geographic_info_by_rows(
+                next_lats, next_lons, running_bbox, running_resolution
+            )
+            np.testing.assert_almost_equal(tuple(merged_bbox), (10.0, 10.0, 25.0, 16.0))
+            self.assertAlmostEqual(merged_resolution, math.sqrt(26), places=7)
+
+        with self.subTest('Non-finite values raise InvalidGranuleDimensions'):
+            bad_lats = np.array([[10.0, 11.0], [12.0, np.nan]])
+            bad_lons = np.array([[20.0, 21.0], [22.0, 23.0]])
+            with self.assertRaises(InvalidGranuleDimensions):
+                get_grid_geographic_info_by_rows(bad_lats, bad_lons, None, None)
 
     def test_get_geographic_resolution(self):
         """Ensure the calculated resolution is the minimum Euclidean distance

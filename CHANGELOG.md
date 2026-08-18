@@ -1,3 +1,11 @@
+## [v1.2.8] - 2026-08-07
+
+### Changed
+
+- Re-enable UTC time string variables (matching `time_utc` pattern) for SMAP L3
+  collections by removing the SMAP entry from the `ExcludedScienceVariables`
+  list in the `hoss_config.json` configuration file.
+
 ## [v1.2.7] - 2026-07-09
 
 ### Fixed
@@ -278,6 +286,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.2.8]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.8
 [v1.2.7]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.7
 [v1.2.6]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.6
 [v1.2.5]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.5

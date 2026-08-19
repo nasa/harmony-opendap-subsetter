@@ -20,8 +20,8 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo):
     whether or not they include leading slashes.
 
     """
-    excluded_string1 = '/string_variable_time_utc'
-    excluded_string2 = 'subgroup/nested_string_variable_time_utc'
+    excluded_string1 = '/excluded_string_variable'
+    excluded_string2 = 'subgroup/nested_excluded_variable'
     requested_variable_paths = {
         excluded_string1,
         excluded_string2,
@@ -35,8 +35,8 @@ def test_check_invalid_variable_request_exclusions(mocker, mock_varinfo):
 
     # Returned excluded variables should always have leading slashes.
     excluded_vars = {
-        '/string_variable_time_utc',
-        '/subgroup/nested_string_variable_time_utc',
+        '/excluded_string_variable',
+        '/subgroup/nested_excluded_variable',
     }
     mock_get_excluded_variables = mocker.patch.object(
         mock_varinfo,
@@ -127,3 +127,30 @@ def test_check_invalid_variable_request_no_exclusions(
     assert 'No invalid variables are requested.' in caplog.text
 
     mock_get_excluded_variables.assert_called_once()
+
+
+def test_smap_l3_time_utc_variables_not_excluded():
+    """UTC time string variables must no longer be excluded for SMAP L3
+    collections.
+
+    """
+    varinfo = VarInfoFromDmr(
+        'tests/data/SC_SPL3SMP_008.dmr',
+        'SPL3SMP',
+        config_file='hoss/hoss_config.json',
+    )
+
+    excluded_variables = varinfo.get_excluded_science_variables()
+    time_utc_excluded = {
+        variable for variable in excluded_variables if 'time_utc' in variable
+    }
+    assert time_utc_excluded == set()
+
+    # An explicit request for a UTC time string variable must not raise.
+    requested_harmony_variables = [
+        HarmonyVariable({'fullPath': '/Soil_Moisture_Retrieval_Data_AM/tb_time_utc'}),
+        HarmonyVariable(
+            {'fullPath': '/Soil_Moisture_Retrieval_Data_PM/tb_time_utc_pm'}
+        ),
+    ]
+    check_invalid_variable_request(requested_harmony_variables, varinfo)

@@ -21,7 +21,8 @@
     "M2T1NXSLV": "MERRA-2",
     "M2I3NPASM": "MERRA-2",
     "ABoVE_ForestDisturbance_Agents_1924": "ABoVE",
-    "NorthSlope_NEE_TVPRM_1920": "ABoVE"
+    "NorthSlope_NEE_TVPRM_1920": "ABoVE",
+    "TEMPO_.+": "TEMPO"
   },
   "ExcludedScienceVariables": [
     {
@@ -1431,6 +1432,20 @@
         }
       ],
       "_Description": "Provide segment size information for variables."
+    },
+    {
+      "Applicability": {
+        "Mission": "TEMPO",
+        "ShortNamePath": "TEMPO_O3PROF_L3",
+        "VariablePattern": "^/(product|support_data)/.*"
+      },
+      "Attributes": [
+        {
+          "Name": "index_dimensions",
+          "Value": "layer"
+        }
+      ],
+      "_Description": "The layer dimension has no coordinate variable. Variables carrying the index_dimensions attribute support subsetting of the named dimension as a 0-based integer index scale."
     }
   ]
 }

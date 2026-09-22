@@ -1,12 +1,12 @@
-  ## [v1.4.0] - 2026-09-18
+## [v1.4.0] - 2026-09-18
 
-  ### Added
+### Added
 
-  - Named dimension subsetting now supports dimensions that have no coordinate variable
-    in the granule, when the configuration file declares them via a new `index_dimensions`
-    variable attribute. The configuration entry enables this for the `layer` dimension
-    of the TEMPO ozone profile Level 3 collection, for use in the IMAGENATOR-L3
-    browse imagery chain.
+- Named dimension subsetting now supports dimensions that have no coordinate variable
+  in the granule, when the configuration file declares them via a new `index_dimensions`
+  variable attribute. The configuration entry enables this for the `layer` dimension
+  of the TEMPO ozone profile Level 3 collection, for use in the IMAGENATOR-L3
+  browse imagery chain.
 
 ## [v1.3.0] - 2026-08-20
 

@@ -1,6 +1,6 @@
 {
   "Identification": "hoss_config",
-  "Version": 23,
+  "Version": 24,
   "CollectionShortNamePath": [
     "/HDF5_GLOBAL/short_name",
     "/NC_GLOBAL/short_name",

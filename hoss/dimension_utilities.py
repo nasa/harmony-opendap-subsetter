@@ -617,6 +617,11 @@ def get_configured_index_dimensions(
             continue
         for base_name in configured.split():
             for dimension_name in variable.dimensions:
+                # A dimension qualifies when these three conditions are satisfied: its
+                # base name is one of the configured names, the granule has
+                # no dimension variable for it (otherwise the existing
+                # one applies), and the dmr has its size, which determines
+                # the length of the generated scale.
                 if (
                     dimension_name.rsplit('/', 1)[-1] == base_name
                     and varinfo.get_variable(dimension_name) is None

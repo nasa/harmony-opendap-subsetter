@@ -11,7 +11,6 @@ unwrapped in accordance with the longitude dimension values.
 """
 
 from pathlib import PurePosixPath
-from typing import Dict, Set, Tuple
 
 import numpy as np
 from harmony_service_lib.exceptions import NoDataException
@@ -38,8 +37,8 @@ from hoss.utilities import (
     get_value_or_default,
 )
 
-IndexRange = Tuple[int]
-IndexRanges = Dict[str, IndexRange]
+IndexRange = tuple[int]
+IndexRanges = dict[str, IndexRange]
 
 
 def is_index_subset(message: Message) -> bool:
@@ -66,7 +65,7 @@ def is_index_subset(message: Message) -> bool:
 def get_prefetch_variables(
     opendap_url: str,
     varinfo: VarInfoFromDmr,
-    required_variables: Set[str],
+    required_variables: set[str],
     output_dir: str,
     access_token: str,
     config: Config,
@@ -115,7 +114,7 @@ def get_prefetch_variables(
 
 def check_add_artificial_bounds(
     dimensions_nc4: str,
-    required_dimensions: Set[str],
+    required_dimensions: set[str],
     varinfo: VarInfoFromDmr,
 ) -> None:
     """Augment a NetCDF4 file with artificial bounds variables for each
@@ -385,7 +384,7 @@ def get_dimension_indices_from_values(
 
 def get_dimension_indices_from_bounds(
     bounds: np.ndarray, min_value: float, max_value: float
-) -> Tuple[int]:
+) -> tuple[int]:
     """Derive the dimension array indices that correspond to the requested
     dimension range in the input Harmony message.
 
@@ -516,7 +515,7 @@ def get_fill_slice(dimension: str, fill_ranges: IndexRanges) -> slice:
     return fill_slice
 
 
-def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
+def get_dimension_extents(dimension_array: np.ndarray) -> tuple[float]:
     """Fit the dimension with a straight line, and find the outer edge of the
     first and last pixel, assuming the supplied values lie at the centre of
     each pixel.
@@ -532,7 +531,7 @@ def get_dimension_extents(dimension_array: np.ndarray) -> Tuple[float]:
 
 
 def get_requested_index_ranges(
-    required_variables: Set[str],
+    required_variables: set[str],
     varinfo: VarInfoFromDmr,
     dimensions_path: str,
     harmony_message: Message,
@@ -600,7 +599,7 @@ def get_requested_index_ranges(
 
 
 def get_configured_index_dimensions(
-    required_variables: Set[str], varinfo: VarInfoFromDmr
+    required_variables: set[str], varinfo: VarInfoFromDmr
 ) -> dict[str, np.ndarray]:
     """Return 0-based integer index scales for dimensions of the required
     variables that have no coordinate variable in the granule but are named

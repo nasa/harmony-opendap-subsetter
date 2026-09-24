@@ -1,3 +1,11 @@
+## [v1.4.1] - 2026-09-21
+
+### Changed
+
+- The service Docker image is now built from the official `python:3.12-slim-trixie`
+  base image instead of Miniconda, and `conda_requirements.txt` has been
+  removed. All dependencies are installed via pip.
+
 ## [v1.4.0] - 2026-09-18
 
 ### Added
@@ -296,6 +304,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.4.1]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.4.1
 [v1.4.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.4.0
 [v1.3.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.3.0
 [v1.2.7]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.7

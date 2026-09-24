@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Fixed
+
+- Clip partially overlapping requests on descending coordinate dimensions instead of incorrectly returning no data.
+
 ## [v1.4.1] - 2026-09-21
 
 ### Changed

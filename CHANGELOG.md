@@ -2,7 +2,7 @@
 
 ### Changed
 
-- The service Docker image is now built from the official `python:3.12-slim`
+- The service Docker image is now built from the official `python:3.12-slim-trixie`
   base image instead of Miniconda, and `conda_requirements.txt` has been
   removed. All dependencies are installed via pip.
 

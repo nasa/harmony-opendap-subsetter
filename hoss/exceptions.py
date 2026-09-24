@@ -56,7 +56,8 @@ class InvalidInputGeoJSON(CustomNoRetryError):
 
 class InvalidNamedDimension(CustomNoRetryError):
     """This exception is raised when a user-supplied dimension name
-    is not in the list of required dimensions for the subset.
+    is not in the list of required dimensions for the subset, and is not
+    configured as an index dimension of any requested variable.
 
     """
 
@@ -64,7 +65,10 @@ class InvalidNamedDimension(CustomNoRetryError):
         super().__init__(
             'InvalidNamedDimension',
             f'"{dimension_name}" is not a dimension for '
-            'any of the requested variables.',
+            'any of the requested variables. A named dimension must be a '
+            'dimension of a requested variable and either have a dimension '
+            'variable of the same name in the granule or be declared via '
+            'the index_dimensions configuration attribute.',
         )
 
 

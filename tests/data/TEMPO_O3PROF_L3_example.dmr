@@ -1,0 +1,174 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" xml:base="https://opendap.uat.earthdata.nasa.gov/collections/C1274178570-LARC_CLOUD/granules/TEMPO_O3PROF_L3_V04_20260520T010534Z_S014.nc" dapVersion="4.0" dmrVersion="1.0" name="TEMPO_O3PROF_L3_V04_20260520T010534Z_S014.nc">
+    <!-- Trimmed from the .dmr.xml served by UAT OPeNDAP for granule TEMPO_O3PROF_L3_V04_20260520T010534Z_S014.nc (collection C1274178570-LARC_CLOUD). Only the dimensions and the variables used by the unit tests are kept. The layer and level dimensions have no dimension variables. -->
+    <Dimension name="level" size="2" />
+    <Dimension name="time" size="1" />
+    <Dimension name="longitude" size="3875" />
+    <Dimension name="latitude" size="1475" />
+    <Dimension name="layer" size="24" />
+    <Float64 name="time">
+        <Dim name="/time" />
+        <Attribute name="units" type="String">
+            <Value>seconds since 1980-01-06T00:00:00Z</Value>
+        </Attribute>
+        <Attribute name="standard_name" type="String">
+            <Value>time</Value>
+        </Attribute>
+        <Attribute name="long_name" type="String">
+            <Value>scan start time</Value>
+        </Attribute>
+        <Attribute name="calendar" type="String">
+            <Value>gregorian</Value>
+        </Attribute>
+    </Float64>
+    <Float32 name="longitude">
+        <Dim name="/longitude" />
+        <Attribute name="standard_name" type="String">
+            <Value>longitude</Value>
+        </Attribute>
+        <Attribute name="long_name" type="String">
+            <Value>longitude</Value>
+        </Attribute>
+        <Attribute name="comment" type="String">
+            <Value>longitude at grid box center</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_east</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float32">
+            <Value>-180.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float32">
+            <Value>180.</Value>
+        </Attribute>
+    </Float32>
+    <Float32 name="latitude">
+        <Dim name="/latitude" />
+        <Attribute name="standard_name" type="String">
+            <Value>latitude</Value>
+        </Attribute>
+        <Attribute name="long_name" type="String">
+            <Value>latitude</Value>
+        </Attribute>
+        <Attribute name="comment" type="String">
+            <Value>latitude at grid box center</Value>
+        </Attribute>
+        <Attribute name="units" type="String">
+            <Value>degrees_north</Value>
+        </Attribute>
+        <Attribute name="valid_min" type="Float32">
+            <Value>-90.</Value>
+        </Attribute>
+        <Attribute name="valid_max" type="Float32">
+            <Value>90.</Value>
+        </Attribute>
+    </Float32>
+    <Group name="support_data">
+        <Float32 name="ozone_profile_altitude">
+            <Dim name="/time" />
+            <Dim name="/latitude" />
+            <Dim name="/longitude" />
+            <Dim name="/layer" />
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-1.2676506e+30</Value>
+            </Attribute>
+            <Attribute name="comment" type="String">
+                <Value>altitude of each retrieval layer</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>km</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>100.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>time latitude longitude ozone_profile_pressure ozone_profile_altitude</Value>
+            </Attribute>
+        </Float32>
+        <Float32 name="ozone_profile_altitude_bounds">
+            <Dim name="/time" />
+            <Dim name="/latitude" />
+            <Dim name="/longitude" />
+            <Dim name="/layer" />
+            <Dim name="/level" />
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-1.2676506e+30</Value>
+            </Attribute>
+            <Attribute name="comment" type="String">
+                <Value>altitude of each retrieval layer boundary</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>100.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>time latitude longitude ozone_profile_pressure ozone_profile_altitude</Value>
+            </Attribute>
+            <Map name="/time" />
+            <Map name="/latitude" />
+            <Map name="/longitude" />
+            <Map name="/support_data/ozone_profile_pressure" />
+            <Map name="/support_data/ozone_profile_altitude" />
+        </Float32>
+    </Group>
+    <Group name="product">
+        <Float32 name="ozone_profile">
+            <Dim name="/time" />
+            <Dim name="/latitude" />
+            <Dim name="/longitude" />
+            <Dim name="/layer" />
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-1.2676506e+30</Value>
+            </Attribute>
+            <Attribute name="comment" type="String">
+                <Value>retrieved ozone profile</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>DU</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>-100.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>100.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>time latitude longitude ozone_profile_pressure ozone_profile_altitude</Value>
+            </Attribute>
+            <Map name="/time" />
+            <Map name="/latitude" />
+            <Map name="/longitude" />
+        </Float32>
+        <Float32 name="total_ozone_column">
+            <Dim name="/time" />
+            <Dim name="/latitude" />
+            <Dim name="/longitude" />
+            <Attribute name="_FillValue" type="Float32">
+                <Value>-1.2676506e+30</Value>
+            </Attribute>
+            <Attribute name="comment" type="String">
+                <Value>total ozone column</Value>
+            </Attribute>
+            <Attribute name="units" type="String">
+                <Value>DU</Value>
+            </Attribute>
+            <Attribute name="valid_min" type="Float32">
+                <Value>0.</Value>
+            </Attribute>
+            <Attribute name="valid_max" type="Float32">
+                <Value>600.</Value>
+            </Attribute>
+            <Attribute name="coordinates" type="String">
+                <Value>time latitude longitude</Value>
+            </Attribute>
+            <Map name="/time" />
+            <Map name="/latitude" />
+            <Map name="/longitude" />
+        </Float32>
+    </Group>
+</Dataset>

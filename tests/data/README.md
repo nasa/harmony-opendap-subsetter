@@ -41,6 +41,15 @@
 * M2T1NXSLV_temporal.nc4
   - An example output for a MERRA-2 collection, with a request to OPeNDAP for
     a temporal subset
+* TEMPO_O3PROF_L3_example.dmr
+  - The `.dmr` file for a granule of the TEMPO ozone profile Level 3
+    collection (TEMPO_O3PROF_L3), as obtained from OPeNDAP. The vertical
+    `layer` dimension (size 24) and the `level` bounds dimension (size 2)
+    have no dimension variables
+* TEMPO_O3PROF_L3_prefetch.nc4
+  - An example dimension prefetch output from TEMPO_O3PROF_L3 collection.
+    This contains the `time`, `latitude` and `longitude` dimension variables
+    from the same granule as the `.dmr` file
 * f16_ssmis_20200102v7.nc
   - An input granule for the RSSMIF16D collection. The variables in this
     collection a 3-dimensional, gridded with a latitude and longitude dimension

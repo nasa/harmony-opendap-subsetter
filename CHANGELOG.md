@@ -1,3 +1,13 @@
+## [v1.4.0] - 2026-09-18
+
+### Added
+
+- Named dimension subsetting now supports dimensions that have no coordinate variable
+  in the granule, when the configuration file declares them via a new `index_dimensions`
+  variable attribute. The configuration entry enables this for the `layer` dimension
+  of the TEMPO ozone profile Level 3 collection, for use in the IMAGENATOR-L3
+  browse imagery chain.
+
 ## [v1.3.0] - 2026-08-20
 
 ### Changed
@@ -286,6 +296,7 @@ Repository structure changes include:
 
 For more information on internal releases prior to NASA open-source approval,
 see legacy-CHANGELOG.md.
+[v1.4.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.4.0
 [v1.3.0]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.3.0
 [v1.2.7]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.7
 [v1.2.6]: https://github.com/nasa/harmony-opendap-subsetter/releases/tag/1.2.6

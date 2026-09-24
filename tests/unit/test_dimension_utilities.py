@@ -19,6 +19,7 @@ from hoss.dimension_utilities import (
     add_index_range,
     check_add_artificial_bounds,
     get_bounds_array,
+    get_configured_index_dimensions,
     get_dimension_bounds,
     get_dimension_extents,
     get_dimension_index_range,
@@ -1178,6 +1179,106 @@ class TestDimensionUtilities(TestCase):
                 "Input request outside supported dimension range for ",
                 context2.exception.message,
             )
+
+    def test_get_configured_index_dimensions(self):
+        """Ensure index scales are generated only for dimensions that have
+        no dimension variable in the granule and are named in an
+        `index_dimensions` attribute supplied by the configuration file.
+
+        The TEMPO_O3PROF_L3 fixture has been created from an actual
+        granule TEMPO_O3PROF_L3_V04_20260520T010534Z_S014.nc (see DAS-2528
+        comments for details): the `layer` (size 24) and `level` (size 2) dimensions
+        have no dimension variables, and the shipped hoss_config.json applies
+        `index_dimensions` = "layer" to the science variables.
+
+        """
+        tempo_varinfo = VarInfoFromDmr(
+            'tests/data/TEMPO_O3PROF_L3_example.dmr',
+            short_name='TEMPO_O3PROF_L3',
+            config_file='hoss/hoss_config.json',
+        )
+
+        with self.subTest('Configured attribute resolves the bare dimension'):
+            index_dimensions = get_configured_index_dimensions(
+                {'/product/ozone_profile'}, tempo_varinfo
+            )
+            self.assertSetEqual(set(index_dimensions.keys()), {'/layer'})
+            np.testing.assert_array_equal(index_dimensions['/layer'], np.arange(24))
+
+        with self.subTest('Variable without the named dimension yields nothing'):
+            self.assertDictEqual(
+                get_configured_index_dimensions(
+                    {'/product/total_ozone_column'}, tempo_varinfo
+                ),
+                {},
+            )
+
+        with self.subTest('Only the named dimension is treated as an index'):
+            # The bounds variable also has the `level` dimension, which
+            # is not named in the `index_dimensions` attribute.
+            index_dimensions = get_configured_index_dimensions(
+                {'/support_data/ozone_profile_altitude_bounds'}, tempo_varinfo
+            )
+            self.assertSetEqual(set(index_dimensions.keys()), {'/layer'})
+
+        with self.subTest('Collections without the configuration return nothing'):
+            # self.varinfo created from the RSSMIF16D
+            self.assertDictEqual(
+                get_configured_index_dimensions(
+                    {'/rainfall_rate', '/latitude', '/longitude'}, self.varinfo
+                ),
+                {},
+            )
+
+    def test_get_requested_index_ranges_index_dimension(self):
+        """Ensure a dimension with no dimension variable in the granule can
+        be named in a dimensions subset when it is declared through the
+        `index_dimensions` configuration attribute.
+
+        """
+        tempo_varinfo = VarInfoFromDmr(
+            'tests/data/TEMPO_O3PROF_L3_example.dmr',
+            short_name='TEMPO_O3PROF_L3',
+            config_file='hoss/hoss_config.json',
+        )
+        prefetch_path = 'tests/data/TEMPO_O3PROF_L3_prefetch.nc4'
+        required_variables = {
+            '/product/ozone_profile',
+            '/latitude',
+            '/longitude',
+            '/time',
+        }
+
+        with self.subTest('Combined index dimension with a dimension variable subset'):
+            harmony_message = Message(
+                {
+                    'subset': {
+                        'dimensions': [
+                            {'name': '/latitude', 'min': 30, 'max': 40},
+                            {'name': '/layer', 'min': 10, 'max': 15},
+                        ]
+                    }
+                }
+            )
+            self.assertDictEqual(
+                get_requested_index_ranges(
+                    required_variables, tempo_varinfo, prefetch_path, harmony_message
+                ),
+                {'/latitude': (400, 649), '/layer': (10, 15)},
+            )
+
+        with self.subTest('Bare dimension not named in the attribute'):
+            harmony_message = Message(
+                {'subset': {'dimensions': [{'name': '/level', 'min': 0, 'max': 1}]}}
+            )
+            with self.assertRaises(InvalidNamedDimension):
+                get_requested_index_ranges(
+                    required_variables
+                    | {'/support_data/ozone_profile_altitude_bounds'},
+                    tempo_varinfo,
+                    prefetch_path,
+                    harmony_message,
+                )
 
     @patch('hoss.dimension_utilities.get_dimension_index_range')
     def test_get_requested_index_ranges_bounds(self, mock_get_dimension_index_range):

@@ -153,12 +153,8 @@ that are run for CI/CD. If you add a new Python package to be used within the
 project (or remove a third party package), the change in dependencies will need
 to be recorded in the relevant requirements file:
 
-* `conda_requirements.txt`: Requirements needed for HOSS to run, obtained from
-  the `conda-forge` channel.
-* `pip_requirements.txt`: Additional requirements installed within the
-  container's conda environment via Pip. These are also required for the source
-  code of HOSS to run. It is preferable to obtain dependencies from Pip, so
-  that Pip can manage inter-package dependencies and version conflicts.
+* `pip_requirements.txt`: Requirements needed for HOSS to run, installed
+  within the container via pip.
 * `tests/pip_test_requirements.txt`: Requirements only used while running
   tests, such as `pylint` or `coverage`. These are kept separate to reduce the
   dependencies in the delivered software.

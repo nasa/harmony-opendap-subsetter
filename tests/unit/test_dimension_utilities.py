@@ -1400,6 +1400,97 @@ class TestDimensionUtilities(TestCase):
                     get_dimension_bounds('/latitude', self.varinfo, dataset)
                 )
 
+    def test_point_subset_with_short_bounds(self):
+        """Point subsets need no spacing estimate for zero or one inner edge."""
+        cases = [
+            (np.array([[0.0, 10.0]]), 5.0, (0, 0)),
+            (np.array([[0.0, 10.0], [10.0, 20.0]]), 5.0, (0, 0)),
+            (np.array([[0.0, 10.0], [10.0, 20.0]]), 10.0, (0, 1)),
+            (np.array([[0.0, 10.0], [10.0, 20.0]]), 15.0, (1, 1)),
+            (np.array([[20.0, 10.0], [10.0, 0.0]]), 5.0, (1, 1)),
+            (np.array([[20.0, 10.0], [10.0, 0.0]]), 10.0, (0, 1)),
+            (np.array([[20.0, 10.0], [10.0, 0.0]]), 15.0, (0, 0)),
+        ]
+        for bounds, point, expected in cases:
+            with self.subTest(bounds=bounds.tolist(), point=point):
+                self.assertEqual(
+                    get_dimension_indices_from_bounds(bounds, point, point), expected
+                )
+                self.assertEqual(
+                    get_dimension_index_range(
+                        np.ma.array(bounds.mean(axis=1)), point, point, bounds
+                    ),
+                    expected,
+                )
+
+    def test_point_subset_does_not_truncate_fractional_extents(self):
+        """Integer bounds must not turn a nearby fractional point into an edge."""
+        for dtype in (np.int16, np.int64, np.float64):
+            for descending in (False, True):
+                bounds = np.array([[0, 10], [10, 20], [20, 30]], dtype=dtype)
+                if descending:
+                    bounds = np.flip(bounds)
+                for point in (10.4, 10.9, 19.9):
+                    with self.subTest(dtype=dtype, descending=descending, point=point):
+                        self.assertEqual(
+                            get_dimension_indices_from_bounds(bounds, point, point),
+                            (1, 1),
+                        )
+
+    def test_named_point_subsets_with_real_prefetch_bounds(self):
+        """Resolve a Harmony point request through real NetCDF prefetch data."""
+        varinfo = VarInfoFromDmr(
+            'tests/data/GPM_3IMERGHH_example.dmr', short_name='GPM_3IMERGHH'
+        )
+        cases = [
+            ([[0, 10]], 5.0, (0, 0)),
+            ([[0, 10], [10, 20]], 10.0, (0, 1)),
+            ([[0, 10], [10, 20], [20, 30]], 10.4, (1, 1)),
+            ([[30, 20], [20, 10], [10, 0]], 10.4, (1, 1)),
+        ]
+        for number, (bounds, point, expected) in enumerate(cases):
+            with self.subTest(bounds=bounds, point=point):
+                path = f'{self.temp_dir}/point_bounds_{number}.nc4'
+                with Dataset(path, 'w') as prefetch:
+                    group = prefetch.createGroup('Grid')
+                    group.createDimension('lon', len(bounds))
+                    group.createDimension('lonv', 2)
+                    group.createVariable('lon', 'f8', ('lon',))[:] = np.mean(
+                        bounds, axis=1
+                    )
+                    group.createVariable('lon_bnds', 'i4', ('lon', 'lonv'))[:] = bounds
+                message = Message(
+                    {
+                        'subset': {
+                            'dimensions': [
+                                {'name': '/Grid/lon', 'min': point, 'max': point}
+                            ]
+                        }
+                    }
+                )
+                self.assertEqual(
+                    get_requested_index_ranges({'/Grid/lon'}, varinfo, path, message),
+                    {'/Grid/lon': expected},
+                )
+
+    def test_is_almost_in_small_arrays_and_fractional_values(self):
+        """Use the absolute-tolerance cap when no interval can be measured."""
+        cases = [
+            (0.0, np.array([]), False),
+            (10.0, np.array([10.0]), True),
+            (10.000001, np.array([10.0]), True),
+            (10.001, np.array([10.0]), False),
+            (10.4, np.array([10, 20]), False),
+            (-10.4, np.array([-20, -10]), False),
+            (10.0, np.array([10, 20]), True),
+            (1000000000.1, np.array([1000000000.0]), False),
+            (0.0000010005, np.array([0.0, 0.000001, 0.000002]), True),
+            (0.00000101, np.array([0.0, 0.000001, 0.000002]), False),
+        ]
+        for value, array, expected in cases:
+            with self.subTest(value=value, array=array.tolist()):
+                self.assertEqual(bool(is_almost_in(value, array)), expected)
+
     def test_get_dimension_indices_from_bounds(self):
         """Ensure that the correct index ranges are retrieved for a variety
         of requested dimension ranges, including values that lie within

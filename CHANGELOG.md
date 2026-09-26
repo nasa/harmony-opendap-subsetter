@@ -1,3 +1,10 @@
+## [Unreleased]
+
+### Fixed
+
+- Handle point subsets with one or two bounded cells, and preserve fractional
+  requested coordinates when testing proximity to integer-valued cell edges.
+
 ## [v1.4.1] - 2026-09-21
 
 ### Changed

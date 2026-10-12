@@ -1,3 +1,12 @@
+## [Unreleased]
+
+### Changed
+
+- Removes the explicit platform flag for docker builds. The docker images are
+  are now able to build and run under arm64 architecture as well as amd64.
+  This change only affects developers ci/cd will continue to build amd64 images
+  as always.
+
 ## [v1.4.1] - 2026-09-21
 
 ### Changed

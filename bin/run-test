@@ -23,7 +23,7 @@ mkdir -p coverage
 
 # Run the tests in a Docker container with mounted volumes for XML report
 # output and test coverage reporting
-docker run --platform linux/amd64 --rm \
+docker run  --rm \
 	-v $(pwd)/test-reports:/home/test-reports \
 	-v $(pwd)/coverage:/home/coverage \
 	ghcr.io/nasa/harmony-opendap-subsetter-test "$@"

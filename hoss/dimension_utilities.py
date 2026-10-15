@@ -677,7 +677,14 @@ def is_almost_in(value: float, array: np.ndarray) -> bool:
     values.
 
     """
-    array_precision = min(np.nanmin(np.abs(np.diff(array) / 1000.0)), 0.00001)
-    return np.any(
-        np.isclose(array, np.full_like(array, value), rtol=0, atol=array_precision)
-    )
+    if array.size == 0:
+        return False
+
+    # With only one candidate edge there is no interval from which to derive
+    # a tolerance, so use the existing absolute-tolerance cap.
+    array_precision = 0.00001
+    if array.size > 1:
+        array_precision = min(
+            np.nanmin(np.abs(np.diff(array) / 1000.0)), array_precision
+        )
+    return np.any(np.isclose(array, value, rtol=0, atol=array_precision))
